@@ -68,19 +68,19 @@ xdescribe('storage v2 integration tests', () => {
 
     // await storage.save(entities)
 
-    for await (const entry of storage.getAll()) {
+    for await (const entry of await storage.getAll()) {
       console.log('by id', entry)
     }
 
     console.log('-----------')
 
-    for await (const entry of storage.useIndex('timestamp').getAll()) {
+    for await (const entry of await storage.useIndex('timestamp').getAll()) {
       console.log('by timestamp', entry)
     }
 
     console.log('-----------')
 
-    for await (const entry of storage
+    for await (const entry of await storage
       .useIndex('market')
       .getAllFromTo(['market-3'])) {
       console.log('by market', entry)
@@ -88,7 +88,7 @@ xdescribe('storage v2 integration tests', () => {
 
     console.log('-----------')
 
-    for await (const entry of storage
+    for await (const entry of await storage
       .useIndex('account')
       .getAllFromTo(
         ['market-2', 'So22222222222222222222222222222222222222222'],
