@@ -10,6 +10,7 @@
     "start": "npm i && ./run.sh",
     "start-alone": "./run.sh",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:rebuild": "npm run clean:all && npm i && npm run test",
     "lint": "eslint --cache --ignore-path .gitignore './packages/**/src/**/*.{js,ts,tsx}'",
     "lint:fix": "npm run lint -- --fix --quiet",

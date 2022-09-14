@@ -4,6 +4,7 @@ import { LayoutHub } from './layoutHub.js'
 export class LayoutFactory extends Utils.AsyncModuleFactory {
   protected static baseModuleId: string | undefined = undefined
 
+  //@todo: Move this to aleph-indexer/layout
   static async importModule(moduleId: string): Promise<any> {
     return import(`./impl/${moduleId}.js`)
   }

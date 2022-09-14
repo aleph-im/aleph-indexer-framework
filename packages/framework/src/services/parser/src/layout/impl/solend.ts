@@ -1,5 +1,5 @@
 import { SOLEND_PROGRAM_ID } from '../layoutHub.js'
-import { blob, struct, u64, u8 } from '../primitives.js'
+import { blob, struct, u64, u8 } from '@aleph-indexer/layout'
 import { LayoutImplementation } from '../types.js'
 import {
   SPL_TOKEN_LENDING_IX_DATA_LAYOUT,

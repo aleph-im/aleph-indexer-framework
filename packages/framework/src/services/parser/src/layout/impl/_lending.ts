@@ -1,4 +1,4 @@
-import { struct, u8, blob, u64 } from '../primitives.js'
+import { struct, u8, blob, u64 } from '@aleph-indexer/layout'
 
 export enum LendingEventType {
   InitLendingMarket = 'initLendingMarket',
