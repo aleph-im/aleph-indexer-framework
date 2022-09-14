@@ -1,8 +1,8 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { FetcherOptions, FetcherOptionsTypes } from '../types.js'
+import { FetcherRequest, FetcherOptionsTypes } from '../types.js'
 import { v4 as uuidv4 } from 'uuid'
 
-export type FetcherOptionsStorage = EntityStorage<FetcherOptions>
+export type FetcherOptionsStorage = EntityStorage<FetcherRequest>
 
 export enum RequestsDALIndex {
   Type = 'type_index',
@@ -10,17 +10,17 @@ export enum RequestsDALIndex {
 }
 
 const idKey = {
-  get: (e: FetcherOptions) => e.id,
+  get: (e: FetcherRequest) => e.id,
   length: EntityStorage.VariableLength,
 }
 
 const typeKey = {
-  get: (e: FetcherOptions) => e.type,
+  get: (e: FetcherRequest) => e.type,
   length: EntityStorage.VariableLength,
 }
 
 const accountKey = {
-  get: (e: FetcherOptions) => e.options.account,
+  get: (e: FetcherRequest) => e.options.account,
   length: EntityStorage.VariableLength,
 }
 
@@ -29,7 +29,7 @@ const accountKey = {
  * @param path Path to the database.
  */
 export function createRequestsDAL(path: string): FetcherOptionsStorage {
-  return new EntityStorage<FetcherOptions>({
+  return new EntityStorage<FetcherRequest>({
     name: 'fetcher_requests',
     path,
     primaryKey: [idKey],
@@ -54,7 +54,7 @@ export function createRequestsDAL(path: string): FetcherOptionsStorage {
 export function createFetcherOptions(
   type: FetcherOptionsTypes,
   options: any,
-): FetcherOptions {
+): FetcherRequest {
   return {
     id: uuidv4(),
     type,

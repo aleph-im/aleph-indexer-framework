@@ -1,5 +1,3 @@
-import { DateTime } from 'luxon'
-
 /**
  * Contains the original and parsed data, as well as the context of the parsing.
  */
@@ -30,9 +28,3 @@ export type AccountData = ParseElement & {
 }
 
 export type ParseResult = Transaction | Instruction | AccountData
-
-export type RawEventBase = {
-  program: string
-  programId: string
-  parsed: unknown
-}

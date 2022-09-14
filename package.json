@@ -48,7 +48,8 @@
     "luxon": "^2.4.0",
     "murmurhash": "^2.0.0",
     "node-cache": "^5.1.2",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "typedoc": "^0.23.14"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",

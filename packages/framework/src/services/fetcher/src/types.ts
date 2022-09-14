@@ -1,4 +1,4 @@
-import { RawTransactionV1 } from '@aleph-indexer/core/dist'
+import { RawTransactionV1 } from '@aleph-indexer/core'
 import { FetcherMsI, PrivateFetcherMsI } from '../interface'
 
 export type SignatureFetcherState = {
@@ -103,19 +103,19 @@ export enum FetcherOptionsTypes {
   AccountTransactionSlotFetcher = 'account_transaction_slot_fetcher',
 }
 
-export type BaseFetcherOptions = {
+export type BaseFetcherRequest = {
   id: string
   type: string
 }
 
-export type FetcherAccountOptions = Omit<BaseFetcherOptions, 'type'> & {
+export type FetcherAccountRequest = Omit<BaseFetcherRequest, 'type'> & {
   type: FetcherOptionsTypes.AccountFetcher
   options: {
     account: string
   }
 }
 
-export type FetcherAccountInfoOptions = Omit<BaseFetcherOptions, 'type'> & {
+export type FetcherAccountInfoRequest = Omit<BaseFetcherRequest, 'type'> & {
   type: FetcherOptionsTypes.AccountInfoFetcher
   options: {
     account: string
@@ -123,7 +123,7 @@ export type FetcherAccountInfoOptions = Omit<BaseFetcherOptions, 'type'> & {
   }
 }
 
-export type FetcherSignatureOptions = Omit<BaseFetcherOptions, 'type'> & {
+export type FetcherSignatureRequest = Omit<BaseFetcherRequest, 'type'> & {
   type: FetcherOptionsTypes.TransactionSignatureFetcher
   options: {
     account: string
@@ -131,7 +131,7 @@ export type FetcherSignatureOptions = Omit<BaseFetcherOptions, 'type'> & {
   }
 }
 
-export type FetcherDateOptions = Omit<BaseFetcherOptions, 'type'> & {
+export type FetcherDateRequest = Omit<BaseFetcherRequest, 'type'> & {
   type: FetcherOptionsTypes.AccountTransactionDateFetcher
   options: {
     account: string
@@ -140,7 +140,7 @@ export type FetcherDateOptions = Omit<BaseFetcherOptions, 'type'> & {
   }
 }
 
-export type FetcherSlotOptions = Omit<BaseFetcherOptions, 'type'> & {
+export type FetcherSlotRequest = Omit<BaseFetcherRequest, 'type'> & {
   type: FetcherOptionsTypes.AccountTransactionSlotFetcher
   options: {
     account: string
@@ -149,9 +149,9 @@ export type FetcherSlotOptions = Omit<BaseFetcherOptions, 'type'> & {
   }
 }
 
-export type FetcherOptions =
-  | FetcherAccountOptions
-  | FetcherAccountInfoOptions
-  | FetcherSignatureOptions
-  | FetcherDateOptions
-  | FetcherSlotOptions
+export type FetcherRequest =
+  | FetcherAccountRequest
+  | FetcherAccountInfoRequest
+  | FetcherSignatureRequest
+  | FetcherDateRequest
+  | FetcherSlotRequest

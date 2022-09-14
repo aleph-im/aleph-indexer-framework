@@ -1,7 +1,7 @@
 import { Utils } from '../../index.js'
 import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
 import { JobRunnerReturnCode } from '../../utils/concurrence'
-import { FetcherJobRunnerOptions, FetcherState } from './types.js'
+import { FetcherJobRunnerOptions, FetcherStateV1 } from './types.js'
 
 export interface FetcherOptions {
   id: string
@@ -10,7 +10,7 @@ export interface FetcherOptions {
 }
 
 export abstract class Fetcher {
-  protected fetcherState!: FetcherState
+  protected fetcherState!: FetcherStateV1
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
 

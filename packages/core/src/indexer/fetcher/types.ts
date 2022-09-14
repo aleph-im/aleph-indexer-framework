@@ -41,7 +41,7 @@ export type FetcherJobState = {
   usePublicRPC: boolean
 }
 
-export type FetcherState = {
+export type FetcherStateV1 = {
   id: string
   forward: FetcherJobState
   backward: FetcherJobState
