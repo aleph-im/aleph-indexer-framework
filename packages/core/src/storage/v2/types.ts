@@ -1,8 +1,14 @@
+/**
+ * Key-value storage item
+ */
 export type StorageItem<K, V> = {
   key: K
   value: V
 }
 
+/**
+ * A
+ */
 export type StorageStream<K, V> = NodeJS.ReadableStream &
   AsyncIterable<StorageItem<K, V>>
 export type StorageKeyStream<K> = NodeJS.ReadableStream & AsyncIterable<K>

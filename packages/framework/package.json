@@ -25,5 +25,9 @@
     "buffer-layout": "^1.2.2",
     "moleculer": "^0.14.21",
     "uuid": "^8.3.2"
+  },
+  "typedoc": {
+    "entryPoint": "./index.ts",
+    "displayName": "Indexer Framework"
   }
 }

@@ -25,12 +25,11 @@ export class WorkerThreadsTransporter extends Transporters.Base {
   }
 
   async connect(): Promise<void> {
-    console.log('connect')
     return this.onConnected()
   }
 
   async disconnect(): Promise<void> {
-    console.log('disconnect')
+    // NOOP
   }
 
   async subscribe(cmd: string, nodeID: string): Promise<void> {

@@ -146,15 +146,11 @@ export class IndexerMainDomain {
 
     return (
       await Promise.all(
-        accounts.map(async (account) => {
-          const state = await this.context.apiClient.getAccountState({
+        accounts.map(async (account) =>
+          this.context.apiClient.getAccountState({
             account,
-          })
-
-          console.log('account state', account, state)
-
-          return state
-        }),
+          }),
+        ),
       )
     ).filter((info): info is AccountIndexerState => !!info)
   }

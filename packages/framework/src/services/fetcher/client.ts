@@ -152,8 +152,6 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
           return acc
         }, {} as Record<string, string[]>)
 
-    console.log('partitionGroups', partitionGroups)
-
     return partitionGroups
   }
 }

@@ -31,6 +31,9 @@ export const TimeFrameDurationUnitsMap: Record<
   [TimeFrame.All]: ['year', Number.MAX_SAFE_INTEGER],
 }
 
+/**
+ * A simple date range object using unix timestamps.
+ */
 export type DateRange = {
   startDate: number
   endDate: number
@@ -144,7 +147,6 @@ function clipDateRanges(
 export async function clipDateRangesFromIterable<T extends DateRangeArrayOrMap>(
   ranges: T,
   clipRanges: Iterable<DateRange> | AsyncIterable<DateRange>,
-  log = '',
 ): Promise<T> {
   let map: Record<string, DateRange> = Array.isArray(ranges)
     ? Object.fromEntries(
@@ -152,29 +154,9 @@ export async function clipDateRangesFromIterable<T extends DateRangeArrayOrMap>(
       )
     : ranges
 
-  if (log)
-    console.log(
-      `CLIP SOURCE RANGE [${log}] [
-      ${Object.values(map)
-        .map((s) => getIntervalFromDateRange(s).toISO())
-        .join('\n')}
-    ]`,
-    )
-
   for await (const range of clipRanges) {
-    if (log)
-      console.log(`CLIP BY [${log}]${getIntervalFromDateRange(range).toISO()}`)
     map = clipDateRanges(map, range)
   }
-
-  if (log)
-    console.log(
-      `CLIP RESULT RANGE [${log}] [
-      ${Object.values(map)
-        .map((s) => getIntervalFromDateRange(s).toISO())
-        .join('\n')}
-    ]`,
-    )
 
   return Array.isArray(ranges)
     ? Object.values(map).sort((a, b) => a.startDate - b.startDate)

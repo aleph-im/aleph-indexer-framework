@@ -69,7 +69,31 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     if (!txs.length) return
 
     console.log(`✉️  ${txs.length} txs sent by the parser...`)
-    return this.broadcastToClients('txs', txs)
+
+    const txGroups = this.groupTransactions(txs)
+    const groups = this.getClientEventGroups()
+
+    await Promise.all(
+      groups.flatMap((group) =>
+        Object.entries(txGroups).map(([partitionKey, txs]) =>
+          this.emitToClients('txs', txs, { group, partitionKey }),
+        ),
+      ),
+    )
+
+    // return this.broadcastToClients('txs', txs)
     // return this.broker.broadcast('parser.txs', txs, [MsIds.Indexer])
+  }
+
+  protected groupTransactions(
+    txs: ParsedTransactionV1[],
+  ): Record<string, ParsedTransactionV1[]> {
+    return txs.reduce((acc, tx) => {
+      tx.parsed.message.accountKeys.forEach(({ pubkey }) => {
+        const byAccount = acc[pubkey] || (acc[pubkey] = [])
+        byAccount.push(tx)
+      })
+      return acc
+    }, {} as Record<string, ParsedTransactionV1[]>)
   }
 }

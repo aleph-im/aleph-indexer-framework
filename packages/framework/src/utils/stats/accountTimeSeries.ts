@@ -87,8 +87,6 @@ export class AccountTimeSeriesStatsManager {
     const state = await this.indexerApi.getAccountState({ account })
     if (!state) return
 
-    console.log('📊 state', account, state)
-
     if (!state.processed.length) return
 
     const pendingRanges: DateRange[] = state.processed.map(
@@ -161,7 +159,7 @@ export class AccountTimeSeriesStatsManager {
 
     if (newStates.length > 0) {
       console.log(
-        `🍔 compact stats states
+        `💿 compact stats states
         newRanges: ${newStates.length},
         toDeleteRanges: ${oldStates.length}
       `,

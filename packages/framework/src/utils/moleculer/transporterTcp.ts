@@ -37,7 +37,7 @@ export class FrameworkTCPTransporter extends SuperClass {
         // useHostname: true,
         // // Gossip sending period in seconds
         // gossipPeriod: 2,
-        gossipPeriod: 30,
+        gossipPeriod: 10,
         // // Maximum enabled outgoing connections. If reach, close the old connections
         // maxConnections: 32,
         // @note: This is a quick dirty fix (Maximum TCP packet size)
@@ -86,7 +86,6 @@ export class FrameworkTCPTransporter extends SuperClass {
     if (['GOSSIP_REQ', 'GOSSIP_RES', 'GOSSIP_HELLO'].includes(packet.type)) {
       this.cleanGossipNodeList(packet, 'online')
       this.cleanGossipNodeList(packet, 'offline')
-      // console.log('AFTER clean', JSON.stringify(packet, null, 2))
     }
   }
 

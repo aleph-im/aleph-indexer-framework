@@ -301,7 +301,7 @@ export class TimeSeriesStats<I, O> {
     })
 
     console.log(
-      `🍔 compact stats states
+      `💿 compact stats states
         newRanges: ${newStates.length},
         toDeleteRanges: ${oldStates.length}
       `,

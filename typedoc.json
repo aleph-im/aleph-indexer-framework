@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Aleph Indexer Framework for Solana",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/core",
+    "packages/layout",
+    "packages/framework",
+    "packages/middleware"
+  ],
+  "out": "docs",
+  "externalPattern": [
+    "**/lib/**",
+    "**/external/**"
+  ],
+  "excludeExternals": true
+}

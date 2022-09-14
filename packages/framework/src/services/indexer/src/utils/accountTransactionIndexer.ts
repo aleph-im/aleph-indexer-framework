@@ -92,7 +92,6 @@ export class AccountTransactionIndexer {
     const pendingRanges = await clipDateRangesFromIterable(
       [toFetchRange],
       processedRanges,
-      'pendings',
     )
 
     const pendingMilis = pendingRanges.reduce(
@@ -193,8 +192,6 @@ export class AccountTransactionIndexer {
         requestNonce,
       )
 
-      console.log('🍭 initPendingRanges.state ==', requestNonce, isComplete)
-
       if (!isComplete) continue
 
       // @note: Update the state of the request to ready (mark for processing)
@@ -215,8 +212,6 @@ export class AccountTransactionIndexer {
 
     const ranges = await this.getPendingRanges(account)
     if (!ranges.length) return interval + 1000 // @note: delay 1sec
-
-    console.log('fetch ranges', account, ranges)
 
     const targetRange = ranges[ranges.length - 1]
 
@@ -241,12 +236,6 @@ export class AccountTransactionIndexer {
 
       requests.push({ account, startDate, endDate })
     }
-
-    console.log(
-      `fetch ${account} => [
-        ${requests.map((s) => getIntervalFromDateRange(s).toISO()).join('\n')}
-      ]`,
-    )
 
     await Promise.all(requests.map(this.fetchRangeByDate.bind(this)))
 
@@ -290,14 +279,14 @@ export class AccountTransactionIndexer {
     })
 
     // console.log(
-    //   `🍟 compact fetching states
+    //   `💿 compact fetching states
     //     newStates: ${newStates.length},
     //     oldStates: ${oldStates.length}
     //   `,
     // )
 
     console.log(
-      `🍟 compact fetching states *
+      `💿 compact fetching states *
         newStates: [
           ${newStates
             .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
@@ -412,6 +401,6 @@ export class AccountTransactionIndexer {
         { reverse: false, atomic: true },
       ))
 
-    return clipDateRangesFromIterable([totalDateRange], clipRanges, 'toFetch')
+    return clipDateRangesFromIterable([totalDateRange], clipRanges)
   }
 }

@@ -6,13 +6,31 @@ import { TransportType } from './moleculer/config.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+/**
+ * Currently there exist 4 types of workers:
+ */
 export enum WorkerKind {
+  /**
+   * Worker that is exposing the GraphQL API and orchestrating the other workers
+   */
   Main = 'main',
+  /**
+   * Worker that is fetching data from the blockchain and passing it to the parser
+   */
   Fetcher = 'fetcher',
+  /**
+   * Worker that is parsing data from the blockchain and passing it to the indexer
+   */
   Parser = 'parser',
+  /**
+   * Worker that is requesting data from the fetcher, while aggregating, transforming and storing received data
+   */
   Indexer = 'indexer',
 }
 
+/**
+ * Describes a worker instance.
+ */
 export type WorkerInfo = {
   /**
    * Name of the project the worker is running for.
@@ -48,21 +66,42 @@ export type WorkerInfo = {
   tcpPort?: number
 }
 
-export type WorkersConfig = {
-  workers: WorkerConfig[]
-}
-
+/**
+ * Config to be passed to {@link createWorker}.
+ */
 export type WorkerConfig = {
+  /**
+   * The kind of worker to create.
+   */
   kind: WorkerKind
+  /**
+   * The unique name of the worker to create.
+   */
   name: string
 }
 
+/**
+ * Contains the port for communicating with a worker.
+ */
 export type WorkerChannel = {
+  /**
+   * The kind of worker the channel is connecting to.
+   */
   kind: WorkerKind
+  /**
+   * The port for communicating with the worker.
+   */
   port: MessagePort
 }
 
+/**
+ * A record of all workers and their available {@link WorkerChannel}s.
+ */
 export type AllWorkerChannels = Record<string, Record<string, WorkerChannel>>
+
+/**
+ * A record of workers and their according {@link WorkerChannel}s.
+ */
 export type WorkerChannels = Record<string, WorkerChannel>
 
 /**

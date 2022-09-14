@@ -67,7 +67,7 @@ export async function waitForAllNodesWithService(
         !!node.rawInfo.services.find((s: any) => s.name === service)
 
       console.log(
-        `🐷 service ${service} ready? `,
+        `⚙️ service ${service} ready? `,
         name,
         isReady,
         node?.rawInfo?.services,
@@ -101,6 +101,11 @@ type EventPayload<Event> = {
   payload: any
 }
 
+export type EventOptions = {
+  group?: string
+  balancingStrategy?: { strategy: string; strategyOptions: any }
+}
+
 /**
  * Interface for a service which can emit events of a given type.
  * @todo: Angel, please inspect these docs and make sure they are correct.
@@ -121,6 +126,7 @@ export class MsClientWithEvents<Event extends string = string> {
     protected broker: ServiceBroker,
     protected id: MsIds,
     protected initService = true,
+    protected eventOpts?: EventOptions,
   ) {
     if (initService) this._initLocalClientMs()
   }
@@ -150,16 +156,33 @@ export class MsClientWithEvents<Event extends string = string> {
 
     if (!this._self._localClientMs) {
       const handler = this._multiplexedHandler.bind(this)
+      const eventOpts = this.eventOpts
+
+      if (eventOpts?.balancingStrategy) {
+        const strategyOptions = eventOpts?.balancingStrategy.strategyOptions
+
+        eventOpts.balancingStrategy = {
+          ...eventOpts?.balancingStrategy,
+          strategyOptions: {
+            ...strategyOptions,
+            shardKey: `#${strategyOptions.shardKey}`,
+          },
+        }
+      }
 
       this._self._localClientMs = this.broker.createService(
         class extends Service {
           constructor(broker: ServiceBroker) {
             super(broker)
 
+            console.log('this.eventOpts', eventOpts)
             this.parseServiceSchema({
               name,
               events: {
-                [`${name}.${MOLECULER_MULTIPLEXED_EVENT_CHANNEL}`]: { handler },
+                [`${name}.${MOLECULER_MULTIPLEXED_EVENT_CHANNEL}`]: {
+                  ...eventOpts,
+                  handler,
+                },
               },
             })
           }
@@ -185,16 +208,45 @@ export class MsMainWithEvents {
     this._EVENT_CHANNEL = `${name}.${MOLECULER_MULTIPLEXED_EVENT_CHANNEL}`
   }
 
-  async broadcastToClients(event: string, data?: any): Promise<void> {
+  getClientEventGroups(): string[] {
+    return this.broker.getEventGroups(this._EVENT_CHANNEL)
+  }
+
+  async emitToClients(
+    event: string,
+    data?: any,
+    opts?: {
+      group?: string
+      partitionKey?: string
+    },
+  ): Promise<void> {
+    const payload: any = {
+      eventId: event,
+      payload: data,
+    }
+
+    const groups = [opts?.group || getClientMsId(this.msId)]
+    const options = { groups, meta: { partitionKey: opts?.partitionKey } }
+
+    console.log(
+      `==> event ${groups} | ${JSON.stringify(options)} | ${payload.eventId}`,
+    )
+
     return this.broker
-      .broadcast(
-        this._EVENT_CHANNEL,
-        {
-          eventId: event,
-          payload: data,
-        },
-        [getClientMsId(this.msId)],
-      )
+      .emit(this._EVENT_CHANNEL, payload, options)
+      .catch((e) => 'ignore' && console.error(e))
+  }
+
+  async broadcastToClients(event: string, data?: any): Promise<void> {
+    const payload: any = {
+      eventId: event,
+      payload: data,
+    }
+
+    const groups = [getClientMsId(this.msId)]
+
+    return this.broker
+      .broadcast(this._EVENT_CHANNEL, payload, groups)
       .catch((e) => 'ignore' && console.error(e))
   }
 }

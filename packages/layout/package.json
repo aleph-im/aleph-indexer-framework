@@ -13,5 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "@project-serum/borsh": "0.2.5"
+  },
+  "typedoc": {
+    "entryPoint": "./index.ts",
+    "displayName": "Indexer Layouts"
   }
 }

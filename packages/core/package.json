@@ -18,5 +18,9 @@
     "@types/compression": "^1.7.2",
     "@types/level": "^6.0.0",
     "@types/bs58": "^4.0.1"
+  },
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "displayName": "Indexer Core"
   }
 }

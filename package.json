@@ -16,6 +16,7 @@
     "lint:fix": "npm run lint -- --fix --quiet",
     "build": "npm run clean:dist && npm run build:ts",
     "build:ts": "lerna exec -- tsc -p ./tsconfig.json",
+    "build:all": "npm i && npm run docs",
     "watch:ts": "lerna exec --parallel -- tsc -w -p ./tsconfig.json",
     "bootstrap": "lerna bootstrap --force-local",
     "link": "lerna link --force-local && node ./scripts/links.js",
@@ -23,7 +24,8 @@
     "clean:package-lock": "find . -maxdepth 3 -type f -name package-lock.json -exec rm -rf '{}' +",
     "clean": "lerna clean --yes && npm run clean:dist && npm run clean:package-lock",
     "clean:all": "npm run clean && rm -rf ./node_modules",
-    "deps:fix": "madge --exclude 'dist/(.+)' --circular packages"
+    "deps:fix": "madge --exclude 'dist/(.+)' --circular packages",
+    "docs": "typedoc --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@solana/spl-token-registry": "^0.2.7",

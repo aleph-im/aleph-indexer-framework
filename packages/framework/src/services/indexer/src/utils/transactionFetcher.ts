@@ -217,18 +217,7 @@ export class TransactionFetcher {
         filteredTxs as unknown as TransactionRequestPendingSignature[]
 
       await this.transactionRequestResponseDAL.save(requestResponse)
-      console.log(
-        requestResponse
-          .map((r) => `🌈 3 tx RES | response update  -> ${r.signature}`)
-          .join('\n'),
-      )
       await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
-
-      console.log(
-        pendingSignatures
-          .map((r) => `🌈 4 tx RES | pending remove  -> ${r.signature}`)
-          .join('\n'),
-      )
 
       this.checkCompletionJob.run()
     } finally {
@@ -237,6 +226,7 @@ export class TransactionFetcher {
 
     const elapsed1 = Date.now() - now1
     const elapsed2 = Date.now() - now2
+
     console.log(`onTxs time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
   }
 
@@ -413,8 +403,6 @@ export class TransactionFetcher {
         )
 
       for await (const signatures of signaturesStream) {
-        console.log(signatures)
-
         const pendingSignatures = signatures.map((signature) => {
           return { signature, nonces: [nonce] }
         })
@@ -424,23 +412,7 @@ export class TransactionFetcher {
         })
 
         await this.transactionRequestResponseDAL.save(requestResponse)
-        console.log(
-          requestResponse
-            .map(
-              (r) =>
-                `🌈 1 tx REQ | response saved -> ${nonce} -> ${r.signature}`,
-            )
-            .join('\n'),
-        )
         await this.transactionRequestPendingSignatureDAL.save(pendingSignatures)
-        console.log(
-          pendingSignatures
-            .map(
-              (r) =>
-                `🌈 2 tx REQ | pending signature -> ${nonce} -> ${r.signature}`,
-            )
-            .join('\n'),
-        )
       }
 
       const request = { nonce, ...requestParams }

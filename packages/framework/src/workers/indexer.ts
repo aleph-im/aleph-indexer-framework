@@ -3,7 +3,7 @@
  */
 import path from 'path'
 import { workerData } from 'worker_threads'
-import { MsIds } from '../services/common.js'
+import { MsIds, shardBalancingStrategy } from '../services/common.js'
 import { FetcherMsClient } from '../services/fetcher'
 import { IndexerMs, IndexerMsMain } from '../services/indexer'
 import { createTransactionIndexerStateDAL } from '../services/indexer/src/dal/transactionIndexerState.js'
@@ -34,7 +34,10 @@ async function main() {
       : localBroker
 
   const fetcherMsClient = new FetcherMsClient(broker)
-  const parserMsClient = new ParserMsClient(broker, true)
+  const parserMsClient = new ParserMsClient(broker, true, {
+    group: projectId,
+    balancingStrategy: shardBalancingStrategy,
+  })
 
   const indexerMain = new IndexerMsMain(
     localBroker,

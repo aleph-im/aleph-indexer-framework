@@ -8,6 +8,7 @@ import {
   RawTransactionV1,
 } from '@aleph-indexer/core'
 import {
+  EventOptions,
   MsClientWithEvents,
   MsIds,
   waitForAllNodesWithService,
@@ -29,9 +30,10 @@ export class ParserMsClient
   constructor(
     protected broker: ServiceBroker,
     protected clientEvents = false,
+    protected eventOpts?: EventOptions,
     protected msId: MsIds = MsIds.Parser,
   ) {
-    super(broker, msId, clientEvents)
+    super(broker, msId, clientEvents, eventOpts)
   }
 
   waitForAll(indexers: string[]): Promise<void> {
@@ -66,14 +68,5 @@ export class ParserMsClient
       account,
       payload,
     })
-  }
-}
-
-export class ParserMsClientWithEvents extends MsClientWithEvents<'onTxs'> {
-  constructor(
-    protected broker: ServiceBroker,
-    protected msId: MsIds = MsIds.Parser,
-  ) {
-    super(broker, msId)
   }
 }
