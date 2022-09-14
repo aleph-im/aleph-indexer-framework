@@ -1,0 +1,9 @@
+{
+  "packages": [
+    "packages/core",
+    "packages/layout",
+    "packages/middleware",
+    "packages/framework"
+  ],
+  "version": "1.0.0"
+}

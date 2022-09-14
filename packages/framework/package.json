@@ -1,0 +1,29 @@
+{
+  "name": "@aleph-indexer/framework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ALEPH.im",
+  "license": "ISC",
+  "peerDependencies": {
+    "luxon": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/level": "^6.0.0",
+    "@types/uuid": "^8.3.2"
+  },
+  "dependencies": {
+    "@aleph-indexer/core": "1.0.0",
+    "@aleph-indexer/layout": "1.0.0",
+    "@solana/web3.js": "^1.36.0",
+    "buffer-layout": "^1.2.2",
+    "moleculer": "^0.14.21",
+    "uuid": "^8.3.2"
+  }
+}

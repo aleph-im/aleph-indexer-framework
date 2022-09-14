@@ -1,0 +1,15 @@
+node_modules
+.env
+git_ignore
+device.key
+data/
+.vscode
+.idea
+.eslintcache
+dist
+.DS_Store
+test.js
+logs.log
+
+# "Lockfiles for apps, but not for packages." https://twitter.com/sindresorhus/status/878240818363981827
+/packages/**/package-lock.json
