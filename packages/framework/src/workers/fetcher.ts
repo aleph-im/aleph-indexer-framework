@@ -4,7 +4,7 @@
 import path from 'path'
 import { workerData } from 'worker_threads'
 import { FetcherStateLevelStorage } from '@aleph-indexer/core'
-import { FetcherMs, FetcherMsMain } from '../services/fetcher'
+import { FetcherMs, FetcherMsMain } from '../services/fetcher/index.js'
 import { createAccountInfoDAL } from '../services/fetcher/src/dal/accountInfo.js'
 import { createPendingTransactionDAL } from '../services/fetcher/src/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'

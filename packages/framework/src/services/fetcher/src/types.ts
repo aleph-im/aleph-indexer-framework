@@ -1,5 +1,5 @@
 import { RawTransactionV1 } from '@aleph-indexer/core'
-import { FetcherMsI, PrivateFetcherMsI } from '../interface'
+import { FetcherMsI, PrivateFetcherMsI } from '../interface.js'
 
 export type SignatureFetcherState = {
   fetcher: string

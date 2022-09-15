@@ -1,5 +1,5 @@
 import { MAX_TIMER_INTEGER } from '../../constants.js'
-import { concurrentPromises, JobRunner, Mutex } from '../../utils'
+import { concurrentPromises, JobRunner, Mutex } from '../../utils/index.js'
 import { StorageItem } from '../../storage/v2/types.js'
 import { PendingWork } from './types.js'
 import {

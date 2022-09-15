@@ -1,1 +1,1 @@
-export * from './src/graphql'
+export * from './src/graphql/index.js'

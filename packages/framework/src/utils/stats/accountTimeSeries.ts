@@ -1,5 +1,5 @@
 import { Utils } from '@aleph-indexer/core'
-import { IndexerMsI } from '../../services/indexer'
+import { IndexerMsI } from '../../services/indexer/index.js'
 import {
   DateRange,
   getDateRangeFromInterval,

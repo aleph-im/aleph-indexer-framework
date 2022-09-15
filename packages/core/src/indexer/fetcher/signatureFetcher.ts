@@ -2,7 +2,7 @@ import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { Duration } from 'luxon'
 import { FetchSignaturesOptions, SolanaRPC } from '../../solana.js'
 import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
-import { JobRunnerReturnCode } from '../../utils/concurrence'
+import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
 import { Fetcher } from './baseFetcher.js'
 import {
   FetcherStateAddressesKeys,

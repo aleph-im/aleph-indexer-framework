@@ -12,7 +12,7 @@ import {
   ComposeRateLimit,
   RateLimitClient,
   SparseRateLimit,
-} from '../../utils/ratelimit'
+} from '../../utils/ratelimit/index.js'
 import { Base64 } from 'js-base64'
 import fetch from 'cross-fetch'
 

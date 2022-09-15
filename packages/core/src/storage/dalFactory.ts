@@ -1,4 +1,4 @@
-import { LevelStorage, LevelStorageConstructorI, LevelStorageI } from './common'
+import { LevelStorage, LevelStorageConstructorI, LevelStorageI } from './common.js'
 
 export abstract class DALFactory<DAL extends string | number | symbol> {
   protected dalCache: Record<string, LevelStorage<unknown, unknown>> = {}

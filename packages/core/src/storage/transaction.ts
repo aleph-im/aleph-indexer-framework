@@ -11,7 +11,7 @@ import {
   ReadableStorageStreamItem,
   StorageAdapter,
 } from './index.js'
-import { StreamMap } from '../utils'
+import { StreamMap } from '../utils/index.js'
 
 export type AlephStoredParsedTransaction = AlephParsedTransactionWithAccounts
 

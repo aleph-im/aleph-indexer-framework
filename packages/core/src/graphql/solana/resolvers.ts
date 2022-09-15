@@ -1,7 +1,7 @@
 import { TokenInfo } from '@solana/spl-token-registry'
 import { PublicKey } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID_PK } from '../../constants.js'
-import * as Token from '../../token'
+import * as Token from '../../token/index.js'
 import {
   AlephParsedTransaction,
   AlephParsedTransactionWithAccounts,

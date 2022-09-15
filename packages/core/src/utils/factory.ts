@@ -1,4 +1,4 @@
-import { Mutex } from './concurrence'
+import { Mutex } from './concurrence/index.js'
 
 export interface FactoryConstructor<T> {
   new (...args: any[]): T

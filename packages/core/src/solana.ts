@@ -9,7 +9,7 @@ import {
   SolanaJSONRPCError,
 } from '@solana/web3.js'
 import { Parsers } from './parsers/common.js'
-import { concurrentPromises } from './utils'
+import { concurrentPromises } from './utils/index.js'
 import { Connection } from './lib/solana/web3.js'
 import {
   AlephParsedTransaction,

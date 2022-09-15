@@ -6,7 +6,7 @@ import {
 } from '../types.js'
 import { TOKEN_PROGRAM_ID } from '../constants.js'
 import BN from 'bn.js'
-import { InstructionContext, InstructionContextV1 } from '../indexer'
+import { InstructionContext, InstructionContextV1 } from '../indexer/index.js'
 
 export function isTokenInstruction(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,

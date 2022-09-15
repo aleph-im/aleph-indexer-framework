@@ -10,7 +10,7 @@ export * from './fetcherPool.js'
 export * from './pendingWork.js'
 export * from './event.js'
 
-export * as V2Storage from './v2'
+export * as V2Storage from './v2/index.js'
 export * from './v2/entityIndexStorage.js'
 export * from './v2/entityStorage.js'
 export * from './v2/types.js'

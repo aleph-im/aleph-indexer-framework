@@ -1,6 +1,6 @@
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { ErrorFetching } from '../../solana.js'
-import { SolanaTransactionLevelStorage } from '../../storage'
+import { SolanaTransactionLevelStorage } from '../../storage/index.js'
 import {
   AlephParsedInnerInstruction,
   AlephParsedInstruction,
@@ -9,7 +9,7 @@ import {
   ParsedInstructionV1,
   ParsedTransactionV1,
 } from '../../types.js'
-import { JobRunnerOptions } from '../../utils'
+import { JobRunnerOptions } from '../../utils/index.js'
 
 export type FetcherJobRunnerOptions = Omit<
   JobRunnerOptions,

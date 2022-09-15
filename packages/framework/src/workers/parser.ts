@@ -2,7 +2,7 @@
  * Bootstrapping file for the parser worker.
  */
 import { workerData } from 'worker_threads'
-import { ParserMs, ParserMsMain } from '../services/parser'
+import { ParserMs, ParserMsMain } from '../services/parser/index.js'
 import { solana, solanaMainPublic } from '../solanaRpc.js'
 import { getMoleculerBroker } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'

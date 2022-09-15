@@ -1,6 +1,6 @@
 import { config } from './config.js'
 import { SolanaRPC, SolanaRPCRoundRobin } from './solana.js'
-import { PARSERS } from './parsers'
+import { PARSERS } from './parsers/index.js'
 
 export const solanaPrivateRPCRoundRobin = new SolanaRPCRoundRobin(
   (config.SOLANA_RPC || '').split(','),

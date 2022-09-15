@@ -1,4 +1,4 @@
-import { SolanaTransactionLevelStorage, Storage } from '../storage'
+import { SolanaTransactionLevelStorage, Storage } from '../storage/index.js'
 import { IndexerRunOptions } from './common.js'
 
 export interface IndexerOptions extends IndexerRunOptions {

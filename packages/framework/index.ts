@@ -14,7 +14,7 @@ import {
 import { IndexerMsClient } from './src/services/indexer/client.js'
 import { IndexerMainDomainContext } from './src/services/indexer/src/types.js'
 import { FetcherMsClient } from './src/services/fetcher/client.js'
-import { FetcherMainDomain } from './src/utils'
+import { FetcherMainDomain } from './src/utils/index.js'
 import { FetcherMainDomainContext } from './src/services/fetcher/src/types.js'
 import { FetcherAPISchema } from './src/utils/api/fetcher/schema.js'
 
@@ -27,7 +27,7 @@ export * from './src/services/parser/interface.js'
 export * from './src/services/indexer/interface.js'
 
 export * from './src/services/indexer/client.js'
-export * from './src/utils'
+export * from './src/utils/index.js'
 
 /**
  * Configs to initialize the framework.
