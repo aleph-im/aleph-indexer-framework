@@ -184,7 +184,7 @@ export class SDK {
                   ? config.indexer?.tcpUrls
                   : null,
               tcpPort:
-                config.transport === TransportType.P2PNet
+                config.transport !== TransportType.Thread
                   ? Number(config.indexer?.tcpPort || 7900) + i
                   : null,
             } as WorkerInfo),
@@ -206,7 +206,7 @@ export class SDK {
                   ? config.parser?.tcpUrls
                   : null,
               tcpPort:
-                config.transport === TransportType.P2PNet
+                config.transport !== TransportType.Thread
                   ? Number(config.parser?.tcpPort || 7800) + i
                   : null,
             } as WorkerInfo),
@@ -228,7 +228,7 @@ export class SDK {
                   ? config.fetcher?.tcpUrls
                   : null,
               tcpPort:
-                config.transport === TransportType.P2PNet
+                config.transport !== TransportType.Thread
                   ? Number(config.fetcher?.tcpPort || 7700) + i
                   : null,
             } as WorkerInfo),
