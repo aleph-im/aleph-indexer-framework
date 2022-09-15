@@ -64,6 +64,10 @@ export type WorkerInfo = {
    * @todo: what is this?
    */
   tcpPort?: number
+  /**
+   * @todo: what is this?
+   */
+  tcpUrls?: string[]
 }
 
 /**

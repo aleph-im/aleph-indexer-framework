@@ -58,6 +58,10 @@ export type IndexerConfig = {
      */
     tcpPort?: number | number[]
     /**
+     * @todo
+     */
+    tcpUrls?: string | string[]
+    /**
      * Singleton instance of the main API service.
      */
     main: {
@@ -108,6 +112,10 @@ export type IndexerConfig = {
      * The port which the service will be exposed on.
      */
     tcpPort?: number | number[]
+    /**
+     * @todo
+     */
+    tcpUrls?: string | string[]
   }
   /**
    * Parser service configuration.
@@ -133,6 +141,10 @@ export type IndexerConfig = {
      * The port which the service will be exposed on.
      */
     tcpPort?: number | number[]
+    /**
+     * @todo
+     */
+    tcpUrls?: string | string[]
   }
 }
 
@@ -167,6 +179,10 @@ export class SDK {
               name: `${projectId}-${WorkerKind.Indexer}-${i}`,
               domainPath: config.indexer?.worker.domainPath,
               dataPath: config.indexer?.dataPath || args.dataPath,
+              tcpUrls:
+                config.transport !== TransportType.Thread
+                  ? config.indexer?.tcpUrls
+                  : null,
               tcpPort:
                 config.transport === TransportType.P2PNet
                   ? Number(config.indexer?.tcpPort || 7900) + i
@@ -185,6 +201,10 @@ export class SDK {
                 i + (config.parser?.instanceOffset || 0)
               }`,
               dataPath: config.parser?.dataPath || args.dataPath,
+              tcpUrls:
+                config.transport !== TransportType.Thread
+                  ? config.parser?.tcpUrls
+                  : null,
               tcpPort:
                 config.transport === TransportType.P2PNet
                   ? Number(config.parser?.tcpPort || 7800) + i
@@ -203,6 +223,10 @@ export class SDK {
                 i + (config.fetcher?.instanceOffset || 0)
               }`,
               dataPath: config.fetcher?.dataPath || args.dataPath,
+              tcpUrls:
+                config.transport !== TransportType.Thread
+                  ? config.fetcher?.tcpUrls
+                  : null,
               tcpPort:
                 config.transport === TransportType.P2PNet
                   ? Number(config.fetcher?.tcpPort || 7700) + i
