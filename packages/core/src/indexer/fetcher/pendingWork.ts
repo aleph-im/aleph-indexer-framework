@@ -48,12 +48,7 @@ export class PendingWorkPool<T> {
   }
 
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
-    work = Array.isArray(work) ? work : [work]
-
-    console.log(work.map((w) => `SAVE-PRE work => ${w.id}`).join('\n'))
     await this.options.dal.save(work)
-    console.log(work.map((w) => `SAVE-POST work => ${w.id}`).join('\n'))
-
     this.skipNextSleep()
   }
 
@@ -129,11 +124,7 @@ export class PendingWorkPool<T> {
             `Handling ${works.length} works from ${this.options.id} pending work queue`,
           )
 
-          console.log(works.map((w) => `HANDLE-PRE work => ${w.id}`).join('\n'))
           const sleepTime = await this.handleWork(works)
-          console.log(
-            works.map((w) => `HANDLE-POST work => ${w.id}`).join('\n'),
-          )
 
           if (sleepTime) {
             minSleepTimeRef.value = Math.min(minSleepTimeRef.value, sleepTime)
@@ -194,13 +185,7 @@ export class PendingWorkPool<T> {
       }),
     )
 
-    console.log(
-      worksToDelete.map((w) => `REMOVE-PRE work => ${w.id}`).join('\n'),
-    )
     await this.options.dal.remove(worksToDelete)
-    console.log(
-      worksToDelete.map((w) => `REMOVE-POST work => ${w.id}`).join('\n'),
-    )
 
     return pendingWorks
   }
