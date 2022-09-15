@@ -1,2 +1,2 @@
-export * from './indexer'
-export * from './fetcher'
+export * from './indexer/index.js'
+export * from './fetcher/index.js'

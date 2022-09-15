@@ -5,7 +5,7 @@ import zlib from 'node:zlib'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 
-import { Mutex } from '../../utils'
+import { Mutex } from '../../utils/index.js'
 import { StorageGetOptions } from './baseStorage.js'
 import {
   EntityIndexStorage,

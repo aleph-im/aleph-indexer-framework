@@ -1,7 +1,7 @@
 /* eslint-disable no-constant-condition */
 import { TokenInfo } from '@solana/spl-token-registry'
 import { DateTime } from 'luxon'
-import { Mutex, sleep } from './utils'
+import { Mutex, sleep } from './utils/index.js'
 
 export type PoolInfo = {
   name: string
