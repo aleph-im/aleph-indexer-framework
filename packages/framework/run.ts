@@ -7,6 +7,7 @@ async function main() {
   const instances = Number(process.env['INDEXER_FRAMEWORK_INSTANCES'] || 1)
   const apiPort = Number(process.env['INDEXER_FRAMEWORK_API_PORT'] || 8080)
   const tcpPort = Number(process.env['INDEXER_FRAMEWORK_TCP_PORT']) || undefined
+  const tcpUrls = process.env['INDEXER_FRAMEWORK_TCP_URLS'] || undefined
   const projectId = process.env['INDEXER_FRAMEWORK_NAMESPACE'] || 'global'
   const instanceOffset = Number(
     process.env['INDEXER_FRAMEWORK_INSTANCE_OFFSET'] || 0,
@@ -39,6 +40,7 @@ async function main() {
             instanceOffset,
             dataPath,
             tcpPort,
+            tcpUrls,
             api: true,
           },
         }
@@ -57,6 +59,7 @@ async function main() {
             instanceOffset,
             dataPath,
             tcpPort,
+            tcpUrls,
             api: true,
           },
         }

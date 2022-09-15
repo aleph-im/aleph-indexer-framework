@@ -19,7 +19,7 @@ import { WorkerInfo } from '../utils/workers.js'
 initThreadContext()
 
 async function main() {
-  const { name, projectId, transport, channels, tcpPort, domainPath } =
+  const { name, projectId, transport, channels, tcpPort, tcpUrls, domainPath } =
     workerData as Required<WorkerInfo>
 
   const dataPath = path.join(workerData.dataPath, name)
@@ -30,7 +30,11 @@ async function main() {
 
   const broker =
     transport !== TransportType.Thread
-      ? getMoleculerBroker(name, transport, { channels, port: tcpPort })
+      ? getMoleculerBroker(name, transport, {
+          channels,
+          port: tcpPort,
+          urls: tcpUrls,
+        })
       : localBroker
 
   const fetcherMsClient = new FetcherMsClient(broker)

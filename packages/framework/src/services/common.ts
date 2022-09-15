@@ -228,10 +228,6 @@ export class MsMainWithEvents {
     const groups = [opts?.group || getClientMsId(this.msId)]
     const options = { groups, meta: { partitionKey: opts?.partitionKey } }
 
-    console.log(
-      `==> event ${groups} | ${JSON.stringify(options)} | ${payload.eventId}`,
-    )
-
     return this.broker
       .emit(this._EVENT_CHANNEL, payload, options)
       .catch((e) => 'ignore' && console.error(e))

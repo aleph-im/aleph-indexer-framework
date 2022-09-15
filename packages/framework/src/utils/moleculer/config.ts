@@ -63,10 +63,13 @@ export function getMoleculerBroker(
       return getThreadMoleculerBroker(nodeID, opts)
     }
     case TransportType.LocalNet: {
+      const udpDiscovery = opts.urls ? false : true
+      const urls = opts?.urls
+
       return getTCPMoleculerBroker(nodeID, {
         ...opts,
-        urls: null,
-        udpDiscovery: true,
+        urls,
+        udpDiscovery,
       })
     }
     case TransportType.P2PNet: {
