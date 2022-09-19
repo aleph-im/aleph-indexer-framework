@@ -30,6 +30,11 @@ export abstract class AsyncModuleFactory {
       try {
         mod = await this.importModule(moduleId)
       } catch (e) {
+        console.log(
+          `${this.name} factory: Failed importing ${moduleId} module, trying ${this.baseModuleId} as fallback`,
+          e,
+        )
+
         if (this.baseModuleId) {
           mod = await this.importModule(this.baseModuleId)
         }
