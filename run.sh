@@ -1,8 +1,7 @@
 #!/bin/bash
 
 WORKDIR=$PWD
-INDEXER=$1
-
+INDEXER=${1:-framework}
 cd $WORKDIR && \
 
 echo "NODE_ENV=production node packages/core/dist/config.js setup"
