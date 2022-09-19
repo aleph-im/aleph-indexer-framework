@@ -25,6 +25,7 @@
     "bootstrap": "lerna bootstrap --force-local",
     "version": "lerna version",
     "publish": "lerna publish from-git",
+    "publish:ci": "git fetch --tags && npm run publish",
     "link": "lerna link --force-local && node ./scripts/links.js",
     "clean:dist": "find ./packages -maxdepth 2 -type d -name 'dist' -exec rm -rf '{}' +",
     "clean:package-lock": "find . -maxdepth 3 -type f -name package-lock.json -exec rm -rf '{}' +",
