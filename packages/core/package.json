@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -15,9 +15,9 @@
     "luxon": "^2.0.2"
   },
   "devDependencies": {
+    "@types/bs58": "^4.0.1",
     "@types/compression": "^1.7.2",
-    "@types/level": "^6.0.0",
-    "@types/bs58": "^4.0.1"
+    "@types/level": "^6.0.0"
   },
   "typedoc": {
     "entryPoint": "./src/index.ts",
