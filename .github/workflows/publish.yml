@@ -22,6 +22,7 @@ jobs:
           # Defaults to the user or organization that owns the workflow file
           scope: '@aleph-indexer'
       - run: npm ci
-      - run: npm run publish
+      - run: git fetch --tags
+      - run: npm run publish -- --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
