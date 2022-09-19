@@ -1,5 +1,5 @@
-import * as Types from '../types'
-import { OrderMarketPair, TradeMarketPair } from '../types'
+import * as Types from '../types.js'
+import { OrderMarketPair, TradeMarketPair } from '../types.js'
 
 export interface GraphQLApiResolvers {
   getEvents(): Types.Event[]

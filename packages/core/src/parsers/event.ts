@@ -1,5 +1,5 @@
 import { InstructionContext } from '../indexer/index.js'
-import { EventBase, AlephParsedEvent } from '../types'
+import { EventBase, AlephParsedEvent } from '../types.js'
 
 export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
   constructor(
