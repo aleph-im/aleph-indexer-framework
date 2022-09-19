@@ -1,5 +1,5 @@
 {
-  "name": "@aleph/solana-indexing-framework",
+  "name": "@aleph-indexer/lerna",
   "repository": {
     "type": "git",
     "url": "https://github.com/aleph-im/solana-indexer-framework.git"
@@ -23,7 +23,7 @@
     "build:all": "npm i && npm run docs",
     "watch:ts": "lerna exec --parallel -- tsc -w -p ./tsconfig.json",
     "bootstrap": "lerna bootstrap --force-local",
-    "prepublish": "lerna version",
+    "version": "lerna version",
     "publish": "lerna publish",
     "link": "lerna link --force-local && node ./scripts/links.js",
     "clean:dist": "find ./packages -maxdepth 2 -type d -name 'dist' -exec rm -rf '{}' +",

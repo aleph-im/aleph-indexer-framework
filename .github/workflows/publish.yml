@@ -1,7 +1,11 @@
-name: Publish package to GitHub Packages
+name: Publish Package to npmjs
 on:
   release:
     types: [created]
+  push:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest 
@@ -14,9 +18,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://registry.npmjs.org'
           # Defaults to the user or organization that owns the workflow file
-          scope: '@aleph'
+          scope: '@aleph-indexer'
       - run: npm ci
       - run: npm run publish
         env:
