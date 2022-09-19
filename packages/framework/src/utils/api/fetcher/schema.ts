@@ -5,7 +5,7 @@ import {
   GraphQLSchema,
   GraphQLString,
 } from 'graphql'
-import { FetcherMainDomain } from '../../domain'
+import { FetcherMainDomain } from '../../domain/index.js'
 import * as Types from './types.js'
 
 /**

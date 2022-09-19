@@ -1,6 +1,6 @@
 import { Utils } from '../../index.js'
 import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
-import { JobRunnerReturnCode } from '../../utils/concurrence'
+import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
 import { FetcherJobRunnerOptions, FetcherStateV1 } from './types.js'
 
 export interface FetcherOptions {

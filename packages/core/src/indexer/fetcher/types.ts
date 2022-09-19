@@ -9,7 +9,7 @@ import {
   ParsedInstructionV1,
   ParsedTransactionV1,
 } from '../../types.js'
-import { JobRunnerOptions } from '../../utils'
+import { JobRunnerOptions } from '../../utils/index.js'
 
 export type FetcherJobRunnerOptions = Omit<
   JobRunnerOptions,

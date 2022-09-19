@@ -18,7 +18,7 @@ import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
-} from '../../stats'
+} from '../../stats/index.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 

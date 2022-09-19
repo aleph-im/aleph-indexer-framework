@@ -1,8 +1,8 @@
 import { StorageValueStream } from '@aleph-indexer/core'
-import { TransportType } from '../../../utils'
-import { IndexerMsI, PrivateIndexerMsI } from '../interface'
-import { TransactionRequestType } from './dal/transactionRequest'
-import { TransactionParsedResponse } from './dal/transactionRequestResponse'
+import { TransportType } from '../../../utils/index.js'
+import { IndexerMsI, PrivateIndexerMsI } from '../interface.js'
+import { TransactionRequestType } from './dal/transactionRequest.js'
+import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
 
 export {
   InstructionContextV1,

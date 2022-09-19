@@ -22,7 +22,7 @@ import {
   StoreBackupEncoder,
   StoreBackupRestore,
 } from './utils.js'
-import { Mutex } from '../../utils'
+import { Mutex } from '../../utils/index.js'
 
 export interface EntityIndexStorageOptions<Entity> {
   name: string

@@ -9,7 +9,7 @@ import {
   GraphQLSchemaConfig,
   GraphQLString,
 } from 'graphql'
-import { IndexerMainDomain } from '../../domain'
+import { IndexerMainDomain } from '../../domain/index.js'
 import * as Types from './types.js'
 
 export type APISchemaConfig = GraphQLSchemaConfig & {
