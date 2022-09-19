@@ -12,4 +12,5 @@ test.js
 logs.log
 
 # "Lockfiles for apps, but not for packages." https://twitter.com/sindresorhus/status/878240818363981827
-/packages/**/package-lock.json
+# Doesn't work with "lerna version"
+# /packages/**/package-lock.json/packages/**/package-lock.json
