@@ -14,15 +14,16 @@ const zone = { zone: 'utc' }
  * @param end - DateTime object or string in ISO format or timestamp in milliseconds
  * @param intervalUnit - The time units of each interval
  * @param intervalSize - The number of time units of each interval
+ * @param preserveExactBounds Whether to adjust the first and last interval to exactly fit the start and end date
  * @todo: Think about using luxon Interval.splitBy
  */
-export function splitDurationIntoIntervals(
+export function* splitDurationIntoIntervals(
   start: DateTime | string | number,
   end: DateTime | string | number,
   intervalUnit: DateTimeUnit,
   intervalSize: number,
   preserveExactBounds = false,
-): Interval[] {
+): Generator<Interval> {
   const startDate =
     typeof start === 'object'
       ? start
@@ -41,17 +42,35 @@ export function splitDurationIntoIntervals(
     return []
   }
 
-  const length = Math.ceil(
+  let length = Math.ceil(
     endDate
       .diff(startDate, intervalUnit as DurationUnit)
       .get(intervalUnit as DurationUnit) / intervalSize,
   )
 
+  let i = 0
+  let offset = 0
+
+  // Override leftmost bound with "startDate" and rightmost bound with "endDate"
+  // [(startDate, A), (A, B), (B, C), (C, endDate)]
+  if (preserveExactBounds) {
+    yield Interval.fromDateTimes(
+      startDate
+        .toUTC(),
+      startDate
+        .plus({ [intervalUnit]: intervalSize })
+        .startOf(intervalUnit)
+        .toUTC(),
+    )
+    i += 1
+    length -= 2
+  }
+
   // Divide range (A, D) in chunks of intervalSize * intervalUnit time intervals
   // [(A, B), (B, C), (C, D)]
-  const intervals: Interval[] = Array.from({ length }).map((x, i) => {
-    const offset = i * intervalSize
-    return Interval.fromDateTimes(
+  for(i; i < length; i++) {
+    offset = i * intervalSize
+    yield Interval.fromDateTimes(
       startDate
         .plus({ [intervalUnit]: offset })
         .startOf(intervalUnit)
@@ -61,23 +80,18 @@ export function splitDurationIntoIntervals(
         .startOf(intervalUnit)
         .toUTC(),
     )
-  })
-
-  // Override leftmost bound with "startDate" and rightmost bound with "endDate"
-  // [(startDate, A), (A, B), (B, C), (C, endDate)]
-  if (preserveExactBounds) {
-    intervals[0] = intervals[0].set({ start: startDate })
-    intervals[intervals.length - 1] = intervals[intervals.length - 1].set({
-      end: endDate,
-    })
   }
 
-  // console.log(
-  //   '📅 Intervals',
-  //   intervals.map((interval) => interval.toISO()).join(', '),
-  // )
-
-  return intervals
+  if (preserveExactBounds) {
+    yield Interval.fromDateTimes(
+      startDate
+        .plus({ [intervalUnit]: offset })
+        .startOf(intervalUnit)
+        .toUTC(),
+      endDate
+        .toUTC()
+    )
+  }
 }
 
 export function sleep(ms = 1000): Promise<void> {

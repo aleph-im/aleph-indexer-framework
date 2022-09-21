@@ -1,11 +1,13 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { TimeFrame } from '../../time.js'
 
 export type StatsTimeSeries<T> = {
   account: string
   type: string
-  timeFrame: TimeFrame
+  // @note: time frame in millis
+  timeFrame: number
+  // @note: start date in millis
   startDate: number
+  // @note: end date in millis
   endDate: number
   data: T
 }
