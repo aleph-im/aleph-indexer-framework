@@ -1,22 +1,45 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { TimeFrame } from '../../time.js'
 
-export enum StatsStateState {
+export enum StatsStateStatus {
   Processing = 0,
   Processed = 1,
 }
 
+/**
+ * Storage record for the processing state of a stats entry.
+ */
 export type StatsState = {
+  /**
+   * Account address to which the stats belong.
+   */
   account: string
+  /**
+   * User defined type of the stats.
+   */
   type: string
-  timeFrame: TimeFrame
+  /**
+   * Duration in millis.
+   */
+  timeFrame: number
+  /**
+   * Start date in millis.
+   */
   startDate: number
+  /**
+   * End date in millis.
+   */
   endDate: number
-  state: StatsStateState
+  /**
+   * Processing state. 0 = processing, 1 = processed.
+   */
+  state: StatsStateStatus
 }
 
 export type StatsStateStorage = EntityStorage<StatsState>
 
+/**
+ * Enum for the different indexes of the stats state storage.
+ */
 export enum StatsStateDALIndex {
   AccountTypeState = 'account_type_state',
 }
@@ -43,7 +66,7 @@ const startDateKey = {
 }
 
 const stateKey = {
-  get: (e: StatsState) => e.state || StatsStateState.Processing,
+  get: (e: StatsState) => e.state || StatsStateStatus.Processing,
   length: 1,
 }
 
