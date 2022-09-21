@@ -11,13 +11,12 @@ import { WorkerInfo } from '../utils/workers.js'
 initThreadContext()
 
 async function main() {
-  const { name, transport, channels, tcpPort, tcpUrls } =
+  const { name, transport, transportConfig, channels } =
     workerData as WorkerInfo
 
   const broker = getMoleculerBroker(name, transport, {
     channels,
-    port: tcpPort,
-    urls: tcpUrls,
+    transportConfig,
   })
 
   ParserMs.mainFactory = () =>

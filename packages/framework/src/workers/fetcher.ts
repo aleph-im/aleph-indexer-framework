@@ -24,7 +24,7 @@ import { MsIds } from '../services/common.js'
 initThreadContext()
 
 async function main() {
-  const { name, transport, channels, tcpPort, tcpUrls } =
+  const { name, transport, transportConfig, channels } =
     workerData as WorkerInfo
 
   const basePath = path.join(workerData.dataPath, name)
@@ -49,8 +49,7 @@ async function main() {
     transport !== TransportType.Thread
       ? getMoleculerBroker(name, transport, {
           channels,
-          port: tcpPort,
-          urls: tcpUrls,
+          transportConfig,
         })
       : localBroker
 
