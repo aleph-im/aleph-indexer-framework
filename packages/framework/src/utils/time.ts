@@ -57,17 +57,21 @@ export async function* clipIntervals(
 ): AsyncGenerator<Interval> {
   if (clipRange instanceof Interval) {
     for await (const interval of intervals) {
-      const clippedRange = interval.difference(clipRange)
-      if (clippedRange) {
-        for (const range of clippedRange) {
-          yield range
+      const intersection = interval.intersection(clipRange)
+      if (intersection) {
+        const clippedRange = interval.difference(intersection)
+        if (clippedRange.length > 0) {
+          for (const range of clippedRange) {
+            yield range
+          }
         }
       }
     }
   } else {
     for await (const range of clipRange) {
-      yield* clipIntervals(intervals, range)
+      intervals = clipIntervals(intervals, range)
     }
+    yield* intervals as AsyncGenerator<Interval>
   }
 }
 
@@ -114,8 +118,11 @@ export async function mergeIntervals(
     }
 
     // @note: Merge adjacent ranges
-    if (prevRange.abutsStart(range)) {
-      const unionRange = (prevRange = prevRange.union(range))
+    if (prevRange.end.toMillis() >= range.start.toMillis() - 1) {
+      const unionRange = Interval.fromDateTimes(
+        prevRange.start,
+        range.end > prevRange.end ? range.end : prevRange.end,
+      )
 
       const equalToRange = range.equals(unionRange)
       const equalToPrevRange = prevRange.equals(unionRange)

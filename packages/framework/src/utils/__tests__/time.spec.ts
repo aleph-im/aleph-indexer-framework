@@ -4,11 +4,12 @@ jest.useFakeTimers()
 
 import {
   mergeIntervals,
-  clipIntervalsByAnyInterval,
+  clipIntervals,
+  generatorToArray,
 } from '../time.js'
 
 describe('Framework time utils', () => {
-  it('mergeDateRangesFromIterable should work', async () => {
+  it('mergeIntervals should work', async () => {
     const intervals = [
       Interval.fromDateTimes(
         DateTime.fromISO('2021-07-19T05:33:21.000Z'),
@@ -30,11 +31,11 @@ describe('Framework time utils', () => {
     expect(merged.oldRanges.length).toBe(3)
     expect(merged.mergedRanges.length).toBe(1)
 
-    expect(merged.mergedRanges[0].start).toBe(intervals[0].start)
-    expect(merged.mergedRanges[0].end).toBe(intervals[2].end)
+    expect(merged.mergedRanges[0].start).toEqual(intervals[0].start)
+    expect(merged.mergedRanges[0].end).toEqual(intervals[2].end)
   })
 
-  it('mergeDateRangesFromIterable should work 2', async () => {
+  it('mergeIntervals should work 2', async () => {
     const intervals = [
       Interval.fromDateTimes(
         DateTime.fromISO('2021-07-19T05:33:21.000Z'),
@@ -53,7 +54,7 @@ describe('Framework time utils', () => {
     expect(merged.mergedRanges.includes(intervals[1])).toBeTruthy()
   })
 
-  it('clipDateRangesFromIterable should work', async () => {
+  it('clipIntervals should work', async () => {
     const stateRange = Interval.fromDateTimes(
       DateTime.fromISO('2021-07-19T05:33:21.000Z'),
       DateTime.fromISO('2022-08-02T16:26:39.000Z')
@@ -70,7 +71,10 @@ describe('Framework time utils', () => {
       )
     ]
 
-    const clipped = await clipIntervalsByAnyInterval([stateRange], dateRanges)
+    const clipped = await generatorToArray(clipIntervals([stateRange], dateRanges))
+    for (const interval of clipped) {
+      console.log(interval.toISO())
+    }
 
     expect(clipped.length).toBe(0)
   })
