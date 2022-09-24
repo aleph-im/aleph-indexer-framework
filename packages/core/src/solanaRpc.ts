@@ -7,38 +7,21 @@ export const solanaPrivateRPCRoundRobin = new SolanaRPCRoundRobin(
   PARSERS,
 )
 
-const solanaGenesysgoRPC = new SolanaRPC({
-  RPC_ENDPOINT: 'https://aleph.genesysgo.net',
-  PARSERS,
-  rateLimit: false,
-})
-
-export const solanaPublicRPCRoundRobin = new SolanaRPCRoundRobin(
-  config.SOLANA_PUBLIC_RPC
-    ? config.SOLANA_PUBLIC_RPC.split(',')
-    : [
-        // @note: Let the main server just for owner discovery (until we have our own big table with historical tx access)
-        'https://api.mainnet-beta.solana.com',
-        // 'https://api.devnet.solana.com',
-        // 'https://solana-api.projectserum.com', (not working, random 502 Bad Gateway)
-        // solanaGenesysgoRPC,
-      ],
-  PARSERS,
-  false, // true,
-)
-
 export const solanaMainPublicRPCRoundRobin = new SolanaRPCRoundRobin(
   config.SOLANA_MAIN_PUBLIC_RPC
     ? config.SOLANA_MAIN_PUBLIC_RPC.split(',')
-    : [
-        // @note: Both pools has historical data
-        'https://api.mainnet-beta.solana.com',
-        // 'https://free.rpcpool.com', // same cluster than "api.mainnet-beta.solana.com" (rate limit)
-        // 'https://lon22.rpcpool.com', // same cluster than "api.mainnet-beta.solana.com" (rate limit)
-      ],
+    : ['https://api.mainnet-beta.solana.com'],
   PARSERS,
   true,
 )
+
+export const solanaPublicRPCRoundRobin = config.SOLANA_PUBLIC_RPC
+  ? new SolanaRPCRoundRobin(
+      config.SOLANA_PUBLIC_RPC.split(','),
+      PARSERS,
+      false, // true,
+    )
+  : solanaMainPublicRPCRoundRobin
 
 export const solanaPrivateRPC = solanaPrivateRPCRoundRobin.getProxy()
 export const solanaPublicRPC = solanaPublicRPCRoundRobin.getProxy()
