@@ -3,7 +3,7 @@ import {
   AlephParsedInstruction,
   AlephParsedTransaction,
   ParsedTransactionV1,
-} from '../parsers/transaction.js'
+} from '../types.js'
 import { isParsedIx } from './instruction.js'
 
 export function txIxsCheck(

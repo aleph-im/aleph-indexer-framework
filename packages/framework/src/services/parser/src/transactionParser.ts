@@ -22,9 +22,7 @@ export class TransactionParser extends StrictParser<
   /**
    * @param instructionParserAggregator Aggregates all available instruction parsers for use.
    */
-  constructor(
-    protected instructionParserAggregator: InstructionParserLibrary,
-  ) {
+  constructor(protected instructionParserAggregator: InstructionParserLibrary) {
     super()
   }
 
@@ -119,7 +117,9 @@ export class TransactionParser extends StrictParser<
    * @param parsedTx The parsed transaction to parse the instructions of.
    * @protected
    */
-  protected async parseInstructions(parsedTx: ParsedTransactionV1): Promise<void> {
+  protected async parseInstructions(
+    parsedTx: ParsedTransactionV1,
+  ): Promise<void> {
     const instructions = parsedTx.parsed.message.instructions
     const innerInstructions = parsedTx.meta?.innerInstructions || []
     const innerInstructionsMap = innerInstructions.reduce((acc, curr) => {

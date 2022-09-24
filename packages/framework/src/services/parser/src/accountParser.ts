@@ -1,12 +1,15 @@
-import { AlephParsedAccountInfo, RawAccountInfo } from '../types.js'
-import { Parser, Parsers } from './common.js'
+import {
+  AlephParsedAccountInfo,
+  RawAccountInfo,
+} from '@aleph-indexer/core/src/types.js'
+import { DefinedParser } from './parser.js'
 
-export class AccountParser<T> extends Parser<
+export class AccountParser<T> extends DefinedParser<
   RawAccountInfo,
   RawAccountInfo | AlephParsedAccountInfo
 > {
-  constructor(protected parsers: Parsers, protected accountDataLayouts: any) {
-    super(parsers)
+  constructor(protected accountDataLayouts: any) {
+    super()
   }
 
   parse(rawAccount: RawAccountInfo): RawAccountInfo | AlephParsedAccountInfo {

@@ -1,6 +1,5 @@
 export * from './baseFetcher.js'
 export * from './signatureFetcher.js'
-export * from './transactionFetcher.js'
 export * from './accountFetcher.js'
 export * from './fetcherPool.js'
 export * from './pendingWork.js'

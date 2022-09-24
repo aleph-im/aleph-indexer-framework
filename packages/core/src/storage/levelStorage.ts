@@ -1,7 +1,8 @@
 import level from 'level'
 import path from 'node:path'
 
-import { StreamFilter, StreamMap } from '../../utils/stream.js'
+import { StreamFilter, StreamMap } from '../utils/stream.js'
+import { ensurePath } from '../utils/common.js'
 import {
   StorageStream,
   StorageItem,
@@ -9,7 +10,6 @@ import {
   StorageValueStream,
 } from './types.js'
 import { BaseStorage, StorageGetOptions } from './baseStorage.js'
-import { ensurePath } from '../../utils/common.js'
 
 export type StorageFilterFn<V> = (
   this: LevelStorage<V>,

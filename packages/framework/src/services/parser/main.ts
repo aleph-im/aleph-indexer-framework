@@ -6,7 +6,6 @@ import {
   RawTransaction,
   RawInstruction,
   RawAccountInfo,
-  SolanaRPC,
 } from '@aleph-indexer/core'
 import { ParserMsI } from './interface.js'
 import { TransactionParser } from './src/transactionParser.js'
@@ -17,8 +16,6 @@ import { MsIds, MsMainWithEvents } from '../common.js'
 export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
   constructor(
     protected broker: ServiceBroker,
-    protected solanaRpc: SolanaRPC,
-    protected solanaMainPublicRpc: SolanaRPC,
     protected instructionParserLibrary: InstructionParserLibrary = new InstructionParserLibrary(),
     protected accountParserLibrary: AccountParserLibrary = new AccountParserLibrary(),
     protected transactionParser: TransactionParser = new TransactionParser(

@@ -3,19 +3,19 @@
  */
 import path from 'path'
 import { workerData } from 'worker_threads'
-import { FetcherStateLevelStorage } from '@aleph-indexer/core'
+import {
+  FetcherStateLevelStorage,
+  solanaPrivateRPC,
+  solanaMainPublicRPC,
+  solanaPrivateRPCRoundRobin,
+  solanaMainPublicRPCRoundRobin,
+} from '@aleph-indexer/core'
 import { FetcherMs, FetcherMsMain } from '../services/fetcher/index.js'
 import { createAccountInfoDAL } from '../services/fetcher/src/dal/accountInfo.js'
 import { createPendingTransactionDAL } from '../services/fetcher/src/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
 import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
 import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
-import {
-  solana,
-  solanaMainPublic,
-  solanaRPCRoundRobin,
-  solanaMainPublicRPCRoundRobin,
-} from '../solanaRpc.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -32,7 +32,7 @@ async function main() {
   // @note: Force resolve DNS and cache it before starting fetcher
   await Promise.allSettled(
     [
-      ...solanaRPCRoundRobin.getAllClients(),
+      ...solanaPrivateRPCRoundRobin.getAllClients(),
       ...solanaMainPublicRPCRoundRobin.getAllClients(),
     ].map(async (client) => {
       const conn = client.getConnection()
@@ -60,8 +60,8 @@ async function main() {
     createRawTransactionDAL(basePath),
     createAccountInfoDAL(basePath),
     createRequestsDAL(basePath),
-    solana,
-    solanaMainPublic,
+    solanaPrivateRPC,
+    solanaMainPublicRPC,
     new FetcherStateLevelStorage({ path: basePath }),
   )
 
