@@ -3,7 +3,6 @@
  */
 import { workerData } from 'worker_threads'
 import { ParserMs, ParserMsMain } from '../services/parser/index.js'
-import { solana, solanaMainPublic } from '../solanaRpc.js'
 import { getMoleculerBroker } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -11,17 +10,15 @@ import { WorkerInfo } from '../utils/workers.js'
 initThreadContext()
 
 async function main() {
-  const { name, transport, channels, tcpPort, tcpUrls } =
+  const { name, transport, transportConfig, channels } =
     workerData as WorkerInfo
 
   const broker = getMoleculerBroker(name, transport, {
     channels,
-    port: tcpPort,
-    urls: tcpUrls,
+    transportConfig,
   })
 
-  ParserMs.mainFactory = () =>
-    new ParserMsMain(broker, solana, solanaMainPublic)
+  ParserMs.mainFactory = () => new ParserMsMain(broker)
 
   broker.createService(ParserMs)
   await broker.start()

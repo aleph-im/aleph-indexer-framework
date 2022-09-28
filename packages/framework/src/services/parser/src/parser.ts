@@ -11,16 +11,16 @@
  * @template R The type of the raw data to parse.
  * @template P The type of the parsed data.
  */
-export abstract class FreeParser<
-  R extends any = any,
-  P extends any = any,
-> {
+export abstract class FreeParser<R = any, P = any> {
   /**
    * Parses the given data.
    * @param data Data to be parsed.
    * @param context Additional context, if needed.
    */
-  abstract parse(data: R | P, context?: any): R | P | undefined | Promise<R | P | undefined>
+  abstract parse(
+    data: R | P,
+    context?: any,
+  ): R | P | undefined | Promise<R | P | undefined>
 }
 
 /**

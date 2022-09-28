@@ -3,14 +3,14 @@ import { MAX_TIMER_INTEGER } from '../../constants.js'
 import { Fetcher } from './baseFetcher.js'
 import { PendingWork } from './types.js'
 import { PendingWorkOptions, PendingWorkPool } from './pendingWork.js'
-import { FetcherPoolDAL } from '../../storage/fetcherPool.js'
+import { PendingWorkDAL } from '../../storage/pendingWork.js'
 
 export interface FetcherPoolOptions<T>
   extends Omit<
     PendingWorkOptions<T>,
     'checkComplete' | 'handleWork' | 'chunkSize'
   > {
-  dal: FetcherPoolDAL<T>
+  dal: PendingWorkDAL<T>
   getFetcher: (work: PendingWork<T>) => Promise<Fetcher> | Fetcher
   checkComplete?: (
     work: PendingWork<T>,

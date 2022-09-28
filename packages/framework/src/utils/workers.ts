@@ -41,6 +41,19 @@ export type WorkerInfo = {
    */
   transport: TransportType
   /**
+   * The transport layer configuration.
+   */
+  transportConfig?: {
+    /**
+     * @todo
+     */
+    tcpUrls?: string | string[]
+    /**
+     * @todo
+     */
+    natsUrl?: string
+  }
+  /**
    * Path to the worker's data directory.
    */
   dataPath: string
@@ -60,14 +73,6 @@ export type WorkerInfo = {
    * @todo: what is this?
    */
   channels: WorkerChannels
-  /**
-   * @todo: what is this?
-   */
-  tcpPort?: number
-  /**
-   * @todo: what is this?
-   */
-  tcpUrls?: string[]
 }
 
 /**

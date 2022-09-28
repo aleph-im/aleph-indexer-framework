@@ -5,7 +5,6 @@ import zlib from 'node:zlib'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 
-import { StreamFilter, StreamMap } from '../../utils/stream.js'
 import { StorageGetOptions } from './baseStorage.js'
 import { LevelStorage, StorageFilterFn, StorageMapFn } from './levelStorage.js'
 import {
@@ -16,13 +15,14 @@ import {
   StorageValueStream,
   Stringifable,
 } from './types.js'
-import { ensurePath } from '../../utils/common.js'
+import { ensurePath } from '../utils/common.js'
 import {
   StoreBackupDecoder,
   StoreBackupEncoder,
   StoreBackupRestore,
 } from './utils.js'
-import { Mutex } from '../../utils/index.js'
+import { StreamFilter, StreamMap } from '../utils/stream.js'
+import { Mutex } from '../utils/index.js'
 
 export interface EntityIndexStorageOptions<Entity> {
   name: string

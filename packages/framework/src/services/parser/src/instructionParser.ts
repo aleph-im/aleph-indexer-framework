@@ -4,23 +4,24 @@ import {
   AlephParsedInstruction,
   AlephParsedParsedInstruction,
   RawInstruction,
-} from '../types.js'
-import { Parser, Parsers } from './common.js'
+} from '@aleph-indexer/core'
+import { DefinedParser } from './parser.js'
 
 // @note: Based on solana-program-library (would need different implementation for Anchor-based programs).
-export class InstructionParser<EventTypeEnum extends string> extends Parser<
+export class InstructionParser<
+  EventTypeEnum extends string,
+> extends DefinedParser<
   RawInstruction,
   RawInstruction | AlephParsedInstruction
 > {
   constructor(
     public programId: string,
     public programName: string,
-    protected parsers: Parsers,
     protected getInstructionType: (data: Buffer) => EventTypeEnum | undefined,
     protected accountLayouts: Partial<Record<EventTypeEnum, any>>,
     protected dataLayouts: Partial<Record<EventTypeEnum, any>>,
   ) {
-    super(parsers)
+    super()
   }
 
   parse(

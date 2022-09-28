@@ -2,6 +2,7 @@ import { BrokerOptions, ServiceBroker } from 'moleculer'
 import { WorkerThreadsTransporter } from './transporterThread.js'
 import { WorkerChannels } from '../workers.js'
 import { FrameworkTCPTransporter } from './transporterTcp.js'
+import { FrameworkNatsTransporter } from './transporterNats.js'
 
 /**
  * Describes the transport layer type which Moleculer will use.
@@ -17,10 +18,9 @@ export enum TransportType {
    */
   LocalNet = 'LocalNet',
   /**
-   * Will use the Aleph network to run the services as multiple processes on multiple machines, as needed.
-   * [Not implemented]
+   * Will use a nats server for allowing to run the services as multiple processes on multiple machines, as needed.
    */
-  P2PNet = 'P2PNet',
+  Nats = 'Nats',
 }
 
 // const UINT32_MAX = Math.floor((2 ** 32 - 1) / 1000)
@@ -56,30 +56,32 @@ export const defaultBrokerConfig: BrokerOptions = {
 export function getMoleculerBroker(
   nodeID: string,
   transportType: TransportType,
-  opts: any,
+  opts: {
+    channels: WorkerChannels
+    transportConfig?: {
+      tcpUrls?: string | string[]
+      natsUrl?: string
+    }
+  },
 ): ServiceBroker {
   switch (transportType) {
     case TransportType.Thread: {
       return getThreadMoleculerBroker(nodeID, opts)
     }
     case TransportType.LocalNet: {
-      const udpDiscovery = opts.urls ? false : true
-      const urls = opts?.urls
+      const urls = opts?.transportConfig?.tcpUrls || null
+      const udpDiscovery = urls ? false : true
 
       return getTCPMoleculerBroker(nodeID, {
-        ...opts,
         urls,
         udpDiscovery,
       })
     }
-    case TransportType.P2PNet: {
-      return getTCPMoleculerBroker(nodeID, {
-        ...opts,
-        udpDiscovery: false,
-        urls: [
-          'tcp://51.159.101.87:7700/aleph-fetcher-0',
-          'tcp://51.159.101.87:7800/aleph-parser-0',
-        ],
+    case TransportType.Nats: {
+      const url = opts?.transportConfig?.natsUrl as string
+
+      return getNatsMoleculerBroker(nodeID, {
+        url,
       })
     }
   }
@@ -98,11 +100,22 @@ export function getThreadMoleculerBroker(
 
 export function getTCPMoleculerBroker(
   nodeID: string,
-  opts: { port?: number; urls: string | string[] },
+  opts: { udpDiscovery: boolean; urls: string | string[] | null },
 ): ServiceBroker {
   return new ServiceBroker({
     ...defaultBrokerConfig,
     transporter: new FrameworkTCPTransporter(nodeID, opts),
+    nodeID,
+  })
+}
+
+export function getNatsMoleculerBroker(
+  nodeID: string,
+  opts: { url: string },
+): ServiceBroker {
+  return new ServiceBroker({
+    ...defaultBrokerConfig,
+    transporter: new FrameworkNatsTransporter(nodeID, opts),
     nodeID,
   })
 }

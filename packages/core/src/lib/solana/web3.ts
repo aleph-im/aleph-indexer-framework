@@ -43,6 +43,16 @@ export class Connection extends SolConnection {
         ? new https.Agent(options)
         : new http.Agent(options)
 
+    setInterval(() => {
+      console.log(`
+      agent [${endpoint}]: {
+        freeSockets: ${Object.keys(agent.freeSockets).length},
+        sockets: ${Object.keys(agent.sockets).length},
+        requests: ${Object.keys(agent.requests).length},
+      }
+    `)
+    }, 1000 * 2)
+
     cacheable.install(agent)
 
     // Solana RPC client is limiting the socket pool to 25

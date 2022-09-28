@@ -1,11 +1,7 @@
-import {
-  AccountParser,
-  AlephParsedAccountInfo,
-  Parser,
-  RawAccountInfo,
-} from '@aleph-indexer/core'
+import { AlephParsedAccountInfo, RawAccountInfo } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
-import { DefinedParser } from "./parser.js";
+import { DefinedParser } from './parser.js'
+import { AccountParser } from './accountParser.js'
 
 /**
  * Finds all available account parsers and aggregates them for use.
@@ -13,10 +9,10 @@ import { DefinedParser } from "./parser.js";
 export class AccountParserLibrary extends DefinedParser<
   RawAccountInfo,
   RawAccountInfo | AlephParsedAccountInfo
-  > {
+> {
   protected accountParsers: Record<
     string,
-    Parser<RawAccountInfo, RawAccountInfo | AlephParsedAccountInfo>
+    DefinedParser<RawAccountInfo, RawAccountInfo | AlephParsedAccountInfo>
   > = {}
 
   /**
@@ -43,7 +39,8 @@ export class AccountParserLibrary extends DefinedParser<
   protected async getParser(
     address: string,
   ): Promise<
-    Parser<RawAccountInfo, RawAccountInfo | AlephParsedAccountInfo> | undefined
+    | DefinedParser<RawAccountInfo, RawAccountInfo | AlephParsedAccountInfo>
+    | undefined
   > {
     let parser = this.accountParsers[address]
     if (parser) return parser
@@ -51,7 +48,7 @@ export class AccountParserLibrary extends DefinedParser<
     const implementation = await LayoutFactory.getSingleton(address)
     if (!implementation) return
 
-    parser = new AccountParser({}, implementation.accountDataLayoutMap)
+    parser = new AccountParser(implementation.accountDataLayoutMap)
     this.accountParsers[address] = parser
 
     return parser

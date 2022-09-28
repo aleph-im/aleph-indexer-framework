@@ -1,6 +1,5 @@
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { ErrorFetching } from '../../solana.js'
-import { SolanaTransactionLevelStorage } from '../../storage/index.js'
 import {
   AlephParsedInnerInstruction,
   AlephParsedInstruction,
@@ -93,20 +92,6 @@ export interface SignatureFetcherOptions {
   address: string
   forwardJobOptions?: SignatureFetcherForwardJobRunnerOptions
   backwardJobOptions?: SignatureFetcherBackwardJobRunnerOptions
-  // @todo: Implement tx save
-  storeTransactions?: SolanaTransactionLevelStorage
-  cacheTransactions?: SolanaTransactionLevelStorage
-  errorFetching?: ErrorFetching
-}
-
-export interface TransactionFetcherOptions {
-  id: string
-  fetcherAddresses: string[]
-  forwardJobOptions?: TransactionFetcherForwardJobRunnerOptions
-  backwardJobOptions?: TransactionFetcherBackwardJobRunnerOptions
-  // @todo: Implement tx save
-  storeTransactions?: SolanaTransactionLevelStorage
-  cacheTransactions?: SolanaTransactionLevelStorage
   errorFetching?: ErrorFetching
 }
 

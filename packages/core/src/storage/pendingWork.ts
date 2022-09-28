@@ -1,6 +1,6 @@
 import { PendingWork } from '../indexer/fetcher/types.js'
-import { EntityStorage, EntityStorageOptions } from './v2/entityStorage.js'
-import { EntityUpdateOp, KeySchema } from './v2/types.js'
+import { EntityStorage, EntityStorageOptions } from './entityStorage.js'
+import { EntityUpdateOp, KeySchema } from './types.js'
 
 export type PendingWorkStorageOptions<T> = Pick<
   EntityStorageOptions<PendingWork<T>>,

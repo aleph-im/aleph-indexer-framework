@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/framework",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -25,7 +25,7 @@
     "@types/uuid": "^8.3.2"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.7",
+    "@aleph-indexer/core": "^1.0.9",
     "@aleph-indexer/layout": "^1.0.7",
     "@solana/web3.js": "^1.36.0",
     "buffer-layout": "^1.2.2",

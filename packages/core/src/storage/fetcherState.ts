@@ -2,7 +2,7 @@ import { FetcherStateV1 } from '../indexer/fetcher/types.js'
 import {
   EntityIndexStorage,
   EntityIndexStorageOptions,
-} from './v2/entityIndexStorage.js'
+} from './entityIndexStorage.js'
 
 export type FetcherStateLevelStorageOptions = Pick<
   EntityIndexStorageOptions<FetcherStateV1>,

@@ -2,7 +2,7 @@ version: '2'
 
 services:
   framework:
-    build: ../../..
+    build: ../..
     container_name: framework-fetcher-parser
     volumes:
       - ~/indexer.data:/app/data:rw

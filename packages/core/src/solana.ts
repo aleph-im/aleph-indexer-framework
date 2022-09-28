@@ -5,28 +5,23 @@ import {
   Supply,
   RpcResponseAndContext,
   SignaturesForAddressOptions,
-  Finality,
   SolanaJSONRPCError,
 } from '@solana/web3.js'
-import { Parsers } from './parsers/common.js'
-import { concurrentPromises } from './utils/index.js'
 import { Connection } from './lib/solana/web3.js'
 import {
   AlephParsedTransaction,
-  RawTransaction,
   RawTransactionV1,
-  TransactionParser,
   VoteAccountInfo,
-} from './parsers/transaction.js'
+} from './types.js'
 
 export interface PaginationKey {
   signature: string
   slot: number
   timestamp: number
 }
+
 export interface SolanaRPCOptions {
-  RPC_ENDPOINT: string
-  PARSERS: Parsers
+  url: string
   rateLimit?: boolean
 }
 
@@ -44,31 +39,6 @@ export type FetchSignaturesOptions = {
   untilSlot?: number
 }
 
-export type FetchDataOptions = {
-  address: string
-  before?: string
-  until?: string
-  maxLimit?: number
-  errorFetching?: ErrorFetching
-  signatureBlacklist?: Set<string>
-  txsPerRequest?: number
-  concurrentTxRequests?: number
-  txCache?: SolanaTxL1Cache
-  untilSlot?: number
-}
-
-export type HistoryChunkOptions = {
-  addressPubkey: PublicKey
-  errorFetching: ErrorFetching
-  txsPerRequest: number
-  concurrentTxRequests: number
-  limit?: number
-  before?: string
-  until?: string
-  signatureBlacklist?: Set<string>
-  txCache?: SolanaTxL1Cache
-}
-
 export type OptimizedHistoryOptions = {
   minSignatures: number
   addressPubkey: PublicKey
@@ -78,13 +48,6 @@ export type OptimizedHistoryOptions = {
   until?: string
   signatureBlacklist?: Set<string>
   untilSlot?: number
-}
-
-export type HistoryChunkResponse = {
-  chunk: AlephParsedTransaction[]
-  firstItem?: AlephParsedTransaction | ConfirmedSignatureInfo
-  lastItem?: AlephParsedTransaction | ConfirmedSignatureInfo
-  count: number
 }
 
 export type OptimizedHistoryResponse = {
@@ -101,14 +64,12 @@ export enum ErrorFetching {
 
 export class SolanaRPC {
   protected connection: Connection
-  protected parsers: Parsers = {}
   protected rateLimit = false
 
   constructor(options: SolanaRPCOptions) {
-    this.connection = new Connection(options.RPC_ENDPOINT, {
+    this.connection = new Connection(options.url, {
       rateLimit: options.rateLimit,
     })
-    this.parsers = options.PARSERS || this.parsers
     this.rateLimit = options.rateLimit || false
   }
 
@@ -306,284 +267,6 @@ export class SolanaRPC {
     }
   }
 
-  async *fetchData({
-    address,
-    before,
-    until,
-    untilSlot,
-    maxLimit = 1000,
-    errorFetching = ErrorFetching.SkipErrors,
-    signatureBlacklist,
-    txsPerRequest = 100,
-    concurrentTxRequests = 10,
-    txCache,
-  }: FetchDataOptions): AsyncGenerator<{
-    firstKey: undefined | PaginationKey
-    lastKey: undefined | PaginationKey
-    chunk: AlephParsedTransaction[]
-  }> {
-    for await (const { chunk, firstKey, lastKey } of this.fetchSignatures({
-      address,
-      before,
-      until,
-      untilSlot,
-      maxLimit,
-      errorFetching,
-      signatureBlacklist,
-    })) {
-      if (txCache) {
-        const txs = await Promise.all(
-          chunk.map(async ({ signature }) => txCache.getBySignature(signature)),
-        )
-
-        let countTxs = 0
-
-        for (const [i, tx] of txs.entries()) {
-          if (!tx) continue
-
-          chunk[i] = tx
-          countTxs++
-        }
-
-        console.log(
-          `${countTxs}/${txs.length} txs taken from fetcher tx cache!`,
-        )
-      }
-
-      const toBeFetched = chunk.filter((item) => !this.isTransaction(item))
-
-      if (toBeFetched.length > 0) {
-        const fetchedTxs = await this.fetchHistory(
-          toBeFetched,
-          txsPerRequest,
-          concurrentTxRequests,
-        )
-
-        for (const [i, item] of chunk.entries()) {
-          if (this.isTransaction(item)) continue
-          chunk[i] = fetchedTxs.shift() as AlephParsedTransaction
-        }
-      }
-
-      yield {
-        chunk: chunk as AlephParsedTransaction[],
-        firstKey,
-        lastKey,
-      }
-    }
-  }
-
-  async *mergeFetchData(options: FetchDataOptions[]): AsyncGenerator<{
-    firstKeys: Record<string, PaginationKey>
-    lastKeys: Record<string, PaginationKey>
-    chunk: AlephParsedTransaction[]
-  }> {
-    if (options.length < 2) throw new Error('Multiple options expected')
-
-    const firstKeys: Record<string, PaginationKey> = {}
-    const lastKeys: Record<string, PaginationKey> = {}
-
-    // @note: In some cases we need to dedup txs (when some tx has been indexed by multipe fetch addresses because it contains different ixs)
-    // For example if we use serum requestQueue address for fetching newOrderV3 ixs and vaultSigner address for fetching settleFunds ixs, there are
-    // some txs that cotains both kind of ixs so we can dedup signatures before fetching txs for improving performance
-    const signatureBlacklist = new Set<string>()
-
-    const iterators = options.map((option) =>
-      this.fetchData({ ...option, signatureBlacklist }),
-    )
-
-    const nextItems: {
-      chunk: AlephParsedTransaction[]
-      value: AlephParsedTransaction
-    }[] = []
-    let done = false
-
-    while (!done) {
-      const chunks = []
-
-      // @note: Do secuentially for deduping signatures from previous chunks using the blacklist
-      for (const it of iterators) {
-        const chunk = await it.next()
-        chunks.push(chunk)
-
-        for (const tx of chunk.value?.chunk || []) {
-          signatureBlacklist.add(tx.signature)
-        }
-      }
-
-      const result: AlephParsedTransaction[] = []
-      done = chunks.every((res) => res.done)
-
-      for (const [index, val] of chunks.entries()) {
-        const chunk: AlephParsedTransaction[] = val.value?.chunk || []
-
-        if (chunk.length > 0) {
-          const address = options[index].address
-
-          if (!lastKeys[address]) {
-            lastKeys[address] = val.value?.lastKey
-          }
-
-          firstKeys[address] = val.value?.firstKey
-        }
-
-        const value = chunk[0]
-        if (value === undefined) continue
-
-        nextItems.push({ chunk, value })
-      }
-
-      while (nextItems.length) {
-        // @note: Sort from newest to oldest
-        nextItems.sort((a, b) => b.value.slot - a.value.slot)
-
-        const first = nextItems[0]
-        const second = nextItems[1]
-
-        while (
-          first.value !== undefined &&
-          (second?.value === undefined || first.value.slot >= second.value.slot)
-        ) {
-          result.push(first.value)
-          first.chunk.shift()
-          first.value = first.chunk[0]
-        }
-
-        if (first.value === undefined) {
-          nextItems.splice(0, 1)
-        }
-      }
-
-      if (result.length) {
-        yield {
-          chunk: result,
-          firstKeys,
-          lastKeys,
-        }
-      }
-    }
-  }
-
-  /**
-   * multi target fetching
-   */
-  async *multiFetchData(
-    options: FetchDataOptions,
-    targets: string[],
-    context: any,
-  ): AsyncGenerator<AlephParsedTransaction[]> {
-    for await (const target of targets) {
-      context.target = target // update context
-      if (context.setOptions) await context.setOptions(options)
-      options.address = target
-      if (context.continue) continue
-
-      const iterator = this.fetchData(options)
-      for await (const { chunk: items } of iterator) {
-        yield items
-      }
-
-      context.setOptions = null
-      context.continue = false
-    }
-  }
-
-  async getTransaction(
-    signature: TransactionSignature,
-    signatureInfo?: ConfirmedSignatureInfo,
-  ): Promise<AlephParsedTransaction> {
-    const result = await this.getConfirmedTransaction(signature)
-    if (!result) throw new Error(`null transaction | ${signature}`)
-
-    // console.log('signatureInfo', signatureInfo)
-    // console.log('rawTx', JSON.stringify(result, null, 2))
-
-    if (!signatureInfo) {
-      const { blockTime, meta, slot } = result
-      const err = meta ? meta.err : null
-
-      signatureInfo = {
-        signature,
-        err,
-        slot,
-        blockTime,
-        memo: null, // @todo: Think how to retrieve it
-      }
-    }
-
-    const parsed = this.parseTransaction(signature, result, signatureInfo)
-
-    // console.log('parsed', JSON.stringify(parsed, null, 2))
-
-    return parsed
-  }
-
-  protected async getTransactionBulk(
-    signaturesInfo: ConfirmedSignatureInfo[],
-  ): Promise<AlephParsedTransaction[]> {
-    if (signaturesInfo.length === 0) return []
-
-    const signatures = signaturesInfo.map((info) => info.signature)
-    const txs = await this.getConfirmedTransactions(signatures)
-
-    return txs.map((tx, index) => {
-      if (!tx) throw new Error(`null transaction | ${signatures[index]}`)
-      const info = signaturesInfo[index]
-      return this.parseTransaction(info.signature, tx, info)
-    })
-  }
-
-  parseTransaction(
-    signature: TransactionSignature,
-    rpcTransaction: RawTransactionV1,
-    signatureInfo: ConfirmedSignatureInfo,
-  ): AlephParsedTransaction {
-    const rawTransaction: RawTransaction = {
-      ...rpcTransaction,
-      ...signatureInfo,
-      signature,
-    }
-
-    const transactionParser = this.parsers.transaction as TransactionParser
-    if (!transactionParser) throw new Error('Transaction parser not configured')
-
-    return transactionParser.parse(rawTransaction)
-  }
-
-  protected isTransaction(
-    txOrSignatureInfo: AlephParsedTransaction | ConfirmedSignatureInfo,
-  ): txOrSignatureInfo is AlephParsedTransaction {
-    return 'parsed' in txOrSignatureInfo
-  }
-
-  protected async fetchHistory(
-    chunk: ConfirmedSignatureInfo[],
-    txsPerRequest: number,
-    concurrentTxRequests: number,
-  ): Promise<AlephParsedTransaction[]> {
-    const chunkMap: Record<number, AlephParsedTransaction[]> = {}
-
-    // @note: Fetch N transactions per request
-    const generator = this.getTransactionsBulkGenerator(
-      chunk,
-      chunkMap,
-      txsPerRequest,
-    )
-
-    // @note: Do N concurrent requests at time
-    await concurrentPromises(generator, concurrentTxRequests)
-
-    // @note: We are sorting here the results as responses can be received unsorted
-    // Sort from newest (lessest index) to oldest (greatest index)
-    const chunkKeys = Object.keys(chunkMap) as unknown as number[]
-    chunkKeys.sort((a, b) => a - b)
-
-    return chunkKeys.reduce(
-      (acc, index) => acc.concat(chunkMap[index]),
-      [] as AlephParsedTransaction[],
-    )
-  }
-
   protected async getOptimizedHistory({
     minSignatures,
     addressPubkey,
@@ -668,37 +351,6 @@ export class SolanaRPC {
     }
   }
 
-  protected *getTransactionsGenerator(
-    history: ConfirmedSignatureInfo[],
-    chunkMap: Record<number, AlephParsedTransaction[]>,
-  ): Generator<Promise<unknown>> {
-    for (const [index, item] of history.entries()) {
-      yield (async () => {
-        const rawTx = await this.getTransaction(item.signature, item)
-        chunkMap[index] = [rawTx]
-      })()
-    }
-  }
-
-  protected *getTransactionsBulkGenerator(
-    history: ConfirmedSignatureInfo[],
-    chunkMap: Record<number, AlephParsedTransaction[]>,
-    chunkSize: number,
-  ): Generator<Promise<unknown>> {
-    for (let i = 0; i < history.length; i += chunkSize) {
-      const firstIndex = i
-      const lastIndex = i + Math.min(chunkSize, history.length - i)
-
-      const signatures = history.slice(firstIndex, lastIndex)
-
-      yield (async () => {
-        // console.log(`Fetching from ${firstIndex} to ${lastIndex - 1}`)
-        const rawTxs = await this.getTransactionBulk(signatures)
-        chunkMap[firstIndex] = rawTxs
-      })()
-    }
-  }
-
   protected filterSignature(
     item: ConfirmedSignatureInfo,
     errorFetching?: ErrorFetching,
@@ -724,19 +376,14 @@ export class SolanaRPCRoundRobin {
   protected i = 0
   protected rpcClients: SolanaRPC[] = []
 
-  constructor(
-    rpcs: (string | SolanaRPC)[],
-    parsers: Parsers,
-    rateLimit = false,
-  ) {
+  constructor(rpcs: (string | SolanaRPC)[], rateLimit = false) {
     const dedup = rpcs
       .filter((rpc) => !!rpc)
       .map((rpc) => {
         return rpc instanceof SolanaRPC
           ? rpc
           : new SolanaRPC({
-              RPC_ENDPOINT: rpc,
-              PARSERS: parsers,
+              url: rpc,
               rateLimit,
             })
       })

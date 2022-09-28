@@ -1,10 +1,7 @@
-import {
-  ParsedInstructionV1,
-  InstructionParser,
-  RawInstruction,
-} from '@aleph-indexer/core'
+import { ParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
-import { DefinedParser, StrictParser } from "./parser.js";
+import { DefinedParser } from './parser.js'
+import { InstructionParser } from './instructionParser.js'
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
@@ -14,10 +11,10 @@ import { DefinedParser, StrictParser } from "./parser.js";
 export class InstructionParserLibrary extends DefinedParser<
   RawInstruction,
   ParsedInstructionV1
-  > {
+> {
   protected instructionParsers: Record<
     string,
-    StrictParser<RawInstruction, RawInstruction | ParsedInstructionV1>
+    DefinedParser<RawInstruction, RawInstruction | ParsedInstructionV1>
   > = {}
 
   /**
@@ -25,7 +22,7 @@ export class InstructionParserLibrary extends DefinedParser<
    * @param payload The raw instruction to parse.
    */
   async parse(
-    payload: RawInstruction | ParsedInstructionV1
+    payload: RawInstruction | ParsedInstructionV1,
   ): Promise<RawInstruction | ParsedInstructionV1> {
     const { programId } = payload
 
@@ -44,7 +41,8 @@ export class InstructionParserLibrary extends DefinedParser<
   protected async getParser(
     programId: string,
   ): Promise<
-    StrictParser<RawInstruction, RawInstruction | ParsedInstructionV1> | undefined
+    | DefinedParser<RawInstruction, RawInstruction | ParsedInstructionV1>
+    | undefined
   > {
     let parser = this.instructionParsers[programId]
     if (parser) return parser
@@ -55,7 +53,6 @@ export class InstructionParserLibrary extends DefinedParser<
     parser = new InstructionParser(
       implementation.programID,
       implementation.name,
-      {},
       implementation.getInstructionType,
       implementation.accountLayoutMap,
       implementation.dataLayoutMap,

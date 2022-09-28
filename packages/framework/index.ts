@@ -42,6 +42,19 @@ export type IndexerConfig = {
    */
   transport?: TransportType
   /**
+   * The transport layer configuration.
+   */
+  transportConfig?: {
+    /**
+     * @todo
+     */
+    tcpUrls?: string | string[]
+    /**
+     * @todo
+     */
+    natsUrl?: string
+  }
+  /**
    * The port which the API will be exposed on.
    */
   apiPort?: number
@@ -53,14 +66,6 @@ export type IndexerConfig = {
      * The path to the directory which will be used to store the indexer's data.
      */
     dataPath?: string
-    /**
-     * The port which the service will be exposed on.
-     */
-    tcpPort?: number | number[]
-    /**
-     * @todo
-     */
-    tcpUrls?: string | string[]
     /**
      * Singleton instance of the main API service.
      */
@@ -108,14 +113,6 @@ export type IndexerConfig = {
      * Directory to which the fetcher service will write the fetcher state. (@todo: Only state or txn too?)
      */
     dataPath?: string
-    /**
-     * The port which the service will be exposed on.
-     */
-    tcpPort?: number | number[]
-    /**
-     * @todo
-     */
-    tcpUrls?: string | string[]
   }
   /**
    * Parser service configuration.
@@ -137,14 +134,6 @@ export type IndexerConfig = {
      * Directory to which the parser service will write the parsed data. (@todo: Is this correct?)
      */
     dataPath?: string
-    /**
-     * The port which the service will be exposed on.
-     */
-    tcpPort?: number | number[]
-    /**
-     * @todo
-     */
-    tcpUrls?: string | string[]
   }
 }
 
@@ -167,8 +156,13 @@ export class SDK {
     // @todo: External transport (thread by default)
     config.transport = config.transport || TransportType.Thread
 
-    const { projectId, transport } = config
-    const args = { projectId, transport, dataPath: this.defaultDataPath }
+    const { projectId, transport, transportConfig } = config
+    const args = {
+      projectId,
+      transport,
+      transportConfig,
+      dataPath: this.defaultDataPath,
+    }
 
     const indexers = config.indexer
       ? Array.from({ length: config.indexer.worker.instances || 1 }).map(
@@ -179,14 +173,6 @@ export class SDK {
               name: `${projectId}-${WorkerKind.Indexer}-${i}`,
               domainPath: config.indexer?.worker.domainPath,
               dataPath: config.indexer?.dataPath || args.dataPath,
-              tcpUrls:
-                config.transport !== TransportType.Thread
-                  ? config.indexer?.tcpUrls
-                  : null,
-              tcpPort:
-                config.transport !== TransportType.Thread
-                  ? Number(config.indexer?.tcpPort || 7900) + i
-                  : null,
             } as WorkerInfo),
         )
       : []
@@ -201,14 +187,6 @@ export class SDK {
                 i + (config.parser?.instanceOffset || 0)
               }`,
               dataPath: config.parser?.dataPath || args.dataPath,
-              tcpUrls:
-                config.transport !== TransportType.Thread
-                  ? config.parser?.tcpUrls
-                  : null,
-              tcpPort:
-                config.transport !== TransportType.Thread
-                  ? Number(config.parser?.tcpPort || 7800) + i
-                  : null,
             } as WorkerInfo),
         )
       : []
@@ -223,14 +201,6 @@ export class SDK {
                 i + (config.fetcher?.instanceOffset || 0)
               }`,
               dataPath: config.fetcher?.dataPath || args.dataPath,
-              tcpUrls:
-                config.transport !== TransportType.Thread
-                  ? config.fetcher?.tcpUrls
-                  : null,
-              tcpPort:
-                config.transport !== TransportType.Thread
-                  ? Number(config.fetcher?.tcpPort || 7700) + i
-                  : null,
             } as WorkerInfo),
         )
       : []
