@@ -49,7 +49,17 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     txs,
   }: TransactionDateRangeResponse): Promise<void> {
     console.log('Processing', account, startDate, endDate)
-    await this.processTransactions(txs)
+    const mapAccounts = new StreamMap((tx: ParsedTransactionV1) => {
+      return {
+        ...tx,
+        account
+      }
+    })
+    return promisify(pipeline)(
+      txs,
+      mapAccounts,
+      new StreamMap(this.processTransactions.bind(this))
+    )
   }
 
   protected async processTransactions(
