@@ -49,7 +49,14 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     txs,
   }: TransactionDateRangeResponse): Promise<void> {
     console.log('Processing', account, startDate, endDate)
-    const mapAccounts = new StreamMap((tx: ParsedTransactionV1) => {
+    await this.processTransactions(txs, account)
+  }
+
+  protected async processTransactions(
+    txs: StorageValueStream<ParsedTransactionV1>,
+    account: string,
+  ): Promise<void> {
+    const mapAccounts = new StreamMap((tx: ParsedTransactionV1): ParsedTransactionV1 => {
       return {
         ...tx,
         account
@@ -58,15 +65,6 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     return promisify(pipeline)(
       txs,
       mapAccounts,
-      new StreamMap(this.processTransactions.bind(this))
-    )
-  }
-
-  protected async processTransactions(
-    txs: StorageValueStream<ParsedTransactionV1>,
-  ): Promise<void> {
-    return promisify(pipeline)(
-      txs,
       new StreamFilter(this.filterTransaction.bind(this)),
       new StreamMap(this.indexTransaction.bind(this)),
       new StreamMap(this.mapTransaction.bind(this)),
@@ -75,7 +73,6 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
       new StreamMap(this.indexInstructions.bind(this)),
     )
   }
-
   protected groupInstructions(
     ixs: (ParsedInstructionV1 | ParsedInnerInstructionV1)[],
     parentTx: ParsedTransactionV1,
