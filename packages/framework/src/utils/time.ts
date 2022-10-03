@@ -5,7 +5,7 @@ import {StatsEntry} from "./stats";
 const { splitDurationIntoIntervals } = Utils
 
 export const MAX_TIMEFRAME = Duration.fromDurationLike({year: 315});
-
+// @todo: move time utils from framework to core
 /**
  * Returns custom date ranges for a given interval.
  * @param interval If string, it should be in ISO 8601 format.
@@ -14,6 +14,21 @@ export function toInterval(
   interval: Interval | string,
 ): Interval {
   return typeof interval === 'string' ? Interval.fromISO(interval) : interval
+}
+
+export function candleIntervalToDuration(
+  candleInterval: string,
+): Duration {
+  candleInterval = candleInterval.toLowerCase()
+  const count = candleInterval.match(/\d+/)?.[0]
+  if (!count) {
+    if(candleInterval !== 'all') {
+      throw new Error(`Invalid candle interval: ${candleInterval}`)
+    }
+    return MAX_TIMEFRAME
+  }
+  const unit = candleInterval.replace(count, '') as DateTimeUnit
+  return Duration.fromObject({[unit]: parseInt(count)})
 }
 
 /**
