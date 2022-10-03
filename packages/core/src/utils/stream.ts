@@ -1,8 +1,12 @@
 import { Transform, TransformCallback } from 'stream'
 
-export async function* mergeStreams(
-  sources: AsyncGenerator[],
-): AsyncGenerator<any, any> {
+/**
+ * Concatenates a stream of generators into a single generator.
+ * @param sources The stream of generators to concatenate in order.
+ */
+export async function* concatenateStreams<T>(
+  sources: AsyncGenerator<T>[],
+): AsyncGenerator<T> {
   for (const source of sources) {
     for await (const data of source) {
       yield data
@@ -10,9 +14,13 @@ export async function* mergeStreams(
   }
 }
 
-export async function* mergeShuffledStreams(
-  sources: AsyncGenerator[],
-): AsyncGenerator<any, any> {
+/**
+ * @todo: what is this for?
+ * @param sources
+ */
+export async function* concatenateShuffledStreams<T>(
+  sources: AsyncGenerator<T>[],
+): AsyncGenerator<T> {
   if (sources.length === 1) {
     yield* sources[0]
     return
@@ -42,7 +50,12 @@ export async function* mergeShuffledStreams(
   }
 }
 
-export async function* mergeShuffledSortedStreams<T>(
+/**
+ * @todo: what is this for?
+ * @param sources
+ * @param comparator
+ */
+export async function* concatenateShuffledSortedStreams<T>(
   sources: AsyncIterable<T>[],
   comparator: (a: T, b: T) => number,
 ): AsyncIterable<T> {
