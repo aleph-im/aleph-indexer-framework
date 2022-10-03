@@ -5,7 +5,7 @@ import {
   ParsedInnerInstructionV1,
   ParsedInstructionV1,
   ParsedTransactionV1,
-  StorageValueStream,
+  ParsedTransactionContextV1,
   Utils,
 } from '@aleph-indexer/core'
 import {
@@ -42,29 +42,28 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   abstract init(): Promise<void>
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
 
-  async onTxDateRange({
-    account,
-    startDate,
-    endDate,
-    txs,
-  }: TransactionDateRangeResponse): Promise<void> {
+  async onTxDateRange(args: TransactionDateRangeResponse): Promise<void> {
+    const { account, startDate, endDate } = args
     console.log('Processing', account, startDate, endDate)
-    await this.processTransactions(txs, account)
+    await this.processTransactions(args)
   }
 
   protected async processTransactions(
-    txs: StorageValueStream<ParsedTransactionV1>,
-    account: string,
+    { account, startDate, endDate, txs }: TransactionDateRangeResponse
   ): Promise<void> {
-    const mapAccounts = new StreamMap((tx: ParsedTransactionV1): ParsedTransactionV1 => {
+    const mapContext = new StreamMap((tx: ParsedTransactionV1): ParsedTransactionContextV1 => {
       return {
-        ...tx,
-        account
+        tx,
+        parserContext: {
+          account,
+          startDate,
+          endDate,
+        }
       }
     })
     return promisify(pipeline)(
       txs,
-      mapAccounts,
+      mapContext,
       new StreamFilter(this.filterTransaction.bind(this)),
       new StreamMap(this.indexTransaction.bind(this)),
       new StreamMap(this.mapTransaction.bind(this)),
@@ -75,41 +74,41 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   }
   protected groupInstructions(
     ixs: (ParsedInstructionV1 | ParsedInnerInstructionV1)[],
-    parentTx: ParsedTransactionV1,
+    ctx: ParsedTransactionContextV1,
     parentIx?: ParsedInstructionV1,
     ixsCtx: InstructionContextV1[] = [],
   ): InstructionContextV1[] {
     for (const ix of ixs) {
       // @note: index inner ixs before
       if ('innerInstructions' in ix && ix.innerInstructions) {
-        this.groupInstructions(ix.innerInstructions, parentTx, ix, ixsCtx)
+        this.groupInstructions(ix.innerInstructions, ctx, ix, ixsCtx)
       }
 
-      ixsCtx.push({ ix, parentTx, parentIx })
+      ixsCtx.push({ ix, txContext: ctx, parentIx })
     }
 
     return ixsCtx
   }
 
-  protected async filterTransaction(tx: ParsedTransactionV1): Promise<boolean> {
+  protected async filterTransaction(ctx: ParsedTransactionContextV1): Promise<boolean> {
     return true
   }
 
   protected async indexTransaction(
-    tx: ParsedTransactionV1,
-  ): Promise<ParsedTransactionV1> {
-    return tx
+    ctx: ParsedTransactionContextV1,
+  ): Promise<ParsedTransactionContextV1> {
+    return ctx
   }
 
   protected async mapTransaction(
-    tx: ParsedTransactionV1,
+    ctx: ParsedTransactionContextV1,
   ): Promise<InstructionContextV1[]> {
-    if (tx.parsed === undefined) {
-      console.log('wrong parsed tx --->', JSON.stringify(tx, null, 2))
+    if (ctx.tx.parsed === undefined) {
+      console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
     }
 
-    const instructions = tx.parsed.message.instructions
-    return this.groupInstructions(instructions, tx)
+    const instructions = ctx.tx.parsed.message.instructions
+    return this.groupInstructions(instructions, ctx)
   }
 
   protected abstract filterInstructions(
