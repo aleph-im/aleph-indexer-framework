@@ -8,18 +8,30 @@ import { TOKEN_PROGRAM_ID } from '../constants.js'
 import BN from 'bn.js'
 import { InstructionContext, InstructionContextV1 } from '../indexer/index.js'
 
+/**
+ * Returns true if the instruction is from the SPL Token program.
+ * @param ix Instruction to check.
+ */
 export function isTokenInstruction(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): boolean {
   return ix.programId === TOKEN_PROGRAM_ID
 }
 
+/**
+ * Returns true if the instruction is already parsed.
+ * @param ix Instruction to check.
+ */
 export function isParsedIx(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {
   return 'parsed' in ix
 }
 
+/**
+ * Returns true if the instruction is a parsed SPL Token instruction.
+ * @param ix Instruction to check.
+ */
 export function isTokenParsedInstruction(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {
@@ -27,7 +39,13 @@ export function isTokenParsedInstruction(
   return true
 }
 
-export function getTransferedAmount(
+/**
+ * Returns the raw amount of tokens transferred by the instruction.
+ * @param sourceAddress Address of the source account.
+ * @param targetAddress Address of the target account.
+ * @param subIxs Subinstructions of the instruction.
+ */
+export function getTransferredAmount(
   sourceAddress: string,
   targetAddress: string,
   subIxs: (AlephParsedInstruction | AlephParsedInnerInstruction)[],
@@ -47,6 +65,12 @@ export function getTransferedAmount(
   return new BN(transferIx.parsed.info.amount)
 }
 
+/**
+ * Returns the raw amount of minted collateral tokens.
+ * @param userCollateral Address of the user collateral account.
+ * @param reserveCollateralMint Address of the reserve collateral mint account.
+ * @param subIxs Subinstructions of the instruction.
+ */
 export function getMintedCollateralAmount(
   userCollateral: string,
   reserveCollateralMint: string,
@@ -60,6 +84,12 @@ export function getMintedCollateralAmount(
   )
 }
 
+/**
+ * Returns the raw amount of burned collateral tokens.
+ * @param userCollateral Address of the user collateral account.
+ * @param reserveCollateralMint Address of the reserve collateral mint account.
+ * @param subIxs Subinstructions of the instruction.
+ */
 export function getBurnedCollateralAmount(
   userCollateral: string,
   reserveCollateralMint: string,
@@ -73,6 +103,13 @@ export function getBurnedCollateralAmount(
   )
 }
 
+/**
+ * Returns the raw amount of collateral tokens burned or minted by the instruction.
+ * @param userCollateral Address of the user collateral account.
+ * @param reserveCollateralMint Address of the reserve collateral mint account.
+ * @param subIxs Subinstructions of the instruction.
+ * @param type Either 'mintTo' or 'burn'.
+ */
 export function getCollateralAmount(
   userCollateral: string,
   reserveCollateralMint: string,
@@ -95,6 +132,10 @@ export function getCollateralAmount(
   return new BN(mintIx.parsed.info.amount)
 }
 
+/**
+ * Returns the subinstructions of the instruction.
+ * @param ixCtx Instruction context.
+ */
 export function getSubInstructions(
   ixCtx: InstructionContext | InstructionContextV1,
 ): (AlephParsedInstruction | AlephParsedInnerInstruction)[] {
