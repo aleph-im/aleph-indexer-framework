@@ -3,7 +3,7 @@ import { sleep } from '../time.js'
 /**
  * It keeps a concurrent fixed size buffer of pending promises.
  * When some of them finish, it takes another one from the provided iterator
- * @param {Iterator} iterator - A iterator function that returns promises
+ * @param {Iterator} it - A iterator function that returns promises
  * @param {number} concurrency - The max number of concurrent pending promises
  */
 export async function concurrentPromises<T>(
@@ -51,7 +51,7 @@ export async function concurrentPromises<T>(
  * In other frameworks they usually call it "Deferred" too.
  *
  * Example:
- *
+ *```ts
  * function sleep(ms) {
  *   const future = new Future()
  *   setTimeout(() => future.resolve(), ms)
@@ -61,6 +61,7 @@ export async function concurrentPromises<T>(
  * async function main() {
  *   await sleep(1000)
  * }
+ * ```
  */
 export class Future<T> {
   public resolve!: (value: T | PromiseLike<T>) => void

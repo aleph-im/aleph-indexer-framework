@@ -8,11 +8,20 @@ import rateLimit from 'express-rate-limit'
 import * as expressTypes from 'express-serve-static-core'
 import { GraphQLEndpoint } from './endpoint.js'
 
+/**
+ * Description for a GraphQL server. Has its own unique port and can be created from multiple endpoints, which have their own unique paths and GraphQL schemas.
+ */
 export class GraphQLServer {
   protected app: expressTypes.Application = {} as any | undefined
 
+  /**
+   * Initializes the GraphQL server. Can either use multiple endpoints, or a single schema.
+   * @param schemas The schemas to use. Can be empty, if endpoints are used.
+   * @param endpoints The endpoints to use. Can be empty, if schemas are used.
+   * @param rateLimitConfig The rate limit configuration.
+   */
   constructor(
-    schemas: GraphQLSchema[],
+    schemas: GraphQLSchema[] = [],
     endpoints: GraphQLEndpoint[] = [],
     rateLimitConfig: rateLimit.Options = {
       windowMs: 1000 * 10, // 10sec
@@ -51,6 +60,10 @@ export class GraphQLServer {
       )
     }
 
+    if (schemas.length === 0) {
+      throw new Error('No schemas or endpoints provided.')
+    }
+
     endpoints.forEach((endpoint) => {
       this.app.use(
         endpoint.endpoint(),
@@ -62,12 +75,19 @@ export class GraphQLServer {
     })
   }
 
+  /**
+   * Starts the GraphQL server.
+   * @param port The port to listen on.
+   */
   start(port = 8080): void {
     this.app.listen(port, () => {
       console.log(`Running a GraphQL API server at localhost:${port}`)
     })
   }
 
+  /**
+   * Closes the GraphQL server, by removing all listeners.
+   */
   stop(): void {
     // TODO: Is this sufficient?
     this.app.removeAllListeners()

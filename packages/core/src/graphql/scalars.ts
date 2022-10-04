@@ -1,6 +1,9 @@
 import graphql, { Kind, ValueNode } from 'graphql'
 import BN from 'bn.js'
 
+/**
+ * GraphQL scalar type for BN.js
+ */
 export const GraphQLBigNumber = new graphql.GraphQLScalarType({
   name: 'BigNumber',
   description: 'GraphQL representation of BigNumber',
@@ -14,7 +17,7 @@ export const GraphQLBigNumber = new graphql.GraphQLScalarType({
   },
 })
 
-export function coerceLong(value: any) {
+function coerceLong(value: any) {
   if (value === '')
     throw new TypeError(
       'Long cannot represent non 52-bit signed integer value: (empty string)',
@@ -31,6 +34,9 @@ export function coerceLong(value: any) {
   )
 }
 
+/**
+ * GraphQL scalar type for 52-bit signed integers
+ */
 export const GraphQLLong = new graphql.GraphQLScalarType({
   name: 'Long',
   description: 'The `Long` scalar type represents 52-bit integers',
