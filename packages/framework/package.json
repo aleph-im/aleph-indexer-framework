@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/framework",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -18,10 +18,9 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "peerDependencies": {
-    "luxon": "^2.0.2",
     "graphql": "^15.8.0",
-    "graphql-scalars": "^1.18.0",
-    "graphql-type-json": "^0.3.2"
+    "graphql-type-json": "^0.3.2",
+    "luxon": "^2.0.2"
   },
   "devDependencies": {
     "@types/bs58": "^4.0.1",
@@ -29,21 +28,20 @@
     "@types/luxon": "^2.3.2",
     "@types/node": "^17.0.33",
     "@types/uuid": "^8.3.4",
-    "luxon": "^2.0.2",
     "graphql": "^15.8.0",
-    "graphql-scalars": "^1.18.0",
-    "graphql-type-json": "^0.3.2"
+    "graphql-type-json": "^0.3.2",
+    "luxon": "^2.0.2"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.9",
-    "@aleph-indexer/layout": "^1.0.7",
+    "@aleph-indexer/core": "^1.0.10",
+    "@aleph-indexer/layout": "^1.0.10",
     "@solana/web3.js": "^1.42.0",
-    "buffer-layout": "^1.2.2",
-    "moleculer": "^0.14.21",
-    "uuid": "^8.3.2",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
-    "nats": "^2.7.1"
+    "buffer-layout": "^1.2.2",
+    "moleculer": "^0.14.21",
+    "nats": "^2.7.1",
+    "uuid": "^8.3.2"
   },
   "typedoc": {
     "entryPoint": "./index.ts",
