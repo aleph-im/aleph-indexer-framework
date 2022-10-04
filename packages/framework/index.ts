@@ -350,8 +350,6 @@ export class SDK {
       const SchemaClass = FetcherAPISchema
       const schema = new SchemaClass(domain)
 
-      console.log('👺', schema, typeof schema)
-
       this.apiEndpoints.push(new GraphQLEndpoint('/fetcher', [schema], true))
     }
   }
