@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/layout",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
