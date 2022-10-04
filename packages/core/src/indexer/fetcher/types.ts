@@ -47,6 +47,17 @@ export type FetcherStateV1 = {
   addresses: FetcherStateAddressesKeys
 }
 
+export type ParserContextV1 = {
+  account: string
+  startDate: number
+  endDate: number
+}
+
+export type ParsedTransactionContextV1 = {
+  tx: ParsedTransactionV1
+  parserContext: ParserContextV1
+}
+
 export type InstructionContext = {
   parentTx: AlephParsedTransaction
   parentIx?: AlephParsedInstruction
@@ -54,7 +65,7 @@ export type InstructionContext = {
 }
 
 export type InstructionContextV1 = {
-  parentTx: ParsedTransactionV1
+  txContext: ParsedTransactionContextV1
   parentIx?: ParsedInstructionV1
   ix: ParsedInstructionV1 | ParsedInnerInstructionV1
 }
