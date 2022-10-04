@@ -1,12 +1,4 @@
-import {
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLList,
-  GraphQLString,
-  GraphQLFloat,
-  GraphQLInt,
-  GraphQLBoolean,
-} from 'graphql'
+import { GraphQLSchema, GraphQLObjectType, GraphQLList } from 'graphql'
 
 import * as Types from './types.js'
 import { GraphQLApiResolvers, GraphQLOrderBookResolvers } from './resolvers.js'

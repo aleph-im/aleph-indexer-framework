@@ -1,58 +1,103 @@
-import { LevelDB } from 'level'
-import { AbstractIteratorOptions } from 'abstract-leveldown'
-import { StorageItem } from './types'
+import {
+  Level,
+  IteratorOptions,
+  KeyIteratorOptions,
+  ValueIteratorOptions,
+} from 'level'
+import { AbstractLevel, AbstractChainedBatch } from 'abstract-level'
+import { StorageEntry } from './types'
 
 // @todo: define an abstract interface
-export type StorageAdapter = LevelDB
-export type StorageGetOptions = AbstractIteratorOptions
+export type StorageCommonOptions = { sublevel?: string }
+export type StorageGetOptions<K, V> = IteratorOptions<K, V> &
+  StorageCommonOptions
+export type StoragePutOptions<K, V> = StorageCommonOptions & {
+  batch?: AbstractChainedBatch<StorageLevel<K, V>, K, V>
+}
+export type StorageBatch<K, V> = AbstractChainedBatch<Level<K, V>, K, V>
 
-export abstract class BaseStorage<K, V> {
-  constructor(protected storage: StorageAdapter) {
-    process.on('beforeExit', this.destructor.bind(this))
+export type StorageIteratorOptions<K, V> = IteratorOptions<K, V> &
+  StorageCommonOptions
+export type StorageKeyIteratorOptions<K> = KeyIteratorOptions<K> &
+  StorageCommonOptions
+export type StorageValueIteratorOptions<K, V> = ValueIteratorOptions<K, V> &
+  StorageCommonOptions
+
+export type StorageLevel<K, V> = AbstractLevel<
+  string | Buffer | Uint8Array,
+  K,
+  V
+>
+
+export abstract class BaseStorage<K extends string, V> {
+  static defaultOpts = { keyEncoding: 'utf8', valueEncoding: 'json' }
+  protected sublevels: Record<string, StorageLevel<K, V>> = {}
+
+  constructor(
+    protected path: string,
+    protected db: Level<K, V> = new Level(path, BaseStorage.defaultOpts),
+  ) {
+    process.on('beforeExit', this.close.bind(this))
   }
 
-  destructor(): Promise<void> {
-    return this.storage.close()
+  close(): Promise<void> {
+    return this.db.close()
   }
 
-  getDb(): StorageAdapter {
-    return this.storage
+  protected getDb(sublevel?: string): StorageLevel<K, V> {
+    if (!sublevel) return this.db
+
+    let db = this.sublevels[sublevel]
+
+    if (!db) {
+      db = this.db.sublevel<K, V>(sublevel, BaseStorage.defaultOpts)
+
+      this.sublevels[sublevel] = db
+    }
+
+    return db
   }
 
-  async get(key: K): Promise<V | undefined> {
+  async get(key: K, options?: StorageCommonOptions): Promise<V | undefined> {
     try {
-      return await this.storage.get(key)
+      const db = this.getDb(options?.sublevel)
+      return await db.get(key)
     } catch (e) {
-      if (!(e as any).notFound) throw e
+      const isNotFound = (e as any)?.code === 'LEVEL_NOT_FOUND'
+      if (!isNotFound) throw e
     }
   }
 
-  async getMany(keys: K[]): Promise<V[]> {
-    try {
-      const many = await this.storage.getMany(keys)
-      console.log('MANY !!', many, many.length)
-      return many
-    } catch (e) {
-      console.log('MANY err', e)
-      throw e
-      // if (!(e as any).notFound) throw e
-    }
+  async getMany(keys: K[], options?: StorageCommonOptions): Promise<V[]> {
+    const db = this.getDb(options?.sublevel)
+    return await db.getMany(keys)
   }
 
-  async exists(key: K): Promise<boolean> {
-    return (await this.get(key)) !== undefined
+  async exists(key: K, options?: StorageCommonOptions): Promise<boolean> {
+    return (await this.get(key, options)) !== undefined
   }
 
-  async put(key: K, value: V): Promise<void> {
-    return this.storage.put(key, value)
+  async put(key: K, value: V, options?: StorageCommonOptions): Promise<void> {
+    const db = this.getDb(options?.sublevel)
+    return db.put(key, value)
   }
 
-  async del(key: K): Promise<void> {
-    return this.storage.del(key)
+  async del(key: K, options?: StorageCommonOptions): Promise<void> {
+    const db = this.getDb(options?.sublevel)
+    return db.del(key)
   }
 
-  async clear(): Promise<void> {
-    return this.storage.clear()
+  async clear(options?: StorageCommonOptions): Promise<void> {
+    const db = this.getDb(options?.sublevel)
+    return db.clear()
+  }
+
+  async getLastEntry(): Promise<StorageEntry<K, V> | undefined> {
+    return this.findBoundingEntry({ reverse: true })
+  }
+
+  async getFirstEntry(): Promise<StorageEntry<K, V> | undefined> {
+    return this.findBoundingEntry({ reverse: false })
   }
 
   async getLastKey(): Promise<K | undefined> {
@@ -71,36 +116,44 @@ export abstract class BaseStorage<K, V> {
     return this.findBoundingValue({ reverse: false })
   }
 
-  async findBoundingItem(
-    options?: AbstractIteratorOptions,
-  ): Promise<StorageItem<K, V> | undefined> {
-    const stream = this.storage.createReadStream({
+  async findBoundingEntry(
+    options?: StorageIteratorOptions<K, V>,
+  ): Promise<StorageEntry<K, V> | undefined> {
+    const db = this.getDb(options?.sublevel)
+    const items = db.iterator({
+      ...options,
+      limit: 1,
       keys: true,
       values: true,
-      limit: 1,
-      ...options,
     })
 
-    for await (const item of stream) {
-      if (item) return item as any
+    for await (const item of items) {
+      if (item) {
+        const [key, value] = item
+        return { key, value }
+      }
     }
   }
 
   async findBoundingKey(
-    options?: AbstractIteratorOptions,
+    options?: StorageKeyIteratorOptions<K>,
   ): Promise<K | undefined> {
-    const item = await this.findBoundingItem(options)
-    if (!item) return
+    const db = this.getDb(options?.sublevel)
+    const items = db.keys({ ...options, limit: 1 })
 
-    return item.key
+    for await (const item of items) {
+      if (item) return item as K
+    }
   }
 
   async findBoundingValue(
-    options?: AbstractIteratorOptions,
+    options?: StorageValueIteratorOptions<K, V>,
   ): Promise<V | undefined> {
-    const item = await this.findBoundingItem(options)
-    if (!item) return
+    const db = this.getDb(options?.sublevel)
+    const items = db.values({ ...options, limit: 1 })
 
-    return item.value
+    for await (const item of items) {
+      if (item) return item as V
+    }
   }
 }

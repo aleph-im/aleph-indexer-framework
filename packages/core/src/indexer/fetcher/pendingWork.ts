@@ -1,6 +1,6 @@
 import { MAX_TIMER_INTEGER } from '../../constants.js'
 import { concurrentPromises, JobRunner, Mutex } from '../../utils/index.js'
-import { StorageItem } from '../../storage/index.js'
+import { StorageEntry } from '../../storage/index.js'
 import { PendingWork } from './types.js'
 import {
   PendingWorkDAL,
@@ -94,7 +94,7 @@ export class PendingWorkPool<T> {
 
     const pendingWorkGen = pendingWorkStream[
       Symbol.asyncIterator
-    ]() as AsyncIterator<StorageItem<string, PendingWork<T>>>
+    ]() as AsyncIterator<StorageEntry<string, PendingWork<T>>>
 
     const mutex = new Mutex()
     const minSleepTimeRef = { value: MAX_TIMER_INTEGER }
@@ -140,7 +140,7 @@ export class PendingWorkPool<T> {
   }
 
   protected async loadPendingWork(
-    pendingWorkGen: AsyncIterator<StorageItem<string, PendingWork<T>>>,
+    pendingWorkGen: AsyncIterator<StorageEntry<string, PendingWork<T>>>,
     size: number,
   ): Promise<PendingWork<T>[]> {
     const result: PendingWork<T>[] = []

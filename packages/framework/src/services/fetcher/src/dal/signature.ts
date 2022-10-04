@@ -43,7 +43,7 @@ export function createSignatureDAL(path: string): SignatureStorage {
   return new EntityStorage<Signature>({
     name: 'fetcher_signatures',
     path,
-    primaryKey: [signatureKey],
+    key: [signatureKey],
     indexes: [
       {
         name: SignatureDALIndex.AccountTimestampIndex,

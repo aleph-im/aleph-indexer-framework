@@ -1,4 +1,5 @@
-import EventEmitter from 'node:events'
+import { EventEmitter } from 'node:events'
+
 import {
   ParsedTransactionV1,
   StorageValueStream,
@@ -482,9 +483,9 @@ export class TransactionFetcher {
 
     const pendings = await this.transactionRequestPendingSignatureDAL
       .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
-      .getAllFromTo([nonce], [nonce], { atomic: true })
+      .getAllValuesFromTo([nonce], [nonce], { atomic: true })
 
-    for await (const { value: pending } of pendings) {
+    for await (const pending of pendings) {
       const { signature } = pending
 
       const tx = await this.transactionRequestResponseDAL.get(signature)

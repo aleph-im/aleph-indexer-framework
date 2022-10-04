@@ -28,7 +28,7 @@ export function createTransactionRequestPendingSignatureDAL(
   return new EntityStorage<TransactionRequestPendingSignature>({
     name: 'transaction_request_pending_signatures',
     path,
-    primaryKey: [signatureKey],
+    key: [signatureKey],
     indexes: [
       {
         name: TransactionRequestPendingSignatureDALIndex.NonceSignature,

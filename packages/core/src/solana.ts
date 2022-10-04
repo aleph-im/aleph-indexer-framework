@@ -333,7 +333,7 @@ export class SolanaRPC {
       count += history.length
       before = firstItem.signature
 
-      const filteredHistory = history.filter((item) =>
+      const filteredHistory = history.filter((item: any) =>
         this.filterSignature(item, errorFetching, signatureBlacklist),
       )
 

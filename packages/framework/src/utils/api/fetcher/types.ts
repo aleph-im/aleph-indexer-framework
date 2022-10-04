@@ -14,7 +14,6 @@ import {
 import { GraphQLJSONObject } from 'graphql-type-json'
 import { TimeInfo } from '../types.js'
 
-
 export const FetcherState = new GraphQLObjectType({
   name: 'FetcherState',
   fields: {

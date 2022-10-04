@@ -1,7 +1,7 @@
 declare module '@solana/web3.js' {
   interface Connection {
-    public _rpcRequest(method: string, args: any[]): Promise<any>
-    public _rpcBatchRequest(requests: any[]): Promise<any>
+    public _rpcRequest(method: string, args: any[]): getAllValuesFromTo<any>
+    public _rpcBatchRequest(requests: any[]): getAllValuesFromTo<any>
   }
 }
 

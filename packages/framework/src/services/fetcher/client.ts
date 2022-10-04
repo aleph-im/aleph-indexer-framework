@@ -43,14 +43,18 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
-  addAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
+  addAccountFetcher(
+    args: FetcherAccountPartitionRequestArgs,
+  ): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountFetcher`, {
       partitionKey: args.account,
       ...args,
     })
   }
 
-  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
+  delAccountFetcher(
+    args: FetcherAccountPartitionRequestArgs,
+  ): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountFetcher`, {
       partitionKey: args.account,
       ...args,
@@ -66,7 +70,9 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     })
   }
 
-  addAccountInfoFetcher(args: AddAccountInfoFetcherRequestArgs): Promise<void> {
+  addAccountInfoFetcher(
+    args: AddAccountInfoFetcherRequestArgs,
+  ): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountInfoFetcher`, {
       partitionKey: args.account,
       ...args,
@@ -116,7 +122,9 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
-  getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState> {
+  getFetcherState(
+    args: FetcherStateRequestArgs,
+  ): Promise<FetcherState> {
     return this.broker.call(`${this.msId}.getFetcherState`, args, {
       nodeID: args.fetcher,
     })
