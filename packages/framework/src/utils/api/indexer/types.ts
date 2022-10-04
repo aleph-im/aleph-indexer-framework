@@ -14,7 +14,7 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
-import { GraphQLDuration, GraphQLJSONObject } from "graphql-scalars";
+import {GraphQLDuration, GraphQLJSONObject} from "graphql-scalars";
 
 // State
 

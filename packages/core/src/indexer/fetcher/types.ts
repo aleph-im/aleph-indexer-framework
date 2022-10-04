@@ -9,6 +9,7 @@ import {
   ParsedTransactionV1,
 } from '../../types.js'
 import { JobRunnerOptions } from '../../utils/index.js'
+import {DateTime} from "luxon";
 
 export type FetcherJobRunnerOptions = Omit<
   JobRunnerOptions,
@@ -49,8 +50,8 @@ export type FetcherStateV1 = {
 
 export type ParserContextV1 = {
   account: string
-  startDate: number
-  endDate: number
+  startDate: DateTime
+  endDate: DateTime
 }
 
 export type ParsedTransactionContextV1 = {

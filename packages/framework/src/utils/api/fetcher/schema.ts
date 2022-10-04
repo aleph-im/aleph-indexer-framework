@@ -7,7 +7,7 @@ import {
 } from 'graphql'
 import { FetcherMainDomain } from '../../domain/index.js'
 import * as Types from './types.js'
-import { GraphQLDateTime } from "graphql-scalars";
+import {GraphQLDateTime} from "graphql-scalars";
 
 /**
  * Combines the fetcher's domain class with the fetcher's API.

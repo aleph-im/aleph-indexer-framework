@@ -11,7 +11,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql'
-import { GraphQLJSONObject } from "graphql-scalars";
+import { GraphQLJSONObject } from 'graphql-scalars'
 
 
 export const FetcherState = new GraphQLObjectType({

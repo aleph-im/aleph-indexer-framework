@@ -28,6 +28,7 @@ import {
   AccountSlotRange,
   GetTransactionPendingRequestsRequestArgs,
 } from '../types.js'
+import {DateTime} from "luxon";
 
 const {
   Future,
@@ -380,8 +381,8 @@ export class TransactionFetcher {
             const { account, startDate, endDate } = requestParams.params
             return this.fetcherMsClient.fetchAccountTransactionsByDate({
               account,
-              startDate,
-              endDate,
+              startDate: startDate,
+              endDate: endDate,
             })
           }
           case TransactionRequestType.BySlotRange: {
