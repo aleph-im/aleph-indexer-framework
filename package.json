@@ -86,7 +86,7 @@
     "express-graphql": "^0.12.0",
     "express-rate-limit": "^5.5.1",
     "graphql": "^15.8.0",
-    "graphql-type-json": "^0.3.2",
+    "graphql-scalars": "^1.18.0",
     "js-base64": "^3.7.2",
     "level": "^8.0.0",
     "level-read-stream": "^1.1.0",
