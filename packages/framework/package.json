@@ -20,6 +20,7 @@
   "peerDependencies": {
     "luxon": "^2.0.2",
     "graphql": "^15.8.0",
+    "graphql-scalars": "^1.18.0",
     "graphql-type-json": "^0.3.2"
   },
   "devDependencies": {
@@ -30,6 +31,7 @@
     "@types/uuid": "^8.3.4",
     "luxon": "^2.0.2",
     "graphql": "^15.8.0",
+    "graphql-scalars": "^1.18.0",
     "graphql-type-json": "^0.3.2"
   },
   "dependencies": {

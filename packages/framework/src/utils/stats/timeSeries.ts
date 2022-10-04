@@ -182,7 +182,7 @@ export class TimeSeriesStats<I, O> {
 
           let data: O | undefined
 
-          for await (const { value } of inputs) {
+          for await (const value of inputs) {
             const input = 'data' in value ? value.data : value
             data = await aggregator({
               input,
