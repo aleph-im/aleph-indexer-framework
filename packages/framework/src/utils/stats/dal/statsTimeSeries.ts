@@ -39,6 +39,6 @@ export function createStatsTimeSeriesDAL(path: string): StatsTimeSeriesStorage {
   return new EntityStorage<StatsTimeSeries<any>>({
     name: 'stats_time_series',
     path,
-    primaryKey: [accountKey, typeKey, timeFrameKey, startDateKey],
+    key: [accountKey, typeKey, timeFrameKey, startDateKey],
   })
 }

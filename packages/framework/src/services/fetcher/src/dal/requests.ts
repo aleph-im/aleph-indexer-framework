@@ -32,7 +32,7 @@ export function createRequestsDAL(path: string): FetcherOptionsStorage {
   return new EntityStorage<FetcherRequest>({
     name: 'fetcher_requests',
     path,
-    primaryKey: [idKey],
+    key: [idKey],
     indexes: [
       {
         name: RequestsDALIndex.Type,

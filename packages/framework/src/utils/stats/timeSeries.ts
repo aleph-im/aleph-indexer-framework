@@ -62,7 +62,7 @@ export class TimeSeriesStats<I, O> {
   ): Promise<TimeSeries> {
     const { type } = this.config
 
-    const values = await this.timeSeriesDAL.getAllFromTo(
+    const values = await this.timeSeriesDAL.getAllValuesFromTo(
       [account, type, timeFrame.toMillis(), startDate?.toMillis()],
       [account, type, timeFrame.toMillis(), endDate?.toMillis()],
       { limit, reverse },
@@ -70,7 +70,7 @@ export class TimeSeriesStats<I, O> {
 
     const series = []
 
-    for await (const { value } of values) {
+    for await (const value of values) {
       value.data.type = type
 
       series.push({
@@ -165,7 +165,7 @@ export class TimeSeriesStats<I, O> {
                   startDate: interval.start,
                   endDate: interval.end.minus(1),
                 })
-              : await this.timeSeriesDAL.getAllFromTo(
+              : await this.timeSeriesDAL.getAllValuesFromTo(
                   [
                     account,
                     type,
@@ -296,7 +296,7 @@ export class TimeSeriesStats<I, O> {
   public async compactStates(account: string): Promise<void> {
     const { type } = this.config
     const { Processed } = StatsStateStatus
-  
+
     // @note: entries from DAL are always sorted
     const fetchedRanges = await this.stateDAL
       .useIndex(StatsStateDALIndex.AccountTypeState)

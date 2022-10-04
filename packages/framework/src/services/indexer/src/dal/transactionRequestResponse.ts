@@ -45,7 +45,7 @@ export function createTransactionRequestResponseDAL(
   return new EntityStorage<TransactionRequestResponse>({
     name: 'transaction_request_responses',
     path,
-    primaryKey: [signatureKey],
+    key: [signatureKey],
     indexes: [
       {
         name: TransactionRequestResponseDALIndex.NonceIndex,

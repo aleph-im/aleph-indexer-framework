@@ -167,12 +167,12 @@ export class AccountTransactionIndexer {
     // @note: Check the current pending ranges
     const pendingRanges = await this.transactionIndexerStateDAL
       .useIndex(TransactionIndexerStateDALIndex.AccountState)
-      .getAllFromTo([account, Pending], [account, Pending], {
+      .getAllValuesFromTo([account, Pending], [account, Pending], {
         reverse: false,
         atomic: true,
       })
 
-    for await (const { value: range } of pendingRanges) {
+    for await (const range of pendingRanges) {
       const requestNonce = range.requestNonce as number
 
       const isComplete = await this.transactionFetcher.isRequestComplete(
@@ -308,14 +308,14 @@ export class AccountTransactionIndexer {
 
     const completeRanges = await this.transactionIndexerStateDAL
       .useIndex(TransactionIndexerStateDALIndex.AccountState)
-      .getAllFromTo([account, Ready], [account, Ready], {
+      .getAllValuesFromTo([account, Ready], [account, Ready], {
         reverse: false,
         atomic: true,
       })
 
     let count = 0
 
-    for await (const { value: range } of completeRanges) {
+    for await (const range of completeRanges) {
       const nonce = range.requestNonce as number
 
       // @note: Obtain the response of the ready ranges

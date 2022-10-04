@@ -1,46 +1,45 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import path from 'node:path'
-import fs from 'node:fs'
-import zlib from 'node:zlib'
-import { pipeline } from 'node:stream'
-import { promisify } from 'node:util'
 
-import { StorageGetOptions } from './baseStorage.js'
-import { LevelStorage, StorageFilterFn, StorageMapFn } from './levelStorage.js'
+import {
+  StorageBatch,
+  StorageGetOptions,
+  StoragePutOptions,
+} from './baseStorage.js'
+import { LevelStorage, LevelStorageOptions } from './levelStorage.js'
 import {
   KeySchema,
-  StorageItem,
   StorageKeyStream,
   StorageStream,
+  StorageEntry,
   StorageValueStream,
   Stringifable,
 } from './types.js'
-import { ensurePath } from '../utils/common.js'
-import {
-  StoreBackupDecoder,
-  StoreBackupEncoder,
-  StoreBackupRestore,
-} from './utils.js'
 import { StreamFilter, StreamMap } from '../utils/stream.js'
 import { Mutex } from '../utils/index.js'
 
-export interface EntityIndexStorageOptions<Entity> {
+export type EntityIndexStorageOptions<Entity> = LevelStorageOptions<
+  string | Entity
+> & {
   name: string
-  path: string
+  sublevel?: string
   key: KeySchema<Entity>
   entityStore?: EntityIndexStorage<Entity, Entity>
-  filterFn?: StorageFilterFn<string | Entity>
-  mapFn?: StorageMapFn<string | Entity>
   count?: boolean
 }
 
 export type EntityIndexStorageInvokeOptions = { atomic?: boolean }
 export type EntityIndexStorageCallOptions = EntityIndexStorageInvokeOptions
-export type EntityIndexStorageSaveOptions = EntityIndexStorageCallOptions & {
-  count?: number
-}
-export type EntityIndexStorageRemoveOptions = EntityIndexStorageSaveOptions
-export type EntityIndexStorageGetStreamOptions = StorageGetOptions &
+export type EntityIndexStorageSaveOptions<V> = StoragePutOptions<string, V> &
+  EntityIndexStorageInvokeOptions & {
+    count?: number
+  }
+export type EntityIndexStorageRemoveOptions<V> =
+  EntityIndexStorageSaveOptions<V>
+export type EntityIndexStorageGetStreamOptions<V> = StorageGetOptions<
+  string,
+  V
+> &
   EntityIndexStorageInvokeOptions
 
 export class EntityIndexStorage<
@@ -48,51 +47,36 @@ export class EntityIndexStorage<
   Returned extends Entity | string = string,
 > {
   static keyValueDelimiter = '|'
-
   // @note: https://docs.solana.com/es/cli/transfer-tokens#receive-tokens
   // The public key is a long string of base58 characters. Its length varies from 32 to 44 characters.
   static AddressLength = 44
-
   // @note: Timestamps in millis take 13 chars
   static TimestampLength = 13
-
   static VariableLength = 0
 
   protected self: typeof EntityIndexStorage
-  protected storage: LevelStorage<string | Entity>
-  protected basePath: string
-  protected backupPath: string
   protected noopMutex = Promise.resolve((): void => {})
   protected count = 0
 
   constructor(
     protected options: EntityIndexStorageOptions<Entity>,
-    protected StorageClass: typeof LevelStorage = LevelStorage,
     protected atomicOpMutex: Mutex = new Mutex(),
+    protected storage: LevelStorage<string | Entity> = new LevelStorage({
+      ...options,
+      path: path.join(options.path, options.name),
+    }),
   ) {
-    const { name, path: dir, filterFn, mapFn } = this.options
-    this.basePath = path.join(dir, name)
-    this.backupPath = path.join(dir, '_backup')
-
     this.self = this.constructor as typeof EntityIndexStorage
-    this.storage = new StorageClass({ path: this.basePath, filterFn, mapFn })
-
     this.init()
-  }
-
-  getPaths(): { base: string; backup: string } {
-    return {
-      base: this.basePath,
-      backup: this.backupPath,
-    }
   }
 
   async init(): Promise<void> {
     const release = await this.getAtomicOpMutex(true)
+    const { count, sublevel } = this.options
 
     try {
-      if (this.options.count) {
-        const allKeys = this.storage.getAllKeys()
+      if (count) {
+        const allKeys = this.storage.getAllKeys({ sublevel })
         for await (const _ of allKeys) {
           this.count++
         }
@@ -114,21 +98,25 @@ export class EntityIndexStorage<
     }
   }
 
+  getBatch(): StorageBatch<string, string | Entity> {
+    return this.storage.getBatch()
+  }
+
   async getAll(
-    options?: EntityIndexStorageGetStreamOptions,
+    options?: EntityIndexStorageGetStreamOptions<Returned>,
   ): Promise<StorageStream<string, Returned>> {
     return this.getAllFromTo(undefined, undefined, options)
   }
 
   async getAllKeys(
-    options?: EntityIndexStorageGetStreamOptions,
+    options?: EntityIndexStorageGetStreamOptions<Returned>,
   ): Promise<StorageKeyStream<string>> {
     const stream = await this.getAll(options)
     return stream.pipe(new StreamMap(this.mapItemToKey.bind(this)))
   }
 
   async getAllValues(
-    options?: EntityIndexStorageGetStreamOptions,
+    options?: EntityIndexStorageGetStreamOptions<Returned>,
   ): Promise<StorageValueStream<Returned>> {
     const stream = await this.getAll(options)
     return stream.pipe(new StreamMap(this.mapItemToValue.bind(this)))
@@ -161,7 +149,7 @@ export class EntityIndexStorage<
   async getAllFromTo(
     start?: Stringifable[],
     end?: Stringifable[],
-    options: EntityIndexStorageGetStreamOptions = { reverse: true },
+    options: EntityIndexStorageGetStreamOptions<Returned> = { reverse: true },
   ): Promise<StorageStream<string, Returned>> {
     const release = await this.getAtomicOpMutex(options?.atomic)
 
@@ -169,7 +157,7 @@ export class EntityIndexStorage<
       const stream = this.storage.getAllFromTo(
         this.mapKeyChunks(start, false),
         this.mapKeyChunks(end, true),
-        options,
+        { ...options, sublevel: this.options.sublevel },
       )
 
       return this.mapItems(stream)
@@ -181,7 +169,7 @@ export class EntityIndexStorage<
   async getAllKeysFromTo(
     start?: Stringifable[],
     end?: Stringifable[],
-    options?: EntityIndexStorageGetStreamOptions,
+    options?: EntityIndexStorageGetStreamOptions<Returned>,
   ): Promise<StorageKeyStream<string>> {
     const stream = await this.getAllFromTo(start, end, options)
     return stream.pipe(new StreamMap(this.mapItemToKey.bind(this)))
@@ -190,7 +178,7 @@ export class EntityIndexStorage<
   async getAllValuesFromTo(
     start?: Stringifable[],
     end?: Stringifable[],
-    options?: EntityIndexStorageGetStreamOptions,
+    options?: EntityIndexStorageGetStreamOptions<Returned>,
   ): Promise<StorageValueStream<Returned>> {
     const stream = await this.getAllFromTo(start, end, options)
     return stream.pipe(new StreamMap(this.mapItemToValue.bind(this)))
@@ -200,13 +188,14 @@ export class EntityIndexStorage<
     start?: Stringifable[],
     end?: Stringifable[],
     options?: EntityIndexStorageCallOptions,
-  ): Promise<StorageItem<string, Returned> | undefined> {
+  ): Promise<StorageEntry<string, Returned> | undefined> {
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
       const item = await this.storage.getFirstItemFromTo(
         this.mapKeyChunks(start, false),
         this.mapKeyChunks(end, true),
+        { sublevel: this.options.sublevel },
       )
 
       if (!item) return
@@ -238,13 +227,14 @@ export class EntityIndexStorage<
     start?: Stringifable[],
     end?: Stringifable[],
     options?: EntityIndexStorageCallOptions,
-  ): Promise<StorageItem<string, Returned> | undefined> {
+  ): Promise<StorageEntry<string, Returned> | undefined> {
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
       const item = await this.storage.getLastItemFromTo(
         this.mapKeyChunks(start, false),
         this.mapKeyChunks(end, true),
+        { sublevel: this.options.sublevel },
       )
 
       if (!item) return
@@ -294,7 +284,9 @@ export class EntityIndexStorage<
         Array.isArray(key) ? (this.mapKeyChunks(key, true) as string[]) : key,
       )
 
-      const value = (await this.storage.get(innerKey)) as Returned | undefined
+      const value = (await this.storage.get(innerKey, {
+        sublevel: this.options.sublevel,
+      })) as Returned | undefined
       if (!value) return
 
       const item = await this.mapItem({ key: innerKey, value })
@@ -311,7 +303,7 @@ export class EntityIndexStorage<
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
-      return this.storage.exists(key)
+      return this.storage.exists(key, { sublevel: this.options.sublevel })
     } finally {
       release()
     }
@@ -319,23 +311,30 @@ export class EntityIndexStorage<
 
   async save(
     entities: Entity | Entity[],
-    options?: EntityIndexStorageSaveOptions,
+    options?: EntityIndexStorageSaveOptions<string | Entity>,
   ): Promise<void> {
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
       entities = Array.isArray(entities) ? entities : [entities]
 
-      const items = entities.flatMap((entity) =>
-        this.getKeys(entity).map((key) => ({
-          key,
-          value: this.getValue(entity),
-        })),
-      )
-      const keys = items.map((i) => i.key)
+      const items = entities.flatMap((entity) => {
+        const keys = this.getKeys(entity)
+        return keys.map(
+          (key) =>
+            ({ key, value: this.getValue(entity) } as StorageEntry<
+              string,
+              Entity
+            >),
+        )
+      })
+      const keys = items.map(({ key }) => key)
       const countDelta = await this.getCountDelta(keys, false, options?.count)
 
-      await this.storage.save(items)
+      await this.storage.save(items, {
+        sublevel: this.options.sublevel,
+        batch: options?.batch,
+      })
 
       this.count += countDelta
     } finally {
@@ -345,7 +344,7 @@ export class EntityIndexStorage<
 
   async remove(
     entities: Entity | Entity[],
-    options?: EntityIndexStorageRemoveOptions,
+    options?: EntityIndexStorageRemoveOptions<string | Entity>,
   ): Promise<void> {
     const release = await this.getAtomicOpMutex(options?.atomic)
 
@@ -358,7 +357,10 @@ export class EntityIndexStorage<
 
       const countDelta = await this.getCountDelta(items, true, options?.count)
 
-      await this.storage.remove(items)
+      await this.storage.remove(items, {
+        sublevel: this.options.sublevel,
+        batch: options?.batch,
+      })
 
       this.count -= countDelta
     } finally {
@@ -368,59 +370,6 @@ export class EntityIndexStorage<
 
   getKeys(entity: Entity): string[] {
     return this.getAllSubkeysStartingFrom(entity, 0)
-  }
-
-  async backup(): Promise<void> {
-    const { name } = this.options
-
-    console.log(`Start store backup [${name}]`)
-
-    ensurePath(this.backupPath)
-
-    const store = this.storage.getAll({
-      reverse: false,
-      keys: false,
-      values: true,
-    })
-    const encoder = new StoreBackupEncoder(`store backup [${name}]`)
-    const brotli = zlib.createBrotliCompress({
-      params: {
-        [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
-        [zlib.constants.BROTLI_PARAM_QUALITY]: 10,
-      },
-    })
-    const outputPath = path.join(this.backupPath, name)
-    const output = fs.createWriteStream(outputPath)
-
-    try {
-      await promisify(pipeline)(store, encoder, brotli, output)
-      console.log(`Complete store backup [${name}]`)
-    } catch (e) {
-      console.error(`Error store backup [${name}]`, e)
-    }
-  }
-
-  async restore(): Promise<boolean> {
-    const { name } = this.options
-
-    const inputPath = path.join(this.backupPath, name)
-    if (!fs.existsSync(inputPath)) return false
-
-    console.log(`Start store restore [${name}]`)
-
-    const input = fs.createReadStream(inputPath)
-    const brotli = zlib.createBrotliDecompress()
-    const decoder = new StoreBackupDecoder(`Store restore [${name}]`)
-    const store = new StoreBackupRestore(this)
-
-    try {
-      await promisify(pipeline)(input, brotli, decoder, store)
-      console.log(`Complete store restore [${name}]`)
-      return true
-    } catch (e) {
-      console.error(`Error store restore [${name}]`, e)
-      return false
-    }
   }
 
   protected getAllSubkeysStartingFrom(
@@ -450,7 +399,7 @@ export class EntityIndexStorage<
         if (nextKeyChunks.length) {
           return nextKeyChunks.map(
             (nextKeyChunk) =>
-              `${keyChunk}${this.StorageClass.keyChunkDelimiter}${nextKeyChunk}`,
+              `${keyChunk}${LevelStorage.keyChunkDelimiter}${nextKeyChunk}`,
           )
         }
 
@@ -471,11 +420,11 @@ export class EntityIndexStorage<
     const schema = this.options.key[chunk]
     if (!schema)
       throw new Error(
-        `Key chunk schema not found for ${this.options.name} key (chunk ${chunk})`,
+        `Key chunk schema not found for ${this.options.sublevel} key (chunk ${chunk})`,
       )
 
     const { length, padEnd } = schema
-    const { minChar, maxChar } = this.StorageClass
+    const { minChar, maxChar } = LevelStorage
 
     key = String(key)
 
@@ -522,7 +471,7 @@ export class EntityIndexStorage<
     return chunks
       .map((value, i) => {
         if ((value === undefined || value === null) && i < chunks.length - 1) {
-          const { minChar, maxChar } = this.StorageClass
+          const { minChar, maxChar } = LevelStorage
           value = isEnd ? maxChar : minChar
         }
         return this.getKeyChunk(value, i)
@@ -539,8 +488,8 @@ export class EntityIndexStorage<
   }
 
   protected async mapItem(
-    item: StorageItem<string, string | Entity>,
-  ): Promise<StorageItem<string, Returned> | undefined> {
+    item: StorageEntry<string, string | Entity>,
+  ): Promise<StorageEntry<string, Returned> | undefined> {
     const { entityStore } = this.options
 
     if (entityStore) {
@@ -550,28 +499,28 @@ export class EntityIndexStorage<
 
       if (value === undefined) {
         console.log(
-          `🟥 Inconsistent lookup key [${entityKey}] on db [${this.options.name}]`,
+          `🟥 Inconsistent lookup key [${entityKey}] on db [${this.options.sublevel}]`,
         )
         return
       }
 
-      return { key, value } as unknown as StorageItem<string, Returned>
+      return { key, value: value as Returned }
     }
 
-    return item as StorageItem<string, Returned>
+    return item as StorageEntry<string, Returned>
   }
 
   protected async filterItem(
-    item: StorageItem<string, Entity> | undefined,
+    item: StorageEntry<string, Entity> | undefined,
   ): Promise<boolean> {
     return item !== undefined
   }
 
-  protected mapItemToKey(item: StorageItem<string, Returned>): string {
+  protected mapItemToKey(item: StorageEntry<string, Returned>): string {
     return item.key
   }
 
-  protected mapItemToValue(item: StorageItem<string, Returned>): Returned {
+  protected mapItemToValue(item: StorageEntry<string, Returned>): Returned {
     return item.value
   }
 
@@ -587,7 +536,17 @@ export class EntityIndexStorage<
     if (!this.options.count) return 0
     if (fixedCount !== undefined) return fixedCount
 
-    const storedCount = (await this.storage.getMany(items)).length
+    const storedCount = (
+      await this.storage.getMany(items, { sublevel: this.options.sublevel })
+    ).length
     return isDelete ? storedCount : items.length - storedCount
+  }
+
+  async backup(): Promise<void> {
+    return this.backup()
+  }
+
+  async restore(): Promise<boolean> {
+    return this.restore()
   }
 }

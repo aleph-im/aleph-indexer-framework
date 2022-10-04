@@ -63,7 +63,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
       }
     })
     return promisify(pipeline)(
-      txs,
+      txs as any,
       mapContext,
       new StreamFilter(this.filterTransaction.bind(this)),
       new StreamMap(this.indexTransaction.bind(this)),
@@ -73,6 +73,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
       new StreamMap(this.indexInstructions.bind(this)),
     )
   }
+
   protected groupInstructions(
     ixs: (ParsedInstructionV1 | ParsedInnerInstructionV1)[],
     ctx: ParsedTransactionContextV1,

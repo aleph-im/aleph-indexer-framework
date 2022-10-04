@@ -46,6 +46,6 @@ export function createTransactionRequestDAL(
   return new EntityStorage<TransactionRequest>({
     name: 'transaction_requests',
     path,
-    primaryKey: [nonceKey],
+    key: [nonceKey],
   })
 }

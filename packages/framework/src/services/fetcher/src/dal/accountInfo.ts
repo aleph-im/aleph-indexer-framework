@@ -17,6 +17,6 @@ export function createAccountInfoDAL(path: string): AccountInfoStorage {
   return new EntityStorage<AccountInfo>({
     name: 'fetcher_accounts_info',
     path,
-    primaryKey: [accountKey],
+    key: [accountKey],
   })
 }

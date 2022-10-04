@@ -13,7 +13,6 @@ import {
 } from 'graphql'
 import { GraphQLJSONObject } from 'graphql-scalars'
 
-
 export const FetcherState = new GraphQLObjectType({
   name: 'FetcherState',
   fields: {

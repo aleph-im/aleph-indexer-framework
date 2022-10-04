@@ -74,7 +74,7 @@ export function createStatsStateDAL(path: string): StatsStateStorage {
   return new EntityStorage<StatsState>({
     name: 'stats_state',
     path,
-    primaryKey: [accountKey, typeKey, timeFrameKey, startDateKey],
+    key: [accountKey, typeKey, timeFrameKey, startDateKey],
     indexes: [
       {
         name: StatsStateDALIndex.AccountTypeState,

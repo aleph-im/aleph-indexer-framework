@@ -1,18 +1,34 @@
-/**
- * Key-value storage item
- */
-export type StorageItem<K, V> = {
-  key: K
-  value: V
+import { EventEmitter } from 'node:events'
+
+// @todo: Find a way to use NodeJS.ReadableStream excluding "Symbol.asyncIterator" prop (Omit doesn't work here)
+interface ReadableStreamNotIterable extends EventEmitter {
+  readable: boolean
+  read(size?: number): string | Buffer
+  setEncoding(encoding: BufferEncoding): this
+  pause(): this
+  resume(): this
+  isPaused(): boolean
+  pipe<T extends NodeJS.WritableStream>(
+    destination: T,
+    options?: { end?: boolean | undefined },
+  ): T
+  unpipe(destination?: NodeJS.WritableStream): this
+  unshift(chunk: string | Uint8Array, encoding?: BufferEncoding): void
+  wrap(oldStream: NodeJS.ReadableStream): this
 }
 
 /**
- * A
+ * Key-value storage item
  */
-export type StorageStream<K, V> = NodeJS.ReadableStream &
-  AsyncIterable<StorageItem<K, V>>
-export type StorageKeyStream<K> = NodeJS.ReadableStream & AsyncIterable<K>
-export type StorageValueStream<V> = NodeJS.ReadableStream & AsyncIterable<V>
+export type StorageEntry<K, V> = { key: K; value: V }
+
+export type BasicStream<V> = ReadableStreamNotIterable & {
+  [Symbol.asyncIterator](): AsyncIterableIterator<V>
+}
+
+export type StorageStream<K, V> = BasicStream<StorageEntry<K, V>>
+export type StorageKeyStream<K> = BasicStream<K>
+export type StorageValueStream<V> = BasicStream<V>
 
 // -------------------
 

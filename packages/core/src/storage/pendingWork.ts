@@ -21,7 +21,7 @@ export class PendingWorkStorage<T> extends EntityStorage<PendingWork<T>> {
   constructor(options: PendingWorkStorageOptions<T>) {
     super({
       name: 'pending_work',
-      primaryKey: [{ get: (e) => e.id, length: EntityStorage.VariableLength }],
+      key: [{ get: (e) => e.id, length: EntityStorage.VariableLength }],
       indexes: [
         options.sortedIndex || {
           name: PendingWorkDALIndex.Sorted,

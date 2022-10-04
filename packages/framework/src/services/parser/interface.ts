@@ -12,7 +12,9 @@ export interface ParserMsI {
    * Parses a raw transaction.
    * @param payload The raw transaction to parse.
    */
-  parseTransaction(payload: RawTransactionV1): Promise<ParsedTransactionV1>
+  parseTransaction(
+    payload: RawTransactionV1,
+  ): Promise<ParsedTransactionV1>
 
   /**
    * Parses a raw instruction.
