@@ -11,8 +11,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql'
-import { GraphQLJSONObject } from 'graphql-type-json'
-import { TimeInfo } from '../types.js'
+import { GraphQLJSONObject } from "graphql-scalars";
 
 
 export const FetcherState = new GraphQLObjectType({
@@ -59,10 +58,7 @@ export const TransactionState = new GraphQLObjectType({
 
 export const TransactionStateList = new GraphQLList(TransactionState)
 
-export { TimeInfo } from '../types.js'
-
 export const types: GraphQLNamedType[] = [
-  TimeInfo,
   FetcherState,
   TransactionState,
   AccountFetcherState,

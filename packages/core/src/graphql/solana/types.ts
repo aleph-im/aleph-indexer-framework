@@ -7,8 +7,8 @@ import {
   GraphQLList,
   GraphQLNonNull,
 } from 'graphql'
+import { GraphQLLong } from 'graphql-scalars'
 
-import { GraphQLLong } from '../scalars.js'
 // TokenList definition => https://uniswap.org/tokenlist.schema.json
 
 // --------------------- TOKEN ----------------------------

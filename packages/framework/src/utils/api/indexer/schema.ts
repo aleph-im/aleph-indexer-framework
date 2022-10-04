@@ -11,7 +11,7 @@ import {
 } from 'graphql'
 import { IndexerMainDomain } from '../../domain/index.js'
 import * as Types from './types.js'
-import { GraphQLDuration } from "graphql-scalars"
+import { GraphQLDuration, GraphQLDateTime } from "graphql-scalars"
 
 export type APISchemaConfig = GraphQLSchemaConfig & {
   customTimeSeriesTypesMap?: Record<string, GraphQLObjectType>
@@ -38,7 +38,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       ...queryConf.fields,
 
       time: {
-        type: Types.TimeInfo,
+        type: GraphQLDateTime,
         args: {},
         resolve: () => new Date().toISOString(),
       },
@@ -105,7 +105,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
     }
 
     config.query = new GraphQLObjectType(queryConf)
-
+    console.log("Built schema", config)
     super(config)
   }
 }

@@ -7,6 +7,7 @@ import {
 } from 'graphql'
 import { FetcherMainDomain } from '../../domain/index.js'
 import * as Types from './types.js'
+import { GraphQLDateTime } from "graphql-scalars";
 
 /**
  * Combines the fetcher's domain class with the fetcher's API.
@@ -19,7 +20,7 @@ export class FetcherAPISchema extends GraphQLSchema {
         name: 'Query',
         fields: {
           time: {
-            type: Types.TimeInfo,
+            type: GraphQLDateTime,
             args: {},
             resolve: () => new Date().toISOString(),
           },
