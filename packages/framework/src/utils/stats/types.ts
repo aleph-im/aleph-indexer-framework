@@ -1,5 +1,5 @@
 import { Interval } from 'luxon'
-import { StorageStream } from '@aleph-indexer/core'
+import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
@@ -37,7 +37,7 @@ export type TimeSeriesStatsConfig<I, O> = {
   timeFrames: TimeFrame[]
   getInputStream: (
     args: InputStreamFactoryFnArgs,
-  ) => Promise<StorageStream<string, I>>
+  ) => Promise<StorageValueStream<I>>
   aggregate: (args: TimeSeriesAggregatorFnArgs<I, O>) => O
   // getPrevValue?: (
   //   args: PrevValueFactoryFnArgs,

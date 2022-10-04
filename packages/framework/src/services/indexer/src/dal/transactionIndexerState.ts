@@ -63,7 +63,7 @@ export function createTransactionIndexerStateDAL(
   return new EntityStorage<TransactionIndexerState>({
     name: 'transaction_indexer_state',
     path,
-    primaryKey: [accountKey, startDateKey, endDateKey],
+    key: [accountKey, startDateKey, endDateKey],
     indexes: [
       {
         name: TransactionIndexerStateDALIndex.RequestState,

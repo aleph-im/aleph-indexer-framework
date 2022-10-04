@@ -21,13 +21,13 @@
     "luxon": "^2.0.2"
   },
   "devDependencies": {
-    "@types/compression": "^1.7.2",
-    "@types/level": "^6.0.0"
+    "@types/compression": "^1.7.2"
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.0.9",
     "buffer-layout": "^1.2.2",
-    "compression": "^1.7.4"
+    "compression": "^1.7.4",
+    "graphql": "^15.8.0"
   },
   "typedoc": {
     "entryPoint": "./index.ts",

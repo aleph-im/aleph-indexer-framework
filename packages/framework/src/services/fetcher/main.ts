@@ -1,3 +1,5 @@
+import { pipeline } from 'node:stream'
+import { DateTime } from 'luxon'
 import { ServiceBroker } from 'moleculer'
 import {
   AccountInfoFetcher,
@@ -7,7 +9,7 @@ import {
   RawTransactionV1,
   Signature,
   SolanaRPC,
-  StorageItem,
+  StorageEntry,
   Utils,
 } from '@aleph-indexer/core'
 import { SignatureFetcher } from './src/signatureFetcher.js'
@@ -34,8 +36,6 @@ import {
   FetcherOptionsStorage,
   RequestsDALIndex,
 } from './src/dal/requests.js'
-import { DateTime } from 'luxon'
-import { pipeline } from 'node:stream'
 import { FetcherMsClient } from './client.js'
 
 const { BufferExec, StreamBuffer, StreamMap, sleep } = Utils
@@ -313,7 +313,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return pipeline(
       signaturesQuery,
       new StreamMap(
-        ({ value }: StorageItem<string, Signature>) => value.signature,
+        ({ value }: StorageEntry<string, Signature>) => value.signature,
       ),
       new StreamBuffer(1000),
       new StreamMap(async (signatures: string[]) => {
@@ -367,7 +367,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return pipeline(
       signaturesQuery,
       new StreamMap(
-        ({ value }: StorageItem<string, Signature>) => value.signature,
+        ({ value }: StorageEntry<string, Signature>) => value.signature,
       ),
       new StreamBuffer(1000),
       new StreamMap(async (signatures: string[]) => {
@@ -508,9 +508,13 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected async loadExistingRequests(): Promise<void> {
     console.log(`🔗 Loading existing requests ...`)
 
-    const requests = await this.requestDAL.getAll()
+    const requests = await this.requestDAL.getAllValues()
 
-    for await (const { value } of requests) {
+    console.log(`🔗 Loading existing requests 222...`)
+
+    for await (const value of requests) {
+      console.log(`🔗 Loading existing requests 333 ...`)
+
       const { type, options } = value
 
       switch (type) {
@@ -538,9 +542,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     const requests = await this.requestDAL
       .useIndex(RequestsDALIndex.TypeAccount)
-      .getAllFromTo([type, account], [type, account])
+      .getAllValuesFromTo([type, account], [type, account])
 
-    for await (const { value } of requests) {
+    for await (const value of requests) {
       this.requestDAL.remove(value)
     }
   }

@@ -42,7 +42,7 @@ xdescribe('storage v2 integration tests', () => {
     const storage = new EntityStorage<MyEntity>({
       name: 'my-entity',
       path: 'data',
-      primaryKey: [{ get: (e) => e.name, length: 10 }],
+      key: [{ get: (e) => e.name, length: 10 }],
       indexes: [
         {
           name: 'market',

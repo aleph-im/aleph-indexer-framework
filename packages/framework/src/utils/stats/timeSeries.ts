@@ -62,7 +62,7 @@ export class TimeSeriesStats<I, O> {
   ): Promise<TimeSeries> {
     const { type } = this.config
 
-    const values = await this.timeSeriesDAL.getAllFromTo(
+    const values = await this.timeSeriesDAL.getAllValuesFromTo(
       [account, type, timeFrame, startDate],
       [account, type, timeFrame, endDate],
       { limit, reverse },
@@ -70,7 +70,7 @@ export class TimeSeriesStats<I, O> {
 
     const series = []
 
-    for await (const { value } of values) {
+    for await (const value of values) {
       value.data.type = type
 
       series.push({
@@ -214,7 +214,7 @@ export class TimeSeriesStats<I, O> {
                   startDate,
                   endDate: endDate - 1,
                 })
-              : await this.timeSeriesDAL.getAllFromTo(
+              : await this.timeSeriesDAL.getAllValuesFromTo(
                   [
                     account,
                     type,
@@ -231,7 +231,7 @@ export class TimeSeriesStats<I, O> {
 
           let data: O | undefined
 
-          for await (const { value } of inputs) {
+          for await (const value of inputs) {
             const input = 'data' in value ? value.data : value
             data = await aggregator({
               input,

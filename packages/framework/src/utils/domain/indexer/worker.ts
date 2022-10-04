@@ -56,7 +56,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     txs: StorageValueStream<ParsedTransactionV1>,
   ): Promise<void> {
     return promisify(pipeline)(
-      txs,
+      txs as any,
       new StreamFilter(this.filterTransaction.bind(this)),
       new StreamMap(this.indexTransaction.bind(this)),
       new StreamMap(this.mapTransaction.bind(this)),

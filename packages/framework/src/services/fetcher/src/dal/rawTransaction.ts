@@ -15,6 +15,6 @@ export function createRawTransactionDAL(path: string): RawTransactionStorage {
   return new EntityStorage<RawTransactionV1>({
     name: 'fetcher_raw_transactions',
     path,
-    primaryKey: [signatureKey],
+    key: [signatureKey],
   })
 }
