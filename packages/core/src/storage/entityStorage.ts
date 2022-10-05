@@ -53,21 +53,24 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   ) {
     const atomicOpMutex = new Mutex()
     const basePath = path.join(options.path, options.name)
-    const opts = { ...options, path: basePath }
-    const storage = new LevelStorage(opts)
+    const storage = new LevelStorage({ ...options, path: basePath })
 
+    const opts = { ...options, sublevel: 'main' }
     super(opts, atomicOpMutex, storage)
 
+    this.options = opts
     this.atomicOpMutex = atomicOpMutex
 
     const { indexes } = this.options
     if (!indexes) return
 
     for (const index of indexes) {
+      if (index.name === 'main')
+        throw new Error('entity index name is reserved')
+
       this.byIndex[index.name] = new EntityIndexStorage(
         {
-          name: index.name,
-          path: basePath,
+          ...options,
           sublevel: index.name,
           key: index.key,
           entityStore: this,
@@ -174,8 +177,8 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
     await Promise.all(
       entities.map(async (entity) => {
-        const [primaryKey] = super.getKeys(entity)
-        const oldEntity = await super.get(primaryKey)
+        const [primaryKey] = this.getKeys(entity)
+        const oldEntity = await this.get(primaryKey)
 
         if (op === EntityUpdateOp.Update && updateCheckFn) {
           op = await updateCheckFn(oldEntity, entity)

@@ -284,9 +284,10 @@ export class EntityIndexStorage<
         Array.isArray(key) ? (this.mapKeyChunks(key, true) as string[]) : key,
       )
 
-      const value = (await this.storage.get(innerKey, {
+      const value = await this.storage.get(innerKey, {
         sublevel: this.options.sublevel,
-      })) as Returned | undefined
+      })
+
       if (!value) return
 
       const item = await this.mapItem({ key: innerKey, value })
@@ -319,8 +320,7 @@ export class EntityIndexStorage<
       entities = Array.isArray(entities) ? entities : [entities]
 
       const items = entities.flatMap((entity) => {
-        const keys = this.getKeys(entity)
-        return keys.map(
+        return this.getKeys(entity).map(
           (key) =>
             ({ key, value: this.getValue(entity) } as StorageEntry<
               string,
@@ -543,10 +543,10 @@ export class EntityIndexStorage<
   }
 
   async backup(): Promise<void> {
-    return this.backup()
+    return this.storage.backup()
   }
 
   async restore(): Promise<boolean> {
-    return this.restore()
+    return this.storage.restore()
   }
 }
