@@ -194,11 +194,11 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     if (entries.length === 0) return
 
     const db = this.getDb(options?.sublevel)
+    const batch = options?.batch || db.batch()
 
-    const batch = db.batch()
     entries.forEach(({ key, value }) =>
       batch.put(this.composeKey(key), value, {
-        sublevel: db !== batch.db ? (db as any) : undefined,
+        sublevel: db as any,
       }),
     )
 
@@ -212,11 +212,11 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     if (keys.length === 0) return
 
     const db = this.getDb(options?.sublevel)
-
     const batch = options?.batch || db.batch()
+
     keys.forEach((key) =>
       batch.del(this.composeKey(key), {
-        sublevel: db !== batch.db ? (db as any) : undefined,
+        sublevel: db as any,
       }),
     )
 

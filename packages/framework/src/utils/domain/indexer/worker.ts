@@ -43,28 +43,19 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   abstract init(): Promise<void>
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
 
-  async onTxDateRange(args: TransactionDateRangeResponse): Promise<void> {
-    const { account, startDate, endDate } = args
+  async onTxDateRange(response: TransactionDateRangeResponse): Promise<void> {
+    const { account, startDate, endDate } = response
     console.log('Processing', account, startDate, endDate)
-    await this.processTransactions(args)
+    await this.processTransactions(response)
   }
 
   protected async processTransactions(
-    { account, startDate, endDate, txs }: TransactionDateRangeResponse
+    response: TransactionDateRangeResponse
   ): Promise<void> {
-    const mapContext = new StreamMap((tx: ParsedTransactionV1): ParsedTransactionContextV1 => {
-      return {
-        tx,
-        parserContext: {
-          account,
-          startDate: DateTime.fromMillis(startDate),
-          endDate: DateTime.fromMillis(endDate),
-        }
-      }
-    })
+    const { txs } = response
     return promisify(pipeline)(
       txs as any,
-      mapContext,
+      new StreamMap(this.mapTransactionContext(response).bind(this)),
       new StreamFilter(this.filterTransaction.bind(this)),
       new StreamMap(this.indexTransaction.bind(this)),
       new StreamMap(this.mapTransaction.bind(this)),
@@ -72,6 +63,20 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
       new StreamBuffer(1000),
       new StreamMap(this.indexInstructions.bind(this)),
     )
+  }
+
+  protected mapTransactionContext(args: TransactionDateRangeResponse) {
+    const { account, startDate, endDate } = args
+    return (tx: ParsedTransactionV1): ParsedTransactionContextV1 => {
+      return {
+        tx,
+        parserContext: {
+          account,
+          startDate,
+          endDate,
+        }
+      }
+    }
   }
 
   protected groupInstructions(
