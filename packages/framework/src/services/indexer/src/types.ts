@@ -32,10 +32,7 @@ export type AccountSlotRange = {
 /**
  * {@link AccountDateRange} bundled with fetched transactions.
  */
-export type TransactionDateRangeResponse = {
-  account: string
-  startDate: number
-  endDate: number
+export type TransactionDateRangeResponse = AccountDateRange & {
   txs: StorageValueStream<TransactionParsedResponse>
 }
 
