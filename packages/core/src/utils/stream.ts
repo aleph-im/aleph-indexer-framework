@@ -15,8 +15,8 @@ export async function* concatenateStreams<T>(
 }
 
 /**
- * @todo: what is this for?
- * @param sources
+ * Returns a generator for randomly selecting items from multiple streams.
+ * @param sources The streams to randomly select items from.
  */
 export async function* concatenateShuffledStreams<T>(
   sources: AsyncGenerator<T>[],
@@ -51,9 +51,9 @@ export async function* concatenateShuffledStreams<T>(
 }
 
 /**
- * @todo: what is this for?
- * @param sources
- * @param comparator
+ * Returns a generator for randomly selecting items from multiple streams, while maintaining the order of the items.
+ * @param sources The streams to randomly select items from.
+ * @param comparator The comparator function to use to order the items by.
  */
 export async function* concatenateShuffledSortedStreams<T>(
   sources: AsyncIterable<T>[],
@@ -102,7 +102,14 @@ export async function* concatenateShuffledSortedStreams<T>(
   }
 }
 
+/**
+ * A transform stream that maps the incoming data to a new value.
+ */
 export class StreamMap<I, O> extends Transform {
+  /**
+   * Creates a new stream map.
+   * @param mapFn Mapper function.
+   */
   constructor(protected mapFn: (item: I) => Promise<O> | O) {
     super({
       readableObjectMode: true,
@@ -129,7 +136,14 @@ export class StreamMap<I, O> extends Transform {
   }
 }
 
+/**
+ * A transform stream that filters the incoming data.
+ */
 export class StreamFilter<I> extends Transform {
+  /**
+   * Creates a new stream filter.
+   * @param filterFn Filter function. If the function returns true, the item will be passed through.
+   */
   constructor(protected filterFn: (item: I) => Promise<boolean> | boolean) {
     super({
       readableObjectMode: true,
