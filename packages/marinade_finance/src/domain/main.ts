@@ -10,9 +10,9 @@ import {
 import { AccountType, ParsedEvents } from '../utils/layouts/index.js'
 import {
   GlobalMarinadeFinanceStats,
-  MarinadeFinanceStats,
-  MarinadeFinanceProgramData,
-  MarinadeFinanceAccountInfo,
+  MarinadeFinanceAccountStats,
+  MarinadeFinanceAccountData,
+  MarinadeFinanceAccountInfo, TimeStats,
 } from '../types.js'
 import MarinadeFinanceDiscoverer from './discoverer/marinade_finance.js'
 
@@ -54,13 +54,13 @@ export default class MainDomain
 
   async getAccounts(
     includeStats?: boolean,
-  ): Promise<Record<string, MarinadeFinanceProgramData>> {
-    const accounts: Record<string, MarinadeFinanceProgramData> = {}
+  ): Promise<Record<string, MarinadeFinanceAccountData>> {
+    const accounts: Record<string, MarinadeFinanceAccountData> = {}
 
     await Promise.all(
       Array.from(this.accounts || []).map(async (account) => {
         const actual = await this.getAccount(account, includeStats)
-        accounts[account] = actual as MarinadeFinanceProgramData
+        accounts[account] = actual as MarinadeFinanceAccountData
       }),
     )
 
@@ -70,7 +70,7 @@ export default class MainDomain
   async getAccount(
     account: string,
     includeStats?: boolean,
-  ): Promise<MarinadeFinanceProgramData> {
+  ): Promise<MarinadeFinanceAccountData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'getAccountInfo',
@@ -81,7 +81,7 @@ export default class MainDomain
     const { stats } = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'getMarinadeFinanceStats',
-    })) as AccountStats<MarinadeFinanceStats>
+    })) as AccountStats<MarinadeFinanceAccountStats>
 
     return { info, stats }
   }
@@ -123,32 +123,43 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<GlobalMarinadeFinanceStats> {
-    const accountsStats = await this.getAccountStats(accountAddresses)
+    const accountsStats = await this.getAccountStats<TimeStats>(accountAddresses)
     const globalStats: GlobalMarinadeFinanceStats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
       if (!accountStats.stats) continue
 
-      const { totalRequests, totalUniqueAccessingPrograms, totalAccounts } =
+      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
         accountStats.stats
 
       const type = this.discoverer.getAccountType(accountStats.account)
 
-      globalStats.totalAccounts[type] += totalAccounts[type]
-      globalStats.totalRequests += totalRequests
-      globalStats.totalUniqueAccessingPrograms += totalUniqueAccessingPrograms
+      globalStats.totalAccounts[type]++
+      globalStats.totalAccesses += accesses
+      Object.entries(accessesByProgramId).forEach(([programId, accesses]) => {
+        globalStats.totalAccessesByProgramId[programId] =
+          (globalStats.totalAccessesByProgramId[programId] || 0) + accesses
+      })
+      globalStats.startTimestamp = Math.min(
+        globalStats.startTimestamp || Infinity, startTimestamp || Infinity,
+      )
+      globalStats.endTimestamp = Math.max(
+        globalStats.endTimestamp || 0, endTimestamp || 0,
+      )
     }
     return globalStats
   }
 
   getNewGlobalStats(): GlobalMarinadeFinanceStats {
     return {
-      totalRequests: 0,
+      totalAccesses: 0,
       totalAccounts: {
         [AccountType.State]: 0,
         [AccountType.TicketAccountData]: 0,
       },
-      totalUniqueAccessingPrograms: 0,
+      totalAccessesByProgramId: {},
+      startTimestamp: undefined,
+      endTimestamp: undefined,
     }
   }
 }

@@ -8,7 +8,7 @@ import {
   GraphQLInterfaceType,
   GraphQLUnionType,
 } from 'graphql'
-import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
+import { GraphQLBigNumber, GraphQLLong, GraphQLJSON } from '@aleph-indexer/core'
 import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
@@ -149,11 +149,13 @@ export const ValidatorSystem = new GraphQLObjectType({
 
 // look .src/domain/stats/statsAggregator & ./src/types.ts
 
-export const MarinadeFinanceInfo = new GraphQLObjectType({
+export const AccessTimeStats = new GraphQLObjectType({
   name: 'MarinadeFinanceInfo',
   fields: {
-    customProperties1: { type: new GraphQLNonNull(GraphQLInt) },
-    customProperties2: { type: new GraphQLNonNull(GraphQLInt) },
+    accesses: { type: new GraphQLNonNull(GraphQLInt) },
+    accessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
@@ -169,18 +171,20 @@ export const GlobalMarinadeFinanceStats = new GraphQLObjectType({
   name: 'GlobalMarinadeFinanceStats',
   fields: {
     totalAccounts: { type: new GraphQLNonNull(TotalAccounts) },
-    totalRequests: { type: new GraphQLNonNull(GraphQLInt) },
-    totalUniqueAccessingPrograms: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccesses: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
 export const MarinadeFinanceStats = new GraphQLObjectType({
   name: 'MarinadeFinanceStats',
   fields: {
-    last1h: { type: MarinadeFinanceInfo },
-    last24h: { type: MarinadeFinanceInfo },
-    last7d: { type: MarinadeFinanceInfo },
-    total: { type: MarinadeFinanceInfo },
+    last1h: { type: AccessTimeStats },
+    last24h: { type: AccessTimeStats },
+    last7d: { type: AccessTimeStats },
+    total: { type: AccessTimeStats },
   },
 })
 

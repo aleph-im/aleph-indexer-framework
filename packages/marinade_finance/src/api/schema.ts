@@ -26,7 +26,7 @@ export default class APISchema extends IndexerAPISchema {
       types: Types.types,
 
       customTimeSeriesTypesMap: {
-        marinadeFinanceInfo: Types.MarinadeFinanceInfo,
+        marinadeFinanceInfo: Types.AccessTimeStats,
       },
       customStatsType: Types.MarinadeFinanceStats,
 

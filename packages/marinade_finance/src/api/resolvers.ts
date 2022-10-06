@@ -7,7 +7,7 @@ import {
 import {
   GlobalMarinadeFinanceStats,
   MarinadeFinanceAccountInfo,
-  MarinadeFinanceProgramData,
+  MarinadeFinanceAccountData,
 } from '../types.js'
 
 export type AccountsFilters = {
@@ -101,7 +101,7 @@ export class APIResolvers {
     types,
     accounts,
     includeStats,
-  }: AccountsFilters): Promise<MarinadeFinanceProgramData[]> {
+  }: AccountsFilters): Promise<MarinadeFinanceAccountData[]> {
     const accountMap = await this.domain.getAccounts(includeStats)
 
     accounts =

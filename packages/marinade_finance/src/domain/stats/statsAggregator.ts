@@ -1,12 +1,12 @@
 import { DateTime } from 'luxon'
 import { TimeFrame, AccountAggregatorFnArgs } from '@aleph-indexer/framework'
-import { MarinadeFinanceStats, MarinadeFinanceInfo } from '../../types.js'
-import eventAggregator from './timeSeriesAggregator.js'
+import { MarinadeFinanceAccountStats } from '../../types.js'
+import accessAggregator from './timeSeriesAggregator.js'
 
 export class StatsAggregator {
   async aggregate(
     args: AccountAggregatorFnArgs,
-  ): Promise<MarinadeFinanceStats> {
+  ): Promise<MarinadeFinanceAccountStats> {
     const { now, account, timeSeriesDAL } = args
 
     const stats = this.getEmptyStats()
@@ -27,7 +27,7 @@ export class StatsAggregator {
 
     let last24h
     for await (const event of last24hEvents) {
-      last24h = eventAggregator.aggregate(event.data, last24h)
+      last24h = accessAggregator.aggregate(event.data, last24h)
     }
 
     const last7dEvents = await timeSeriesDAL.getAllValuesFromTo(
@@ -37,7 +37,7 @@ export class StatsAggregator {
 
     let last7d
     for await (const event of last7dEvents) {
-      last7d = eventAggregator.aggregate(event.data, last7d)
+      last7d = accessAggregator.aggregate(event.data, last7d)
     }
 
     const total = await timeSeriesDAL.get([account, type, TimeFrame.All, 0])
@@ -50,21 +50,14 @@ export class StatsAggregator {
     return stats
   }
 
-  protected getEmptyStats(): MarinadeFinanceStats {
+  protected getEmptyStats(): MarinadeFinanceAccountStats {
     return {
       requestsStatsByHour: {},
-      last1h: this.getEmptyMarinadeFinanceStats(),
-      last24h: this.getEmptyMarinadeFinanceStats(),
-      last7d: this.getEmptyMarinadeFinanceStats(),
-      total: this.getEmptyMarinadeFinanceStats(),
+      last1h: accessAggregator.getEmptyAccessTimeStats(),
+      last24h: accessAggregator.getEmptyAccessTimeStats(),
+      last7d: accessAggregator.getEmptyAccessTimeStats(),
+      total: accessAggregator.getEmptyAccessTimeStats(),
       accessingPrograms: new Set<string>(),
-    }
-  }
-  protected getEmptyMarinadeFinanceStats(): MarinadeFinanceInfo {
-    return {
-      customProperties1: 0,
-
-      customProperties2: 0,
     }
   }
 }
