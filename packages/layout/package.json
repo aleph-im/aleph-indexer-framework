@@ -17,10 +17,13 @@
   },
   "author": "ALEPH.im",
   "license": "ISC",
-  "devDependencies": {
-    "@types/bn.js": "^5.1.0"
+  "peerDependencies": {
+    "@project-serum/borsh": "0.2.5",
+    "bn.js": "^5.2.0",
+    "buffer-layout": "^1.2.2"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
     "@project-serum/borsh": "0.2.5",
     "bn.js": "^5.2.0",
     "buffer-layout": "^1.2.2"
