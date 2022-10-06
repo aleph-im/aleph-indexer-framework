@@ -27,7 +27,7 @@ npm run start your-indexer-name
 
 ## Running an indexer on Aleph
 
-###TODO
+We have some examples in [this repository](https://github.com/aleph-im/solana-indexer-library) with the concrete steps to deploy an Indexer inside Aleph.im network.
 
 ## Architecture
 The framework provides three services:
