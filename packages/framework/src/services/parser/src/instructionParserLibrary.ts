@@ -2,6 +2,7 @@ import { ParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
 import { DefinedParser } from './parser.js'
 import { InstructionParser } from './instructionParser.js'
+import { LayoutImplementation } from './layout/types.js'
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
@@ -12,6 +13,10 @@ export class InstructionParserLibrary extends DefinedParser<
   RawInstruction,
   ParsedInstructionV1
 > {
+  constructor(protected layoutPath?: string) {
+    super()
+  }
+
   protected instructionParsers: Record<
     string,
     DefinedParser<RawInstruction, RawInstruction | ParsedInstructionV1>
@@ -47,7 +52,14 @@ export class InstructionParserLibrary extends DefinedParser<
     let parser = this.instructionParsers[programId]
     if (parser) return parser
 
-    const implementation = await LayoutFactory.getSingleton(programId)
+    let implementation: LayoutImplementation
+    implementation = await LayoutFactory.getSingleton(programId)
+
+    if (!implementation) {
+      const customLayoutsMap = await this.getCustomLayoutsMap()
+      implementation = customLayoutsMap[programId]
+    }
+
     if (!implementation) return
 
     parser = new InstructionParser(
@@ -61,5 +73,13 @@ export class InstructionParserLibrary extends DefinedParser<
     this.instructionParsers[programId] = parser
 
     return parser
+  }
+
+  protected async getCustomLayoutsMap(): Promise<
+    Record<string, LayoutImplementation>
+  > {
+    if (!this.layoutPath) return {}
+    const customLayoutsMap = (await import(this.layoutPath)).default
+    return customLayoutsMap || {}
   }
 }

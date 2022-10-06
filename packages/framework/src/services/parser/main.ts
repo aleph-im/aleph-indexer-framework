@@ -16,7 +16,10 @@ import { MsIds, MsMainWithEvents } from '../common.js'
 export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
   constructor(
     protected broker: ServiceBroker,
-    protected instructionParserLibrary: InstructionParserLibrary = new InstructionParserLibrary(),
+    protected layoutPath?: string,
+    protected instructionParserLibrary: InstructionParserLibrary = new InstructionParserLibrary(
+      layoutPath,
+    ),
     protected accountParserLibrary: AccountParserLibrary = new AccountParserLibrary(),
     protected transactionParser: TransactionParser = new TransactionParser(
       instructionParserLibrary,

@@ -10,7 +10,7 @@ import { WorkerInfo } from '../utils/workers.js'
 initThreadContext()
 
 async function main() {
-  const { name, transport, transportConfig, channels } =
+  const { name, transport, transportConfig, channels, layoutPath } =
     workerData as WorkerInfo
 
   const broker = getMoleculerBroker(name, transport, {
@@ -18,7 +18,7 @@ async function main() {
     transportConfig,
   })
 
-  ParserMs.mainFactory = () => new ParserMsMain(broker)
+  ParserMs.mainFactory = () => new ParserMsMain(broker, layoutPath)
 
   broker.createService(ParserMs)
   await broker.start()
