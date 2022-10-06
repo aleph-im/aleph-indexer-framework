@@ -1,9 +1,11 @@
 import MainDomain from '../domain/main.js'
 import {
   AccountType,
-  GlobalMarinadeFinanceStats,
   ParsedEvents,
   InstructionType,
+} from '../utils/layouts/index.js'
+import {
+  GlobalMarinadeFinanceStats,
   MarinadeFinanceAccountInfo,
   MarinadeFinanceProgramData,
 } from '../types.js'

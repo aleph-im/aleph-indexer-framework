@@ -1,5 +1,3 @@
-export * from './utils/layouts/index.js'
-
 import { AccountStats } from '@aleph-indexer/framework'
 import {
   AccountType,

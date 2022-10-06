@@ -1,5 +1,4 @@
 import { MARINADE_FINANCE_PROGRAM_ID } from '../../constants.js'
-import { LayoutImplementation } from '@aleph-indexer/framework'
 import { ACCOUNTS_DATA_LAYOUT } from './accounts.js'
 import {
   InstructionType,
@@ -17,5 +16,5 @@ export default {
     accountDataLayoutMap: ACCOUNTS_DATA_LAYOUT,
     eventType: InstructionType,
     getInstructionType,
-  } as LayoutImplementation,
+  },
 }

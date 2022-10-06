@@ -2,7 +2,8 @@ import {
   MARINADE_FINANCE_PROGRAM_ID,
   MARINADE_FINANCE_PROGRAM_ID_PK,
 } from '../../constants.js'
-import { AccountType, MarinadeFinanceAccountInfo } from '../../types.js'
+import { AccountType } from '../../utils/layouts/index.js'
+import { MarinadeFinanceAccountInfo } from '../../types.js'
 import {
   ACCOUNT_DISCRIMINATOR,
   ACCOUNTS_DATA_LAYOUT,

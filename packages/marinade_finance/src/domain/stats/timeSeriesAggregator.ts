@@ -1,13 +1,15 @@
 import {
-  ParsedEvents,
   MarinadeFinanceInfo,
   EventType1Info,
   EventType2Info,
+} from '../../types.js'
+import {
+  ParsedEvents,
   InitializeEvent,
   ChangeAuthorityEvent,
   AddValidatorEvent,
   RemoveValidatorEvent,
-} from '../../types.js'
+} from '../../utils/layouts/index.js'
 import {
   collectionEvent1Whitelist,
   collectionEvent2Whitelist,

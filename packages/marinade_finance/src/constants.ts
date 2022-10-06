@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js'
 import { config } from '@aleph-indexer/core'
-import { InstructionType } from './types.js'
+import { InstructionType } from './utils/layouts/index.js';
 
 export enum ProgramName {
   MarinadeFinance = 'marinade_finance',

@@ -7,7 +7,8 @@ import {
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
-import { ParsedEvents, MarinadeFinanceInfo } from '../../types.js'
+import { ParsedEvents } from '../../utils/layouts/index.js'
+import { MarinadeFinanceInfo } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import eventAggregator from './timeSeriesAggregator.js'
 

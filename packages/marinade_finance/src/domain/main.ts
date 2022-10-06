@@ -8,12 +8,14 @@ import {
   AccountStats,
 } from '@aleph-indexer/framework'
 import {
+  AccountType,
+  ParsedEvents,
+} from '../utils/layouts/index.js'
+import {
   GlobalMarinadeFinanceStats,
   MarinadeFinanceStats,
   MarinadeFinanceProgramData,
-  AccountType,
   MarinadeFinanceAccountInfo,
-  ParsedEvents,
 } from '../types.js'
 import MarinadeFinanceDiscoverer from './discoverer/marinade_finance.js'
 

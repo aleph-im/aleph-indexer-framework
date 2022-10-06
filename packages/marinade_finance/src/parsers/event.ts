@@ -26,7 +26,7 @@ import {
   EmergencyUnstakeEvent,
   PartialUnstakeEvent,
   MergeStakesEvent,
-} from '../types.js'
+} from '../utils/layouts/index.js'
 
 export class EventParser {
   parse(ixCtx: InstructionContextV1): ParsedEvents {

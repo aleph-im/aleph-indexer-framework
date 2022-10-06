@@ -9,7 +9,7 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
-import { InstructionType } from '../types.js'
+import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 
@@ -19,6 +19,16 @@ export const Fee = new GraphQLObjectType({
   name: 'Fee',
   fields: {
     basisPoints: { type: new GraphQLNonNull(GraphQLInt) },
+  },
+})
+
+export const LiqPoolInitializeData = new GraphQLObjectType({
+  name: 'LiqPoolInitializeData',
+  fields: {
+    lpLiquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    lpMaxFee: { type: new GraphQLNonNull(Fee) },
+    lpMinFee: { type: new GraphQLNonNull(Fee) },
+    lpTreasuryCut: { type: new GraphQLNonNull(Fee) },
   },
 })
 
@@ -33,16 +43,6 @@ export const InitializeData = new GraphQLObjectType({
     additionalStakeRecordSpace: { type: new GraphQLNonNull(GraphQLInt) },
     additionalValidatorRecordSpace: { type: new GraphQLNonNull(GraphQLInt) },
     slotsForStakeDelta: { type: new GraphQLNonNull(GraphQLBigNumber) },
-  },
-})
-
-export const LiqPoolInitializeData = new GraphQLObjectType({
-  name: 'LiqPoolInitializeData',
-  fields: {
-    lpLiquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    lpMaxFee: { type: new GraphQLNonNull(Fee) },
-    lpMinFee: { type: new GraphQLNonNull(Fee) },
-    lpTreasuryCut: { type: new GraphQLNonNull(Fee) },
   },
 })
 
