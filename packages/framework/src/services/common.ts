@@ -147,6 +147,17 @@ export class MsClientWithEvents<Event extends string = string> {
     return this
   }
 
+  off(eventId: Event, handler: (payload: any) => any): this {
+    if (!this.initService)
+      throw new Error(`Events are disabled on ${this.id} client`)
+
+    console.log(`Unregistering event on ${this.id} (${eventId})`)
+
+    this._self._emitter.off(eventId, handler)
+
+    return this
+  }
+
   private _multiplexedHandler(ctx: EventPayload<Event>) {
     this._self._emitter.emit(ctx.eventId, ctx.payload)
   }

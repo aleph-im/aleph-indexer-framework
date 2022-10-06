@@ -99,10 +99,13 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    * First fetches pending transactions and parses them, then loads existing
    * requests to the service.
    */
-  async init(): Promise<void> {
-    await this.pendingTransactions.init()
-    this.pendingTransactions.run().catch(() => 'ignore')
+  async start(): Promise<void> {
+    this.pendingTransactions.start().catch(() => 'ignore')
     await this.loadExistingRequests()
+  }
+
+  async stop(): Promise<void> {
+    this.pendingTransactions.stop().catch(() => 'ignore')
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
@@ -507,14 +510,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
   protected async loadExistingRequests(): Promise<void> {
     console.log(`🔗 Loading existing requests ...`)
-
     const requests = await this.requestDAL.getAllValues()
 
-    console.log(`🔗 Loading existing requests 222...`)
-
     for await (const value of requests) {
-      console.log(`🔗 Loading existing requests 333 ...`)
-
       const { type, options } = value
 
       switch (type) {

@@ -98,6 +98,10 @@ export class JobRunner {
     }
   }
 
+  async start(): Promise<void> {
+    return this.run()
+  }
+
   async run(): Promise<void> {
     if (this._isRunning) return
     this._isRunning = true

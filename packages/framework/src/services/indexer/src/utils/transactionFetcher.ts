@@ -77,20 +77,24 @@ export class TransactionFetcher {
     protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
     protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
-  ) {}
-
-  async init(): Promise<void> {
+  ) {
     this.checkPendingRetriesJob = new JobRunner({
       name: `indexer-transaction-pending-retries`,
       interval: 1000 * 60 * 10,
       intervalFn: this.handlePendingRetries.bind(this),
     })
 
-    this.checkPendingRetriesJob.run().catch(() => 'ignore')
-
     this.checkCompletionJob = new DebouncedJob<void>(
       this.checkAllRequestCompletion.bind(this),
     )
+  }
+
+  async start(): Promise<void> {
+    this.checkPendingRetriesJob.start().catch(() => 'ignore')
+  }
+
+  async stop(): Promise<void> {
+    this.checkPendingRetriesJob.stop().catch(() => 'ignore')
   }
 
   async fetchTransactionsBySignature(signatures: string[]): Promise<number> {
@@ -125,6 +129,10 @@ export class TransactionFetcher {
 
   onResponse(handler: (nonce: number) => void): void {
     this.events.on('response', handler)
+  }
+
+  offResponse(handler: (nonce: number) => void): void {
+    this.events.off('response', handler)
   }
 
   async getRequests(
