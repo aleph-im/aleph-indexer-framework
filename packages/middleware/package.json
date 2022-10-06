@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/middleware",
-  "version": "1.0.12",
+  "version": "1.0.14",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -18,18 +18,18 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "peerDependencies": {
-    "luxon": "^3.0.4",
+    "buffer-layout": "^1.2.2",
     "graphql": "^15.8.0",
-    "buffer-layout": "^1.2.2"
+    "luxon": "^3.0.4"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",
-    "luxon": "^3.0.4",
+    "buffer-layout": "^1.2.2",
     "graphql": "^15.8.0",
-    "buffer-layout": "^1.2.2"
+    "luxon": "^3.0.4"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.12",
+    "@aleph-indexer/core": "^1.0.14",
     "compression": "^1.7.4"
   },
   "typedoc": {

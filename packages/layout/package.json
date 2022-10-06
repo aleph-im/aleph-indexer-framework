@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/layout",
-  "version": "1.0.10",
+  "version": "1.0.14",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -23,8 +23,8 @@
     "buffer-layout": "^1.2.2"
   },
   "devDependencies": {
-    "@types/bn.js": "^5.1.0",
     "@project-serum/borsh": "0.2.5",
+    "@types/bn.js": "^5.1.0",
     "bn.js": "^5.2.0",
     "buffer-layout": "^1.2.2"
   },
