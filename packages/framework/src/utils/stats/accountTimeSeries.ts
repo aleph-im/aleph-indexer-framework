@@ -122,6 +122,7 @@ export class AccountTimeSeriesStatsManager {
     const { account, aggregate } = this.config
     const { timeSeriesDAL } = this
 
+    // @todo: do some real stats aggregation
     if (aggregate) {
       const stats = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }

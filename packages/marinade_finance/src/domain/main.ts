@@ -7,10 +7,7 @@ import {
   IndexerMainDomainContext,
   AccountStats,
 } from '@aleph-indexer/framework'
-import {
-  AccountType,
-  ParsedEvents,
-} from '../utils/layouts/index.js'
+import { AccountType, ParsedEvents } from '../utils/layouts/index.js'
 import {
   GlobalMarinadeFinanceStats,
   MarinadeFinanceStats,

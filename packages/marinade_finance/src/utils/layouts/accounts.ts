@@ -4,8 +4,6 @@ import {
   ticketAccountDataDiscriminator,
   ticketAccountDataBeet,
 } from './solita/index.js'
-import { ParsedAccounts, ParsedAccountsData } from './solita/index.js'
-import { BeetStruct, FixableBeetStruct } from '@metaplex-foundation/beet'
 
 export enum AccountType {
   State = 'State',

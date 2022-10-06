@@ -10,7 +10,7 @@ async function main() {
   const workerDomainPath = path.join(__dirname, './src/domain/worker.js')
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
-  const layoutPath = path.join(__dirname, './src/utils/layouts/index.js')
+  const layoutPath = path.join(__dirname, './src/utils/layouts/layout.js')
 
   const instances = Number(config.INDEXER_INSTANCES || 2)
   const apiPort = Number(config.INDEXER_API_PORT || 8080)
