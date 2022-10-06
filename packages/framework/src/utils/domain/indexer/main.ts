@@ -161,11 +161,11 @@ export class IndexerMainDomain {
    * @param type The type of time-series to get.
    * @param filters The transformations and clipping to apply to the time-series.
    */
-  async getAccountTimeSeriesStats(
+  async getAccountTimeSeriesStats<V>(
     accounts: string[] = [],
     type: string,
     filters: AccountStatsFilters,
-  ): Promise<AccountTimeSeriesStats[]> {
+  ): Promise<AccountTimeSeriesStats<V>[]> {
     this.checkStats()
 
     accounts =
@@ -177,7 +177,7 @@ export class IndexerMainDomain {
           account,
           method: 'getTimeSeriesStats',
           args: [type, filters],
-        })) as AccountTimeSeriesStats
+        })) as AccountTimeSeriesStats<V>
 
         return stats
       }),
@@ -188,7 +188,7 @@ export class IndexerMainDomain {
    * Returns the global stats for the given accounts.
    * @param accounts The accounts to get the summary from.
    */
-  async getAccountStats(accounts: string[] = []): Promise<AccountStats[]> {
+  async getAccountStats<V>(accounts: string[] = []): Promise<AccountStats<V>[]> {
     this.checkStats()
 
     accounts =
@@ -200,7 +200,7 @@ export class IndexerMainDomain {
           account,
           method: 'getStats',
           args: [],
-        })) as AccountStats
+        })) as AccountStats<V>
 
         return stats
       }),
