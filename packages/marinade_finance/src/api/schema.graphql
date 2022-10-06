@@ -1,0 +1,891 @@
+scalar Datetime
+scalar PublicKey
+scalar GraphQLLong
+scalar Null
+
+schema {
+	query: Query
+}
+
+type Query {
+	instructionHistory(account: String, types: [InstructionType], startDate: Int, endDate: Int, limit: Int, skip: Int, reverse: Boolean): [Instruction]
+	accounts(type: AccountType, accounts: String): [Account]
+	globalStats(type: AccountType, accounts: String): GlobalStats
+}
+
+type AccessStats {
+	requests1h: Int
+	requests24h: Int
+	requests7d: Int
+	requestsTotal: Int
+	accessingPrograms: [String]
+}
+
+type GlobalStats {
+	totalAccounts: TotalAccounts
+	totalRequests: GraphQLLong
+	totalUniqueAccessingPrograms: Int
+}
+
+interface Account {
+	name: String
+	type: AccountType
+	address: String
+	stats: AccessStats
+	data: AccountsData
+}
+
+type TotalAccounts {
+	State: Int
+	TicketAccountData: Int
+}
+
+union Accounts = State | TicketAccountData 
+union AccountsData = State_Data | TicketAccountData_Data 
+union Instructions = Initialize | ChangeAuthority | AddValidator | RemoveValidator | SetValidatorScore | ConfigValidatorSystem | Deposit | DepositStakeAccount | LiquidUnstake | AddLiquidity | RemoveLiquidity | SetLpParams | ConfigMarinade | OrderUnstake | Claim | StakeReserve | UpdateActive | UpdateDeactivated | DeactivateStake | EmergencyUnstake | PartialUnstake | MergeStakes 
+union InstructionAccounts = Initialize_Accounts | ChangeAuthority_Accounts | AddValidator_Accounts | RemoveValidator_Accounts | SetValidatorScore_Accounts | ConfigValidatorSystem_Accounts | Deposit_Accounts | DepositStakeAccount_Accounts | LiquidUnstake_Accounts | AddLiquidity_Accounts | RemoveLiquidity_Accounts | SetLpParams_Accounts | ConfigMarinade_Accounts | OrderUnstake_Accounts | Claim_Accounts | StakeReserve_Accounts | UpdateActive_Accounts | UpdateDeactivated_Accounts | DeactivateStake_Accounts | EmergencyUnstake_Accounts | PartialUnstake_Accounts | MergeStakes_Accounts 
+union InstructionArgs = Initialize_Args | ChangeAuthority_Args | AddValidator_Args | RemoveValidator_Args | SetValidatorScore_Args | ConfigValidatorSystem_Args | Deposit_Args | DepositStakeAccount_Args | LiquidUnstake_Args | AddLiquidity_Args | RemoveLiquidity_Args | SetLpParams_Args | ConfigMarinade_Args | OrderUnstake_Args | StakeReserve_Args | UpdateActive_Args | UpdateDeactivated_Args | DeactivateStake_Args | EmergencyUnstake_Args | PartialUnstake_Args | MergeStakes_Args 
+
+enum AccountType {
+	State,
+	TicketAccountData,
+}
+
+interface Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+}
+
+enum InstructionType {
+	Initialize,
+	ChangeAuthority,
+	AddValidator,
+	RemoveValidator,
+	SetValidatorScore,
+	ConfigValidatorSystem,
+	Deposit,
+	DepositStakeAccount,
+	LiquidUnstake,
+	AddLiquidity,
+	RemoveLiquidity,
+	SetLpParams,
+	ConfigMarinade,
+	OrderUnstake,
+	Claim,
+	StakeReserve,
+	UpdateActive,
+	UpdateDeactivated,
+	DeactivateStake,
+	EmergencyUnstake,
+	PartialUnstake,
+	MergeStakes,
+}
+
+      
+type InstructionStats {
+	initialize: Int,
+	changeAuthority: Int,
+	addValidator: Int,
+	removeValidator: Int,
+	setValidatorScore: Int,
+	configValidatorSystem: Int,
+	deposit: Int,
+	depositStakeAccount: Int,
+	liquidUnstake: Int,
+	addLiquidity: Int,
+	removeLiquidity: Int,
+	setLpParams: Int,
+	configMarinade: Int,
+	orderUnstake: Int,
+	claim: Int,
+	stakeReserve: Int,
+	updateActive: Int,
+	updateDeactivated: Int,
+	deactivateStake: Int,
+	emergencyUnstake: Int,
+	partialUnstake: Int,
+	mergeStakes: Int,
+}
+
+
+
+#*--------ACCOUNTS--------*#
+
+
+type State implements Account {
+	name: String
+	type: AccountType
+	address: String
+	stats: AccessStats
+	data: State_Data
+}
+
+type State_Data {
+	msolMint: PublicKey
+	adminAuthority: PublicKey
+	operationalSolAccount: PublicKey
+	treasuryMsolAccount: PublicKey
+	reserveBumpSeed: Int
+	msolMintAuthorityBumpSeed: Int
+	rentExemptForTokenAcc: GraphQLLong
+	rewardFee: Fee
+	stakeSystem: StakeSystem
+	validatorSystem: ValidatorSystem
+	liqPool: LiqPool
+	availableReserveBalance: GraphQLLong
+	msolSupply: GraphQLLong
+	msolPrice: GraphQLLong
+	circulatingTicketCount: GraphQLLong
+	circulatingTicketBalance: GraphQLLong
+	lentFromReserve: GraphQLLong
+	minDeposit: GraphQLLong
+	minWithdraw: GraphQLLong
+	stakingSolCap: GraphQLLong
+	emergencyCoolingDown: GraphQLLong
+}
+
+type TicketAccountData implements Account {
+	name: String
+	type: AccountType
+	address: String
+	stats: AccessStats
+	data: TicketAccountData_Data
+}
+
+type TicketAccountData_Data {
+	stateAddress: PublicKey
+	beneficiary: PublicKey
+	lamportsAmount: GraphQLLong
+	createdEpoch: GraphQLLong
+}
+
+
+#*--------INSTRUCTIONS--------*#
+
+
+
+type Initialize_Accounts {
+	creatorAuthority: PublicKey
+	state: PublicKey
+	reservePda: PublicKey
+	stakeList: PublicKey
+	validatorList: PublicKey
+	msolMint: PublicKey
+	operationalSolAccount: PublicKey
+	lpMintLiqPool: PublicKey
+	solLegPdaLiqPool: PublicKey
+	msolLegLiqPool: PublicKey
+	treasuryMsolAccount: PublicKey
+	clock: PublicKey
+}
+
+type Initialize_Args {
+	data: InitializeData
+}
+
+type Initialize implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: Initialize_Accounts,
+	args: Initialize_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type ChangeAuthority_Accounts {
+	state: PublicKey
+	adminAuthority: PublicKey
+}
+
+type ChangeAuthority_Args {
+	data: ChangeAuthorityData
+}
+
+type ChangeAuthority implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: ChangeAuthority_Accounts,
+	args: ChangeAuthority_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type AddValidator_Accounts {
+	state: PublicKey
+	managerAuthority: PublicKey
+	validatorList: PublicKey
+	validatorVote: PublicKey
+	duplicationFlag: PublicKey
+	rentPayer: PublicKey
+	clock: PublicKey
+}
+
+type AddValidator_Args {
+	score: Int
+}
+
+type AddValidator implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: AddValidator_Accounts,
+	args: AddValidator_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type RemoveValidator_Accounts {
+	state: PublicKey
+	managerAuthority: PublicKey
+	validatorList: PublicKey
+	duplicationFlag: PublicKey
+	operationalSolAccount: PublicKey
+}
+
+type RemoveValidator_Args {
+	index: Int,
+  validatorVote: PublicKey
+}
+
+type RemoveValidator implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: RemoveValidator_Accounts,
+	args: RemoveValidator_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type SetValidatorScore_Accounts {
+	state: PublicKey
+	managerAuthority: PublicKey
+	validatorList: PublicKey
+}
+
+type SetValidatorScore_Args {
+	index: Int,
+  validatorVote: PublicKey,
+  score: Int
+}
+
+type SetValidatorScore implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: SetValidatorScore_Accounts,
+	args: SetValidatorScore_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type ConfigValidatorSystem_Accounts {
+	state: PublicKey
+	managerAuthority: PublicKey
+}
+
+type ConfigValidatorSystem_Args {
+	extraRuns: Int
+}
+
+type ConfigValidatorSystem implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: ConfigValidatorSystem_Accounts,
+	args: ConfigValidatorSystem_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type Deposit_Accounts {
+	state: PublicKey
+	msolMint: PublicKey
+	liqPoolSolLegPda: PublicKey
+	liqPoolMsolLeg: PublicKey
+	liqPoolMsolLegAuthority: PublicKey
+	reservePda: PublicKey
+	transferFrom: PublicKey
+	mintTo: PublicKey
+	msolMintAuthority: PublicKey
+}
+
+type Deposit_Args {
+	lamports: GraphQLLong
+}
+
+type Deposit implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: Deposit_Accounts,
+	args: Deposit_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type DepositStakeAccount_Accounts {
+	state: PublicKey
+	validatorList: PublicKey
+	stakeList: PublicKey
+	stakeAccount: PublicKey
+	stakeAuthority: PublicKey
+	duplicationFlag: PublicKey
+	rentPayer: PublicKey
+	msolMint: PublicKey
+	mintTo: PublicKey
+	msolMintAuthority: PublicKey
+	clock: PublicKey
+	stakeProgram: PublicKey
+}
+
+type DepositStakeAccount_Args {
+	validatorIndex: Int
+}
+
+type DepositStakeAccount implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: DepositStakeAccount_Accounts,
+	args: DepositStakeAccount_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type LiquidUnstake_Accounts {
+	state: PublicKey
+	msolMint: PublicKey
+	liqPoolSolLegPda: PublicKey
+	liqPoolMsolLeg: PublicKey
+	treasuryMsolAccount: PublicKey
+	getMsolFrom: PublicKey
+	getMsolFromAuthority: PublicKey
+	transferSolTo: PublicKey
+}
+
+type LiquidUnstake_Args {
+	msolAmount: GraphQLLong
+}
+
+type LiquidUnstake implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: LiquidUnstake_Accounts,
+	args: LiquidUnstake_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type AddLiquidity_Accounts {
+	state: PublicKey
+	lpMint: PublicKey
+	lpMintAuthority: PublicKey
+	liqPoolMsolLeg: PublicKey
+	liqPoolSolLegPda: PublicKey
+	transferFrom: PublicKey
+	mintTo: PublicKey
+}
+
+type AddLiquidity_Args {
+	lamports: GraphQLLong
+}
+
+type AddLiquidity implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: AddLiquidity_Accounts,
+	args: AddLiquidity_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type RemoveLiquidity_Accounts {
+	state: PublicKey
+	lpMint: PublicKey
+	burnFrom: PublicKey
+	burnFromAuthority: PublicKey
+	transferSolTo: PublicKey
+	transferMsolTo: PublicKey
+	liqPoolSolLegPda: PublicKey
+	liqPoolMsolLeg: PublicKey
+	liqPoolMsolLegAuthority: PublicKey
+}
+
+type RemoveLiquidity_Args {
+	tokens: GraphQLLong
+}
+
+type RemoveLiquidity implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: RemoveLiquidity_Accounts,
+	args: RemoveLiquidity_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type SetLpParams_Accounts {
+	state: PublicKey
+	adminAuthority: PublicKey
+}
+
+type SetLpParams_Args {
+	minFee: Fee,
+  maxFee: Fee,
+  liquidityTarget: GraphQLLong
+}
+
+type SetLpParams implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: SetLpParams_Accounts,
+	args: SetLpParams_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type ConfigMarinade_Accounts {
+	state: PublicKey
+	adminAuthority: PublicKey
+}
+
+type ConfigMarinade_Args {
+	params: ConfigMarinadeParams
+}
+
+type ConfigMarinade implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: ConfigMarinade_Accounts,
+	args: ConfigMarinade_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type OrderUnstake_Accounts {
+	state: PublicKey
+	msolMint: PublicKey
+	burnMsolFrom: PublicKey
+	burnMsolAuthority: PublicKey
+	newTicketAccount: PublicKey
+	clock: PublicKey
+}
+
+type OrderUnstake_Args {
+	msolAmount: GraphQLLong
+}
+
+type OrderUnstake implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: OrderUnstake_Accounts,
+	args: OrderUnstake_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type Claim_Accounts {
+	state: PublicKey
+	reservePda: PublicKey
+	ticketAccount: PublicKey
+	transferSolTo: PublicKey
+	clock: PublicKey
+}
+
+
+
+type Claim implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: Claim_Accounts,
+	args: Null
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type StakeReserve_Accounts {
+	state: PublicKey
+	validatorList: PublicKey
+	stakeList: PublicKey
+	validatorVote: PublicKey
+	reservePda: PublicKey
+	stakeAccount: PublicKey
+	stakeDepositAuthority: PublicKey
+	clock: PublicKey
+	epochSchedule: PublicKey
+	stakeHistory: PublicKey
+	stakeConfig: PublicKey
+	stakeProgram: PublicKey
+}
+
+type StakeReserve_Args {
+	validatorIndex: Int
+}
+
+type StakeReserve implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: StakeReserve_Accounts,
+	args: StakeReserve_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type UpdateActive_Accounts {
+	stateCommon: PublicKey
+	stakeListCommon: PublicKey
+	stakeAccountCommon: PublicKey
+	stakeWithdrawAuthorityCommon: PublicKey
+	reservePdaCommon: PublicKey
+	msolMintCommon: PublicKey
+	msolMintAuthorityCommon: PublicKey
+	treasuryMsolAccountCommon: PublicKey
+	clockCommon: PublicKey
+	stakeHistoryCommon: PublicKey
+	stakeProgramCommon: PublicKey
+	tokenProgramCommon: PublicKey
+	validatorList: PublicKey
+}
+
+type UpdateActive_Args {
+	stakeIndex: Int,
+  validatorIndex: Int
+}
+
+type UpdateActive implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: UpdateActive_Accounts,
+	args: UpdateActive_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type UpdateDeactivated_Accounts {
+	stateCommon: PublicKey
+	stakeListCommon: PublicKey
+	stakeAccountCommon: PublicKey
+	stakeWithdrawAuthorityCommon: PublicKey
+	reservePdaCommon: PublicKey
+	msolMintCommon: PublicKey
+	msolMintAuthorityCommon: PublicKey
+	treasuryMsolAccountCommon: PublicKey
+	clockCommon: PublicKey
+	stakeHistoryCommon: PublicKey
+	stakeProgramCommon: PublicKey
+	tokenProgramCommon: PublicKey
+	operationalSolAccount: PublicKey
+}
+
+type UpdateDeactivated_Args {
+	stakeIndex: Int
+}
+
+type UpdateDeactivated implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: UpdateDeactivated_Accounts,
+	args: UpdateDeactivated_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type DeactivateStake_Accounts {
+	state: PublicKey
+	reservePda: PublicKey
+	validatorList: PublicKey
+	stakeList: PublicKey
+	stakeAccount: PublicKey
+	stakeDepositAuthority: PublicKey
+	splitStakeAccount: PublicKey
+	splitStakeRentPayer: PublicKey
+	clock: PublicKey
+	epochSchedule: PublicKey
+	stakeHistory: PublicKey
+	stakeProgram: PublicKey
+}
+
+type DeactivateStake_Args {
+	stakeIndex: Int,
+  validatorIndex: Int
+}
+
+type DeactivateStake implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: DeactivateStake_Accounts,
+	args: DeactivateStake_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type EmergencyUnstake_Accounts {
+	state: PublicKey
+	validatorManagerAuthority: PublicKey
+	validatorList: PublicKey
+	stakeList: PublicKey
+	stakeAccount: PublicKey
+	stakeDepositAuthority: PublicKey
+	clock: PublicKey
+	stakeProgram: PublicKey
+}
+
+type EmergencyUnstake_Args {
+	stakeIndex: Int,
+  validatorIndex: Int
+}
+
+type EmergencyUnstake implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: EmergencyUnstake_Accounts,
+	args: EmergencyUnstake_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type PartialUnstake_Accounts {
+	state: PublicKey
+	validatorManagerAuthority: PublicKey
+	validatorList: PublicKey
+	stakeList: PublicKey
+	stakeAccount: PublicKey
+	stakeDepositAuthority: PublicKey
+	reservePda: PublicKey
+	splitStakeAccount: PublicKey
+	splitStakeRentPayer: PublicKey
+	clock: PublicKey
+	stakeHistory: PublicKey
+	stakeProgram: PublicKey
+}
+
+type PartialUnstake_Args {
+	stakeIndex: Int,
+  validatorIndex: Int,
+  desiredUnstakeAmount: GraphQLLong
+}
+
+type PartialUnstake implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: PartialUnstake_Accounts,
+	args: PartialUnstake_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+type MergeStakes_Accounts {
+	state: PublicKey
+	stakeList: PublicKey
+	validatorList: PublicKey
+	destinationStake: PublicKey
+	sourceStake: PublicKey
+	stakeDepositAuthority: PublicKey
+	stakeWithdrawAuthority: PublicKey
+	operationalSolAccount: PublicKey
+	clock: PublicKey
+	stakeHistory: PublicKey
+	stakeProgram: PublicKey
+}
+
+type MergeStakes_Args {
+	destinationStakeIndex: Int,
+  sourceStakeIndex: Int,
+  validatorIndex: Int
+}
+
+type MergeStakes implements Instruction {
+	id: String
+	type: InstructionType
+	timestamp: Datetime
+	programId: String
+	account: String
+	accounts: MergeStakes_Accounts,
+	args: MergeStakes_Args
+}
+
+
+#*-------------------------------------------------------------------*#
+
+#*--------TYPES--------*#
+
+
+type Fee {
+	basisPoints: Int
+}
+
+type InitializeData {
+	adminAuthority: PublicKey,
+	validatorManagerAuthority: PublicKey,
+	minStake: GraphQLLong,
+	rewardFee: Fee,
+	liqPool: LiqPoolInitializeData,
+	additionalStakeRecordSpace: Int,
+	additionalValidatorRecordSpace: Int,
+	slotsForStakeDelta: GraphQLLong
+}
+
+type LiqPoolInitializeData {
+	lpLiquidityTarget: GraphQLLong,
+	lpMaxFee: Fee,
+	lpMinFee: Fee,
+	lpTreasuryCut: Fee
+}
+
+type ChangeAuthorityData {
+	admin: PublicKey,
+	validatorManager: PublicKey,
+	operationalSolAccount: PublicKey,
+	treasuryMsolAccount: PublicKey
+}
+
+type ConfigMarinadeParams {
+	rewardsFee: Fee,
+	slotsForStakeDelta: GraphQLLong,
+	minStake: GraphQLLong,
+	minDeposit: GraphQLLong,
+	minWithdraw: GraphQLLong,
+	stakingSolCap: GraphQLLong,
+	liquiditySolCap: GraphQLLong,
+	autoAddValidatorEnabled: Boolean
+}
+
+type LiqPool {
+	lpMint: PublicKey,
+	lpMintAuthorityBumpSeed: Int,
+	solLegBumpSeed: Int,
+	msolLegAuthorityBumpSeed: Int,
+	msolLeg: PublicKey,
+	lpLiquidityTarget: GraphQLLong,
+	lpMaxFee: Fee,
+	lpMinFee: Fee,
+	treasuryCut: Fee,
+	lpSupply: GraphQLLong,
+	lentFromSolLeg: GraphQLLong,
+	liquiditySolCap: GraphQLLong
+}
+
+type List {
+	account: PublicKey,
+	itemSize: Int,
+	count: Int,
+	newAccount: PublicKey,
+	copiedCount: Int
+}
+
+type StakeRecord {
+	stakeAccount: PublicKey,
+	lastUpdateDelegatedLamports: GraphQLLong,
+	lastUpdateEpoch: GraphQLLong,
+	isEmergencyUnstaking: Int
+}
+
+type StakeSystem {
+	stakeList: List,
+	delayedUnstakeCoolingDown: GraphQLLong,
+	stakeDepositBumpSeed: Int,
+	stakeWithdrawBumpSeed: Int,
+	slotsForStakeDelta: GraphQLLong,
+	lastStakeDeltaEpoch: GraphQLLong,
+	minStake: GraphQLLong,
+	extraStakeDeltaRuns: Int
+}
+
+type ValidatorRecord {
+	validatorAccount: PublicKey,
+	activeBalance: GraphQLLong,
+	score: Int,
+	lastStakeDeltaEpoch: GraphQLLong,
+	duplicationFlagBumpSeed: Int
+}
+
+type ValidatorSystem {
+	validatorList: List,
+	managerAuthority: PublicKey,
+	totalValidatorScore: Int,
+	totalActiveBalance: GraphQLLong,
+	autoAddValidatorEnabled: Int
+}
+

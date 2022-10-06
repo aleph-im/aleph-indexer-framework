@@ -3,7 +3,8 @@
     "packages/core",
     "packages/layout",
     "packages/middleware",
-    "packages/framework"
+    "packages/framework",
+    "packages/marinade_finance"
   ],
   "version": "1.0.14"
 }
