@@ -1,0 +1,33 @@
+{
+  "name": "@aleph-indexer/pyth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "up": "docker-compose up -d"
+  },
+  "author": "ALEPH.im",
+  "license": "ISC",
+  "dependencies": {
+    "@aleph-indexer/core": "^1.0.11",
+    "@aleph-indexer/framework": "^1.0.11",
+    "@aleph-indexer/layout": "^1.0.10",
+    "@metaplex-foundation/beet": "^0.7.1",
+    "@metaplex-foundation/beet-solana": "^0.4.0",
+    "@pythnetwork/client": "^2.8.0",
+    "bn.js": "^5.2.0",
+    "graphql": "^15.8.0",
+    "graphql-scalars": "^1.18.0",
+    "luxon": "^3.0.4",
+    "dotenv": "^16.0.1",
+    "dotenv-defaults": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/luxon": "^3.0.1"
+  }
+}
