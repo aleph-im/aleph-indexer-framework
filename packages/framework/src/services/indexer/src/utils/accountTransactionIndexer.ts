@@ -145,7 +145,7 @@ export class AccountTransactionIndexer {
     if (!state || state.firstTimestamp === undefined || state.lastTimestamp === undefined)
       return []
 
-    return this.calculateRangesToFetch(account, Interval.fromDateTimes(
+    yield* this.calculateRangesToFetch(account, Interval.fromDateTimes(
       DateTime.fromMillis(state.firstTimestamp + (state.completeHistory ? 0 : 1)),
       DateTime.fromMillis(state.lastTimestamp),
     ))
@@ -408,6 +408,6 @@ export class AccountTransactionIndexer {
         { reverse: false, atomic: true },
       )
 
-    yield clipIntervals([totalDateRange], getIntervalsFromStorageStream(clipRanges))
+    yield* clipIntervals([totalDateRange], getIntervalsFromStorageStream(clipRanges))
   }
 }

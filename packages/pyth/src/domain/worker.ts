@@ -124,11 +124,11 @@ export default class WorkerDomain
     const { limit, reverse } = opts
     const feed = this.getDataFeed(dataFeed)
     return await feed.getTimeSeriesStats('candle', {
-      startTimestamp: startDate.toMillis(),
-      endTimestamp: endDate.toMillis(),
+      startDate: startDate,
+      endDate: endDate,
       limit,
       reverse,
-      timeFrame: candleIntervalToDuration(candleSize).toISO(),
+      timeFrame: candleIntervalToDuration(candleSize),
     })
   }
 

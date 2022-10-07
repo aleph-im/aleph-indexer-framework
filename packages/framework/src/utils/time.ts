@@ -181,11 +181,11 @@ export async function mergeIntervals(
 
 // @todo: Create a generator function instead for not filling memory on tiny time frames or/and large intervals
 
-export async function* getTimeFrameIntervals(
+export async function getTimeFrameIntervals(
   interval: Interval,
   timeFrame: Duration,
   reverse = false,
-): AsyncGenerator<Interval> {
+): Promise<Interval[]> {
   if (timeFrame.equals(MAX_TIMEFRAME)) {
     return [
       Interval.fromISO('1970-01-01T00:00:00.000Z/2285-01-01T00:00:00.000Z'),

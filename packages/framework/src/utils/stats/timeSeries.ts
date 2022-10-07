@@ -149,13 +149,13 @@ export class TimeSeriesStats<I, O> {
           timeFrameName
         )
 
-        const intervals = getTimeFrameIntervals(
+        const intervals = await getTimeFrameIntervals(
           pendingInterval,
           timeFrame,
           reverse,
         )
 
-        for await (const interval of intervals) {
+        for (const interval of intervals) {
           const timeFrameInMillis = sortedTimeFrames[trueDivideTimeFrameIndex].toMillis()
           const cache = {}
           const inputs =
