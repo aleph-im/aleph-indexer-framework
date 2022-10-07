@@ -71,12 +71,17 @@ export class FetcherMs extends Service {
           handler: this.getTransactionState,
         },
       },
-      started: this.init,
+      started: this.start,
+      stopped: this.stop,
     })
   }
 
-  init(): Promise<void> {
-    return this.main.init()
+  start(): Promise<void> {
+    return this.main.start()
+  }
+
+  stop(): Promise<void> {
+    return this.main.stop()
   }
 
   addAccountFetcher(

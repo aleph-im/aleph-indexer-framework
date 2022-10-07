@@ -24,9 +24,7 @@ export class PendingWorkPool<T> {
   protected skipSleep = false
   protected coordinatorJob!: JobRunner
 
-  constructor(protected options: PendingWorkOptions<T>) {}
-
-  async init(): Promise<void> {
+  constructor(protected options: PendingWorkOptions<T>) {
     this.coordinatorJob = new JobRunner({
       name: `${this.options.id} 🔄`,
       interval: this.options.interval,
@@ -34,7 +32,7 @@ export class PendingWorkPool<T> {
     })
   }
 
-  async run(): Promise<unknown> {
+  async start(): Promise<unknown> {
     const promises: Promise<void>[] = []
 
     if (this.coordinatorJob) {
@@ -45,6 +43,10 @@ export class PendingWorkPool<T> {
     await Promise.all(promises)
 
     return
+  }
+
+  async stop(): Promise<void> {
+    return this.coordinatorJob.stop()
   }
 
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
@@ -132,6 +134,7 @@ export class PendingWorkPool<T> {
           }
 
           await this.checkComplete(works)
+          console.log(`complete --> ${works.length}`)
         })()
       }
 
@@ -177,6 +180,7 @@ export class PendingWorkPool<T> {
     await Promise.all(
       works.map(async (work) => {
         const complete = await checkComplete(work)
+        // console.log('->>', complete)
         if (complete) {
           worksToDelete.push(work)
         } else {
@@ -185,6 +189,7 @@ export class PendingWorkPool<T> {
       }),
     )
 
+    console.log('worksToDelete', worksToDelete.length)
     await this.options.dal.remove(worksToDelete)
 
     return pendingWorks

@@ -4,7 +4,7 @@ import { EntityUpdateOp, KeySchema } from './types.js'
 
 export type PendingWorkStorageOptions<T> = Pick<
   EntityStorageOptions<PendingWork<T>>,
-  'path' | 'count'
+  'path' | 'count' | 'updateCheckFn'
 > & {
   name?: string
   sortedIndex?: {
@@ -37,13 +37,13 @@ export class PendingWorkStorage<T> extends EntityStorage<PendingWork<T>> {
           ],
         },
       ],
-      ...options,
       async updateCheckFn(
         oldEntity: PendingWork<T> | undefined,
       ): Promise<EntityUpdateOp> {
         if (oldEntity) return EntityUpdateOp.Keep
         return EntityUpdateOp.Update
       },
+      ...options,
     })
   }
 }

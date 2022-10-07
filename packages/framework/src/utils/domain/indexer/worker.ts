@@ -49,7 +49,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   }
 
   protected async processTransactions(
-    response: TransactionDateRangeResponse
+    response: TransactionDateRangeResponse,
   ): Promise<void> {
     const { txs } = response
     return promisify(pipeline)(
@@ -73,7 +73,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
           account,
           startDate,
           endDate,
-        }
+        },
       }
     }
   }
@@ -96,7 +96,9 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     return ixsCtx
   }
 
-  protected async filterTransaction(ctx: ParsedTransactionContextV1): Promise<boolean> {
+  protected async filterTransaction(
+    ctx: ParsedTransactionContextV1,
+  ): Promise<boolean> {
     return true
   }
 

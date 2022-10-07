@@ -33,6 +33,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     string,
     AccountTransactionIndexer
   > = {}
+  protected txsHandler: (chunk: ParsedTransactionV1[]) => Promise<void>
 
   /**
    * @param fetcherMsClient Allows communication with the fetcher service.
@@ -57,20 +58,26 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
       transactionRequestPendingSignatureDAL,
       transactionRequestResponseDAL,
     ),
-  ) {}
+  ) {
+    this.txsHandler = this.onTxs.bind(this)
+  }
 
   /**
    * Waits for the fetchers and parsers to be ready.
    * Registers the onTxs event on the parser,
    * such that it can parse ixns from the txns.
    */
-  async init(): Promise<void> {
+  async start(): Promise<void> {
     await this.fetcherMsClient.waitForService()
     await this.parserMsClient.waitForService()
 
-    this.parserMsClient.on('txs', this.onTxs.bind(this))
+    this.parserMsClient.on('txs', this.txsHandler)
+    await this.transactionFetcher.start().catch(() => 'ignore')
+  }
 
-    await this.transactionFetcher.init().catch(() => 'ignore')
+  async stop(): Promise<void> {
+    this.parserMsClient.off('txs', this.txsHandler)
+    await this.transactionFetcher.stop().catch(() => 'ignore')
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
@@ -166,7 +173,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     )
 
     this.accountTransactionsIndexers[args.account] = accountIndexer
-    await accountIndexer.init()
+    await accountIndexer.start()
   }
 
   /**

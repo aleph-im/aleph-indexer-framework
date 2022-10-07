@@ -1,3 +1,5 @@
+import { ParsedTransactionV1, RawTransaction } from '@aleph-indexer/core'
+
 /**
  * Contains the original and parsed data, as well as the context of the parsing.
  */
@@ -28,3 +30,15 @@ export type AccountData = ParseElement & {
 }
 
 export type ParseResult = Transaction | Instruction | AccountData
+
+export type RawTransactionWithPeers = {
+  peers: string[]
+  tx: RawTransaction
+}
+
+export type RawTransactionMsg = RawTransaction | RawTransactionWithPeers
+
+export type ParsedTransactionMsg = {
+  peers?: string[]
+  tx: ParsedTransactionV1
+}

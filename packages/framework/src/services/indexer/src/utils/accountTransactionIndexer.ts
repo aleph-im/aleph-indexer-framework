@@ -26,6 +26,7 @@ export class AccountTransactionIndexer {
   protected fetchAllJob!: Utils.JobRunner
   protected compactionJob!: Utils.JobRunner
   protected processorJob!: Utils.JobRunner
+  protected txResponseHandler: (requestNonce: number) => Promise<void>
 
   constructor(
     protected config: AccountTransactionsIndexerArgs,
@@ -55,18 +56,36 @@ export class AccountTransactionIndexer {
       intervalMax: 1000 * 60 * 5, // 5min
       intervalFn: this.processRanges.bind(this),
     })
+
+    this.txResponseHandler = this.onTransactionResponse.bind(this)
   }
 
-  async init(): Promise<void> {
+  async start(): Promise<void> {
     const { account } = this.config
 
     await this.initPendingRanges()
 
+    // @note: Subscribe to range request responses
+    this.transactionFetcher.onResponse(this.txResponseHandler)
+
     await this.fetcherMsClient.addAccountFetcher({ account })
 
-    this.fetchAllJob.run().catch(() => 'ignore')
-    this.compactionJob.run().catch(() => 'ignore')
-    this.processorJob.run().catch(() => 'ignore')
+    this.fetchAllJob.start().catch(() => 'ignore')
+    this.compactionJob.start().catch(() => 'ignore')
+    this.processorJob.start().catch(() => 'ignore')
+  }
+
+  async stop(): Promise<void> {
+    const { account } = this.config
+
+    // @note: Unsubscribe from range request responses
+    this.transactionFetcher.offResponse(this.txResponseHandler)
+
+    await this.fetcherMsClient.delAccountFetcher({ account })
+
+    this.fetchAllJob.stop().catch(() => 'ignore')
+    this.compactionJob.stop().catch(() => 'ignore')
+    this.processorJob.stop().catch(() => 'ignore')
   }
 
   async getIndexingState(
@@ -159,24 +178,6 @@ export class AccountTransactionIndexer {
     const { account } = this.config
     const { Ready, Pending } = TransactionIndexerStateCode
 
-    // @note: Subscribe to range request responses and update the state to ready
-    this.transactionFetcher.onResponse(async (requestNonce: number) => {
-      const range = await this.transactionIndexerStateDAL
-        .useIndex(TransactionIndexerStateDALIndex.RequestState)
-        .getFirstValueFromTo([requestNonce, Pending], [requestNonce, Pending], {
-          atomic: true,
-        })
-
-      if (!range) return
-
-      // @note: Update the state of the request to ready (mark for processing)
-      await this.transactionIndexerStateDAL.save({
-        ...range,
-        requestNonce,
-        state: Ready,
-      })
-    })
-
     // @note: Check the current pending ranges
     const pendingRanges = await this.transactionIndexerStateDAL
       .useIndex(TransactionIndexerStateDALIndex.AccountState)
@@ -201,6 +202,25 @@ export class AccountTransactionIndexer {
         state: Ready,
       })
     }
+  }
+
+  protected async onTransactionResponse(requestNonce: number): Promise<void> {
+    const { Ready, Pending } = TransactionIndexerStateCode
+
+    const range = await this.transactionIndexerStateDAL
+      .useIndex(TransactionIndexerStateDALIndex.RequestState)
+      .getFirstValueFromTo([requestNonce, Pending], [requestNonce, Pending], {
+        atomic: true,
+      })
+
+    if (!range) return
+
+    // @note: Update the state of the request to ready (mark for processing)
+    await this.transactionIndexerStateDAL.save({
+      ...range,
+      requestNonce,
+      state: Ready,
+    })
   }
 
   protected async fetchAllRanges({

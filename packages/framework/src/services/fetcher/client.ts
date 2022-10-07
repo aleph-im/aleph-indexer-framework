@@ -43,18 +43,14 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
-  addAccountFetcher(
-    args: FetcherAccountPartitionRequestArgs,
-  ): Promise<void> {
+  addAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountFetcher`, {
       partitionKey: args.account,
       ...args,
     })
   }
 
-  delAccountFetcher(
-    args: FetcherAccountPartitionRequestArgs,
-  ): Promise<void> {
+  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountFetcher`, {
       partitionKey: args.account,
       ...args,
@@ -70,9 +66,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     })
   }
 
-  addAccountInfoFetcher(
-    args: AddAccountInfoFetcherRequestArgs,
-  ): Promise<void> {
+  addAccountInfoFetcher(args: AddAccountInfoFetcherRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountInfoFetcher`, {
       partitionKey: args.account,
       ...args,
@@ -93,6 +87,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<void | AsyncIterable<string[]>> {
     return this.broker.call(`${this.msId}.fetchAccountTransactionsByDate`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -102,6 +97,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<void | AsyncIterable<string[]>> {
     return this.broker.call(`${this.msId}.fetchAccountTransactionsBySlot`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -114,6 +110,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     await Promise.all(
       Object.entries(groups).map(([partitionKey, signatures]) => {
         return this.broker.call(`${this.msId}.fetchTransactionsBySignature`, {
+          indexerId: this.broker.nodeID,
           ...args,
           partitionKey,
           signatures,
@@ -122,9 +119,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
-  getFetcherState(
-    args: FetcherStateRequestArgs,
-  ): Promise<FetcherState> {
+  getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState> {
     return this.broker.call(`${this.msId}.getFetcherState`, args, {
       nodeID: args.fetcher,
     })
