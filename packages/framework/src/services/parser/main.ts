@@ -81,7 +81,6 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     const [groups, broadcast] = this.groupTransactions(msgs)
     const txGroups = Object.entries(groups)
 
-    console.log(txGroups)
     if (txGroups.length > 0) {
       await Promise.all(
         txGroups.map(([group, txs]) =>
@@ -104,7 +103,7 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     const broadcastGroup: ParsedTransactionV1[] = []
 
     const groups = msgs.reduce((acc, { tx, peers }) => {
-      if (!peers) {
+      if (!peers || peers.length === 0) {
         broadcastGroup.push(tx)
         return acc
       }
