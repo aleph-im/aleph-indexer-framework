@@ -117,28 +117,19 @@ export class FetcherMs extends Service {
   fetchAccountTransactionsByDate(
     ctx: Context<FetchAccountTransactionsByDateRequestArgs>,
   ): Promise<void | AsyncIterable<string[]>> {
-    return this.main.fetchAccountTransactionsByDate({
-      ...ctx.params,
-      indexerId: ctx.caller as string,
-    })
+    return this.main.fetchAccountTransactionsByDate(ctx.params)
   }
 
   fetchAccountTransactionsBySlot(
     ctx: Context<FetchAccountTransactionsBySlotRequestArgs>,
   ): Promise<void | AsyncIterable<string[]>> {
-    return this.main.fetchAccountTransactionsBySlot({
-      ...ctx.params,
-      indexerId: ctx.caller as string,
-    })
+    return this.main.fetchAccountTransactionsBySlot(ctx.params)
   }
 
   fetchTransactionsBySignature(
     ctx: Context<FetchTransactionsBySignatureRequestArgs>,
   ): Promise<void> {
-    return this.main.fetchTransactionsBySignature({
-      ...ctx.params,
-      indexerId: ctx.caller as string,
-    })
+    return this.main.fetchTransactionsBySignature(ctx.params)
   }
 
   getFetcherState(

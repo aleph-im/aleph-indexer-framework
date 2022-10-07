@@ -81,9 +81,10 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     const [groups, broadcast] = this.groupTransactions(msgs)
     const txGroups = Object.entries(groups)
 
+    console.log(txGroups)
     if (txGroups.length > 0) {
       await Promise.all(
-        Object.entries(groups).map(([group, txs]) =>
+        txGroups.map(([group, txs]) =>
           this.emitToClients('txs', txs, { group }),
         ),
       )

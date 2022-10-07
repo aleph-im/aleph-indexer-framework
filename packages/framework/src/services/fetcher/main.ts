@@ -398,7 +398,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     indexerId,
   }: FetchTransactionsBySignatureRequestArgs): Promise<void> {
     console.log(
-      `🔗 ${signatures.length} new signatures added to the fetcher queue...`,
+      `🔗 ${signatures.length} new signatures added to the fetcher queue... [${indexerId}]`,
     )
 
     const entities = signatures

@@ -87,6 +87,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<void | AsyncIterable<string[]>> {
     return this.broker.call(`${this.msId}.fetchAccountTransactionsByDate`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -96,6 +97,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<void | AsyncIterable<string[]>> {
     return this.broker.call(`${this.msId}.fetchAccountTransactionsBySlot`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -108,6 +110,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     await Promise.all(
       Object.entries(groups).map(([partitionKey, signatures]) => {
         return this.broker.call(`${this.msId}.fetchTransactionsBySignature`, {
+          indexerId: this.broker.nodeID,
           ...args,
           partitionKey,
           signatures,
