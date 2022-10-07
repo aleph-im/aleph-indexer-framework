@@ -135,13 +135,15 @@ export default class MainDomain
       const type = this.discoverer.getAccountType(accountStats.account)
 
       globalStats.totalAccounts[type]++
-      globalStats.totalAccesses += accesses
-      Object.entries(accessesByProgramId).forEach(([programId, accesses]) => {
-        globalStats.totalAccessesByProgramId[programId] =
-          (globalStats.totalAccessesByProgramId[programId] || 0) + accesses
-      })
+      globalStats.totalAccesses += accesses || 0
+      if(accessesByProgramId) {
+        Object.entries(accessesByProgramId).forEach(([programId, accesses]) => {
+          globalStats.totalAccessesByProgramId[programId] =
+            (globalStats.totalAccessesByProgramId[programId] || 0) + accesses
+        })
+      }
       globalStats.startTimestamp = Math.min(
-        globalStats.startTimestamp || Infinity, startTimestamp || Infinity,
+        globalStats.startTimestamp || Number.MAX_SAFE_INTEGER, startTimestamp || Number.MAX_SAFE_INTEGER,
       )
       globalStats.endTimestamp = Math.max(
         globalStats.endTimestamp || 0, endTimestamp || 0,
