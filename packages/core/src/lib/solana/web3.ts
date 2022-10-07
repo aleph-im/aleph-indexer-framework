@@ -44,14 +44,20 @@ export class Connection extends SolConnection {
         : new http.Agent(options)
 
     setInterval(() => {
-      console.log(`
-      agent [${endpoint}]: {
-        freeSockets: ${Object.keys(agent.freeSockets).length},
-        sockets: ${Object.keys(agent.sockets).length},
-        requests: ${Object.keys(agent.requests).length},
+      const freeSockets = Object.keys(agent.freeSockets).length
+      const sockets = Object.keys(agent.sockets).length
+      const requests = Object.keys(agent.requests).length
+
+      if (freeSockets > 100 || sockets > 100 || requests > 100) {
+        console.log(`
+          agent [${endpoint}]: {
+            freeSockets: ${freeSockets},
+            sockets: ${sockets},
+            requests: ${requests},
+          }
+        `)
       }
-    `)
-    }, 1000 * 2)
+    }, 1000 * 10)
 
     cacheable.install(agent)
 

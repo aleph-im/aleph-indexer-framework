@@ -44,12 +44,17 @@ export class IndexerMs extends Service {
           handler: this.getTransactionRequests,
         },
       },
-      started: this.init,
+      started: this.start,
+      stopped: this.stop,
     })
   }
 
-  async init(): Promise<void> {
-    return this.main.init()
+  async start(): Promise<void> {
+    return this.main.start()
+  }
+
+  async stop(): Promise<void> {
+    return this.main.stop()
   }
 
   async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {

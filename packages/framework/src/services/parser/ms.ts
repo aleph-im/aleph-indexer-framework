@@ -9,6 +9,7 @@ import {
 } from '@aleph-indexer/core'
 import { MsIds, MainFactory } from '../common.js'
 import { ParserMsMain } from './main.js'
+import { RawTransactionMsg } from './src/types.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main fetcher service through the broker.
@@ -36,7 +37,7 @@ export class ParserMs extends Service {
     })
   }
 
-  onTxs(chunk: RawTransaction[]): Promise<void> {
+  onTxs(chunk: RawTransactionMsg[]): Promise<void> {
     return this.main.onTxs(chunk)
   }
 

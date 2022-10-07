@@ -134,6 +134,10 @@ export type IndexerConfig = {
      * Directory to which the parser service will write the parsed data. (@todo: Is this correct?)
      */
     dataPath?: string
+    /**
+     * Directory in which the parser service will receive a custom buffer layouts schema for accounts and instructions
+     */
+    layoutPath?: string
   }
 }
 
@@ -187,6 +191,7 @@ export class SDK {
                 i + (config.parser?.instanceOffset || 0)
               }`,
               dataPath: config.parser?.dataPath || args.dataPath,
+              layoutPath: config.parser?.layoutPath,
             } as WorkerInfo),
         )
       : []

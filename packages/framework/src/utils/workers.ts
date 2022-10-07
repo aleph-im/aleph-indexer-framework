@@ -73,6 +73,10 @@ export type WorkerInfo = {
    * @todo: what is this?
    */
   channels: WorkerChannels
+  /**
+   * @todo: what is this?
+   */
+  layoutPath?: string
 }
 
 /**
