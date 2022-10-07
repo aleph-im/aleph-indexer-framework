@@ -53,6 +53,10 @@ export type FetchAccountTransactionsByDateRequestArgs =
   FetcherAccountPartitionRequestArgs & {
     startDate: number
     endDate: number
+    /**
+     * Indexer instance id, the result will be delivered here
+     */
+    indexerId?: string
   }
 
 /**
@@ -62,6 +66,10 @@ export type FetchAccountTransactionsBySlotRequestArgs =
   FetcherAccountPartitionRequestArgs & {
     startSlot: number
     endSlot: number
+    /**
+     * Indexer instance id, the result will be delivered here
+     */
+    indexerId?: string
   }
 
 export type FetchTransactionsBySignatureRequestArgs = {
@@ -73,6 +81,10 @@ export type FetchTransactionsBySignatureRequestArgs = {
    * Signatures to fetch.
    */
   signatures: string[]
+  /**
+   * Indexer instance id, the result will be delivered here
+   */
+  indexerId?: string
 }
 
 export type FetcherStateRequestArgs = FetcherPartitionRequestArgs
@@ -128,6 +140,7 @@ export type FetcherSignatureRequest = Omit<BaseFetcherRequest, 'type'> & {
   options: {
     account: string
     signatures: string[]
+    indexerId: string
   }
 }
 
@@ -137,6 +150,7 @@ export type FetcherDateRequest = Omit<BaseFetcherRequest, 'type'> & {
     account: string
     startDate: number
     endDate: number
+    indexerId: string
   }
 }
 
@@ -146,6 +160,7 @@ export type FetcherSlotRequest = Omit<BaseFetcherRequest, 'type'> & {
     account: string
     startSlot: number
     endSlot: number
+    indexerId: string
   }
 }
 

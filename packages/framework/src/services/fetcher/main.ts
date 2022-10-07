@@ -5,8 +5,9 @@ import {
   AccountInfoFetcher,
   AccountInfoStorage,
   FetcherStateLevelStorage,
+  PendingWork,
   PendingWorkPool,
-  RawTransactionV1,
+  RawTransaction,
   Signature,
   SolanaRPC,
   StorageEntry,
@@ -37,6 +38,7 @@ import {
   RequestsDALIndex,
 } from './src/dal/requests.js'
 import { FetcherMsClient } from './client.js'
+import { RawTransactionWithPeers } from '../parser/src/types.js'
 
 const { BufferExec, StreamBuffer, StreamMap, sleep } = Utils
 
@@ -46,7 +48,7 @@ const { BufferExec, StreamBuffer, StreamMap, sleep } = Utils
 export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected fetchers: Record<string, SignatureFetcher> = {}
   protected infoFetchers: Record<string, AccountInfoFetcher> = {}
-  protected pendingTransactions: PendingWorkPool<undefined>
+  protected pendingTransactions: PendingWorkPool<string[]>
   protected fetcherMsClient: FetcherMsClient
   protected throughput = 0
   protected throughputInit = Date.now()
@@ -83,8 +85,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       concurrency: 10,
       dal: this.pendingTransactionDAL,
       handleWork: async (works): Promise<number | void> => {
-        const signatures = works.map((work) => work.id)
-        return this._fetchTransactions(signatures)
+        return this._fetchTransactions(works)
       },
       checkComplete: async (work): Promise<boolean> => {
         return (
@@ -279,7 +280,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     args: FetchAccountTransactionsByDateRequestArgs,
     save = true,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startDate, endDate } = args
+    const { account, startDate, endDate, indexerId } = args
 
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
@@ -321,7 +322,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       new StreamBuffer(1000),
       new StreamMap(async (signatures: string[]) => {
         // @note: Use the client here for load balancing signatures through all fetcher instances
-        await this.fetcherMsClient.fetchTransactionsBySignature({ signatures })
+        await this.fetcherMsClient.fetchTransactionsBySignature({
+          signatures,
+          indexerId,
+        })
         return signatures
       }),
       async (err) => {
@@ -336,7 +340,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     args: FetchAccountTransactionsBySlotRequestArgs,
     save = true,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startSlot, endSlot } = args
+    const { account, startSlot, endSlot, indexerId } = args
 
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
@@ -375,7 +379,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       new StreamBuffer(1000),
       new StreamMap(async (signatures: string[]) => {
         // @note: Use the client here for load balancing signatures through all fetcher instances
-        await this.fetcherMsClient.fetchTransactionsBySignature({ signatures })
+        await this.fetcherMsClient.fetchTransactionsBySignature({
+          signatures,
+          indexerId,
+        })
         return signatures
       }),
       async (err) => {
@@ -388,6 +395,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
   async fetchTransactionsBySignature({
     signatures,
+    indexerId,
   }: FetchTransactionsBySignatureRequestArgs): Promise<void> {
     console.log(
       `🔗 ${signatures.length} new signatures added to the fetcher queue...`,
@@ -398,57 +406,64 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       .map((signature) => ({
         id: signature,
         time: Date.now(),
-        payload: undefined,
+        payload: indexerId ? [indexerId] : [],
       }))
 
     await this.pendingTransactions.addWork(entities)
   }
 
-  protected async _fetchTransactions(signatures: string[]): Promise<void> {
-    console.log(`Txs fetching | Start fetching txs ${signatures.length}`)
+  protected async _fetchTransactions(
+    works: PendingWork<string[]>[],
+  ): Promise<void> {
+    console.log(`Txs fetching | Start fetching txs ${works.length}`)
 
-    const foundBuffer = new BufferExec<RawTransactionV1>(async (txs) => {
+    const foundBuffer = new BufferExec<RawTransactionWithPeers>(async (txs) => {
       await this.emitTransactions(txs)
     }, 10)
 
-    const requestBuffer = new BufferExec<string>(async (signatures) => {
-      let [txs, pending] = await this._fetchFromRPC(signatures, this.solanaRpc)
-      let retries = 0
+    const requestBuffer = new BufferExec<PendingWork<string[]>>(
+      async (works) => {
+        let [txs, pending] = await this._fetchFromRPC(works, this.solanaRpc)
+        let retries = 0
 
-      while (pending.length > 0 && retries < 3) {
-        if (retries > 0) await sleep(1000)
+        while (pending.length > 0 && retries < 3) {
+          if (retries > 0) await sleep(1000)
 
-        const [txs2, pending2] = await this._fetchFromRPC(
-          pending,
-          this.solanaMainPublicRpc,
-        )
+          const [txs2, pending2] = await this._fetchFromRPC(
+            pending,
+            this.solanaMainPublicRpc,
+          )
 
-        pending = pending2
-        txs = txs.concat(txs2)
+          pending = pending2
+          txs = txs.concat(txs2)
 
-        retries++
-      }
+          retries++
+        }
 
-      if (!txs.length) {
-        console.log('‼️ Txs not found after 3 retries', pending)
-      }
+        if (!txs.length) {
+          console.log('‼️ Txs not found after 3 retries', pending)
+        }
 
-      await this.rawTransactionDAL.save(txs)
-      await foundBuffer.add(txs)
-    }, 200)
+        await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
+        await foundBuffer.add(txs)
+      },
+      200,
+    )
 
     let count1 = 0
     let count2 = 0
 
-    for (const signature of signatures) {
+    for (const work of works) {
+      const { id: signature, payload: peers } = work
       const tx = await this.rawTransactionDAL.get(signature)
 
       if (!tx) {
         count1++
-        await requestBuffer.add(signature)
+        await requestBuffer.add(work)
       } else {
         count2++
-        await foundBuffer.add(tx)
+        const txWithPeers = { tx: tx as RawTransaction, peers }
+        await foundBuffer.add(txWithPeers)
       }
     }
 
@@ -459,27 +474,33 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   }
 
   protected async _fetchFromRPC(
-    signatures: string[],
+    works: PendingWork<string[]>[],
     rpc: SolanaRPC,
-  ): Promise<[RawTransactionV1[], string[]]> {
+  ): Promise<[RawTransactionWithPeers[], PendingWork<string[]>[]]> {
+    const signatures = works.map(({ id }) => id)
     const response = await rpc.getConfirmedTransactions(signatures)
-    const pendingSignatures: string[] = []
-    const txs: RawTransactionV1[] = []
+
+    const pendingWork: PendingWork<string[]>[] = []
+    const txs: RawTransactionWithPeers[] = []
 
     for (const [i, tx] of response.entries()) {
+      const work = works[i]
+
       if (tx === null) {
-        pendingSignatures.push(signatures[i])
+        pendingWork.push(work)
       } else {
-        txs.push(tx as RawTransactionV1)
+        txs.push({ tx: tx as RawTransaction, peers: work.payload })
       }
     }
 
-    await this.rawTransactionDAL.save(txs)
+    await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
 
-    return [txs, pendingSignatures]
+    return [txs, pendingWork]
   }
 
-  protected async emitTransactions(txs: RawTransactionV1[]): Promise<void> {
+  protected async emitTransactions(
+    txs: RawTransactionWithPeers[],
+  ): Promise<void> {
     if (!txs.length) return
 
     console.log(`✉️  ${txs.length} txs sent by the fetcher...`)

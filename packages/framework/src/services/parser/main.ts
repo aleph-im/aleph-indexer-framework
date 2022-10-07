@@ -12,6 +12,7 @@ import { TransactionParser } from './src/transactionParser.js'
 import { AccountParserLibrary } from './src/accountParserLibrary.js'
 import { InstructionParserLibrary } from './src/instructionParserLibrary.js'
 import { MsIds, MsMainWithEvents } from '../common.js'
+import { ParsedTransactionMsg, RawTransactionMsg } from './src/types.js'
 
 export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
   constructor(
@@ -28,22 +29,27 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     super(broker, MsIds.Parser)
   }
 
-  async onTxs(chunk: RawTransaction[]): Promise<void> {
+  async onTxs(chunk: RawTransactionMsg[]): Promise<void> {
     // console.log(`📩 ${chunk.length} txs received by the parser...`)
 
-    const parsedTxs: ParsedTransactionV1[] = []
+    const parsedMsgs: ParsedTransactionMsg[] = []
 
-    for (const tx of chunk) {
+    for (const msg of chunk) {
       try {
-        const result = await this.parseTransaction(tx)
-        parsedTxs.push(result)
+        const [rawTx, peers] =
+          'peers' in msg ? [msg.tx, msg.peers] : [msg, undefined]
+
+        const parsedTx = await this.parseTransaction(rawTx)
+        const parsedMsg = { peers, tx: parsedTx }
+
+        parsedMsgs.push(parsedMsg)
       } catch (e) {
         console.error(e)
         continue
       }
     }
 
-    await this.emitTransactions(parsedTxs)
+    await this.emitTransactions(parsedMsgs)
   }
 
   async parseTransaction(
@@ -65,35 +71,51 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     return await this.accountParserLibrary.parse(payload, account)
   }
 
-  protected async emitTransactions(txs: ParsedTransactionV1[]): Promise<void> {
-    if (!txs.length) return
+  protected async emitTransactions(
+    msgs: ParsedTransactionMsg[],
+  ): Promise<void> {
+    if (!msgs.length) return
 
-    console.log(`✉️  ${txs.length} txs sent by the parser...`)
+    console.log(`✉️  ${msgs.length} txs sent by the parser...`)
 
-    const txGroups = this.groupTransactions(txs)
-    const groups = this.getClientEventGroups()
+    const [groups, broadcast] = this.groupTransactions(msgs)
+    const txGroups = Object.entries(groups)
 
-    await Promise.all(
-      groups.flatMap((group) =>
-        Object.entries(txGroups).map(([partitionKey, txs]) =>
-          this.emitToClients('txs', txs, { group, partitionKey }),
+    if (txGroups.length > 0) {
+      await Promise.all(
+        Object.entries(groups).map(([group, txs]) =>
+          this.emitToClients('txs', txs, { group }),
         ),
-      ),
-    )
+      )
+    }
+
+    if (broadcast.length > 0) {
+      return this.broadcastToClients('txs', broadcast)
+    }
 
     // return this.broadcastToClients('txs', txs)
     // return this.broker.broadcast('parser.txs', txs, [MsIds.Indexer])
   }
 
   protected groupTransactions(
-    txs: ParsedTransactionV1[],
-  ): Record<string, ParsedTransactionV1[]> {
-    return txs.reduce((acc, tx) => {
-      tx.parsed.message.accountKeys.forEach(({ pubkey }) => {
-        const byAccount = acc[pubkey] || (acc[pubkey] = [])
-        byAccount.push(tx)
+    msgs: ParsedTransactionMsg[],
+  ): [Record<string, ParsedTransactionV1[]>, ParsedTransactionV1[]] {
+    const broadcastGroup: ParsedTransactionV1[] = []
+
+    const groups = msgs.reduce((acc, { tx, peers }) => {
+      if (!peers) {
+        broadcastGroup.push(tx)
+        return acc
+      }
+
+      peers.forEach((peer) => {
+        const byPeer = acc[peer] || (acc[peer] = [])
+        byPeer.push(tx)
       })
+
       return acc
     }, {} as Record<string, ParsedTransactionV1[]>)
+
+    return [groups, broadcastGroup]
   }
 }
