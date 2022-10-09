@@ -8,6 +8,7 @@ import {
   PendingWork,
   PendingWorkPool,
   RawTransaction,
+  RawTransactionV1,
   Signature,
   SolanaRPC,
   StorageEntry,
@@ -29,6 +30,7 @@ import {
   FetcherOptionsTypes,
   TransactionState,
   CheckTransactionsRequestArgs,
+  DelTransactionsRequestArgs,
 } from './src/types.js'
 import { PendingTransactionStorage } from './src/dal/pendingTransaction.js'
 import { MsIds } from '../common.js'
@@ -274,6 +276,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         }
       }),
     )
+  }
+
+  async delTransactionCache({
+    signatures,
+  }: DelTransactionsRequestArgs): Promise<void> {
+    const entities = signatures.map((signature) => ({
+      transaction: { signatures: [signature] },
+    })) as unknown as RawTransactionV1[]
+
+    await this.rawTransactionDAL.remove(entities)
   }
 
   async fetchAccountTransactionsByDate(
