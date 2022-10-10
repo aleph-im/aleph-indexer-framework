@@ -9,6 +9,7 @@ import {
   SignatureFetcherState,
   TransactionState,
   CheckTransactionsRequestArgs,
+  DelTransactionsRequestArgs,
 } from './src/types'
 
 /**
@@ -85,4 +86,9 @@ export interface PrivateFetcherMsI {
    * @param args The account to remove the fetcher from.
    */
   delAccountInfoFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+  /**
+   * Force to delete the cached transaction (Useful when rpc nodes return flaw txs).
+   * @param args TThe txn signatures to delete the cache for.
+   */
+  delTransactionCache(args: DelTransactionsRequestArgs): Promise<void>
 }

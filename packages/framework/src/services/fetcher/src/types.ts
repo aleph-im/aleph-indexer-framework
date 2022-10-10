@@ -93,6 +93,10 @@ export type CheckTransactionsRequestArgs = {
   signatures: string[]
 }
 
+export type DelTransactionsRequestArgs = {
+  signatures: string[]
+}
+
 export type FetcherCommonDomainContext = {
   apiClient: FetcherMsI & PrivateFetcherMsI
   dataPath: string
