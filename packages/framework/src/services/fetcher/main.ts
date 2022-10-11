@@ -82,7 +82,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     this.pendingTransactions = new PendingWorkPool({
       id: 'pending-transactions',
-      interval: 1000,
+      interval: 0,
       chunkSize: 1000,
       concurrency: 10,
       dal: this.pendingTransactionDAL,
@@ -424,8 +424,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
   protected async _fetchTransactions(
     works: PendingWork<string[]>[],
-  ): Promise<void> {
+  ): Promise<number | void> {
     console.log(`Txs fetching | Start fetching txs ${works.length}`)
+
+    let totalPendings = 0
 
     const foundBuffer = new BufferExec<RawTransactionWithPeers>(async (txs) => {
       await this.emitTransactions(txs)
@@ -439,6 +441,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         while (pending.length > 0 && retries < 3) {
           if (retries > 0) await sleep(1000)
 
+          console.log(`⚠️ retrying ${pending.length} txs [${retries}]`)
+
           const [txs2, pending2] = await this._fetchFromRPC(
             pending,
             this.solanaMainPublicRpc,
@@ -450,8 +454,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
           retries++
         }
 
-        if (!txs.length) {
-          console.log('‼️ Txs not found after 3 retries', pending)
+        if (pending.length) {
+          console.log(`‼️ ${pending.length} txs not found after 3 retries`)
+          totalPendings += pending.length
         }
 
         await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
@@ -477,10 +482,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       }
     }
 
-    console.log(`Txs fetching | Response ${count1}/${count2} requests/found`)
+    console.log(
+      `Txs fetching | Response ${count1}/${count2} requests/found${
+        totalPendings > 0 ? `, ${totalPendings} errors` : ''
+      }`,
+    )
 
     await requestBuffer.drain()
     await foundBuffer.drain()
+
+    if (totalPendings > 0) return 1000 * 5
   }
 
   protected async _fetchFromRPC(
@@ -488,7 +499,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     rpc: SolanaRPC,
   ): Promise<[RawTransactionWithPeers[], PendingWork<string[]>[]]> {
     const signatures = works.map(({ id }) => id)
-    const response = await rpc.getConfirmedTransactions(signatures)
+    const response = await rpc.getConfirmedTransactions(signatures, {
+      shallowErrors: true,
+    })
 
     const pendingWork: PendingWork<string[]>[] = []
     const txs: RawTransactionWithPeers[] = []
