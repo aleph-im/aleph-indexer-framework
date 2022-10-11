@@ -86,9 +86,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       chunkSize: 1000,
       concurrency: 10,
       dal: this.pendingTransactionDAL,
-      handleWork: async (works): Promise<number | void> => {
-        return this._fetchTransactions(works)
-      },
+      handleWork: this._fetchTransactions.bind(this),
       checkComplete: async (work): Promise<boolean> => {
         return (
           !this.isSignature(work.id) || this.rawTransactionDAL.exists(work.id)

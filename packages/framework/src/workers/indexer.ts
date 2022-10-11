@@ -8,6 +8,7 @@ import { FetcherMsClient } from '../services/fetcher/index.js'
 import { IndexerMs, IndexerMsMain } from '../services/indexer/index.js'
 import { createTransactionIndexerStateDAL } from '../services/indexer/src/dal/transactionIndexerState.js'
 import { createTransactionRequestDAL } from '../services/indexer/src/dal/transactionRequest.js'
+import { createTransactionRequestIncomingTransactionDAL } from '../services/indexer/src/dal/transactionRequestIncomingTransaction.js'
 import { createTransactionRequestPendingSignatureDAL } from '../services/indexer/src/dal/transactionRequestPendingSignature.js'
 import { createTransactionRequestResponseDAL } from '../services/indexer/src/dal/transactionRequestResponse.js'
 import { IndexerDomainContext } from '../services/indexer/src/types.js'
@@ -46,6 +47,7 @@ async function main() {
     fetcherMsClient,
     parserMsClient,
     createTransactionRequestDAL(dataPath),
+    createTransactionRequestIncomingTransactionDAL(dataPath),
     createTransactionRequestPendingSignatureDAL(dataPath),
     createTransactionRequestResponseDAL(dataPath),
     createTransactionIndexerStateDAL(dataPath),
