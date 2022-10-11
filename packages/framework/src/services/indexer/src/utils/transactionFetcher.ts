@@ -2,6 +2,8 @@ import { EventEmitter } from 'node:events'
 
 import {
   ParsedTransactionV1,
+  PendingWork,
+  PendingWorkPool,
   StorageValueStream,
   Utils,
 } from '@aleph-indexer/core'
@@ -29,6 +31,7 @@ import {
   AccountSlotRange,
   GetTransactionPendingRequestsRequestArgs,
 } from '../types.js'
+import { TransactionRequestIncomingTransactionStorage } from '../dal/transactionRequestIncomingTransaction.js'
 
 const {
   Future,
@@ -51,6 +54,7 @@ export class TransactionFetcher {
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
+  protected incomingTransactions: PendingWorkPool<ParsedTransactionV1>
 
   protected toRemoveBuffer = new BufferExec<TransactionRequestPendingSignature>(
     async (pendings) => {
@@ -66,18 +70,29 @@ export class TransactionFetcher {
   }, 1000)
 
   protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
-    this.handleIncomingTxs.bind(this),
+    this.storeIncomingTxs.bind(this),
     1000,
-    5000,
+    1000,
   )
 
   constructor(
     protected fetcherMsClient: FetcherMsClient,
     protected transactionRequestDAL: TransactionRequestStorage,
+    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
     protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
     protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
+    this.incomingTransactions = new PendingWorkPool({
+      id: 'incoming-transactions',
+      interval: 1000,
+      chunkSize: 1000,
+      concurrency: 1,
+      dal: this.transactionRequestIncomingTransactionDAL,
+      handleWork: this.handleIncomingTxs.bind(this),
+      checkComplete: async (): Promise<boolean> => true,
+    })
+
     this.checkPendingRetriesJob = new JobRunner({
       name: `indexer-transaction-pending-retries`,
       interval: 1000 * 60 * 10,
@@ -90,10 +105,12 @@ export class TransactionFetcher {
   }
 
   async start(): Promise<void> {
+    this.incomingTransactions.start().catch(() => 'ignore')
     this.checkPendingRetriesJob.start().catch(() => 'ignore')
   }
 
   async stop(): Promise<void> {
+    this.incomingTransactions.stop().catch(() => 'ignore')
     this.checkPendingRetriesJob.stop().catch(() => 'ignore')
   }
 
@@ -182,61 +199,8 @@ export class TransactionFetcher {
     return requests
   }
 
-  // @todo: All instances of the indexer are receiving all txs requested from other instances
-  // find a way for skipping the txs in which the current instance is not interested in an efficient way
-  // (by including account address in subscription topic name for example)
   async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
     await this.onTxsBuffer.add(chunk)
-  }
-
-  async handleIncomingTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    const now1 = Date.now()
-    const release = await this.requestMutex.acquire()
-    const now2 = Date.now()
-
-    try {
-      const requests = await this.transactionRequestDAL.getAllValues()
-
-      let filteredTxs: ParsedTransactionV1[] = []
-      let remainingTxs: ParsedTransactionV1[] = chunk
-      let requestCount = 0
-      const requestCountId = []
-
-      for await (const request of requests) {
-        const { nonce, complete } = request
-        if (complete) continue
-
-        const result = this.filterTxsByRequest(remainingTxs, request)
-        filteredTxs = filteredTxs.concat(result.filteredTxs)
-        remainingTxs = result.remainingTxs
-        requestCount++
-        requestCountId.push(nonce)
-      }
-
-      console.log(
-        `Filtering txs ${filteredTxs.length} of ${chunk.length} by ${requestCount} pending requests`,
-      )
-
-      if (filteredTxs.length === 0) return
-
-      const requestResponse =
-        filteredTxs as unknown as TransactionRequestResponse[]
-
-      const pendingSignatures =
-        filteredTxs as unknown as TransactionRequestPendingSignature[]
-
-      await this.transactionRequestResponseDAL.save(requestResponse)
-      await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
-
-      this.checkCompletionJob.run()
-    } finally {
-      release()
-    }
-
-    const elapsed1 = Date.now() - now1
-    const elapsed2 = Date.now() - now2
-
-    console.log(`onTxs time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
   }
 
   async isRequestComplete(nonce: number): Promise<boolean> {
@@ -286,6 +250,72 @@ export class TransactionFetcher {
 
   //   await this.transactionRequestDAL.remove(request)
   // }
+
+  protected async storeIncomingTxs(
+    chunk: ParsedTransactionV1[],
+  ): Promise<void> {
+    const works = chunk.map((tx) => ({
+      id: tx.signature,
+      time: Date.now(),
+      payload: tx,
+    }))
+
+    return this.incomingTransactions.addWork(works)
+  }
+
+  protected async handleIncomingTxs(
+    works: PendingWork<ParsedTransactionV1>[],
+  ): Promise<void> {
+    const chunk = works.map((work) => work.payload)
+
+    const now1 = Date.now()
+    const release = await this.requestMutex.acquire()
+    const now2 = Date.now()
+
+    try {
+      const requests = await this.transactionRequestDAL.getAllValues()
+
+      let filteredTxs: ParsedTransactionV1[] = []
+      let remainingTxs: ParsedTransactionV1[] = chunk
+      let requestCount = 0
+      const requestCountId = []
+
+      for await (const request of requests) {
+        const { nonce, complete } = request
+        if (complete) continue
+
+        const result = this.filterTxsByRequest(remainingTxs, request)
+        filteredTxs = filteredTxs.concat(result.filteredTxs)
+        remainingTxs = result.remainingTxs
+        requestCount++
+        requestCountId.push(nonce)
+      }
+
+      console.log(
+        `Filtering txs ${filteredTxs.length} of ${chunk.length} by ${requestCount} pending requests`,
+      )
+
+      if (filteredTxs.length === 0) return
+
+      const requestResponse =
+        filteredTxs as unknown as TransactionRequestResponse[]
+
+      const pendingSignatures =
+        filteredTxs as unknown as TransactionRequestPendingSignature[]
+
+      await this.transactionRequestResponseDAL.save(requestResponse)
+      await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
+
+      this.checkCompletionJob.run()
+    } finally {
+      release()
+    }
+
+    const elapsed1 = Date.now() - now1
+    const elapsed2 = Date.now() - now2
+
+    console.log(`onTxs time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
+  }
 
   protected filterTxsByRequest(
     txs: ParsedTransactionV1[],

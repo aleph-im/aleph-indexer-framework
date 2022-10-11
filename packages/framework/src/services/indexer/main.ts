@@ -9,6 +9,7 @@ import {
   TransactionRequest,
   TransactionRequestStorage,
 } from './src/dal/transactionRequest.js'
+import { TransactionRequestIncomingTransactionStorage } from './src/dal/transactionRequestIncomingTransaction.js'
 import { TransactionRequestPendingSignatureStorage } from './src/dal/transactionRequestPendingSignature.js'
 import { TransactionRequestResponseStorage } from './src/dal/transactionRequestResponse.js'
 import {
@@ -49,12 +50,14 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     protected fetcherMsClient: FetcherMsClient,
     protected parserMsClient: ParserMsClient,
     protected transactionRequestDAL: TransactionRequestStorage,
+    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
     protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
     protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
     protected transactionFetcher: TransactionFetcher = new TransactionFetcher(
       fetcherMsClient,
       transactionRequestDAL,
+      transactionRequestIncomingTransactionDAL,
       transactionRequestPendingSignatureDAL,
       transactionRequestResponseDAL,
     ),
