@@ -58,28 +58,12 @@ export type EmergencyUnstakeInstructionAccounts = {
   stakeDepositAuthority: web3.PublicKey
   clock: web3.PublicKey
   stakeProgram: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const EmergencyUnstakeAccounts = [
-  'state',
-  'validatorManagerAuthority',
-  'validatorList',
-  'stakeList',
-  'stakeAccount',
-  'stakeDepositAuthority',
-  'clock',
-  'stakeProgram',
-]
 
 export const emergencyUnstakeInstructionDiscriminator = [
   123, 69, 168, 195, 183, 213, 199, 214,
 ]
-
-export type EmergencyUnstakeInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _EmergencyUnstake_ instruction.
@@ -94,67 +78,63 @@ export type EmergencyUnstakeInstruction = {
 export function createEmergencyUnstakeInstruction(
   accounts: EmergencyUnstakeInstructionAccounts,
   args: EmergencyUnstakeInstructionArgs,
-): EmergencyUnstakeInstruction {
-  const {
-    state,
-    validatorManagerAuthority,
-    validatorList,
-    stakeList,
-    stakeAccount,
-    stakeDepositAuthority,
-    clock,
-    stakeProgram,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = emergencyUnstakeStruct.serialize({
     instructionDiscriminator: emergencyUnstakeInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorManagerAuthority,
+      pubkey: accounts.validatorManagerAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAccount,
+      pubkey: accounts.stakeAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeDepositAuthority,
+      pubkey: accounts.stakeDepositAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgram,
+      pubkey: accounts.stakeProgram,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: EmergencyUnstakeInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

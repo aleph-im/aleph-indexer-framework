@@ -147,8 +147,6 @@ export const ValidatorSystem = new GraphQLObjectType({
 
 // ------------------- STATS ---------------------------
 
-// look .src/domain/stats/statsAggregator & ./src/types.ts
-
 export const AccessTimeStats = new GraphQLObjectType({
   name: 'MarinadeFinanceInfo',
   fields: {

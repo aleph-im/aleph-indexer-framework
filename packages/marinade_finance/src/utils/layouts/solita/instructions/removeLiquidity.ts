@@ -59,29 +59,14 @@ export type RemoveLiquidityInstructionAccounts = {
   liqPoolSolLegPda: web3.PublicKey
   liqPoolMsolLeg: web3.PublicKey
   liqPoolMsolLegAuthority: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const RemoveLiquidityAccounts = [
-  'state',
-  'lpMint',
-  'burnFrom',
-  'burnFromAuthority',
-  'transferSolTo',
-  'transferMsolTo',
-  'liqPoolSolLegPda',
-  'liqPoolMsolLeg',
-  'liqPoolMsolLegAuthority',
-]
 
 export const removeLiquidityInstructionDiscriminator = [
   80, 85, 209, 72, 24, 206, 177, 108,
 ]
-
-export type RemoveLiquidityInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _RemoveLiquidity_ instruction.
@@ -96,83 +81,78 @@ export type RemoveLiquidityInstruction = {
 export function createRemoveLiquidityInstruction(
   accounts: RemoveLiquidityInstructionAccounts,
   args: RemoveLiquidityInstructionArgs,
-): RemoveLiquidityInstruction {
-  const {
-    state,
-    lpMint,
-    burnFrom,
-    burnFromAuthority,
-    transferSolTo,
-    transferMsolTo,
-    liqPoolSolLegPda,
-    liqPoolMsolLeg,
-    liqPoolMsolLegAuthority,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = removeLiquidityStruct.serialize({
     instructionDiscriminator: removeLiquidityInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: lpMint,
+      pubkey: accounts.lpMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: burnFrom,
+      pubkey: accounts.burnFrom,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: burnFromAuthority,
+      pubkey: accounts.burnFromAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: transferSolTo,
+      pubkey: accounts.transferSolTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: transferMsolTo,
+      pubkey: accounts.transferMsolTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolSolLegPda,
+      pubkey: accounts.liqPoolSolLegPda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLeg,
+      pubkey: accounts.liqPoolMsolLeg,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLegAuthority,
+      pubkey: accounts.liqPoolMsolLegAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: RemoveLiquidityInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

@@ -61,35 +61,17 @@ export type StakeReserveInstructionAccounts = {
   stakeDepositAuthority: web3.PublicKey
   clock: web3.PublicKey
   epochSchedule: web3.PublicKey
+  rent?: web3.PublicKey
   stakeHistory: web3.PublicKey
   stakeConfig: web3.PublicKey
+  systemProgram?: web3.PublicKey
   stakeProgram: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const StakeReserveAccounts = [
-  'state',
-  'validatorList',
-  'stakeList',
-  'validatorVote',
-  'reservePda',
-  'stakeAccount',
-  'stakeDepositAuthority',
-  'clock',
-  'epochSchedule',
-  'stakeHistory',
-  'stakeConfig',
-  'stakeProgram',
-]
 
 export const stakeReserveInstructionDiscriminator = [
   87, 217, 23, 179, 205, 25, 113, 129,
 ]
-
-export type StakeReserveInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _StakeReserve_ instruction.
@@ -104,101 +86,93 @@ export type StakeReserveInstruction = {
 export function createStakeReserveInstruction(
   accounts: StakeReserveInstructionAccounts,
   args: StakeReserveInstructionArgs,
-): StakeReserveInstruction {
-  const {
-    state,
-    validatorList,
-    stakeList,
-    validatorVote,
-    reservePda,
-    stakeAccount,
-    stakeDepositAuthority,
-    clock,
-    epochSchedule,
-    stakeHistory,
-    stakeConfig,
-    stakeProgram,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = stakeReserveStruct.serialize({
     instructionDiscriminator: stakeReserveInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorVote,
+      pubkey: accounts.validatorVote,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: reservePda,
+      pubkey: accounts.reservePda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAccount,
+      pubkey: accounts.stakeAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeDepositAuthority,
+      pubkey: accounts.stakeDepositAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: epochSchedule,
+      pubkey: accounts.epochSchedule,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SYSVAR_RENT_PUBKEY,
+      pubkey: accounts.rent ?? web3.SYSVAR_RENT_PUBKEY,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeHistory,
+      pubkey: accounts.stakeHistory,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeConfig,
+      pubkey: accounts.stakeConfig,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgram,
+      pubkey: accounts.stakeProgram,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: StakeReserveInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

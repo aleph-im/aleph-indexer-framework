@@ -49,19 +49,12 @@ export const setLpParamsStruct = new beet.BeetArgsStruct<
 export type SetLpParamsInstructionAccounts = {
   state: web3.PublicKey
   adminAuthority: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const SetLpParamsAccounts = ['state', 'adminAuthority']
 
 export const setLpParamsInstructionDiscriminator = [
   227, 163, 242, 45, 79, 203, 106, 44,
 ]
-
-export type SetLpParamsInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _SetLpParams_ instruction.
@@ -76,28 +69,33 @@ export type SetLpParamsInstruction = {
 export function createSetLpParamsInstruction(
   accounts: SetLpParamsInstructionAccounts,
   args: SetLpParamsInstructionArgs,
-): SetLpParamsInstruction {
-  const { state, adminAuthority } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = setLpParamsStruct.serialize({
     instructionDiscriminator: setLpParamsInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: adminAuthority,
+      pubkey: accounts.adminAuthority,
       isWritable: false,
       isSigner: true,
     },
   ]
 
-  const ix: SetLpParamsInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

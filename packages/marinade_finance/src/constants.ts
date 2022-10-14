@@ -6,21 +6,6 @@ export enum ProgramName {
   MarinadeFinance = 'marinade_finance',
 }
 
-// @todo: This is just an example, to use it on a type guard on stats folder
-export const collectionEvent1 = [
-  InstructionType.Initialize,
-  InstructionType.ChangeAuthority,
-]
-
-export const collectionEvent1Whitelist = new Set(collectionEvent1)
-
-export const collectionEvent2 = [
-  InstructionType.AddValidator,
-  InstructionType.RemoveValidator,
-]
-
-export const collectionEvent2Whitelist = new Set(collectionEvent1)
-
 const DAY = 1000 * 60 * 60 * 24
 const START_DATE = Date.now()
 const SINCE_DATE = START_DATE - 7 * DAY

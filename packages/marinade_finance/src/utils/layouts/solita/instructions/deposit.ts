@@ -59,29 +59,14 @@ export type DepositInstructionAccounts = {
   transferFrom: web3.PublicKey
   mintTo: web3.PublicKey
   msolMintAuthority: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const DepositAccounts = [
-  'state',
-  'msolMint',
-  'liqPoolSolLegPda',
-  'liqPoolMsolLeg',
-  'liqPoolMsolLegAuthority',
-  'reservePda',
-  'transferFrom',
-  'mintTo',
-  'msolMintAuthority',
-]
 
 export const depositInstructionDiscriminator = [
   242, 35, 198, 137, 82, 225, 242, 182,
 ]
-
-export type DepositInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _Deposit_ instruction.
@@ -96,83 +81,78 @@ export type DepositInstruction = {
 export function createDepositInstruction(
   accounts: DepositInstructionAccounts,
   args: DepositInstructionArgs,
-): DepositInstruction {
-  const {
-    state,
-    msolMint,
-    liqPoolSolLegPda,
-    liqPoolMsolLeg,
-    liqPoolMsolLegAuthority,
-    reservePda,
-    transferFrom,
-    mintTo,
-    msolMintAuthority,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = depositStruct.serialize({
     instructionDiscriminator: depositInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMint,
+      pubkey: accounts.msolMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolSolLegPda,
+      pubkey: accounts.liqPoolSolLegPda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLeg,
+      pubkey: accounts.liqPoolMsolLeg,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLegAuthority,
+      pubkey: accounts.liqPoolMsolLegAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: reservePda,
+      pubkey: accounts.reservePda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: transferFrom,
+      pubkey: accounts.transferFrom,
       isWritable: true,
       isSigner: true,
     },
     {
-      pubkey: mintTo,
+      pubkey: accounts.mintTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMintAuthority,
+      pubkey: accounts.msolMintAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: DepositInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

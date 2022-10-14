@@ -69,12 +69,28 @@ export class TicketAccountData implements TicketAccountDataArgs {
   static async fromAccountAddress(
     connection: web3.Connection,
     address: web3.PublicKey,
+    commitmentOrConfig?: web3.Commitment | web3.GetAccountInfoConfig,
   ): Promise<TicketAccountData> {
-    const accountInfo = await connection.getAccountInfo(address)
+    const accountInfo = await connection.getAccountInfo(
+      address,
+      commitmentOrConfig,
+    )
     if (accountInfo == null) {
       throw new Error(`Unable to find TicketAccountData account at ${address}`)
     }
     return TicketAccountData.fromAccountInfo(accountInfo, 0)[0]
+  }
+
+  /**
+   * Provides a {@link web3.Connection.getProgramAccounts} config builder,
+   * to fetch accounts matching filters that can be specified via that builder.
+   *
+   * @param programId - the program that owns the accounts we are filtering
+   */
+  static gpaBuilder(
+    programId: web3.PublicKey = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+  ) {
+    return beetSolana.GpaBuilder.fromStruct(programId, ticketAccountDataBeet)
   }
 
   /**
@@ -180,5 +196,5 @@ export const ticketAccountDataBeet = new beet.BeetStruct<
     ['createdEpoch', beet.u64],
   ],
   TicketAccountData.fromArgs,
-  'TicketAccountData,',
+  'TicketAccountData',
 )

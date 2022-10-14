@@ -63,35 +63,17 @@ export type DeactivateStakeInstructionAccounts = {
   splitStakeAccount: web3.PublicKey
   splitStakeRentPayer: web3.PublicKey
   clock: web3.PublicKey
+  rent?: web3.PublicKey
   epochSchedule: web3.PublicKey
   stakeHistory: web3.PublicKey
+  systemProgram?: web3.PublicKey
   stakeProgram: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const DeactivateStakeAccounts = [
-  'state',
-  'reservePda',
-  'validatorList',
-  'stakeList',
-  'stakeAccount',
-  'stakeDepositAuthority',
-  'splitStakeAccount',
-  'splitStakeRentPayer',
-  'clock',
-  'epochSchedule',
-  'stakeHistory',
-  'stakeProgram',
-]
 
 export const deactivateStakeInstructionDiscriminator = [
   165, 158, 229, 97, 168, 220, 187, 225,
 ]
-
-export type DeactivateStakeInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _DeactivateStake_ instruction.
@@ -106,101 +88,93 @@ export type DeactivateStakeInstruction = {
 export function createDeactivateStakeInstruction(
   accounts: DeactivateStakeInstructionAccounts,
   args: DeactivateStakeInstructionArgs,
-): DeactivateStakeInstruction {
-  const {
-    state,
-    reservePda,
-    validatorList,
-    stakeList,
-    stakeAccount,
-    stakeDepositAuthority,
-    splitStakeAccount,
-    splitStakeRentPayer,
-    clock,
-    epochSchedule,
-    stakeHistory,
-    stakeProgram,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = deactivateStakeStruct.serialize({
     instructionDiscriminator: deactivateStakeInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: reservePda,
+      pubkey: accounts.reservePda,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAccount,
+      pubkey: accounts.stakeAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeDepositAuthority,
+      pubkey: accounts.stakeDepositAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splitStakeAccount,
-      isWritable: true,
-      isSigner: true,
-    },
-    {
-      pubkey: splitStakeRentPayer,
+      pubkey: accounts.splitStakeAccount,
       isWritable: true,
       isSigner: true,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.splitStakeRentPayer,
+      isWritable: true,
+      isSigner: true,
+    },
+    {
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SYSVAR_RENT_PUBKEY,
+      pubkey: accounts.rent ?? web3.SYSVAR_RENT_PUBKEY,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: epochSchedule,
+      pubkey: accounts.epochSchedule,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeHistory,
+      pubkey: accounts.stakeHistory,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgram,
+      pubkey: accounts.stakeProgram,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: DeactivateStakeInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

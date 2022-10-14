@@ -6,9 +6,9 @@ import {
   TimeFrame,
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
-import {EventDALIndex, EventStorage} from '../../dal/event.js'
-import {ParsedEvents} from '../../utils/layouts/index.js'
-import {AccessTimeStats} from '../../types.js'
+import { EventDALIndex, EventStorage } from '../../dal/event.js'
+import { ParsedEvents } from '../../utils/layouts/index.js'
+import { AccessTimeStats } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import accessAggregator from './timeSeriesAggregator.js'
 
@@ -20,10 +20,7 @@ export async function createAccountStats(
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
 ): Promise<AccountTimeSeriesStatsManager> {
   // @note: this aggregator is used to aggregate usage stats for the account
-  const accessTimeSeries = new TimeSeriesStats<
-    ParsedEvents,
-    AccessTimeStats
-  >(
+  const accessTimeSeries = new TimeSeriesStats<ParsedEvents, AccessTimeStats>(
     {
       type: 'access',
       startDate: 0,
@@ -51,7 +48,7 @@ export async function createAccountStats(
   return new AccountTimeSeriesStatsManager(
     {
       account,
-      series: [accessTimeSeries],  // place your other aggregated stats here
+      series: [accessTimeSeries], // place your other aggregated stats here
       aggregate(args) {
         return statsAggregator.aggregate(args)
       },

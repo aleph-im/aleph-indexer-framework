@@ -12,7 +12,8 @@ import {
   GlobalMarinadeFinanceStats,
   MarinadeFinanceAccountStats,
   MarinadeFinanceAccountData,
-  MarinadeFinanceAccountInfo, TimeStats,
+  MarinadeFinanceAccountInfo,
+  TimeStats,
 } from '../types.js'
 import MarinadeFinanceDiscoverer from './discoverer/marinade_finance.js'
 
@@ -123,7 +124,9 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<GlobalMarinadeFinanceStats> {
-    const accountsStats = await this.getAccountStats<TimeStats>(accountAddresses)
+    const accountsStats = await this.getAccountStats<TimeStats>(
+      accountAddresses,
+    )
     const globalStats: GlobalMarinadeFinanceStats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
@@ -136,17 +139,19 @@ export default class MainDomain
 
       globalStats.totalAccounts[type]++
       globalStats.totalAccesses += accesses || 0
-      if(accessesByProgramId) {
+      if (accessesByProgramId) {
         Object.entries(accessesByProgramId).forEach(([programId, accesses]) => {
           globalStats.totalAccessesByProgramId[programId] =
             (globalStats.totalAccessesByProgramId[programId] || 0) + accesses
         })
       }
       globalStats.startTimestamp = Math.min(
-        globalStats.startTimestamp || Number.MAX_SAFE_INTEGER, startTimestamp || Number.MAX_SAFE_INTEGER,
+        globalStats.startTimestamp || Number.MAX_SAFE_INTEGER,
+        startTimestamp || Number.MAX_SAFE_INTEGER,
       )
       globalStats.endTimestamp = Math.max(
-        globalStats.endTimestamp || 0, endTimestamp || 0,
+        globalStats.endTimestamp || 0,
+        endTimestamp || 0,
       )
     }
     return globalStats

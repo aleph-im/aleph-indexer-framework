@@ -64,33 +64,16 @@ export type DepositStakeAccountInstructionAccounts = {
   mintTo: web3.PublicKey
   msolMintAuthority: web3.PublicKey
   clock: web3.PublicKey
+  rent?: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
   stakeProgram: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const DepositStakeAccountAccounts = [
-  'state',
-  'validatorList',
-  'stakeList',
-  'stakeAccount',
-  'stakeAuthority',
-  'duplicationFlag',
-  'rentPayer',
-  'msolMint',
-  'mintTo',
-  'msolMintAuthority',
-  'clock',
-  'stakeProgram',
-]
 
 export const depositStakeAccountInstructionDiscriminator = [
   110, 130, 115, 41, 164, 102, 2, 59,
 ]
-
-export type DepositStakeAccountInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _DepositStakeAccount_ instruction.
@@ -105,106 +88,98 @@ export type DepositStakeAccountInstruction = {
 export function createDepositStakeAccountInstruction(
   accounts: DepositStakeAccountInstructionAccounts,
   args: DepositStakeAccountInstructionArgs,
-): DepositStakeAccountInstruction {
-  const {
-    state,
-    validatorList,
-    stakeList,
-    stakeAccount,
-    stakeAuthority,
-    duplicationFlag,
-    rentPayer,
-    msolMint,
-    mintTo,
-    msolMintAuthority,
-    clock,
-    stakeProgram,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = depositStakeAccountStruct.serialize({
     instructionDiscriminator: depositStakeAccountInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAccount,
+      pubkey: accounts.stakeAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAuthority,
+      pubkey: accounts.stakeAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: duplicationFlag,
+      pubkey: accounts.duplicationFlag,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: rentPayer,
+      pubkey: accounts.rentPayer,
       isWritable: true,
       isSigner: true,
     },
     {
-      pubkey: msolMint,
+      pubkey: accounts.msolMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: mintTo,
+      pubkey: accounts.mintTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMintAuthority,
+      pubkey: accounts.msolMintAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SYSVAR_RENT_PUBKEY,
+      pubkey: accounts.rent ?? web3.SYSVAR_RENT_PUBKEY,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgram,
+      pubkey: accounts.stakeProgram,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: DepositStakeAccountInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

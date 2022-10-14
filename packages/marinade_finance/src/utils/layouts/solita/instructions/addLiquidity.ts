@@ -55,27 +55,14 @@ export type AddLiquidityInstructionAccounts = {
   liqPoolSolLegPda: web3.PublicKey
   transferFrom: web3.PublicKey
   mintTo: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const AddLiquidityAccounts = [
-  'state',
-  'lpMint',
-  'lpMintAuthority',
-  'liqPoolMsolLeg',
-  'liqPoolSolLegPda',
-  'transferFrom',
-  'mintTo',
-]
 
 export const addLiquidityInstructionDiscriminator = [
   181, 157, 89, 67, 143, 182, 52, 72,
 ]
-
-export type AddLiquidityInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _AddLiquidity_ instruction.
@@ -90,71 +77,68 @@ export type AddLiquidityInstruction = {
 export function createAddLiquidityInstruction(
   accounts: AddLiquidityInstructionAccounts,
   args: AddLiquidityInstructionArgs,
-): AddLiquidityInstruction {
-  const {
-    state,
-    lpMint,
-    lpMintAuthority,
-    liqPoolMsolLeg,
-    liqPoolSolLegPda,
-    transferFrom,
-    mintTo,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = addLiquidityStruct.serialize({
     instructionDiscriminator: addLiquidityInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: lpMint,
+      pubkey: accounts.lpMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: lpMintAuthority,
+      pubkey: accounts.lpMintAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLeg,
+      pubkey: accounts.liqPoolMsolLeg,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: liqPoolSolLegPda,
+      pubkey: accounts.liqPoolSolLegPda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: transferFrom,
+      pubkey: accounts.transferFrom,
       isWritable: true,
       isSigner: true,
     },
     {
-      pubkey: mintTo,
+      pubkey: accounts.mintTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: AddLiquidityInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

@@ -37,25 +37,13 @@ export type ClaimInstructionAccounts = {
   ticketAccount: web3.PublicKey
   transferSolTo: web3.PublicKey
   clock: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const ClaimAccounts = [
-  'state',
-  'reservePda',
-  'ticketAccount',
-  'transferSolTo',
-  'clock',
-]
 
 export const claimInstructionDiscriminator = [
   62, 198, 214, 193, 213, 159, 108, 210,
 ]
-
-export type ClaimInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _Claim_ instruction.
@@ -67,47 +55,52 @@ export type ClaimInstruction = {
  */
 export function createClaimInstruction(
   accounts: ClaimInstructionAccounts,
-): ClaimInstruction {
-  const { state, reservePda, ticketAccount, transferSolTo, clock } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = claimStruct.serialize({
     instructionDiscriminator: claimInstructionDiscriminator,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: reservePda,
+      pubkey: accounts.reservePda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: ticketAccount,
+      pubkey: accounts.ticketAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: transferSolTo,
+      pubkey: accounts.transferSolTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: ClaimInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

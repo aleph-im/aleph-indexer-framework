@@ -35,64 +35,44 @@ export const updateDeactivatedStruct = new beet.BeetArgsStruct<
 /**
  * Accounts required by the _updateDeactivated_ instruction
  *
- * @property [_writable_] stateCommonCommon
- * @property [_writable_] stakeListCommonCommon
- * @property [_writable_] stakeAccountCommonCommon
- * @property [] stakeWithdrawAuthorityCommonCommon
- * @property [_writable_] reservePdaCommonCommon
- * @property [_writable_] msolMintCommonCommon
- * @property [] msolMintAuthorityCommonCommon
- * @property [_writable_] treasuryMsolAccountCommonCommon
- * @property [] clockCommonCommon
- * @property [] stakeHistoryCommonCommon
- * @property [] stakeProgramCommonCommon
- * @property [] tokenProgramCommonCommon
+ * @property [_writable_] commonItemState
+ * @property [_writable_] commonItemStakeList
+ * @property [_writable_] commonItemStakeAccount
+ * @property [] commonItemStakeWithdrawAuthority
+ * @property [_writable_] commonItemReservePda
+ * @property [_writable_] commonItemMsolMint
+ * @property [] commonItemMsolMintAuthority
+ * @property [_writable_] commonItemTreasuryMsolAccount
+ * @property [] commonItemClock
+ * @property [] commonItemStakeHistory
+ * @property [] commonItemStakeProgram
+ * @property [] commonItemTokenProgram
  * @property [_writable_] operationalSolAccount
  * @category Instructions
  * @category UpdateDeactivated
  * @category generated
  */
 export type UpdateDeactivatedInstructionAccounts = {
-  stateCommonCommon: web3.PublicKey
-  stakeListCommonCommon: web3.PublicKey
-  stakeAccountCommonCommon: web3.PublicKey
-  stakeWithdrawAuthorityCommonCommon: web3.PublicKey
-  reservePdaCommonCommon: web3.PublicKey
-  msolMintCommonCommon: web3.PublicKey
-  msolMintAuthorityCommonCommon: web3.PublicKey
-  treasuryMsolAccountCommonCommon: web3.PublicKey
-  clockCommonCommon: web3.PublicKey
-  stakeHistoryCommonCommon: web3.PublicKey
-  stakeProgramCommonCommon: web3.PublicKey
-  tokenProgramCommonCommon: web3.PublicKey
+  commonItemState: web3.PublicKey
+  commonItemStakeList: web3.PublicKey
+  commonItemStakeAccount: web3.PublicKey
+  commonItemStakeWithdrawAuthority: web3.PublicKey
+  commonItemReservePda: web3.PublicKey
+  commonItemMsolMint: web3.PublicKey
+  commonItemMsolMintAuthority: web3.PublicKey
+  commonItemTreasuryMsolAccount: web3.PublicKey
+  commonItemClock: web3.PublicKey
+  commonItemStakeHistory: web3.PublicKey
+  commonItemStakeProgram: web3.PublicKey
+  commonItemTokenProgram: web3.PublicKey
   operationalSolAccount: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const UpdateDeactivatedAccounts = [
-  'stateCommonCommon',
-  'stakeListCommonCommon',
-  'stakeAccountCommonCommon',
-  'stakeWithdrawAuthorityCommonCommon',
-  'reservePdaCommonCommon',
-  'msolMintCommonCommon',
-  'msolMintAuthorityCommonCommon',
-  'treasuryMsolAccountCommonCommon',
-  'clockCommonCommon',
-  'stakeHistoryCommonCommon',
-  'stakeProgramCommonCommon',
-  'tokenProgramCommonCommon',
-  'operationalSolAccount',
-]
 
 export const updateDeactivatedInstructionDiscriminator = [
   16, 232, 131, 115, 156, 100, 239, 50,
 ]
-
-export type UpdateDeactivatedInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _UpdateDeactivated_ instruction.
@@ -107,102 +87,93 @@ export type UpdateDeactivatedInstruction = {
 export function createUpdateDeactivatedInstruction(
   accounts: UpdateDeactivatedInstructionAccounts,
   args: UpdateDeactivatedInstructionArgs,
-): UpdateDeactivatedInstruction {
-  const {
-    stateCommonCommon,
-    stakeListCommonCommon,
-    stakeAccountCommonCommon,
-    stakeWithdrawAuthorityCommonCommon,
-    reservePdaCommonCommon,
-    msolMintCommonCommon,
-    msolMintAuthorityCommonCommon,
-    treasuryMsolAccountCommonCommon,
-    clockCommonCommon,
-    stakeHistoryCommonCommon,
-    stakeProgramCommonCommon,
-    tokenProgramCommonCommon,
-    operationalSolAccount,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = updateDeactivatedStruct.serialize({
     instructionDiscriminator: updateDeactivatedInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: stateCommonCommon,
+      pubkey: accounts.commonItemState,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeListCommonCommon,
+      pubkey: accounts.commonItemStakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeAccountCommonCommon,
+      pubkey: accounts.commonItemStakeAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeWithdrawAuthorityCommonCommon,
+      pubkey: accounts.commonItemStakeWithdrawAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: reservePdaCommonCommon,
+      pubkey: accounts.commonItemReservePda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMintCommonCommon,
+      pubkey: accounts.commonItemMsolMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMintAuthorityCommonCommon,
+      pubkey: accounts.commonItemMsolMintAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: treasuryMsolAccountCommonCommon,
+      pubkey: accounts.commonItemTreasuryMsolAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: clockCommonCommon,
+      pubkey: accounts.commonItemClock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeHistoryCommonCommon,
+      pubkey: accounts.commonItemStakeHistory,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgramCommonCommon,
+      pubkey: accounts.commonItemStakeProgram,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: tokenProgramCommonCommon,
+      pubkey: accounts.commonItemTokenProgram,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: operationalSolAccount,
+      pubkey: accounts.operationalSolAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: UpdateDeactivatedInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

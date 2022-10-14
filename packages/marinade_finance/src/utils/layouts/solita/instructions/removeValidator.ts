@@ -53,25 +53,12 @@ export type RemoveValidatorInstructionAccounts = {
   validatorList: web3.PublicKey
   duplicationFlag: web3.PublicKey
   operationalSolAccount: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const RemoveValidatorAccounts = [
-  'state',
-  'managerAuthority',
-  'validatorList',
-  'duplicationFlag',
-  'operationalSolAccount',
-]
 
 export const removeValidatorInstructionDiscriminator = [
   25, 96, 211, 155, 161, 14, 168, 188,
 ]
-
-export type RemoveValidatorInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _RemoveValidator_ instruction.
@@ -86,49 +73,48 @@ export type RemoveValidatorInstruction = {
 export function createRemoveValidatorInstruction(
   accounts: RemoveValidatorInstructionAccounts,
   args: RemoveValidatorInstructionArgs,
-): RemoveValidatorInstruction {
-  const {
-    state,
-    managerAuthority,
-    validatorList,
-    duplicationFlag,
-    operationalSolAccount,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = removeValidatorStruct.serialize({
     instructionDiscriminator: removeValidatorInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: managerAuthority,
+      pubkey: accounts.managerAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: duplicationFlag,
+      pubkey: accounts.duplicationFlag,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: operationalSolAccount,
+      pubkey: accounts.operationalSolAccount,
       isWritable: true,
       isSigner: false,
     },
   ]
 
-  const ix: RemoveValidatorInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

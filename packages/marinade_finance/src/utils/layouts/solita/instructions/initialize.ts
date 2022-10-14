@@ -43,9 +43,9 @@ export const initializeStruct = new beet.BeetArgsStruct<
  * @property [_writable_] validatorList
  * @property [] msolMint
  * @property [] operationalSolAccount
- * @property [] lpMintLiqPoolLiqPool
- * @property [] solLegPdaLiqPoolLiqPool
- * @property [] msolLegLiqPoolLiqPool
+ * @property [] liqPoolItemLpMint
+ * @property [] liqPoolItemSolLegPda
+ * @property [] liqPoolItemMsolLeg
  * @property [] treasuryMsolAccount
  * @property [] clock
  * @category Instructions
@@ -60,37 +60,18 @@ export type InitializeInstructionAccounts = {
   validatorList: web3.PublicKey
   msolMint: web3.PublicKey
   operationalSolAccount: web3.PublicKey
-  lpMintLiqPoolLiqPool: web3.PublicKey
-  solLegPdaLiqPoolLiqPool: web3.PublicKey
-  msolLegLiqPoolLiqPool: web3.PublicKey
+  liqPoolItemLpMint: web3.PublicKey
+  liqPoolItemSolLegPda: web3.PublicKey
+  liqPoolItemMsolLeg: web3.PublicKey
   treasuryMsolAccount: web3.PublicKey
   clock: web3.PublicKey
+  rent?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const InitializeAccounts = [
-  'creatorAuthority',
-  'state',
-  'reservePda',
-  'stakeList',
-  'validatorList',
-  'msolMint',
-  'operationalSolAccount',
-  'lpMintLiqPoolLiqPool',
-  'solLegPdaLiqPoolLiqPool',
-  'msolLegLiqPoolLiqPool',
-  'treasuryMsolAccount',
-  'clock',
-]
 
 export const initializeInstructionDiscriminator = [
   175, 175, 109, 31, 13, 152, 155, 237,
 ]
-
-export type InitializeInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _Initialize_ instruction.
@@ -105,96 +86,88 @@ export type InitializeInstruction = {
 export function createInitializeInstruction(
   accounts: InitializeInstructionAccounts,
   args: InitializeInstructionArgs,
-): InitializeInstruction {
-  const {
-    creatorAuthority,
-    state,
-    reservePda,
-    stakeList,
-    validatorList,
-    msolMint,
-    operationalSolAccount,
-    lpMintLiqPoolLiqPool,
-    solLegPdaLiqPoolLiqPool,
-    msolLegLiqPoolLiqPool,
-    treasuryMsolAccount,
-    clock,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = initializeStruct.serialize({
     instructionDiscriminator: initializeInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: creatorAuthority,
+      pubkey: accounts.creatorAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: reservePda,
+      pubkey: accounts.reservePda,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMint,
+      pubkey: accounts.msolMint,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: operationalSolAccount,
+      pubkey: accounts.operationalSolAccount,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: lpMintLiqPoolLiqPool,
+      pubkey: accounts.liqPoolItemLpMint,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: solLegPdaLiqPoolLiqPool,
+      pubkey: accounts.liqPoolItemSolLegPda,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: msolLegLiqPoolLiqPool,
+      pubkey: accounts.liqPoolItemMsolLeg,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: treasuryMsolAccount,
+      pubkey: accounts.treasuryMsolAccount,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SYSVAR_RENT_PUBKEY,
+      pubkey: accounts.rent ?? web3.SYSVAR_RENT_PUBKEY,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: InitializeInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })
