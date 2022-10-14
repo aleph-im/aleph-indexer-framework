@@ -126,6 +126,7 @@ export class SolanaRPC {
           {
             commitment: 'finalized',
             encoding: 'jsonParsed',
+            maxSupportedTransactionVersion: 'legacy',
             ...options,
           },
         ],
@@ -152,6 +153,7 @@ export class SolanaRPC {
       {
         commitment: 'finalized',
         encoding: 'jsonParsed',
+        maxSupportedTransactionVersion: 'legacy',
       },
     ])
 
@@ -166,6 +168,7 @@ export class SolanaRPC {
 
   async getConfirmedTransactions(
     signatures: string[],
+    options?: { shallowErrors?: boolean },
   ): Promise<(RawTransactionV1 | null)[]> {
     let batch: any[] = signatures.map((signature) => {
       return {
@@ -175,6 +178,7 @@ export class SolanaRPC {
           {
             commitment: 'finalized',
             encoding: 'jsonParsed',
+            maxSupportedTransactionVersion: 'legacy',
           },
         ],
       }
@@ -190,9 +194,14 @@ export class SolanaRPC {
 
     return res.map(({ error, result }: any) => {
       if (error) {
-        throw new Error(
-          'failed to get confirmed transactions: ' + error.message,
-        )
+        const message = `failed to get confirmed transactions: ${error.message}`
+
+        if (options?.shallowErrors) {
+          console.log(message)
+          return null
+        }
+
+        throw new Error(message)
       }
 
       return result

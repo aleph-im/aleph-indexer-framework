@@ -85,7 +85,7 @@ export class TransactionFetcher {
   ) {
     this.incomingTransactions = new PendingWorkPool({
       id: 'incoming-transactions',
-      interval: 1000,
+      interval: 0,
       chunkSize: 1000,
       concurrency: 1,
       dal: this.transactionRequestIncomingTransactionDAL,
@@ -306,7 +306,7 @@ export class TransactionFetcher {
       await this.transactionRequestResponseDAL.save(requestResponse)
       await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
 
-      this.checkCompletionJob.run()
+      this.checkCompletionJob.run().catch(() => 'ignore')
     } finally {
       release()
     }
@@ -555,7 +555,7 @@ export class TransactionFetcher {
 
   protected async handlePendingRetries(): Promise<void> {
     await this.checkAllPendingSignatures()
-    this.checkCompletionJob.run()
+    await this.checkCompletionJob.run()
   }
 
   protected getFuture(nonce: number): Utils.Future<number> {

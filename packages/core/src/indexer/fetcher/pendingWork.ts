@@ -1,5 +1,10 @@
 import { MAX_TIMER_INTEGER } from '../../constants.js'
-import { concurrentPromises, JobRunner, Mutex } from '../../utils/index.js'
+import {
+  concurrentPromises,
+  DebouncedJobRunner,
+  JobRunner,
+  Mutex,
+} from '../../utils/index.js'
 import { StorageEntry } from '../../storage/index.js'
 import { PendingWork } from './types.js'
 import {
@@ -22,14 +27,25 @@ export interface PendingWorkOptions<T> {
 
 export class PendingWorkPool<T> {
   protected skipSleep = false
-  protected coordinatorJob!: JobRunner
+  protected debouncedJob: DebouncedJobRunner | undefined
+  protected coordinatorJob: JobRunner | undefined
 
   constructor(protected options: PendingWorkOptions<T>) {
-    this.coordinatorJob = new JobRunner({
-      name: `${this.options.id} 🔄`,
-      interval: this.options.interval,
-      intervalFn: this.runJob.bind(this),
-    })
+    const name = `${this.options.id} 🔄`
+
+    // @note: If interval is 0, run it only when new items arrive
+    if (!this.options.interval) {
+      this.debouncedJob = new DebouncedJobRunner({
+        name,
+        callbackFn: this.runJob.bind(this),
+      })
+    } else {
+      this.coordinatorJob = new JobRunner({
+        name,
+        interval: this.options.interval,
+        intervalFn: this.runJob.bind(this),
+      })
+    }
   }
 
   async start(): Promise<unknown> {
@@ -40,18 +56,21 @@ export class PendingWorkPool<T> {
       this.coordinatorJob.run()
     }
 
+    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
+
     await Promise.all(promises)
 
     return
   }
 
   async stop(): Promise<void> {
-    return this.coordinatorJob.stop()
+    return this.coordinatorJob && this.coordinatorJob.stop()
   }
 
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
     await this.options.dal.save(work)
     this.skipNextSleep()
+    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
   }
 
   async getCount(): Promise<number> {
@@ -126,15 +145,21 @@ export class PendingWorkPool<T> {
             `Handling ${works.length} works from ${this.options.id} pending work queue`,
           )
 
-          const sleepTime = await this.handleWork(works)
+          let sleepTime
 
-          if (sleepTime) {
-            minSleepTimeRef.value = Math.min(minSleepTimeRef.value, sleepTime)
-            return
+          try {
+            sleepTime = await this.handleWork(works)
+
+            if (sleepTime) {
+              minSleepTimeRef.value = Math.min(minSleepTimeRef.value, sleepTime)
+            }
+          } finally {
+            if (!sleepTime) {
+              // @note: Always check complete works, for not repeating them all in case that only one failed
+              await this.checkComplete(works)
+              console.log(`complete --> ${works.length}`)
+            }
           }
-
-          await this.checkComplete(works)
-          console.log(`complete --> ${works.length}`)
         })()
       }
 

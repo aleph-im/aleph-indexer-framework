@@ -1,3 +1,4 @@
+import { Duration } from 'luxon'
 import { sleep } from '../time.js'
 
 /**
@@ -116,40 +117,95 @@ export class Mutex {
  * An util for retaining an unique snapshot of data while
  * the previous snapshot is being processed
  */
-export class DebouncedJob<T> {
+export class DebouncedJob<T = void, R = unknown> {
   protected pendingData: T | undefined
   protected pendingRun = false
   protected running = false
   protected lastRun = 0
 
   constructor(
-    protected callback: (data: T) => Promise<void>,
+    protected callback: (data: T) => Promise<R>,
     protected throttle: number = 0,
   ) {}
 
-  async run(data: T): Promise<void> {
+  async run(data: T): Promise<R | void> {
     this.pendingData = data
     this.pendingRun = true
-    await this._run()
+    return this._run()
+  }
+
+  protected async _run(): Promise<R | void> {
+    if (this.running) return
+    this.running = true
+    let result: R | void = undefined
+
+    try {
+      while (this.pendingRun) {
+        const ts = this.lastRun + this.throttle - Date.now()
+        if (ts > 0) await sleep(ts)
+
+        const data = this.pendingData
+        this.pendingData = undefined
+        this.pendingRun = false
+
+        this.lastRun = Date.now()
+        result = await this.callback(data as T)
+      }
+
+      return result
+    } finally {
+      this.running = false
+    }
+  }
+}
+
+export class DebouncedJobRunner extends DebouncedJob<void, number> {
+  protected debouncedTimeoutId: NodeJS.Timeout | undefined
+
+  constructor(
+    protected options: {
+      name: string
+      callbackFn: () => Promise<number>
+    },
+  ) {
+    super(options.callbackFn)
   }
 
   protected async _run(): Promise<void> {
-    if (this.running) return
-    this.running = true
+    const { name } = this.options
 
-    while (this.pendingRun) {
-      const ts = this.lastRun + this.throttle - Date.now()
-      if (ts > 0) await sleep(ts)
+    console.log(`Job[${name}] starting`)
+    const startTime = Date.now()
 
-      const data = this.pendingData
-      this.pendingData = undefined
-      this.pendingRun = false
+    if (this.debouncedTimeoutId) clearTimeout(this.debouncedTimeoutId)
 
-      this.lastRun = Date.now()
-      await this.callback(data as T)
+    let sleepTime: number | void
+
+    try {
+      sleepTime = await super._run()
+    } catch (e) {
+      console.log('error', e)
+      sleepTime = 1000
     }
 
-    this.running = false
+    if (sleepTime) {
+      console.log(
+        `Job[${name}] running again in ${
+          Duration.fromMillis(sleepTime).toISOTime() || '+24h'
+        } (${sleepTime})`,
+      )
+
+      this.debouncedTimeoutId = setTimeout(() => {
+        this.run().catch(() => 'ignore')
+      }, sleepTime)
+    }
+
+    const elapsedTime = Date.now() - startTime
+    console.log(
+      `Job[${name}] finished (took ${
+        Duration.fromMillis(elapsedTime).toISOTime() || '+24h'
+      })`,
+    )
   }
 }
 
