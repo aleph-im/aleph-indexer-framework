@@ -499,12 +499,12 @@ export class EntityIndexStorage<
 
       if (value === undefined) {
         console.log(
-          `🟥 Inconsistent lookup key [${entityKey}] on db [${this.options.sublevel}]`,
+          `🟥 Inconsistent lookup key [${entityKey}] from key (${key}) on index [${this.options.sublevel}]`,
         )
         return
       }
 
-      return { key, value: value as Returned }
+      return { key: entityKey, value: value as Returned }
     }
 
     return item as StorageEntry<string, Returned>
