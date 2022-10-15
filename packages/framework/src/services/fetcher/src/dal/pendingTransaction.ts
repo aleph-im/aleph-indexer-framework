@@ -28,6 +28,7 @@ export function createPendingTransactionDAL(
         ])
 
         newEntity.payload = [...peers]
+        newEntity.time = oldEntity.time
       }
 
       return EntityUpdateOp.Update
