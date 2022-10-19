@@ -37,7 +37,7 @@ export class FrameworkTCPTransporter extends SuperClass {
         // useHostname: true,
         // // Gossip sending period in seconds
         // gossipPeriod: 2,
-        gossipPeriod: 10,
+        gossipPeriod: 2,
         // // Maximum enabled outgoing connections. If reach, close the old connections
         // maxConnections: 32,
         // @note: This is a quick dirty fix (Maximum TCP packet size)

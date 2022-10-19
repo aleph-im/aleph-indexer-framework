@@ -69,11 +69,11 @@ export class TransactionFetcher {
     return this.fetcherMsClient.fetchTransactionsBySignature({ signatures })
   }, 1000)
 
-  protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
-    this.storeIncomingTxs.bind(this),
-    1000,
-    1000,
-  )
+  // protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
+  //   this.storeIncomingTxs.bind(this),
+  //   1000,
+  //   1000,
+  // )
 
   constructor(
     protected fetcherMsClient: FetcherMsClient,
@@ -200,7 +200,8 @@ export class TransactionFetcher {
   }
 
   async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    await this.onTxsBuffer.add(chunk)
+    // await this.onTxsBuffer.add(chunk)
+    return this.storeIncomingTxs(chunk)
   }
 
   async isRequestComplete(nonce: number): Promise<boolean> {

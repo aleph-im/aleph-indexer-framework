@@ -69,6 +69,13 @@ export class PendingWorkPool<T> {
 
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
     await this.options.dal.save(work)
+
+    console.log(
+      `PendingWork | Added ${Array.isArray(work) ? work.length : '1'} items [${
+        this.options.id
+      }]`,
+    )
+
     this.skipNextSleep()
     this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
   }
@@ -142,7 +149,7 @@ export class PendingWorkPool<T> {
           }
 
           console.log(
-            `Handling ${works.length} works from ${this.options.id} pending work queue`,
+            `PendingWork | Handling ${works.length} items [${this.options.id}]`,
           )
 
           let sleepTime
@@ -157,7 +164,6 @@ export class PendingWorkPool<T> {
             if (!sleepTime) {
               // @note: Always check complete works, for not repeating them all in case that only one failed
               await this.checkComplete(works)
-              console.log(`complete --> ${works.length}`)
             }
           }
         })()
@@ -205,7 +211,6 @@ export class PendingWorkPool<T> {
     await Promise.all(
       works.map(async (work) => {
         const complete = await checkComplete(work)
-        // console.log('->>', complete)
         if (complete) {
           worksToDelete.push(work)
         } else {
@@ -214,8 +219,11 @@ export class PendingWorkPool<T> {
       }),
     )
 
-    console.log('worksToDelete', worksToDelete.length)
     await this.options.dal.remove(worksToDelete)
+
+    console.log(
+      `PendingWork | Deleted ${worksToDelete.length} of ${works.length} items [${this.options.id}]`,
+    )
 
     return pendingWorks
   }

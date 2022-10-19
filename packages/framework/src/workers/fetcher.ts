@@ -12,7 +12,11 @@ import {
 } from '@aleph-indexer/core'
 import { FetcherMs, FetcherMsMain } from '../services/fetcher/index.js'
 import { createAccountInfoDAL } from '../services/fetcher/src/dal/accountInfo.js'
-import { createPendingTransactionDAL } from '../services/fetcher/src/dal/pendingTransaction.js'
+import {
+  createPendingTransactionCacheDAL,
+  createPendingTransactionDAL,
+  createPendingTransactionFetchDAL,
+} from '../services/fetcher/src/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
 import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
 import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
@@ -57,6 +61,8 @@ async function main() {
     broker,
     createSignatureDAL(basePath),
     createPendingTransactionDAL(basePath),
+    createPendingTransactionCacheDAL(basePath),
+    createPendingTransactionFetchDAL(basePath),
     createRawTransactionDAL(basePath),
     createAccountInfoDAL(basePath),
     createRequestsDAL(basePath),
