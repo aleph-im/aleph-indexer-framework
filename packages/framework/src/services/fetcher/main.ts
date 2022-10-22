@@ -456,13 +456,14 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     const toFetchWorks: PendingWork<string[]>[] = []
     const inCacheWorks: PendingWork<string[]>[] = []
 
-    for (const work of works) {
-      const tx = await this.rawTransactionDAL.get(work.id)
+    const ids = works.map((work) => work.id)
+    const txs = await this.rawTransactionDAL.getMany(ids)
 
+    for (const [i, tx] of txs.entries()) {
       if (!tx) {
-        toFetchWorks.push(work)
+        toFetchWorks.push(works[i])
       } else {
-        inCacheWorks.push(work)
+        inCacheWorks.push(works[i])
       }
     }
 
@@ -530,8 +531,14 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     }
 
     await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
-    await this.emitTransactions(txs)
-    // await this.pendingTransactionsCache.addWork(txs)
+
+    const cacheWorks = txs.map(({ tx, peers }) => ({
+      id: tx.signature,
+      time: Date.now(),
+      payload: peers,
+    }))
+
+    await this.pendingTransactionsCache.addWork(cacheWorks)
 
     console.log(
       `Txs fetching | Response ${txs.length} requests${
