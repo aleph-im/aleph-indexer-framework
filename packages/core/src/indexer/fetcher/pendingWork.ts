@@ -68,13 +68,12 @@ export class PendingWorkPool<T> {
   }
 
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
+    work = Array.isArray(work) ? work : [work]
+    if (!work.length) return
+
     await this.options.dal.save(work)
 
-    console.log(
-      `PendingWork | Added ${Array.isArray(work) ? work.length : '1'} items [${
-        this.options.id
-      }]`,
-    )
+    console.log(`PendingWork | Added ${work.length} items [${this.options.id}]`)
 
     this.skipNextSleep()
     this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
