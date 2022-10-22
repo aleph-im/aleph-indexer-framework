@@ -533,7 +533,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
 
     const cacheWorks = txs.map(({ tx, peers }) => ({
-      id: tx.signature,
+      id: tx.transaction.signatures[0],
       time: Date.now(),
       payload: peers,
     }))
