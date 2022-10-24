@@ -1,6 +1,9 @@
 import { GraphQLSchema } from 'graphql'
 import { mergeSchemas } from '@graphql-tools/schema'
 
+/**
+ * A specification that defines how to fetch data from a backend system.
+ */
 export class GraphQLEndpoint {
   protected path: string
   protected schemas: GraphQLSchema[]

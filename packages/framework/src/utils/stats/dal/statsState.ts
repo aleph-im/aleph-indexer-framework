@@ -15,6 +15,9 @@ export type StatsState = {
   state: StatsStateState
 }
 
+/**
+ * Stats Entity Storage.
+ */
 export type StatsStateStorage = EntityStorage<StatsState>
 
 export enum StatsStateDALIndex {
@@ -47,6 +50,9 @@ const stateKey = {
   length: 1,
 }
 
+/**
+ * Creates a stats Entity Storage.
+ */
 export function createStatsStateDAL(path: string): StatsStateStorage {
   return new EntityStorage<StatsState>({
     name: 'stats_state',

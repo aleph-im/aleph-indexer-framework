@@ -3,10 +3,21 @@ import { AccountInfoStorage } from '../../storage/accountInfo.js'
 import { AccountInfoFetcherOptions, Utils } from '../../index.js'
 import { SolanaRPC } from '../../solana.js'
 
+/**
+ * Fetcher account info class.
+ */
 export class AccountInfoFetcher {
   protected debouncedJob: Utils.DebouncedJob<AccountInfo<Buffer>>
   protected subscriptionId: number | undefined
 
+  /**
+   * Initialize the AccountInfoFetcher.
+   * @param opts Options where the account address is stored and if it needs to be updated.
+   * @param dal The account info storage.
+   * @param solanaRpc The solana RPC client to use.
+   * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
+   * @param id Identifier containing the account address.
+   */
   constructor(
     protected opts: AccountInfoFetcherOptions,
     protected dal: AccountInfoStorage,
@@ -22,7 +33,7 @@ export class AccountInfoFetcher {
         const account = {
           address: opts.address,
           executable: accountInfo.executable,
-          owner: accountInfo.owner.toString(), // found cases where accounts doesnt have owner, if this case is encountered will stop the execution: https://solscan.io/account/6yZ65vJJ3cNGnysVxujkYktRdGtKEdVXSbtb7JQmh7dJ
+          owner: accountInfo.owner.toString(),
           lamports: accountInfo.lamports,
           data: accountData,
           rentEpoch: accountInfo.rentEpoch,

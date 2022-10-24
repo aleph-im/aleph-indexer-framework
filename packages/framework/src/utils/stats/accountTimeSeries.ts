@@ -21,6 +21,9 @@ import {
 
 const { JobRunner } = Utils
 
+/**
+ * Defines the account stats handler class.
+ */
 export class AccountTimeSeriesStatsManager {
   protected compactionJob!: Utils.JobRunner
   protected stats!: AccountStats

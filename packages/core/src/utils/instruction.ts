@@ -14,6 +14,9 @@ export function isTokenInstruction(
   return ix.programId === TOKEN_PROGRAM_ID
 }
 
+/**
+ * Guard to validate if it is a valid instruction
+ */
 export function isParsedIx(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {

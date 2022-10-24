@@ -9,11 +9,18 @@ export interface FetcherOptions {
   backwardJobOptions?: FetcherJobRunnerOptions
 }
 
+/**
+ * Fetcher abstract class used in SignatureFetcher.
+ */
 export abstract class Fetcher {
   protected fetcherState!: FetcherStateV1
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
 
+  /**
+   * @param options Fetcher options.
+   * @param fetcherStateDAL Fetcher state storage.
+   */
   constructor(
     protected options: FetcherOptions,
     protected fetcherStateDAL: FetcherStateLevelStorage,

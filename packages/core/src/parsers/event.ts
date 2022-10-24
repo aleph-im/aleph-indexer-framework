@@ -1,7 +1,14 @@
 import { InstructionContext } from '../indexer/index.js'
 import { EventBase, AlephParsedEvent } from '../types.js'
 
+/**
+ * Handles signatures fetching of an account.
+ */
 export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
+  /**
+   * Initialize the EventParser class.
+   * @param eventToParserMap Stores the function for parsing each EventType.
+   */
   constructor(
     protected eventToParserMap: Map<
       EventType,
@@ -9,6 +16,10 @@ export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
     >,
   ) {}
 
+  /**
+   * Processes the instruction to obtain an event.
+   * @param ixCtx Stores ixns and txn info.
+   */
   parse(ixCtx: InstructionContext): Event {
     const { ix, parentIx, parentTx } = ixCtx
     const parsed = (ix as AlephParsedEvent<EventType, Info>).parsed

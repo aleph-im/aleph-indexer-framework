@@ -7,6 +7,22 @@ import {
   SignaturesForAddressOptions,
   SolanaJSONRPCError,
 } from '@solana/web3.js'
+import {
+  type as pick,
+  number,
+  string,
+  array,
+  boolean,
+  literal,
+  union,
+  optional,
+  nullable,
+  coerce,
+  create,
+  unknown,
+  any,
+  Struct,
+} from 'superstruct'
 import { Connection } from './lib/solana/web3.js'
 import {
   AlephParsedTransaction,
@@ -147,7 +163,7 @@ export class SolanaRPC {
   async getConfirmedTransaction(
     signature: string,
   ): Promise<RawTransactionV1 | null> {
-    const res = await this.connection._rpcRequest('getTransaction', [
+    const unsafeRes = await this.connection._rpcRequest('getTransaction', [
       signature,
       {
         commitment: 'finalized',
@@ -155,11 +171,13 @@ export class SolanaRPC {
       },
     ])
 
+    const res = create(unsafeRes, GetParsedTransactionRpcResult)
+
     if ('error' in res) {
-      throw new Error(
-        'failed to get confirmed transaction: ' + res.error.message,
-      )
+      throw new SolanaJSONRPCError(res.error, 'failed to get transaction')
     }
+
+    console.log(res.result)
 
     return res.result
   }
@@ -421,3 +439,161 @@ export class SolanaRPCRoundRobin {
     }) as unknown as SolanaRPC
   }
 }
+
+function createRpcResult<T, U>(result: Struct<T, U>) {
+  return union([
+    pick({
+      jsonrpc: literal('2.0'),
+      id: string(),
+      result,
+    }),
+    pick({
+      jsonrpc: literal('2.0'),
+      id: string(),
+      error: pick({
+        code: unknown(),
+        message: string(),
+        data: optional(any()),
+      }),
+    }),
+  ])
+}
+
+const UnknownRpcResult = createRpcResult(unknown())
+
+function jsonRpcResult<T, U>(schema: Struct<T, U>) {
+  return coerce(createRpcResult(schema), UnknownRpcResult, (value) => {
+    if ('error' in value) {
+      return value
+    } else {
+      return {
+        ...value,
+        result: create(value.result, schema),
+      }
+    }
+  })
+}
+
+const AddressTableLookupStruct = pick({
+  accountKey: string(),
+  writableIndexes: array(number()),
+  readonlyIndexes: array(number()),
+})
+
+const LoadedAddressesResult = pick({
+  writable: array(string()),
+  readonly: array(string()),
+})
+
+const TokenAmountResult = pick({
+  amount: string(),
+  uiAmount: nullable(number()),
+  decimals: number(),
+  uiAmountString: optional(string()),
+})
+
+const TokenBalanceResult = pick({
+  accountIndex: number(),
+  mint: string(),
+  owner: optional(string()),
+  uiTokenAmount: TokenAmountResult,
+})
+
+const TransactionErrorResult = nullable(union([pick({}), string()]))
+
+const RawInstructionResult = pick({
+  accounts: array(string()),
+  data: string(),
+  programId: string(),
+})
+
+const ParsedInstructionResult = pick({
+  parsed: unknown(),
+  program: string(),
+  programId: string(),
+})
+
+const InstructionResult = union([RawInstructionResult, ParsedInstructionResult])
+
+const UnknownInstructionResult = union([
+  pick({
+    parsed: unknown(),
+    program: string(),
+    programId: string(),
+  }),
+  pick({
+    accounts: array(string()),
+    data: string(),
+    programId: string(),
+  }),
+])
+
+const ParsedOrRawInstruction = coerce(
+  InstructionResult,
+  UnknownInstructionResult,
+  (value) => {
+    if ('accounts' in value) {
+      return create(value, RawInstructionResult)
+    } else {
+      return create(value, ParsedInstructionResult)
+    }
+  },
+)
+
+const ParsedConfirmedTransactionResult = pick({
+  signatures: array(string()),
+  message: pick({
+    accountKeys: array(
+      pick({
+        pubkey: string(),
+        signer: boolean(),
+        writable: boolean(),
+        source: optional(
+          union([literal('transaction'), literal('lookupTable')]),
+        ),
+      }),
+    ),
+    instructions: array(ParsedOrRawInstruction),
+    recentBlockhash: string(),
+    addressTableLookups: optional(nullable(array(AddressTableLookupStruct))),
+  }),
+})
+
+const TransactionVersionStruct = union([literal(0), literal('legacy')])
+
+const ParsedConfirmedTransactionMetaResult = pick({
+  err: TransactionErrorResult,
+  fee: number(),
+  innerInstructions: optional(
+    nullable(
+      array(
+        pick({
+          index: number(),
+          instructions: array(ParsedOrRawInstruction),
+        }),
+      ),
+    ),
+  ),
+  preBalances: array(number()),
+  postBalances: array(number()),
+  logMessages: optional(nullable(array(string()))),
+  preTokenBalances: optional(nullable(array(TokenBalanceResult))),
+  postTokenBalances: optional(nullable(array(TokenBalanceResult))),
+  loadedAddresses: optional(LoadedAddressesResult),
+  computeUnitsConsumed: optional(number()),
+})
+
+/**
+ * Expected JSON RPC response for the "getTransaction" message
+ */
+const GetParsedTransactionRpcResult = jsonRpcResult(
+  nullable(
+    pick({
+      slot: number(),
+      transaction: ParsedConfirmedTransactionResult,
+      meta: nullable(ParsedConfirmedTransactionMetaResult),
+      blockTime: optional(nullable(number())),
+      version: optional(TransactionVersionStruct),
+    }),
+  ),
+)
