@@ -7,6 +7,7 @@ import {
   SignaturesForAddressOptions,
   SolanaJSONRPCError,
 } from '@solana/web3.js'
+import { config } from './config.js'
 import {
   type as pick,
   number,
@@ -163,7 +164,8 @@ export class SolanaRPC {
   async getConfirmedTransaction(
     signature: string,
   ): Promise<RawTransactionV1 | null> {
-    const unsafeRes = await this.connection._rpcRequest('getTransaction', [
+    // unsafeRes
+    let res = await this.connection._rpcRequest('getTransaction', [
       signature,
       {
         commitment: 'finalized',
@@ -171,7 +173,8 @@ export class SolanaRPC {
       },
     ])
 
-    const res = create(unsafeRes, GetParsedTransactionRpcResult)
+    if (config.STRICT_CHECK_RPC)
+      res = create(res, GetParsedTransactionRpcResult)
 
     if ('error' in res) {
       throw new SolanaJSONRPCError(res.error, 'failed to get transaction')
