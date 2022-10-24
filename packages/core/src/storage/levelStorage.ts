@@ -124,6 +124,19 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     return value
   }
 
+  async getMany(keys: string[], options?: StorageCommonOptions): Promise<V[]> {
+    keys = keys.map((key) => this.composeKey(key))
+    const values = await super.getMany(keys, options)
+
+    const { mapValueFn } = this.options
+
+    if (values && values.length && mapValueFn) {
+      return Promise.all(values.map((value) => mapValueFn.call(this, value)))
+    }
+
+    return values
+  }
+
   getAll(
     options: StorageGetOptions<string, V> = { reverse: true },
   ): StorageStream<string, V> {

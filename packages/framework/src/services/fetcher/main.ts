@@ -42,7 +42,7 @@ import {
 import { FetcherMsClient } from './client.js'
 import { RawTransactionWithPeers } from '../parser/src/types.js'
 
-const { BufferExec, StreamBuffer, StreamMap, sleep } = Utils
+const { StreamBuffer, StreamMap, sleep } = Utils
 
 /**
  * The main class of the fetcher service.
@@ -51,6 +51,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected fetchers: Record<string, SignatureFetcher> = {}
   protected infoFetchers: Record<string, AccountInfoFetcher> = {}
   protected pendingTransactions: PendingWorkPool<string[]>
+  protected pendingTransactionsCache: PendingWorkPool<string[]>
+  protected pendingTransactionsFetch: PendingWorkPool<string[]>
   protected fetcherMsClient: FetcherMsClient
   protected throughput = 0
   protected throughputInit = Date.now()
@@ -71,6 +73,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     protected broker: ServiceBroker,
     protected signatureDAL: SignatureStorage,
     protected pendingTransactionDAL: PendingTransactionStorage,
+    protected pendingTransactionCacheDAL: PendingTransactionStorage,
+    protected pendingTransactionFetchDAL: PendingTransactionStorage,
     protected rawTransactionDAL: RawTransactionStorage,
     protected accountInfoDAL: AccountInfoStorage,
     protected requestDAL: FetcherOptionsStorage,
@@ -84,14 +88,31 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       id: 'pending-transactions',
       interval: 0,
       chunkSize: 1000,
-      concurrency: 10,
+      concurrency: 1,
       dal: this.pendingTransactionDAL,
-      handleWork: this._fetchTransactions.bind(this),
-      checkComplete: async (work): Promise<boolean> => {
-        return (
-          !this.isSignature(work.id) || this.rawTransactionDAL.exists(work.id)
-        )
-      },
+      handleWork: this._handlePendingTransactions.bind(this),
+      checkComplete: () => true,
+    })
+
+    this.pendingTransactionsCache = new PendingWorkPool({
+      id: 'pending-transactions-cache',
+      interval: 0,
+      chunkSize: 10,
+      concurrency: 1,
+      dal: this.pendingTransactionCacheDAL,
+      handleWork: this._handlePendingTransactionsCache.bind(this),
+      checkComplete: () => true,
+    })
+
+    this.pendingTransactionsFetch = new PendingWorkPool({
+      id: 'pending-transactions-fetch',
+      interval: 0,
+      chunkSize: 200,
+      concurrency: 5,
+      dal: this.pendingTransactionFetchDAL,
+      handleWork: this._handlePendingTransactionsFetch.bind(this),
+      checkComplete: (work): Promise<boolean> =>
+        this.rawTransactionDAL.exists(work.id),
     })
   }
 
@@ -102,11 +123,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    */
   async start(): Promise<void> {
     this.pendingTransactions.start().catch(() => 'ignore')
+    this.pendingTransactionsCache.start().catch(() => 'ignore')
+    this.pendingTransactionsFetch.start().catch(() => 'ignore')
+
     await this.loadExistingRequests()
   }
 
   async stop(): Promise<void> {
     this.pendingTransactions.stop().catch(() => 'ignore')
+    this.pendingTransactionsCache.stop().catch(() => 'ignore')
+    this.pendingTransactionsFetch.stop().catch(() => 'ignore')
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
@@ -468,74 +494,103 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    * Fetch transactions from signatures.
    * @param works Txn signatures with extra properties as time and payload.
    */
-  protected async _fetchTransactions(
+  protected async _handlePendingTransactions(
+    works: PendingWork<string[]>[],
+  ): Promise<void> {
+    console.log(`Txs pending | Start handling txs ${works.length}`)
+
+    const toFetchWorks: PendingWork<string[]>[] = []
+    const inCacheWorks: PendingWork<string[]>[] = []
+
+    const ids = works.map((work) => work.id)
+    const txs = await this.rawTransactionDAL.getMany(ids)
+
+    for (const [i, tx] of txs.entries()) {
+      if (!tx) {
+        toFetchWorks.push(works[i])
+      } else {
+        inCacheWorks.push(works[i])
+      }
+    }
+
+    console.log(
+      `Txs pending | Response ${toFetchWorks.length}/${inCacheWorks.length} toFetch/inCache`,
+    )
+
+    if (toFetchWorks.length > 0) {
+      await this.pendingTransactionsFetch.addWork(toFetchWorks)
+    }
+
+    if (inCacheWorks.length > 0) {
+      await this.pendingTransactionsCache.addWork(inCacheWorks)
+    }
+  }
+
+  protected async _handlePendingTransactionsCache(
+    works: PendingWork<string[]>[],
+  ): Promise<void> {
+    console.log(`Txs cache | Start getting txs ${works.length}`)
+
+    const txs = await this.rawTransactionDAL.getMany(
+      works.map((work) => work.id),
+    )
+
+    const msgs = works.map((work, i) => ({
+      tx: txs[i] as RawTransaction,
+      peers: work.payload,
+    }))
+
+    await this.emitTransactions(msgs)
+
+    console.log(`Txs cache | Response ${msgs.length} found in cache`)
+  }
+
+  protected async _handlePendingTransactionsFetch(
     works: PendingWork<string[]>[],
   ): Promise<number | void> {
     console.log(`Txs fetching | Start fetching txs ${works.length}`)
 
     let totalPendings = 0
 
-    const foundBuffer = new BufferExec<RawTransactionWithPeers>(async (txs) => {
-      await this.emitTransactions(txs)
-    }, 10)
+    let [txs, pending] = await this._fetchFromRPC(works, this.solanaRpc)
+    let retries = 0
 
-    const requestBuffer = new BufferExec<PendingWork<string[]>>(
-      async (works) => {
-        let [txs, pending] = await this._fetchFromRPC(works, this.solanaRpc)
-        let retries = 0
+    while (pending.length > 0 && retries < 3) {
+      if (retries > 0) await sleep(1000)
 
-        while (pending.length > 0 && retries < 3) {
-          if (retries > 0) await sleep(1000)
+      console.log(`⚠️ retrying ${pending.length} txs [${retries}]`)
 
-          console.log(`⚠️ retrying ${pending.length} txs [${retries}]`)
+      const [txs2, pending2] = await this._fetchFromRPC(
+        pending,
+        this.solanaMainPublicRpc,
+      )
 
-          const [txs2, pending2] = await this._fetchFromRPC(
-            pending,
-            this.solanaMainPublicRpc,
-          )
+      pending = pending2
+      txs = txs.concat(txs2)
 
-          pending = pending2
-          txs = txs.concat(txs2)
-
-          retries++
-        }
-
-        if (pending.length) {
-          console.log(`‼️ ${pending.length} txs not found after 3 retries`)
-          totalPendings += pending.length
-        }
-
-        await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
-        await foundBuffer.add(txs)
-      },
-      200,
-    )
-
-    let count1 = 0
-    let count2 = 0
-
-    for (const work of works) {
-      const { id: signature, payload: peers } = work
-      const tx = await this.rawTransactionDAL.get(signature)
-
-      if (!tx) {
-        count1++
-        await requestBuffer.add(work)
-      } else {
-        count2++
-        const txWithPeers = { tx: tx as RawTransaction, peers }
-        await foundBuffer.add(txWithPeers)
-      }
+      retries++
     }
 
+    if (pending.length) {
+      console.log(`‼️ ${pending.length} txs not found after 3 retries`)
+      totalPendings += pending.length
+    }
+
+    await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
+
+    const cacheWorks = txs.map(({ tx, peers }) => ({
+      id: tx.transaction.signatures[0],
+      time: Date.now(),
+      payload: peers,
+    }))
+
+    await this.pendingTransactionsCache.addWork(cacheWorks)
+
     console.log(
-      `Txs fetching | Response ${count1}/${count2} requests/found${
+      `Txs fetching | Response ${txs.length} requests${
         totalPendings > 0 ? `, ${totalPendings} errors` : ''
       }`,
     )
-
-    await requestBuffer.drain()
-    await foundBuffer.drain()
 
     if (totalPendings > 0) return 1000 * 5
   }

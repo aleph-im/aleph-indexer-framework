@@ -12,9 +12,10 @@ export type PendingTransactionStorage = PendingWorkStorage<string[]>
  */
 export function createPendingTransactionDAL(
   path: string,
+  name = 'fetcher_pending_transactions',
 ): PendingTransactionStorage {
   return new PendingWorkStorage({
-    name: 'fetcher_pending_transactions',
+    name,
     path,
     count: true,
     async updateCheckFn(
@@ -34,4 +35,16 @@ export function createPendingTransactionDAL(
       return EntityUpdateOp.Update
     },
   })
+}
+
+export function createPendingTransactionCacheDAL(
+  path: string,
+): PendingTransactionStorage {
+  return createPendingTransactionDAL(path, 'fetcher_pending_transactions_cache')
+}
+
+export function createPendingTransactionFetchDAL(
+  path: string,
+): PendingTransactionStorage {
+  return createPendingTransactionDAL(path, 'fetcher_pending_transactions_fetch')
 }
