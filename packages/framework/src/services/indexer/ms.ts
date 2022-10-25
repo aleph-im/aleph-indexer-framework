@@ -1,4 +1,3 @@
-import { ParsedTransactionV1 } from '@aleph-indexer/core'
 import { ServiceBroker, Service, Context } from 'moleculer'
 import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import {
@@ -55,10 +54,6 @@ export class IndexerMs extends Service {
 
   async stop(): Promise<void> {
     return this.main.stop()
-  }
-
-  async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    return this.main.onTxs(chunk)
   }
 
   indexAccount(ctx: Context<AccountIndexerRequestArgs>): Promise<void> {

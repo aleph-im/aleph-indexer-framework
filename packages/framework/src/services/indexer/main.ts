@@ -88,11 +88,6 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     return getRegistryNodesWithService(this.broker, MsIds.Indexer)
   }
 
-  async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    // console.log(`💌 ${chunk.length} txs received by the indexer...`)
-    await this.transactionFetcher.onTxs(chunk)
-  }
-
   // async fetchTransactions(dateRange: AccountEventsFilters): Promise<void> {
   //   const { account } = dateRange
 
@@ -152,6 +147,11 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
       throw new Error(`Method ${method} does not exists in indexer domain`)
 
     return fn.call(this.domain, account, ...args)
+  }
+
+  protected async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
+    // console.log(`💌 ${chunk.length} txs received by the indexer...`)
+    await this.transactionFetcher.onTxs(chunk)
   }
 
   /**

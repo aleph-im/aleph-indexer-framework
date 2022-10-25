@@ -172,6 +172,8 @@ export class DebouncedJobRunner extends DebouncedJob<void, number> {
   }
 
   protected async _run(): Promise<void> {
+    if (this.running) return
+
     const { name } = this.options
 
     console.log(`Job[${name}] starting`)
