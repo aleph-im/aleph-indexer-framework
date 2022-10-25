@@ -2,7 +2,7 @@ import { InstructionContext } from '../indexer/index.js'
 import { EventBase, AlephParsedEvent } from '../types.js'
 
 /**
- * Handles signatures fetching of an account.
+ * Handles the parsing process of an instruction.
  */
 export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
   /**

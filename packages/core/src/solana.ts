@@ -23,6 +23,7 @@ import {
   unknown,
   any,
   Struct,
+  tuple,
 } from 'superstruct'
 import { Connection } from './lib/solana/web3.js'
 import {
@@ -95,7 +96,7 @@ export class SolanaRPC {
   }
 
   async getVoteAccount(votePubkey: string): Promise<VoteAccountInfo> {
-    const res = await this.connection._rpcRequest('getVoteAccounts', [
+    let res = await this.connection._rpcRequest('getVoteAccounts', [
       {
         commitment: 'finalized',
         keepUnstakedDelinquents: true,
@@ -107,6 +108,10 @@ export class SolanaRPC {
       throw new Error('failed to get vote accounts: ' + res.error.message)
     }
 
+    if (config.STRICT_CHECK_RPC) res = create(res, GetVoteAccounts)
+
+    console.log(res)
+
     const data = res.result.current?.[0] || res.result.delinquent?.[0]
     data.delinquent = res.result.delinquent.length > 0
 
@@ -116,7 +121,7 @@ export class SolanaRPC {
   async getSupply(): Promise<
     RpcResponseAndContext<Omit<Supply, 'nonCirculatingAccounts'>>
   > {
-    const res = await this.connection._rpcRequest('getSupply', [
+    let res = await this.connection._rpcRequest('getSupply', [
       {
         commitment: 'finalized',
         excludeNonCirculatingAccountsList: true,
@@ -126,6 +131,10 @@ export class SolanaRPC {
     if ('error' in res) {
       throw new Error('failed to get supply: ' + res.error.message)
     }
+
+    if (config.STRICT_CHECK_RPC) res = create(res, GetSupplyRpcResult)
+
+    console.log(res)
 
     return res.result
   }
@@ -151,12 +160,17 @@ export class SolanaRPC {
 
     const [, res] = await this.connection._rpcBatchRequest(batch)
 
-    if ('error' in res) {
-      throw new SolanaJSONRPCError(
-        res.error,
-        'failed to get signatures for address',
-      )
-    }
+    if (config.STRICT_CHECK_RPC)
+      res.map((unsafeRes: any) => {
+        const response = create(unsafeRes, GetSignaturesForAddressRpcResult)
+        if ('error' in response) {
+          throw new SolanaJSONRPCError(
+            res.error,
+            'failed to get signatures for address',
+          )
+        }
+        return response.result
+      })
 
     return res.result
   }
@@ -206,6 +220,19 @@ export class SolanaRPC {
     batch = [{ methodName: 'getBlockHeight' }].concat(batch)
 
     const res = await this.connection._rpcBatchRequest(batch)
+
+    if (config.STRICT_CHECK_RPC)
+      res.map((unsafeRes: any) => {
+        const response = create(unsafeRes, GetParsedTransactionRpcResult)
+        console.log(response)
+        if ('error' in response) {
+          throw new SolanaJSONRPCError(
+            res.error,
+            'failed to get confirmed transactions',
+          )
+        }
+        return response.result
+      })
 
     // @note: Drop the response of getBlockHeight
     res.shift()
@@ -477,6 +504,17 @@ function jsonRpcResult<T, U>(schema: Struct<T, U>) {
   })
 }
 
+function jsonRpcResultAndContext<T, U>(value: Struct<T, U>) {
+  return jsonRpcResult(
+    pick({
+      context: pick({
+        slot: number(),
+      }),
+      value,
+    }),
+  )
+}
+
 const AddressTableLookupStruct = pick({
   accountKey: string(),
   writableIndexes: array(number()),
@@ -597,6 +635,54 @@ const GetParsedTransactionRpcResult = jsonRpcResult(
       meta: nullable(ParsedConfirmedTransactionMetaResult),
       blockTime: optional(nullable(number())),
       version: optional(TransactionVersionStruct),
+    }),
+  ),
+)
+
+const VoteAccountInfoResult = pick({
+  votePubkey: string(),
+  nodePubkey: string(),
+  activatedStake: number(),
+  epochVoteAccount: boolean(),
+  epochCredits: array(tuple([number(), number(), number()])),
+  commission: number(),
+  lastVote: number(),
+  rootSlot: nullable(number()),
+})
+
+/**
+ * Expected JSON RPC response for the "getVoteAccounts" message
+ */
+const GetVoteAccounts = jsonRpcResult(
+  pick({
+    current: array(VoteAccountInfoResult),
+    delinquent: array(VoteAccountInfoResult),
+  }),
+)
+
+/**
+ * Expected JSON RPC response for the "getSupply" message
+ */
+const GetSupplyRpcResult = jsonRpcResultAndContext(
+  pick({
+    total: number(),
+    circulating: number(),
+    nonCirculating: number(),
+    nonCirculatingAccounts: array(string()),
+  }),
+)
+
+/**
+ * Expected JSON RPC response for the "getSignaturesForAddress" message
+ */
+const GetSignaturesForAddressRpcResult = jsonRpcResult(
+  array(
+    pick({
+      signature: string(),
+      slot: number(),
+      err: TransactionErrorResult,
+      memo: nullable(string()),
+      blockTime: optional(nullable(number())),
     }),
   ),
 )

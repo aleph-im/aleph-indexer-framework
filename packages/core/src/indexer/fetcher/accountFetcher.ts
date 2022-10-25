@@ -4,7 +4,8 @@ import { AccountInfoFetcherOptions, Utils } from '../../index.js'
 import { SolanaRPC } from '../../solana.js'
 
 /**
- * Fetcher account info class.
+ * Fetcher account info class: Component of the fetcher that is in charge of managing the
+ * process of obtaining information from the account.
  */
 export class AccountInfoFetcher {
   protected debouncedJob: Utils.DebouncedJob<AccountInfo<Buffer>>

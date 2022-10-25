@@ -11,7 +11,7 @@ import {
 } from './types.js'
 
 /**
- * Handles signatures fetching of an account.
+ * Handles the fetching and processing of signatures on an account.
  */
 export abstract class SignatureFetcher extends Fetcher {
   protected forwardAutoInterval = false

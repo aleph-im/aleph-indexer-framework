@@ -119,6 +119,10 @@ export type Signature = Omit<
   accountSlotIndex: Record<string, number>
 }
 
+/**
+ * Options where the account address is stored and if it needs to be updated
+ * by fetching new transactions.
+ */
 export interface AccountInfoFetcherOptions {
   address: string
   subscribeChanges?: boolean

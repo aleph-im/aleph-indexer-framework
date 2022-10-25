@@ -10,7 +10,8 @@ export interface FetcherOptions {
 }
 
 /**
- * Fetcher abstract class used in SignatureFetcher.
+ * Fetcher abstract that provides methods to init and stop the fetching process,
+ * also to save and load the work in progress.
  */
 export abstract class Fetcher {
   protected fetcherState!: FetcherStateV1
