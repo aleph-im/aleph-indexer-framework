@@ -3,6 +3,7 @@ import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import { FetcherMsMain } from './main.js'
 import {
   FetcherAccountPartitionRequestArgs,
+  FetcherAggregatedAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
   CheckTransactionsRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
@@ -42,6 +43,10 @@ export class FetcherMs extends Service {
         getAccountFetcherState: {
           ...shardBalancingStrategy,
           handler: this.getAccountFetcherState,
+        },
+        getAggregatedAccountFetcherState: {
+          ...shardBalancingStrategy,
+          handler: this.getAggregatedAccountFetcherState,
         },
         addAccountInfoFetcher: {
           ...shardBalancingStrategy,
@@ -105,6 +110,12 @@ export class FetcherMs extends Service {
     ctx: Context<FetcherAccountPartitionRequestArgs>,
   ): Promise<SignatureFetcherState | undefined> {
     return this.main.getAccountFetcherState(ctx.params)
+  }
+
+  getAggregatedAccountFetcherState(
+    ctx: Context<FetcherAggregatedAccountPartitionRequestArgs>,
+  ): Promise<SignatureFetcherState[] | undefined> {
+    return this.main.getAggregatedAccountFetcherState(ctx.params)
   }
 
   addAccountInfoFetcher(

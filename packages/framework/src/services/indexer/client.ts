@@ -11,6 +11,7 @@ import {
   AccountIndexerRequestArgs,
   InvokeMethodRequestArgs,
   GetAccountIndexingStateRequestArgs,
+  GetAggregatedAccountIndexingStateRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
 } from './src/types'
 
@@ -69,6 +70,15 @@ export class IndexerMsClient implements IndexerMsI, PrivateIndexerMsI {
   ): Promise<AccountIndexerState | undefined> {
     return this.broker.call(`${this.msId}.getAccountState`, {
       partitionKey: args.partitionKey || args.account,
+      ...args,
+    })
+  }
+
+  getAggregatedAccountState(
+    args: GetAggregatedAccountIndexingStateRequestArgs,
+  ): Promise<AccountIndexerState[] | undefined> {
+    return this.broker.call(`${this.msId}.getAggregatedAccountState`, {
+      partitionKey: args.partitionKey || args.accounts,
       ...args,
     })
   }

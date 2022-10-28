@@ -19,6 +19,7 @@ import {
   getIntervalFromDateRange,
   mergeDateRangesFromIterable,
 } from '../../../../utils/time.js'
+import { SignatureFetcherState } from '../../../fetcher/src/types'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
@@ -92,58 +93,27 @@ export class AccountTransactionIndexer {
     account: string,
   ): Promise<AccountIndexerState | undefined> {
     const state = await this.fetcherMsClient.getAccountFetcherState({ account })
+    return this.processAccountState(account, state)
+  }
 
-    if (
-      !state ||
-      state.firstTimestamp === undefined ||
-      state.lastTimestamp === undefined
-    )
-      return
+  async getIndexingStates(
+    accounts: string[],
+  ): Promise<AccountIndexerState[] | undefined> {
+    const states = await this.fetcherMsClient.getAggregatedAccountFetcherState({
+      accounts,
+    })
+    if (!states) return
 
-    const toFetchRange = {
-      account,
-      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
-      endDate: state.lastTimestamp,
+    const indexingStates: AccountIndexerState[] = []
+    for (const account in accounts) {
+      const state = states.find((state) => state.account === account)
+      const processedState = await this.processAccountState(account, state)
+      if (processedState) {
+        indexingStates.push(processedState)
+      }
     }
 
-    const processedRanges = await this.mergeStates()
-
-    const pendingRanges = await clipDateRangesFromIterable(
-      [toFetchRange],
-      processedRanges,
-    )
-
-    const pendingMilis = pendingRanges.reduce(
-      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
-      0,
-    )
-
-    const processedMilis = processedRanges.reduce(
-      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
-      0,
-    )
-
-    const pending = pendingRanges.map((range) =>
-      getIntervalFromDateRange(range).toISO(),
-    )
-
-    const processed = processedRanges.map((range) =>
-      getIntervalFromDateRange(range).toISO(),
-    )
-
-    const accurate = state?.completeHistory || false
-
-    const progress = Number(
-      ((processedMilis / (processedMilis + pendingMilis)) * 100).toFixed(2),
-    )
-
-    return {
-      account,
-      accurate,
-      progress,
-      pending,
-      processed,
-    }
+    return indexingStates
   }
 
   protected async getPendingRanges(account: string): Promise<DateRange[]> {
@@ -422,5 +392,62 @@ export class AccountTransactionIndexer {
       ))
 
     return clipDateRangesFromIterable([totalDateRange], clipRanges)
+  }
+
+  protected async processAccountState(
+    account: string,
+    state: SignatureFetcherState | undefined,
+  ): Promise<AccountIndexerState | undefined> {
+    if (
+      !state ||
+      state.firstTimestamp === undefined ||
+      state.lastTimestamp === undefined
+    )
+      return
+
+    const toFetchRange = {
+      account,
+      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
+      endDate: state.lastTimestamp,
+    }
+
+    const processedRanges = await this.mergeStates()
+
+    const pendingRanges = await clipDateRangesFromIterable(
+      [toFetchRange],
+      processedRanges,
+    )
+
+    const pendingMilis = pendingRanges.reduce(
+      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
+      0,
+    )
+
+    const processedMilis = processedRanges.reduce(
+      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
+      0,
+    )
+
+    const pending = pendingRanges.map((range) =>
+      getIntervalFromDateRange(range).toISO(),
+    )
+
+    const processed = processedRanges.map((range) =>
+      getIntervalFromDateRange(range).toISO(),
+    )
+
+    const accurate = state?.completeHistory || false
+
+    const progress = Number(
+      ((processedMilis / (processedMilis + pendingMilis)) * 100).toFixed(2),
+    )
+
+    return {
+      account,
+      accurate,
+      progress,
+      pending,
+      processed,
+    }
   }
 }

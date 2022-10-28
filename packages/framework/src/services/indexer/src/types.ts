@@ -73,6 +73,17 @@ export type AccountPartitionRequestArgs = {
   partitionKey?: string
 }
 
+export type AggregateAccountPartitionRequestArgs = {
+  /**
+   * Account to partition.
+   */
+  accounts: string[]
+  /**
+   * Key of the partition group to which the account belongs.
+   */
+  partitionKey?: string
+}
+
 export type IndexerPartitionRequestArgs = {
   /**
    * @todo: what is this helpful for? similar to above?
@@ -101,6 +112,9 @@ export type AccountIndexerConfigWithMeta<T> = AccountIndexerRequestArgs & {
 }
 
 export type GetAccountIndexingStateRequestArgs = AccountPartitionRequestArgs
+
+export type GetAggregatedAccountIndexingStateRequestArgs =
+  AggregateAccountPartitionRequestArgs
 
 export type InvokeMethodRequestArgs = AccountPartitionRequestArgs & {
   /**

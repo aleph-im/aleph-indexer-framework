@@ -20,6 +20,7 @@ import { SignatureDALIndex, SignatureStorage } from './src/dal/signature.js'
 import { RawTransactionStorage } from './src/dal/rawTransaction.js'
 import {
   FetcherAccountPartitionRequestArgs,
+  FetcherAggregatedAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
   FetchAccountTransactionsBySlotRequestArgs,
@@ -250,6 +251,23 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     if (state) state.fetcher = this.getFetcherId()
 
     return state
+  }
+
+  async getAggregatedAccountFetcherState({
+    accounts,
+  }: FetcherAggregatedAccountPartitionRequestArgs): Promise<
+    SignatureFetcherState[] | undefined
+  > {
+    const states: SignatureFetcherState[] = []
+
+    accounts.map(async (account) => {
+      const state = await this.getAccountFetcherState({ account })
+      if (state) {
+        states.push(state)
+      }
+    })
+
+    return states
   }
 
   async getFetcherState({

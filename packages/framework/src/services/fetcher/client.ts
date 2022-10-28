@@ -7,6 +7,7 @@ import {
 import { FetcherMsI, PrivateFetcherMsI } from './interface.js'
 import {
   FetcherAccountPartitionRequestArgs,
+  FetcherAggregatedAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
   FetchAccountTransactionsBySlotRequestArgs,
@@ -63,6 +64,15 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<SignatureFetcherState | undefined> {
     return this.broker.call(`${this.msId}.getAccountFetcherState`, {
       partitionKey: args.account,
+      ...args,
+    })
+  }
+
+  getAggregatedAccountFetcherState(
+    args: FetcherAggregatedAccountPartitionRequestArgs,
+  ): Promise<SignatureFetcherState[] | undefined> {
+    return this.broker.call(`${this.msId}.getAggregatedAccountFetcherState`, {
+      partitionKey: args.accounts,
       ...args,
     })
   }

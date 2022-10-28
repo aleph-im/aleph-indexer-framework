@@ -4,6 +4,7 @@ import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
   GetAccountIndexingStateRequestArgs,
+  GetAggregatedAccountIndexingStateRequestArgs,
   InvokeMethodRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
 } from './src/types.js'
@@ -33,6 +34,10 @@ export class IndexerMs extends Service {
         getAccountState: {
           ...shardBalancingStrategy,
           handler: this.getAccountState,
+        },
+        getAggregatedAccountState: {
+          ...shardBalancingStrategy,
+          handler: this.getAggregatedAccountState,
         },
         invokeDomainMethod: {
           ...shardBalancingStrategy,
@@ -65,6 +70,12 @@ export class IndexerMs extends Service {
     ctx: Context<GetAccountIndexingStateRequestArgs>,
   ): Promise<AccountIndexerState | undefined> {
     return this.main.getAccountState(ctx.params)
+  }
+
+  getAggregatedAccountState(
+    ctx: Context<GetAggregatedAccountIndexingStateRequestArgs>,
+  ): Promise<AccountIndexerState[] | undefined> {
+    return this.main.getAggregatedAccountState(ctx.params)
   }
 
   invokeDomainMethod(ctx: Context<InvokeMethodRequestArgs>): Promise<unknown> {

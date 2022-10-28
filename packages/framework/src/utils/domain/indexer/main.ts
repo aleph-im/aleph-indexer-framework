@@ -144,15 +144,21 @@ export class IndexerMainDomain {
     accounts =
       accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
 
-    return (
-      await Promise.all(
-        accounts.map(async (account) =>
-          this.context.apiClient.getAccountState({
-            account,
-          }),
-        ),
-      )
-    ).filter((info): info is AccountIndexerState => !!info)
+    if (accounts.length === 1) {
+      const account = accounts[0]
+      const state = await this.context.apiClient.getAccountState({
+        account,
+      })
+      if (state) return [state]
+    }
+
+    const states = await this.context.apiClient.getAggregatedAccountState({
+      accounts,
+    })
+
+    if (!states) return []
+
+    return states
   }
 
   /**

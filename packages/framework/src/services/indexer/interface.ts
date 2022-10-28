@@ -5,6 +5,7 @@ import {
   InvokeMethodRequestArgs,
   GetAccountIndexingStateRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
+  GetAggregatedAccountIndexingStateRequestArgs,
 } from './src/types.js'
 
 /**
@@ -23,6 +24,14 @@ export interface IndexerMsI {
   getAccountState(
     args: GetAccountIndexingStateRequestArgs,
   ): Promise<AccountIndexerState | undefined>
+
+  /**
+   * Returns the indexing state of the given account.
+   * @param args The account to get the state of.
+   */
+  getAggregatedAccountState(
+    args: GetAggregatedAccountIndexingStateRequestArgs,
+  ): Promise<AccountIndexerState[] | undefined>
   /**
    * Invokes a domain method with the given account.
    * This will be forwarded through the broker to the worker. @todo: Correct?

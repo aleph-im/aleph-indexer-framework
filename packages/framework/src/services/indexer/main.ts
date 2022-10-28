@@ -19,6 +19,7 @@ import {
   AccountTransactionsIndexerArgs,
   AccountContentIndexerArgs,
   GetAccountIndexingStateRequestArgs,
+  GetAggregatedAccountIndexingStateRequestArgs,
   InvokeMethodRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
 } from './src/types.js'
@@ -134,6 +135,25 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
 
     state.indexer = this.getIndexerId()
     return state
+  }
+
+  async getAggregatedAccountState({
+    accounts,
+  }: GetAggregatedAccountIndexingStateRequestArgs): Promise<
+    AccountIndexerState[] | undefined
+  > {
+    const states: AccountIndexerState[] = []
+    const indexer = this.accountTransactionsIndexers[accounts[0]]
+    const indexedStates = await indexer.getIndexingStates(accounts)
+    if (!indexedStates) return
+
+    for (const indexedState of indexedStates) {
+      const state: any = indexedState
+      state.indexer = this.getIndexerId()
+      indexedStates.push(state)
+    }
+
+    return states
   }
 
   async invokeDomainMethod({

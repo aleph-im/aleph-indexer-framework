@@ -10,6 +10,7 @@ import {
   TransactionState,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
+  FetcherAggregatedAccountPartitionRequestArgs,
 } from './src/types'
 
 /**
@@ -28,6 +29,13 @@ export interface FetcherMsI {
   getAccountFetcherState(
     args: FetcherAccountPartitionRequestArgs,
   ): Promise<SignatureFetcherState | undefined>
+  /**
+   * Returns an aggregated signature fetcher's state.
+   * @param args The accounts to get the fetcher's state from.
+   */
+  getAggregatedAccountFetcherState(
+    args: FetcherAggregatedAccountPartitionRequestArgs,
+  ): Promise<SignatureFetcherState[] | undefined>
   /**
    * Requests a new account info fetcher, which will fetch current account info.
    * @param args Arguments for the fetcher.

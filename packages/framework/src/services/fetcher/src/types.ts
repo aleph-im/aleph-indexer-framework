@@ -38,6 +38,10 @@ export type FetcherAccountPartitionRequestArgs = {
   account: string
 }
 
+export type FetcherAggregatedAccountPartitionRequestArgs = {
+  accounts: string[]
+}
+
 export type AddAccountInfoFetcherRequestArgs =
   FetcherAccountPartitionRequestArgs & {
     /**
