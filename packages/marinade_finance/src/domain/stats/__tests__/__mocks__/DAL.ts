@@ -9,8 +9,7 @@ import {InstructionType, ParsedEvents} from "../../../../utils/layouts";
 export async function mockEventDAL() {
   // create a new event storage
   const eventDAL = createEventDAL("packages/marinade_finance/src/domain/stats/__tests__/__mocks__/data");
-  // check if the storage is empty
-  // generate 1000 random events
+  // generate 100 random events
   const events = Array.from({length: 100}, generateEvent);
   // insert them into the event storage
   eventDAL.save(events);

@@ -7,13 +7,13 @@ import {
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { MarinadeFinanceAccountInfo, TimeStats } from '../types.js'
+import {MarinadeFinanceAccountInfo, MarinadeFinanceAccountStats} from '../types.js'
 
 export class AccountDomain {
   constructor(
     public info: MarinadeFinanceAccountInfo,
     protected eventDAL: EventStorage,
-    protected timeSeriesStats: AccountTimeSeriesStatsManager,
+    protected timeSeriesStats: AccountTimeSeriesStatsManager<MarinadeFinanceAccountStats>,
   ) {}
 
   async updateStats(now: number): Promise<void> {
@@ -27,7 +27,7 @@ export class AccountDomain {
     return this.timeSeriesStats.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(): Promise<AccountStats<TimeStats>> {
+  async getStats(): Promise<AccountStats<MarinadeFinanceAccountStats>> {
     return this.timeSeriesStats.getStats()
   }
 

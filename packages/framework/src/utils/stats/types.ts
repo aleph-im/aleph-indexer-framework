@@ -49,7 +49,7 @@ export type TimeSeriesStatsConfig<I, O> = {
 export type AccountTimeSeriesStatsConfig = {
   account: string
   series: TimeSeriesStats<any, any>[]
-  aggregate?: (args: AccountAggregatorFnArgs) => any
+  aggregate?: <V>(args: AccountAggregatorFnArgs) => V
 }
 
 export type TypedValue = { type: string }

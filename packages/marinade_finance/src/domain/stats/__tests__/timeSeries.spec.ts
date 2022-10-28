@@ -11,12 +11,15 @@ import {mockMainIndexer} from "./__mocks__/indexer.js";
 
 describe('AccountTimeSeries', () => {
   it('createAccountStats from __mocks__ data', async () => {
-    await createAccountStats(
+    const accountStats = await createAccountStats(
       'test',
       mockMainIndexer(),
       await mockEventDAL(),
       mockStatsStateDAL(),
       mockStatsTimeSeriesDAL()
     )
+
+    await accountStats.process(Date.now())
+    const stats = await accountStats.getStats()
   })
 })

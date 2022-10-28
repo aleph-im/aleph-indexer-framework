@@ -21,9 +21,9 @@ import {
 
 const { JobRunner } = Utils
 
-export class AccountTimeSeriesStatsManager {
+export class AccountTimeSeriesStatsManager<V> {
   protected compactionJob!: Utils.JobRunner
-  protected stats!: AccountStats
+  protected stats!: AccountStats<V>
 
   constructor(
     public config: AccountTimeSeriesStatsConfig,
@@ -68,7 +68,7 @@ export class AccountTimeSeriesStatsManager {
     }
   }
 
-  async getStats(): Promise<AccountStats> {
+  async getStats(): Promise<AccountStats<V>> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
     }
@@ -123,7 +123,7 @@ export class AccountTimeSeriesStatsManager {
     const { timeSeriesDAL } = this
 
     if (aggregate) {
-      const stats = await aggregate({ now, account, timeSeriesDAL })
+      const stats: V = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }
       return
     }

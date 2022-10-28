@@ -8,7 +8,7 @@ import {
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
-import { AccessTimeStats } from '../../types.js'
+import {AccessTimeStats, MarinadeFinanceAccountStats} from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import accessAggregator from './timeSeriesAggregator.js'
 
@@ -18,7 +18,7 @@ export async function createAccountStats(
   eventDAL: EventStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
-): Promise<AccountTimeSeriesStatsManager> {
+): Promise<AccountTimeSeriesStatsManager<MarinadeFinanceAccountStats>> {
   // @note: this aggregator is used to aggregate usage stats for the account
   const accessTimeSeries = new TimeSeriesStats<ParsedEvents, AccessTimeStats>(
     {
@@ -49,6 +49,7 @@ export async function createAccountStats(
     {
       account,
       series: [accessTimeSeries], // place your other aggregated stats here
+      // todo: add correct typing
       aggregate(args) {
         return statsAggregator.aggregate(args)
       },
