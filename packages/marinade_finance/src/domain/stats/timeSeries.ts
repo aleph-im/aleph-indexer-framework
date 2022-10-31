@@ -45,11 +45,10 @@ export async function createAccountStats(
     statsTimeSeriesDAL,
   )
 
-  return new AccountTimeSeriesStatsManager(
+  return new AccountTimeSeriesStatsManager<MarinadeFinanceAccountStats>(
     {
       account,
       series: [accessTimeSeries], // place your other aggregated stats here
-      // todo: add correct typing
       aggregate(args) {
         return statsAggregator.aggregate(args)
       },

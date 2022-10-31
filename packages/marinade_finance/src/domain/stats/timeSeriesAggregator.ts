@@ -6,8 +6,11 @@ export class AccessTimeSeriesAggregator {
     curr: ParsedEvents | AccessTimeStats,
     prev?: AccessTimeStats,
   ): AccessTimeStats {
+    console.log('aggregate', curr, prev)
     prev = this.prepareAccessStats(prev)
+    console.log('aggregate', curr, prev)
     this.processAccessStats(prev, curr)
+    console.log('aggregate', curr, prev)
 
     return prev
   }

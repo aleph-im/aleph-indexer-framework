@@ -1,8 +1,8 @@
 import {
   AccountIndexerState,
-  GetAccountIndexingStateRequestArgs
-} from "@aleph-indexer/framework/dist/src/services/indexer/src/types";
-import {IndexerMsI} from "@aleph-indexer/framework/dist/src/services/indexer";
+  GetAccountIndexingStateRequestArgs,
+  IndexerMsI
+} from "@aleph-indexer/framework";
 
 export function mockMainIndexer() {
   return {getAccountState(args: GetAccountIndexingStateRequestArgs): Promise<AccountIndexerState | undefined> {

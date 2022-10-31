@@ -14,7 +14,7 @@ import {
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { AccessTimeStats, MarinadeFinanceAccountInfo } from '../types.js'
+import { MarinadeFinanceAccountInfo, MarinadeFinanceAccountStats } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { MARINADE_FINANCE_PROGRAM_ID } from '../constants.js'
@@ -79,7 +79,7 @@ export default class IndexerDomain
     return oracle.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(account: string): Promise<AccountStats<AccessTimeStats>> {
+  async getStats(account: string): Promise<AccountStats<MarinadeFinanceAccountStats>> {
     return this.getAccountStats(account)
   }
 
@@ -92,7 +92,7 @@ export default class IndexerDomain
 
   async getAccountStats(
     reserve: string,
-  ): Promise<AccountStats<AccessTimeStats>> {
+  ): Promise<AccountStats<MarinadeFinanceAccountStats>> {
     const res = this.getAccount(reserve)
     return res.getStats()
   }

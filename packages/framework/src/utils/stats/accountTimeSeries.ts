@@ -26,7 +26,7 @@ export class AccountTimeSeriesStatsManager<V> {
   protected stats!: AccountStats<V>
 
   constructor(
-    public config: AccountTimeSeriesStatsConfig,
+    public config: AccountTimeSeriesStatsConfig<V>,
     protected indexerApi: IndexerMsI,
     protected stateDAL: StatsStateStorage,
     protected timeSeriesDAL: StatsTimeSeriesStorage,
@@ -77,7 +77,9 @@ export class AccountTimeSeriesStatsManager<V> {
   }
 
   async process(now: number): Promise<void> {
+    console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)
+    console.log(`📊 processing account stats for ${this.config.account}`)
     await this.aggregateAccountStats(now)
   }
 
@@ -123,6 +125,7 @@ export class AccountTimeSeriesStatsManager<V> {
     const { timeSeriesDAL } = this
 
     if (aggregate) {
+      console.log(`📊 aggregating account stats for ${account}`)
       const stats: V = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }
       return
