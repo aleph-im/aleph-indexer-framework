@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals'
-jest.useFakeTimers()
-jest.setTimeout(2000)
+// jest.useFakeTimers()
+jest.setTimeout(10000)
 
 import {createAccountStats} from '../timeSeries.js'
 import {
@@ -12,20 +12,23 @@ import {mockMainIndexer} from "../__mocks__/indexer.js";
 
 describe('AccountTimeSeries', () => {
   it('createAccountStats from __mocks__ data', async () => {
+    const eventDAL = await mockEventDAL('AccountTimeSeries')
+    const statsStateDAL = mockStatsStateDAL('AccountTimeSeries')
+    const statsTimeSeriesDAL = mockStatsTimeSeriesDAL('AccountTimeSeries')
     const accountStats = await createAccountStats(
       'test',
       mockMainIndexer(),
-      mockEventDAL('AccountTimeSeries'),
-      mockStatsStateDAL('AccountTimeSeries'),
-      mockStatsTimeSeriesDAL('AccountTimeSeries')
+      eventDAL,
+      statsStateDAL,
+      statsTimeSeriesDAL
     )
-
-    console.log("generated accountStats")
+    const events = await eventDAL.getAll()
+    let eventCnt = 0
+    for await (const event of events) eventCnt++;
     await accountStats.init()
-    console.log("inited accountStats")
     await accountStats.process(Date.now())
-    console.log("processed accountStats")
     const stats = await accountStats.getStats()
-    console.log("got accountStats")
+    console.log(stats)
+    expect(stats.stats.total.accesses).toEqual(eventCnt)
   })
 })

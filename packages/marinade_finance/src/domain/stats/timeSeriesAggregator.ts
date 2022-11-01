@@ -6,11 +6,8 @@ export class AccessTimeSeriesAggregator {
     curr: ParsedEvents | AccessTimeStats,
     prev?: AccessTimeStats,
   ): AccessTimeStats {
-    console.log('aggregate', curr, prev)
     prev = this.prepareAccessStats(prev)
-    console.log('aggregate', curr, prev)
     this.processAccessStats(prev, curr)
-    console.log('aggregate', curr, prev)
 
     return prev
   }
@@ -43,7 +40,7 @@ export class AccessTimeSeriesAggregator {
         acc.startTimestamp || (curr as ParsedEvents).timestamp
       acc.endTimestamp = (curr as ParsedEvents).timestamp || acc.endTimestamp
     } else {
-      acc.accesses += (curr as AccessTimeStats).accesses
+      acc.accesses += (curr as AccessTimeStats).accesses || 0
       if ((curr as AccessTimeStats).accessesByProgramId) {
         Object.entries((curr as AccessTimeStats).accessesByProgramId).forEach(
           ([programId, count]) => {
