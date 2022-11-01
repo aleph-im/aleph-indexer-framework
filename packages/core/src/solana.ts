@@ -94,7 +94,7 @@ export class SolanaRPC {
   }
 
   async getVoteAccount(votePubkey: string): Promise<VoteAccountInfo> {
-    const res = await this.connection._rpcRequest('getVoteAccounts', [
+    const unsafeRes = await this.connection._rpcRequest('getVoteAccounts', [
       {
         commitment: 'finalized',
         keepUnstakedDelinquents: true,
@@ -102,16 +102,16 @@ export class SolanaRPC {
       },
     ])
 
+    const res = unsafeRes.result
+
     if ('error' in res) {
       throw new Error('failed to get vote accounts: ' + res.error.message)
     }
 
     if (config.STRICT_CHECK_RPC) assert(res, GetVoteAccounts)
 
-    console.log(res)
-
-    const data = res.result.current?.[0] || res.result.delinquent?.[0]
-    data.delinquent = res.result.delinquent.length > 0
+    const data = res.current?.[0] || res.delinquent?.[0]
+    data.delinquent = res.delinquent.length > 0
 
     return data
   }
@@ -119,22 +119,22 @@ export class SolanaRPC {
   async getSupply(): Promise<
     RpcResponseAndContext<Omit<Supply, 'nonCirculatingAccounts'>>
   > {
-    const res = await this.connection._rpcRequest('getSupply', [
+    const unsafeRes = await this.connection._rpcRequest('getSupply', [
       {
         commitment: 'finalized',
         excludeNonCirculatingAccountsList: true,
       },
     ])
 
-    if ('error' in res) {
-      throw new Error('failed to get supply: ' + res.error.message)
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(unsafeRes.error, 'failed to get supply:')
     }
+
+    const res = unsafeRes.result
 
     if (config.STRICT_CHECK_RPC) assert(res, GetSupplyRpcResult)
 
-    console.log(res.result)
-
-    return res.result
+    return res
   }
 
   async getSignaturesForAddress(
@@ -156,37 +156,35 @@ export class SolanaRPC {
       },
     ]
 
-    const [, res] = await this.connection._rpcBatchRequest(batch)
+    const [, unsafeRes] = await this.connection._rpcBatchRequest(batch)
 
-    if (config.STRICT_CHECK_RPC)
-      for (const response of res) {
-        assert(response, GetSignaturesForAddressRpcResult)
-      }
+    const res = unsafeRes.result
+    console.log(res)
+    if (config.STRICT_CHECK_RPC) assert(res, GetSignaturesForAddressRpcResult)
 
-    return res.result
+    return res
   }
 
   async getConfirmedTransaction(
     signature: string,
   ): Promise<RawTransactionV1 | null> {
-    console.log('hola')
-    const res = await this.connection._rpcRequest('getTransaction', [
+    const unsafeRes = await this.connection._rpcRequest('getTransaction', [
       signature,
       {
         commitment: 'finalized',
         encoding: 'jsonParsed',
       },
     ])
-    console.log(res)
-    if (config.STRICT_CHECK_RPC) assert(res, GetParsedTransactionRpcResult)
 
-    if ('error' in res) {
-      throw new SolanaJSONRPCError(res.error, 'failed to get transaction')
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(unsafeRes.error, 'failed to get transaction')
     }
 
-    console.log('😀', res.result)
+    const res = unsafeRes.result
 
-    return res.result
+    if (config.STRICT_CHECK_RPC) assert(res, GetParsedTransactionRpcResult)
+
+    return res
   }
 
   async getConfirmedTransactions(
@@ -209,17 +207,12 @@ export class SolanaRPC {
     // @note: getTransaction failse with 429 without adding this
     batch = [{ methodName: 'getBlockHeight' }].concat(batch)
 
-    const res = await this.connection._rpcBatchRequest(batch)
-
-    if (config.STRICT_CHECK_RPC)
-      for (const response of res) {
-        assert(response, GetParsedTransactionRpcResult)
-      }
+    const unsafeRes = await this.connection._rpcBatchRequest(batch)
 
     // @note: Drop the response of getBlockHeight
-    res.shift()
+    unsafeRes.shift()
 
-    return res.map(({ error, result }: any) => {
+    return unsafeRes.map(({ error, result }: any) => {
       if (error) {
         const message = `failed to get confirmed transactions: ${error.message}`
 
@@ -228,7 +221,11 @@ export class SolanaRPC {
           return null
         }
 
-        throw new Error(message)
+        throw new SolanaJSONRPCError(error, message)
+      }
+
+      if (config.STRICT_CHECK_RPC) {
+        assert(result, GetParsedTransactionRpcResult)
       }
 
       return result
@@ -593,14 +590,24 @@ const GetVoteAccounts = pick({
   delinquent: array(VoteAccountInfoResult),
 })
 
-/**
- * Expected JSON RPC response for the "getSupply" message
- */
-const GetSupplyRpcResult = pick({
+const SupplyContext = pick({
+  apiVersion: string(),
+  slot: number(),
+})
+
+const SupplyValue = pick({
   total: number(),
   circulating: number(),
   nonCirculating: number(),
   nonCirculatingAccounts: array(string()),
+})
+
+/**
+ * Expected JSON RPC response for the "getSupply" message
+ */
+const GetSupplyRpcResult = pick({
+  context: SupplyContext,
+  value: SupplyValue,
 })
 
 /**
