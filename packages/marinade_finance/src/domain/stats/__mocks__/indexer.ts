@@ -3,6 +3,7 @@ import {
   GetAccountIndexingStateRequestArgs,
   IndexerMsI
 } from "@aleph-indexer/framework";
+import {DateTime, Interval} from "luxon";
 
 export function mockMainIndexer() {
   return {getAccountState(args: GetAccountIndexingStateRequestArgs): Promise<AccountIndexerState | undefined> {
@@ -11,7 +12,7 @@ export function mockMainIndexer() {
       accurate: true,
       progress: 100,
       pending: [],
-      processed: [],
+      processed: [Interval.fromDateTimes(DateTime.fromMillis(0), DateTime.now()).toISO()],
     })
   }} as IndexerMsI
 }

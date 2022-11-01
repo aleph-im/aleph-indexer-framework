@@ -2,10 +2,17 @@ import {createStatsStateDAL, createStatsTimeSeriesDAL,} from "@aleph-indexer/fra
 import {createEventDAL} from "../../../dal/event";
 import {InstructionType, ParsedEvents} from "../../../utils/layouts";
 
-export function mockEventDAL(testName: string) {
+export async function mockEventDAL(testName: string) {
   const eventDAL = createEventDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
-  const events = Array.from({length: 10}, generateEvent);
-  eventDAL.save(events);
+  const all = await eventDAL.getAll()
+  let i = 0
+  for await(const event of all) {
+    i++
+  }
+  if (i === 0) {
+    const events = Array.from({length: 10}, generateEvent);
+    eventDAL.save(events);
+  }
   return eventDAL;
 }
 
