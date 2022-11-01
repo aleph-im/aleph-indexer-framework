@@ -1,6 +1,7 @@
 import {createStatsStateDAL, createStatsTimeSeriesDAL,} from "@aleph-indexer/framework";
 import {createEventDAL} from "../../../dal/event";
 import {InstructionType, ParsedEvents} from "../../../utils/layouts";
+import { PublicKey } from '@solana/web3.js'
 
 export async function mockEventDAL(testName: string) {
   const eventDAL = createEventDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
@@ -38,6 +39,8 @@ function generateEvent(): ParsedEvents {
     timestamp: Math.floor(Math.random() * Date.now()),
     type: getRandomInstructionType(),
     accounts: {} as any,
-    data: {} as any,
+    data: {
+      programId: new PublicKey("CNCnPo5Fhfjj5Y7DSc82RDJfQoHEd2haAnTkAwRGfo8z")
+    } as any,
   }
 }
