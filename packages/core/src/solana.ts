@@ -104,11 +104,16 @@ export class SolanaRPC {
 
     const res = unsafeRes.result
 
-    if ('error' in res) {
-      throw new Error('failed to get vote accounts: ' + res.error.message)
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(
+        res.error.message,
+        'failed to get vote accounts: ',
+      )
     }
 
-    if (config.STRICT_CHECK_RPC) assert(res, GetVoteAccounts)
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetVoteAccounts)
+    }
 
     const data = res.current?.[0] || res.delinquent?.[0]
     data.delinquent = res.delinquent.length > 0
@@ -132,7 +137,9 @@ export class SolanaRPC {
 
     const res = unsafeRes.result
 
-    if (config.STRICT_CHECK_RPC) assert(res, GetSupplyRpcResult)
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetSupplyRpcResult)
+    }
 
     return res
   }
@@ -158,9 +165,17 @@ export class SolanaRPC {
 
     const [, unsafeRes] = await this.connection._rpcBatchRequest(batch)
 
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(
+        unsafeRes.error,
+        'failed to get signatures for address',
+      )
+    }
+
     const res = unsafeRes.result
-    console.log(res)
-    if (config.STRICT_CHECK_RPC) assert(res, GetSignaturesForAddressRpcResult)
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetSignaturesForAddressRpcResult)
+    }
 
     return res
   }
@@ -182,7 +197,9 @@ export class SolanaRPC {
 
     const res = unsafeRes.result
 
-    if (config.STRICT_CHECK_RPC) assert(res, GetParsedTransactionRpcResult)
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetParsedTransactionRpcResult)
+    }
 
     return res
   }
