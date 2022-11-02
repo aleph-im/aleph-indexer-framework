@@ -10,7 +10,7 @@ export class StatsAggregator {
     const { now, account, timeSeriesDAL } = args
 
     const stats = this.getEmptyStats()
-    const type = 'marinade_finance'
+    const type = 'access'
     const currHour = DateTime.fromMillis(now).startOf('hour')
     const commonFields = [account, type, TimeFrame.Hour]
 

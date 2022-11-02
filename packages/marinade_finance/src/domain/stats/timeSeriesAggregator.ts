@@ -31,7 +31,6 @@ export class AccessTimeSeriesAggregator {
     acc: AccessTimeStats,
     curr: ParsedEvents | AccessTimeStats,
   ): AccessTimeStats {
-    console.log('processAccessStats', acc, curr)
     if ((curr as ParsedEvents).data?.programId) {
       let programId: string;
       if ((curr as ParsedEvents).data?.programId instanceof PublicKey) {

@@ -116,6 +116,7 @@ export class TimeSeriesStats<I, O> {
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
+      console.log("timeFrameIndex", timeFrameIndex, timeFrameName)
 
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
@@ -134,6 +135,7 @@ export class TimeSeriesStats<I, O> {
           const valueEntries = entries.filter(
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
           )
+          console.log("valueEntries", valueEntries)
           await this.timeSeriesDAL.save(valueEntries)
 
           // @note: Save states for all interval, either with empty data or not
@@ -226,9 +228,6 @@ export class TimeSeriesStats<I, O> {
 
           let data: O | undefined
           for await (const value of inputs) {
-            if(timeFrameIndex === 0) {
-              console.log("value", value)
-            }
             const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
