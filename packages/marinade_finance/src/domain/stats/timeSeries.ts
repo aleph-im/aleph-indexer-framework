@@ -8,7 +8,7 @@ import {
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
-import {AccessTimeStats, MarinadeFinanceAccountStats} from '../../types.js'
+import { AccessTimeStats, MarinadeFinanceAccountStats } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import accessAggregator from './timeSeriesAggregator.js'
 
@@ -32,8 +32,8 @@ export async function createAccountStats(
         TimeFrame.Year,
         TimeFrame.All,
       ],
-      getInputStream: ({ account, startDate, endDate }) => {
-        return eventDAL
+      getInputStream: async ({ account, startDate, endDate }) => {
+        return await eventDAL
           .useIndex(EventDALIndex.AccoountTimestamp)
           .getAllValuesFromTo([account, startDate], [account, endDate])
       },

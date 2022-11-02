@@ -17,14 +17,17 @@ describe('AccountTimeSeries', () => {
     const statsTimeSeriesDAL = mockStatsTimeSeriesDAL('AccountTimeSeries')
     const accountStats = await createAccountStats(
       'test',
-      mockMainIndexer(),
+      await mockMainIndexer(eventDAL),
       eventDAL,
       statsStateDAL,
       statsTimeSeriesDAL
     )
     const events = await eventDAL.getAll()
     let eventCnt = 0
-    for await (const event of events) eventCnt++;
+    for await (const event of events) {
+      eventCnt++;
+      if(eventCnt === 1) console.log(event)
+    }
     await accountStats.init()
     await accountStats.process(Date.now())
     const stats = await accountStats.getStats()

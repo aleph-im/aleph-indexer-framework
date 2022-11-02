@@ -2,6 +2,7 @@ import {createStatsStateDAL, createStatsTimeSeriesDAL,} from "@aleph-indexer/fra
 import {createEventDAL} from "../../../dal/event";
 import {InstructionType, ParsedEvents} from "../../../utils/layouts";
 import { PublicKey } from '@solana/web3.js'
+import * as fs from "fs";
 
 export async function mockEventDAL(testName: string) {
   const eventDAL = createEventDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
@@ -12,16 +13,26 @@ export async function mockEventDAL(testName: string) {
   }
   if (i === 0) {
     const events = Array.from({length: 10}, generateEvent);
-    eventDAL.save(events);
+    await eventDAL.save(events);
   }
   return eventDAL;
 }
 
 export function mockStatsStateDAL(testName: string) {
+  // delete the stats_state folder, if existent
+  const path = `packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}/stats_state`
+  if (fs.existsSync(path)) {
+    fs.rmdirSync(path, { recursive: true });
+  }
   return createStatsStateDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
 }
 
 export function mockStatsTimeSeriesDAL(testName: string) {
+  // delete the stats_time_series folder, if existent
+  const path = `packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}/stats_time_series`
+  if (fs.existsSync(path)) {
+    fs.rmdirSync(path, { recursive: true });
+  }
   return createStatsTimeSeriesDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
 }
 
@@ -36,7 +47,7 @@ function generateEvent(): ParsedEvents {
   return {
     id: Math.random().toString(36).substring(2),
     account: "test",
-    timestamp: Math.floor(Math.random() * Date.now()),
+    timestamp: Math.floor((0.99 + Math.random() * 0.01) * Date.now()),
     type: getRandomInstructionType(),
     accounts: {} as any,
     data: {
