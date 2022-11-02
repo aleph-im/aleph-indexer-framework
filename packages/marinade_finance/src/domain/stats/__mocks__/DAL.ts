@@ -47,7 +47,7 @@ function generateEvent(): ParsedEvents {
   return {
     id: Math.random().toString(36).substring(2),
     account: "test",
-    timestamp: Math.floor((0.99 + Math.random() * 0.01) * Date.now()),
+    timestamp: Math.floor(Date.now() - (Math.random() * 60 * 60 * 24 * 7 * 1000)),
     type: getRandomInstructionType(),
     accounts: {} as any,
     data: {
