@@ -45,6 +45,10 @@ export class StatsAggregator {
     if (last7d) stats.last7d = last7d
     if (total) stats.total = total.data
 
+    stats.accessingPrograms = new Set<string>([
+      ...(Object.keys(stats.total?.accessesByProgramId) || [])]
+    )
+
     return stats
   }
 
