@@ -10,8 +10,8 @@ export interface FetcherOptions {
 }
 
 /**
- * Fetcher abstract that provides methods to init and stop the fetching process,
- * also to save and load the work in progress.
+ * Fetcher abstract class that provides methods to init and stop the fetching
+ * process, also to save and load the work in progress.
  */
 export abstract class Fetcher {
   protected fetcherState!: FetcherStateV1
@@ -150,6 +150,10 @@ export abstract class Fetcher {
     )
   }
 
+  /**
+   * Initialises the fetcherState class property of the Fetcher instance, could get
+   * the data from the data access layer when the fetching progress is restarted.
+   */
   protected async loadFetcherState(): Promise<void> {
     if (this.fetcherState) return
 
@@ -174,6 +178,9 @@ export abstract class Fetcher {
     }
   }
 
+  /**
+   * Saves the fetcher state in the data access layer.
+   */
   protected async saveFetcherState(): Promise<void> {
     if (!this.fetcherState) return
     return this.fetcherStateDAL.save(this.fetcherState)

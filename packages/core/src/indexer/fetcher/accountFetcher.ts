@@ -12,7 +12,7 @@ export class AccountInfoFetcher {
   protected subscriptionId: number | undefined
 
   /**
-   * Initialize the AccountInfoFetcher.
+   * Initialize the AccountInfoFetcher and saves the account info in the data access layer.
    * @param opts Options where the account address is stored and if it needs to be updated.
    * @param dal The account info storage.
    * @param solanaRpc The solana RPC client to use.
@@ -45,6 +45,9 @@ export class AccountInfoFetcher {
     )
   }
 
+  /**
+   * Returns account data from the accountInfo argument.
+   */
   protected async parseAccountData<T>(accountInfo: AccountInfo<T>): Promise<T> {
     return accountInfo.data
   }
@@ -54,6 +57,10 @@ export class AccountInfoFetcher {
     // await this.dal.backup()
   }
 
+  /**
+   * Gets the accountInfo, and if the subscribeChanges flag is true,
+   * registers a callback to be invoked whenever the specified account changes.
+   */
   async run(): Promise<void> {
     const conn = this.solanaRpc.getConnection()
     const address = new PublicKey(this.opts.address)
