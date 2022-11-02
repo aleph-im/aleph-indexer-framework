@@ -114,11 +114,8 @@ export class TimeSeriesStats<I, O> {
         { startDate: 0, endDate: startDate - 1 },
       ])
     }
-    console.log("pendingDateRanges", pendingDateRanges)
-    console.log("sortedTimeFrames", sortedTimeFrames)
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
-      console.log("timeFrameIndex", timeFrameIndex)
 
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
@@ -130,7 +127,6 @@ export class TimeSeriesStats<I, O> {
         pendingDateRanges,
         clipRangesStream,
       )
-      console.log("pendingTimeFrameDateRanges", pendingTimeFrameDateRanges)
       // @todo: reduce the depth of for loops, or at least make it more readable
       for (const pendingRange of pendingTimeFrameDateRanges) {
         const processedIntervalsBuffer = new BufferExec<StatsTimeSeries<O | undefined>>(async (entries) => {
@@ -138,7 +134,6 @@ export class TimeSeriesStats<I, O> {
           const valueEntries = entries.filter(
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
           )
-
           await this.timeSeriesDAL.save(valueEntries)
 
           // @note: Save states for all interval, either with empty data or not
@@ -234,7 +229,7 @@ export class TimeSeriesStats<I, O> {
             if(timeFrameIndex === 0) {
               console.log("value", value)
             }
-            const input = 'data' in value ? value.data : value
+            const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,

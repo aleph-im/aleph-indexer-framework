@@ -1,5 +1,6 @@
 import { AccessTimeStats } from '../../types.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
+import { PublicKey } from '@solana/web3.js'
 
 export class AccessTimeSeriesAggregator {
   aggregate(
@@ -30,8 +31,14 @@ export class AccessTimeSeriesAggregator {
     acc: AccessTimeStats,
     curr: ParsedEvents | AccessTimeStats,
   ): AccessTimeStats {
+    console.log('processAccessStats', acc, curr)
     if ((curr as ParsedEvents).data?.programId) {
-      const programId = (curr as ParsedEvents).data.programId.toBase58()
+      let programId: string;
+      if ((curr as ParsedEvents).data?.programId instanceof PublicKey) {
+        programId = (curr as ParsedEvents).data.programId.toBase58()
+      } else {
+        programId = (curr as ParsedEvents).data.programId as unknown as string
+      }
       acc.accesses++
       acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId]
         ? acc.accessesByProgramId[programId] + 1
