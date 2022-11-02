@@ -15,4 +15,5 @@ module.exports = {
   },
   modulePaths: ['<rootDir>'],
   testTimeout: 1000 * 10,
+  verbose: true
 }
