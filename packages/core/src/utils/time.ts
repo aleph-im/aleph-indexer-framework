@@ -66,10 +66,14 @@ export function splitDurationIntoIntervals(
   // Override leftmost bound with "startDate" and rightmost bound with "endDate"
   // [(startDate, A), (A, B), (B, C), (C, endDate)]
   if (preserveExactBounds) {
-    intervals[0] = intervals[0].set({ start: startDate })
-    intervals[intervals.length - 1] = intervals[intervals.length - 1].set({
-      end: endDate,
-    })
+    if (startDate) {
+      intervals[0] = intervals[0].set({ start: startDate })
+    }
+    if (endDate) {
+      intervals[intervals.length - 1] = intervals[intervals.length - 1].set({
+        end: endDate,
+      })
+    }
   }
 
   // console.log(

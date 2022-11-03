@@ -239,7 +239,7 @@ export function isEqualDateRange(a: DateRange, b: DateRange): boolean {
 export function getTimeFrameOptions(
   timeFrame: TimeFrame,
   interval: Interval,
-): [DateTime, DateTime, DateTimeUnit, number] {
+): [DateTime, DateTime, DateTimeUnit, number, boolean] {
   const duration = TimeFrameDurationUnitsMap[timeFrame]
 
   switch (timeFrame) {
@@ -249,7 +249,7 @@ export function getTimeFrameOptions(
     case TimeFrame.Month:
     case TimeFrame.Year:
     case TimeFrame.All: {
-      return [interval.start, interval.end, ...duration]
+      return [interval.start, interval.end, ...duration, true]
     }
   }
 }

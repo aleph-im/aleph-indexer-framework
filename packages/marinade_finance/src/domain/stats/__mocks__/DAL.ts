@@ -12,7 +12,7 @@ export async function mockEventDAL(testName: string) {
     i++
   }
   if (i === 0) {
-    const events = Array.from({length: 10}, generateEvent);
+    const events = Array.from({length: 100}, generateEvent);
     await eventDAL.save(events);
   }
   return eventDAL;
@@ -47,7 +47,7 @@ function generateEvent(): ParsedEvents {
   return {
     id: Math.random().toString(36).substring(2),
     account: "test",
-    timestamp: Math.floor(Date.now() - (Math.random() * 60 * 60 * 24 * 7 * 1000)),
+    timestamp: Math.floor(Date.now() - (Math.random() * 60 * 60 * 24 * 14 * 1000)),
     type: getRandomInstructionType(),
     accounts: {} as any,
     data: {
