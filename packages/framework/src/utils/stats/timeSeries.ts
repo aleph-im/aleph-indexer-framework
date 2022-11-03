@@ -184,11 +184,6 @@ export class TimeSeriesStats<I, O> {
 
         if (!intervals.length) continue
 
-        if(timeFrameIndex === 0) {
-          expect(pendingDateRanges[0].startDate).toEqual(intervals[0].start.toMillis())
-          expect(pendingDateRanges[0].endDate).toEqual(intervals[intervals.length - 1].end.toMillis())
-        }
-
         for (const interval of intervals) {
           let { startDate, endDate } = getDateRangeFromInterval(interval)
           if (timeFrameIndex > 0) {

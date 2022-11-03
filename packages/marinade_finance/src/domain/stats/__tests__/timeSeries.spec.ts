@@ -11,15 +11,17 @@ import {
 import {mockMainIndexer} from "../__mocks__/indexer.js";
 import {Interval} from "luxon";
 import {ParsedEvents} from "../../../utils/layouts";
+import {EventDALIndex} from "../../../dal/event";
 
 describe('AccountTimeSeries', () => {
   it('createAccountStats from __mocks__ data', async () => {
+    const account = 'test'
     const eventDAL = await mockEventDAL('AccountTimeSeries')
     const statsStateDAL = mockStatsStateDAL('AccountTimeSeries')
     const statsTimeSeriesDAL = mockStatsTimeSeriesDAL('AccountTimeSeries')
     const mainIndexer = await mockMainIndexer(eventDAL)
     const accountStats = await createAccountStats(
-      'test',
+      account,
       mainIndexer,
       eventDAL,
       statsStateDAL,
@@ -39,13 +41,17 @@ describe('AccountTimeSeries', () => {
         latest = event.value
       }
     }
-    const accountState = await mainIndexer.getAccountState({account: 'test'})
-    expect(earliest.timestamp).toEqual(Interval.fromISO(accountState!.processed[0]).start.toMillis())
-    expect(latest.timestamp).toEqual(Interval.fromISO(accountState!.processed[0]).end.toMillis())
+    const eventsFromTo = await eventDAL
+      .useIndex(EventDALIndex.AccoountTimestamp)
+      .getAllValuesFromTo([account, earliest.timestamp], [account, latest.timestamp])
+    for await (const event of eventsFromTo) {
+      console.log("fromToEvent", event)
+    }
     await accountStats.init()
     await accountStats.process(Date.now())
     const stats = await accountStats.getStats()
-    expect(Object.keys(stats.stats.accessingPrograms)[0]).toEqual(earliest.data.programId)
+    console.log("stats", stats)
+    expect(stats.stats.accessingPrograms.has(earliest.data.programId.toString())).toBe(true)
     expect(stats.stats.total.accesses).toEqual(eventCnt)
   })
 })

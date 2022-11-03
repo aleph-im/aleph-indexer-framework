@@ -12,7 +12,7 @@ export async function mockEventDAL(testName: string) {
     i++
   }
   if (i === 0) {
-    const events = Array.from({length: 100}, generateEvent);
+    const events = Array.from({length: 1}, generateEvent);
     await eventDAL.save(events);
   }
   return eventDAL;
