@@ -113,6 +113,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   ): Promise<InstructionContextV1[]> {
     if (ctx.tx.parsed === undefined) {
       console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
+      return this.groupInstructions([], ctx)
     }
 
     const instructions = ctx.tx.parsed.message.instructions
