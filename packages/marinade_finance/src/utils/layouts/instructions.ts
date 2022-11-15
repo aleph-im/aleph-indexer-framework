@@ -1,6 +1,5 @@
 import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
-import {OrderUnstakeInstructionArgs} from "./solita/index.js";
 
 export enum InstructionType {
   Initialize = 'Initialize',
@@ -45,7 +44,7 @@ export type InitializeEvent = InstructionBase &
 
 export type ChangeAuthorityInfo = {
   accounts: solita.ChangeAuthorityInstructionAccounts
-  data: solita.ChangeAuthorityInstructionArgs
+  data: solita.ChangeAuthorityInstruction
 }
 
 export type ChangeAuthorityEvent = InstructionBase &

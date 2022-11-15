@@ -13,8 +13,6 @@ import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 
-// if you have some errors here most probably will be solved by changing the order of types
-
 export const Fee = new GraphQLObjectType({
   name: 'Fee',
   fields: {
