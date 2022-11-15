@@ -16,9 +16,9 @@ describe('TransactionParser', () => {
     // @todo: not type safe
     const parsedTxn = await transactionParser.parse(txn as unknown as any)
     console.log(JSON.stringify(parsedTxn, null, 2))
-    expect(parsedTxn).toMatchSnapshot()
-    const parsedIxn = (parsedTxn.parsed.message.instructions[1] as AlephParsedParsedInstruction).parsed
-    expect(parsedIxn.type).toEqual('OrderUnstake')
+    // expect(parsedTxn).toMatchSnapshot()
+    const parsedIxn = (parsedTxn.parsed.message.instructions[1] as AlephParsedParsedInstruction)
+    expect(parsedIxn.parsed.type).toEqual('OrderUnstake')
     console.log(parsedIxn)
   })
 })
