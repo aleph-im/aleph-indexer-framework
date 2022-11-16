@@ -20,6 +20,7 @@ import {
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
 import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
 import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
+import { createAccountDAL } from '../services/fetcher/src/dal/account'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -60,6 +61,7 @@ async function main() {
   const fetcherServiceMain = new FetcherMsMain(
     broker,
     createSignatureDAL(basePath),
+    createAccountDAL(basePath),
     createPendingTransactionDAL(basePath),
     createPendingTransactionCacheDAL(basePath),
     createPendingTransactionFetchDAL(basePath),

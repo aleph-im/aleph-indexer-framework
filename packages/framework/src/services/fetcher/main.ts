@@ -19,18 +19,18 @@ import { FetcherMsI, PrivateFetcherMsI } from './interface.js'
 import { SignatureDALIndex, SignatureStorage } from './src/dal/signature.js'
 import { RawTransactionStorage } from './src/dal/rawTransaction.js'
 import {
-  FetcherAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
-  FetchAccountTransactionsBySlotRequestArgs,
-  FetchTransactionsBySignatureRequestArgs,
-  FetcherStateRequestArgs,
-  FetcherState,
-  SignatureFetcherState,
-  FetcherOptionsTypes,
-  TransactionState,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
+  FetchAccountTransactionsByDateRequestArgs,
+  FetchAccountTransactionsBySlotRequestArgs,
+  FetcherAccountPartitionRequestArgs,
+  FetcherOptionsTypes,
+  FetcherState,
+  FetcherStateRequestArgs,
+  FetchTransactionsBySignatureRequestArgs,
+  SignatureFetcherState,
+  TransactionState,
 } from './src/types.js'
 import { PendingTransactionStorage } from './src/dal/pendingTransaction.js'
 import { MsIds } from '../common.js'
@@ -41,6 +41,7 @@ import {
 } from './src/dal/requests.js'
 import { FetcherMsClient } from './client.js'
 import { RawTransactionWithPeers } from '../parser/src/types.js'
+import { AccountStorage } from './src/dal/account'
 
 const { StreamBuffer, StreamMap, sleep } = Utils
 
@@ -49,6 +50,7 @@ const { StreamBuffer, StreamMap, sleep } = Utils
  */
 export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected fetchers: Record<string, SignatureFetcher> = {}
+  protected accounts: PendingWorkPool<string[]>
   protected infoFetchers: Record<string, AccountInfoFetcher> = {}
   protected pendingTransactions: PendingWorkPool<string[]>
   protected pendingTransactionsCache: PendingWorkPool<string[]>
@@ -61,7 +63,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    * Initialize the fetcher service.
    * @param broker The moleculer broker to assign to the service.
    * @param signatureDAL The transaction signatures' storage.
+   * @param accountDAL The account job storage.
    * @param pendingTransactionDAL The pending transactions' storage.
+   * @param pendingTransactionCacheDAL
+   * @param pendingTransactionFetchDAL
    * @param rawTransactionDAL The raw transactions' storage.
    * @param accountInfoDAL The account info storage.
    * @param requestDAL The fetcher requests' storage.
@@ -72,6 +77,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   constructor(
     protected broker: ServiceBroker,
     protected signatureDAL: SignatureStorage,
+    protected accountDAL: AccountStorage,
     protected pendingTransactionDAL: PendingTransactionStorage,
     protected pendingTransactionCacheDAL: PendingTransactionStorage,
     protected pendingTransactionFetchDAL: PendingTransactionStorage,
@@ -114,6 +120,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       checkComplete: (work): Promise<boolean> =>
         this.rawTransactionDAL.exists(work.id),
     })
+
+    this.accounts = new PendingWorkPool({
+      id: 'accounts',
+      interval: 0,
+      chunkSize: 100,
+      concurrency: 1,
+      dal: this.accountDAL,
+      handleWork: this._handleAccounts.bind(this),
+      checkComplete: () => false,
+    })
   }
 
   /**
@@ -147,34 +163,18 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    */
   async addAccountFetcher(
     args: FetcherAccountPartitionRequestArgs,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     save = true,
   ): Promise<void> {
-    const { account } = args
+    const { account, indexerId } = args
 
-    let fetcher = this.fetchers[account]
-    if (fetcher) return
-
-    fetcher = new SignatureFetcher(
-      account,
-      this.signatureDAL,
-      this.solanaRpc,
-      this.solanaMainPublicRpc,
-      this.fetcherStateDAL,
-    )
-
-    this.fetchers[account] = fetcher
-
-    if (save) {
-      const fetcherOptions = createFetcherOptions(
-        FetcherOptionsTypes.AccountFetcher,
-        args,
-      )
-
-      await this.requestDAL.save(fetcherOptions)
+    const work = {
+      id: account,
+      time: Date.now(),
+      payload: indexerId ? [indexerId] : [],
     }
 
-    await fetcher.init()
-    fetcher.run()
+    this.accounts.addWork(work)
   }
 
   /**
@@ -183,17 +183,20 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    */
   async delAccountFetcher({
     account,
+    indexerId,
   }: FetcherAccountPartitionRequestArgs): Promise<void> {
-    const fetcher = this.fetchers[account]
-    if (!fetcher) return
+    if (!indexerId) return
+    const work = await this.accountDAL.getFirstValueFromTo([account], [account])
+    if (!work) return
 
-    await fetcher.stop()
-    delete this.fetchers[account]
+    if (work.payload.includes(indexerId)) {
+      work.payload = work.payload.filter((id) => id !== indexerId)
+      this.accountDAL.save(work)
+    }
 
-    await this.removeExistingRequest(
-      FetcherOptionsTypes.AccountFetcher,
-      account,
-    )
+    if (work.payload.length === 0) {
+      this.accountDAL.remove(work)
+    }
   }
 
   /**
@@ -488,6 +491,38 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       }))
 
     await this.pendingTransactions.addWork(entities)
+  }
+
+  /**
+   * Fetch signatures from accounts.
+   * @param works Txn signatures with extra properties as time and payload.
+   */
+  protected async _handleAccounts(
+    works: PendingWork<string[]>[],
+  ): Promise<void> {
+    console.log(`Accounts | Start handling ${works.length} accounts`)
+
+    const accounts = works.map((work) => work.id)
+    let fetcher: SignatureFetcher
+
+    for (const account of accounts) {
+      fetcher = this.fetchers[account]
+      if (!fetcher) {
+        const fetcher = new SignatureFetcher(
+          account,
+          this.signatureDAL,
+          this.solanaRpc,
+          this.solanaMainPublicRpc,
+          this.fetcherStateDAL,
+        )
+
+        this.fetchers[account] = fetcher
+        await fetcher.init()
+      }
+
+      await fetcher.run()
+      fetcher.stop()
+    }
   }
 
   /**

@@ -29,6 +29,11 @@ export interface FetcherMsI {
     args: FetcherAccountPartitionRequestArgs,
   ): Promise<SignatureFetcherState | undefined>
   /**
+   * Requests to remove a signature fetcher.
+   * @param args The account to remove the fetcher from.
+   */
+  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+  /**
    * Requests a new account info fetcher, which will fetch current account info.
    * @param args Arguments for the fetcher.
    */
@@ -76,11 +81,7 @@ export interface PrivateFetcherMsI {
   getTransactionState(
     args: CheckTransactionsRequestArgs,
   ): Promise<TransactionState[]>
-  /**
-   * Requests to remove a signature fetcher.
-   * @param args The account to remove the fetcher from.
-   */
-  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+
   /**
    * Requests to remove an account info fetcher.
    * @param args The account to remove the fetcher from.
