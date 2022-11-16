@@ -316,6 +316,7 @@ const commonEventFields = {
   timestamp: { type: GraphQLLong },
   type: { type: new GraphQLNonNull(ParsedEvents) },
   account: { type: new GraphQLNonNull(GraphQLString) },
+  signer: { type: new GraphQLNonNull(GraphQLString) },
 }
 
 const Event = new GraphQLInterfaceType({
