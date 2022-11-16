@@ -35,7 +35,7 @@ function getMockedEntity(i: number): MyEntity {
   }
 }
 
-xdescribe('storage v2 integration tests', () => {
+describe('storage v2 integration tests', () => {
   const entities = getMockedEntities()
 
   it('should work as expected', async () => {
@@ -66,7 +66,7 @@ xdescribe('storage v2 integration tests', () => {
       ],
     })
 
-    // await storage.save(entities)
+    await storage.save(entities)
 
     for await (const entry of await storage.getAll()) {
       console.log('by id', entry)

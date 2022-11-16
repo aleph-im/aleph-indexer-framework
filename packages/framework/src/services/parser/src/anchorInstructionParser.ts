@@ -7,8 +7,11 @@ import {
 } from '@aleph-indexer/core'
 import { DefinedParser } from './parser.js'
 
-// @note: Based on solana-program-library (would need different implementation for Anchor-based programs).
-export class InstructionParser<
+/**
+ * Parses a raw instruction, if a parser for given solana program is available.
+ * This parser is automatically used for indexers generated from IDL with anchor-ts-generator.
+ */
+export class AnchorInstructionParser<
   EventTypeEnum extends string,
 > extends DefinedParser<
   RawInstruction,
@@ -38,12 +41,15 @@ export class InstructionParser<
     const parsedIx: AlephParsedParsedInstruction = rawIx as any
     parsedIx.program = this.programName
 
+    const { instructionDiscriminator, ...data } = this.parseInstructionData(type, decoded)[0]
+    const accounts = this.parseInstructionAccounts(type, parsedIx)
+
     parsedIx.parsed = {
       type,
       info: {
         ...(rawIx as any).parsed?.info,
-        ...this.parseInstructionData(type, decoded),
-        ...this.parseInstructionAccounts(type, parsedIx),
+        data,
+        accounts,
       },
     }
 
@@ -68,7 +74,7 @@ export class InstructionParser<
       const template = this.dataLayouts[type]
       if (!template) return {}
 
-      return this.dataLayouts[type].decode(data)
+      return this.dataLayouts[type].deserialize(data)
     } catch (e) {
       console.error(e)
     }
