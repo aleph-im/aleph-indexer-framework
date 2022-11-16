@@ -8,6 +8,9 @@ import rateLimit from 'express-rate-limit'
 import * as expressTypes from 'express-serve-static-core'
 import { GraphQLEndpoint } from './endpoint.js'
 
+/**
+ * Defines an express app to run the GraphQL API server.
+ */
 export class GraphQLServer {
   protected app: expressTypes.Application = {} as any | undefined
 

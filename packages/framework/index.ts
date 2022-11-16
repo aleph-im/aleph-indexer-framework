@@ -368,5 +368,8 @@ export class SDK {
   }
 }
 
+/**
+ * SDK Object is the entry point to the framework. Call init() to initialize the indexer.
+ */
 const sdk = new SDK()
 export default sdk
