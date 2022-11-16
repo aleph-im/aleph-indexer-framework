@@ -10,11 +10,21 @@ import {
   SignatureFetcherOptions,
 } from './types.js'
 
+/**
+ * Handles the fetching and processing of signatures on an account.
+ */
 export abstract class SignatureFetcher extends Fetcher {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
 
+  /**
+   * Initialize the SignaturesFetcher class.
+   * @param opts Fetcher options.
+   * @param fetcherStateDAL Fetcher state storage.
+   * @param solanaRpc The solana RPC client to use.
+   * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
+   */
   constructor(
     protected opts: SignatureFetcherOptions,
     protected fetcherStateDAL: FetcherStateLevelStorage,

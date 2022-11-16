@@ -199,7 +199,7 @@ export class EntityIndexStorage<
       )
 
       if (!item) return
-      return this.mapItem(item)
+      return this.mapItem(item, options?.atomic)
     } finally {
       release()
     }
@@ -238,7 +238,7 @@ export class EntityIndexStorage<
       )
 
       if (!item) return
-      return this.mapItem(item)
+      return this.mapItem(item, options?.atomic)
     } finally {
       release()
     }
@@ -276,7 +276,10 @@ export class EntityIndexStorage<
         typeof key === 'string' &&
         key.indexOf(this.self.keyValueDelimiter) >= 0
       ) {
-        const mappedItem = await this.mapItem({ key, value: '' })
+        const mappedItem = await this.mapItem(
+          { key, value: '' },
+          options?.atomic,
+        )
         return mappedItem?.value
       }
 
@@ -290,8 +293,38 @@ export class EntityIndexStorage<
 
       if (!value) return
 
-      const item = await this.mapItem({ key: innerKey, value })
+      const item = await this.mapItem({ key: innerKey, value }, options?.atomic)
       return item?.value
+    } finally {
+      release()
+    }
+  }
+
+  async getMany(
+    keys: string[] | Stringifable[][],
+    options?: EntityIndexStorageCallOptions,
+  ): Promise<Returned[]> {
+    const release = await this.getAtomicOpMutex(options?.atomic)
+
+    try {
+      const innerKeys = keys.map((key) =>
+        this.storage.composeKey(
+          Array.isArray(key) ? (this.mapKeyChunks(key, true) as string[]) : key,
+        ),
+      )
+
+      const values = await this.storage.getMany(innerKeys, {
+        sublevel: this.options.sublevel,
+      })
+
+      if (!values || !values.length) return []
+
+      const items = await this.mapManyItem(
+        values.map((v, i) => ({ key: innerKeys[i], value: v })),
+        options?.atomic,
+      )
+
+      return items.map((item) => item.value)
     } finally {
       release()
     }
@@ -489,6 +522,7 @@ export class EntityIndexStorage<
 
   protected async mapItem(
     item: StorageEntry<string, string | Entity>,
+    atomic?: boolean,
   ): Promise<StorageEntry<string, Returned> | undefined> {
     const { entityStore } = this.options
 
@@ -497,17 +531,46 @@ export class EntityIndexStorage<
       const [, entityKey] = key.split(this.self.keyValueDelimiter)
       const value = await entityStore.get(entityKey)
 
-      if (value === undefined) {
+      if (value === undefined && atomic) {
         console.log(
-          `🟥 Inconsistent lookup key [${entityKey}] on db [${this.options.sublevel}]`,
+          `🟥 Inconsistent lookup key [${entityKey}] from key (${key}) on index [${this.options.sublevel}]`,
         )
         return
       }
 
-      return { key, value: value as Returned }
+      return { key: entityKey, value: value as Returned }
     }
 
     return item as StorageEntry<string, Returned>
+  }
+
+  protected async mapManyItem(
+    items: StorageEntry<string, string | Entity>[],
+    atomic?: boolean,
+  ): Promise<StorageEntry<string, Returned>[]> {
+    const { entityStore } = this.options
+
+    if (entityStore) {
+      const entityKeys = items
+        .map((item) => item.key.split(this.self.keyValueDelimiter)?.[1])
+        .filter((k) => !!k)
+
+      const values = await entityStore.getMany(entityKeys)
+
+      if ((!values || !values.length) && atomic) {
+        console.log(
+          `🟥 Inconsistent lookup keys from key on index [${this.options.sublevel}]`,
+        )
+        return []
+      }
+
+      return values.map((v, i) => ({
+        key: entityKeys[i],
+        value: v as unknown as Returned,
+      }))
+    }
+
+    return items as StorageEntry<string, Returned>[]
   }
 
   protected async filterItem(

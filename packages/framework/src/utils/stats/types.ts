@@ -29,6 +29,9 @@ export type TimeSeriesAggregatorFnArgs<I, O> = {
   cache: Record<string, unknown>
 }
 
+/**
+ * Arguments to aggregate account stats.
+ */
 export type AccountAggregatorFnArgs = {
   now: DateTime
   account: string
@@ -65,6 +68,9 @@ export type TimeSeriesItem<V = any> = {
 
 export type TimeSeries<V = any> = TimeSeriesItem<V>[]
 
+/**
+ * Time-series stats for the given account.
+ */
 export type AccountTimeSeriesStats<V = any> = {
   account: string
   type: string
@@ -72,11 +78,17 @@ export type AccountTimeSeriesStats<V = any> = {
   series: TimeSeries<V>
 }
 
+/**
+ * Stats of the given account.
+ */
 export type AccountStats<V = any> = {
   account: string
   stats: V
 }
 
+/**
+ * Transformations and clipping to apply to the time-series.
+ */
 export type AccountStatsFilters = {
   timeFrame: Duration
   startDate?: DateTime

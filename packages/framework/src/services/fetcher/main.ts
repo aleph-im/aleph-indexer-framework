@@ -8,6 +8,7 @@ import {
   PendingWork,
   PendingWorkPool,
   RawTransaction,
+  RawTransactionV1,
   Signature,
   SolanaRPC,
   StorageEntry,
@@ -29,6 +30,7 @@ import {
   FetcherOptionsTypes,
   TransactionState,
   CheckTransactionsRequestArgs,
+  DelTransactionsRequestArgs,
 } from './src/types.js'
 import { PendingTransactionStorage } from './src/dal/pendingTransaction.js'
 import { MsIds } from '../common.js'
@@ -40,7 +42,7 @@ import {
 import { FetcherMsClient } from './client.js'
 import { RawTransactionWithPeers } from '../parser/src/types.js'
 
-const { BufferExec, StreamBuffer, StreamMap, sleep } = Utils
+const { StreamBuffer, StreamMap, sleep } = Utils
 
 /**
  * The main class of the fetcher service.
@@ -49,6 +51,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected fetchers: Record<string, SignatureFetcher> = {}
   protected infoFetchers: Record<string, AccountInfoFetcher> = {}
   protected pendingTransactions: PendingWorkPool<string[]>
+  protected pendingTransactionsCache: PendingWorkPool<string[]>
+  protected pendingTransactionsFetch: PendingWorkPool<string[]>
   protected fetcherMsClient: FetcherMsClient
   protected throughput = 0
   protected throughputInit = Date.now()
@@ -69,6 +73,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     protected broker: ServiceBroker,
     protected signatureDAL: SignatureStorage,
     protected pendingTransactionDAL: PendingTransactionStorage,
+    protected pendingTransactionCacheDAL: PendingTransactionStorage,
+    protected pendingTransactionFetchDAL: PendingTransactionStorage,
     protected rawTransactionDAL: RawTransactionStorage,
     protected accountInfoDAL: AccountInfoStorage,
     protected requestDAL: FetcherOptionsStorage,
@@ -80,18 +86,33 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     this.pendingTransactions = new PendingWorkPool({
       id: 'pending-transactions',
-      interval: 1000,
+      interval: 0,
       chunkSize: 1000,
-      concurrency: 10,
+      concurrency: 1,
       dal: this.pendingTransactionDAL,
-      handleWork: async (works): Promise<number | void> => {
-        return this._fetchTransactions(works)
-      },
-      checkComplete: async (work): Promise<boolean> => {
-        return (
-          !this.isSignature(work.id) || this.rawTransactionDAL.exists(work.id)
-        )
-      },
+      handleWork: this._handlePendingTransactions.bind(this),
+      checkComplete: () => true,
+    })
+
+    this.pendingTransactionsCache = new PendingWorkPool({
+      id: 'pending-transactions-cache',
+      interval: 0,
+      chunkSize: 10,
+      concurrency: 1,
+      dal: this.pendingTransactionCacheDAL,
+      handleWork: this._handlePendingTransactionsCache.bind(this),
+      checkComplete: () => true,
+    })
+
+    this.pendingTransactionsFetch = new PendingWorkPool({
+      id: 'pending-transactions-fetch',
+      interval: 0,
+      chunkSize: 200,
+      concurrency: 5,
+      dal: this.pendingTransactionFetchDAL,
+      handleWork: this._handlePendingTransactionsFetch.bind(this),
+      checkComplete: (work): Promise<boolean> =>
+        this.rawTransactionDAL.exists(work.id),
     })
   }
 
@@ -102,11 +123,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    */
   async start(): Promise<void> {
     this.pendingTransactions.start().catch(() => 'ignore')
+    this.pendingTransactionsCache.start().catch(() => 'ignore')
+    this.pendingTransactionsFetch.start().catch(() => 'ignore')
+
     await this.loadExistingRequests()
   }
 
   async stop(): Promise<void> {
     this.pendingTransactions.stop().catch(() => 'ignore')
+    this.pendingTransactionsCache.stop().catch(() => 'ignore')
+    this.pendingTransactionsFetch.stop().catch(() => 'ignore')
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
@@ -114,6 +140,11 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return this.fetcherMsClient.getAllFetchers()
   }
 
+  /**
+   * Assigns to a fetcher instance an account owned by the specific program
+   * and initializes it.
+   * @param args Account address to asign to the fetcher instance,
+   */
   async addAccountFetcher(
     args: FetcherAccountPartitionRequestArgs,
     save = true,
@@ -146,6 +177,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     fetcher.run()
   }
 
+  /**
+   * Stops the fetching process of that instance of the fetcher for that account.
+   * @param account The account address to stop the fetching process.
+   */
   async delAccountFetcher({
     account,
   }: FetcherAccountPartitionRequestArgs): Promise<void> {
@@ -161,6 +196,12 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
+  /**
+   * Creates an account info fetcher.
+   * Allows to obtain the current state of the account
+   * @param args Consists of the account address and a boolean to determine
+   * whether to update its status if neccesary
+   */
   async addAccountInfoFetcher(
     args: AddAccountInfoFetcherRequestArgs,
     save = true,
@@ -197,6 +238,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     fetcher.run()
   }
 
+  /**
+   * Removes an account info fetcher from the map and its existing requests.
+   * @param account The account address to remove from the map.
+   */
   async delAccountInfoFetcher({
     account,
   }: FetcherAccountPartitionRequestArgs): Promise<void> {
@@ -212,6 +257,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
+  /**
+   * Returns the state of the transaction fetch process of a given account.
+   * @param account The account address to get its fetch status.
+   */
   async getAccountFetcherState({
     account,
   }: FetcherAccountPartitionRequestArgs): Promise<
@@ -226,6 +275,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return state
   }
 
+  /**
+   * Returns the state of the complete fetch process.
+   */
   async getFetcherState({
     fetcher = this.getFetcherId(),
   }: FetcherStateRequestArgs): Promise<FetcherState> {
@@ -242,6 +294,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     }
   }
 
+  /**
+   * Returns the fetch status of certain txn signatures.
+   * @param signatures The txn signatures to get its state.
+   */
   async getTransactionState({
     signatures,
   }: CheckTransactionsRequestArgs): Promise<TransactionState[]> {
@@ -274,6 +330,20 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         }
       }),
     )
+  }
+
+  /**
+   * Delete the cached transaction.
+   * @param args The txn signatures to delete the cache for.
+   */
+  async delTransactionCache({
+    signatures,
+  }: DelTransactionsRequestArgs): Promise<void> {
+    const entities = signatures.map((signature) => ({
+      transaction: { signatures: [signature] },
+    })) as unknown as RawTransactionV1[]
+
+    await this.rawTransactionDAL.remove(entities)
   }
 
   async fetchAccountTransactionsByDate(
@@ -336,6 +406,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
+  /**
+   * Fetch transactions from an account by slot.
+   * @param args accountAddress, startDate, endDate and indexerId.
+   */
   async fetchAccountTransactionsBySlot(
     args: FetchAccountTransactionsBySlotRequestArgs,
     save = true,
@@ -393,6 +467,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     )
   }
 
+  /**
+   * Fetch transactions from an account by signatures.
+   * @param args Txn signatures.
+   */
   async fetchTransactionsBySignature({
     signatures,
     indexerId,
@@ -412,73 +490,123 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     await this.pendingTransactions.addWork(entities)
   }
 
-  protected async _fetchTransactions(
+  /**
+   * Fetch transactions from signatures.
+   * @param works Txn signatures with extra properties as time and payload.
+   */
+  protected async _handlePendingTransactions(
     works: PendingWork<string[]>[],
   ): Promise<void> {
-    console.log(`Txs fetching | Start fetching txs ${works.length}`)
+    console.log(`Txs pending | Start handling txs ${works.length}`)
 
-    const foundBuffer = new BufferExec<RawTransactionWithPeers>(async (txs) => {
-      await this.emitTransactions(txs)
-    }, 10)
+    const toFetchWorks: PendingWork<string[]>[] = []
+    const inCacheWorks: PendingWork<string[]>[] = []
 
-    const requestBuffer = new BufferExec<PendingWork<string[]>>(
-      async (works) => {
-        let [txs, pending] = await this._fetchFromRPC(works, this.solanaRpc)
-        let retries = 0
+    const ids = works.map((work) => work.id)
+    const txs = await this.rawTransactionDAL.getMany(ids)
 
-        while (pending.length > 0 && retries < 3) {
-          if (retries > 0) await sleep(1000)
-
-          const [txs2, pending2] = await this._fetchFromRPC(
-            pending,
-            this.solanaMainPublicRpc,
-          )
-
-          pending = pending2
-          txs = txs.concat(txs2)
-
-          retries++
-        }
-
-        if (!txs.length) {
-          console.log('‼️ Txs not found after 3 retries', pending)
-        }
-
-        await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
-        await foundBuffer.add(txs)
-      },
-      200,
-    )
-
-    let count1 = 0
-    let count2 = 0
-
-    for (const work of works) {
-      const { id: signature, payload: peers } = work
-      const tx = await this.rawTransactionDAL.get(signature)
-
+    for (const [i, tx] of txs.entries()) {
       if (!tx) {
-        count1++
-        await requestBuffer.add(work)
+        toFetchWorks.push(works[i])
       } else {
-        count2++
-        const txWithPeers = { tx: tx as RawTransaction, peers }
-        await foundBuffer.add(txWithPeers)
+        inCacheWorks.push(works[i])
       }
     }
 
-    console.log(`Txs fetching | Response ${count1}/${count2} requests/found`)
+    console.log(
+      `Txs pending | Response ${toFetchWorks.length}/${inCacheWorks.length} toFetch/inCache`,
+    )
 
-    await requestBuffer.drain()
-    await foundBuffer.drain()
+    if (toFetchWorks.length > 0) {
+      await this.pendingTransactionsFetch.addWork(toFetchWorks)
+    }
+
+    if (inCacheWorks.length > 0) {
+      await this.pendingTransactionsCache.addWork(inCacheWorks)
+    }
   }
 
+  protected async _handlePendingTransactionsCache(
+    works: PendingWork<string[]>[],
+  ): Promise<void> {
+    console.log(`Txs cache | Start getting txs ${works.length}`)
+
+    const txs = await this.rawTransactionDAL.getMany(
+      works.map((work) => work.id),
+    )
+
+    const msgs = works.map((work, i) => ({
+      tx: txs[i] as RawTransaction,
+      peers: work.payload,
+    }))
+
+    await this.emitTransactions(msgs)
+
+    console.log(`Txs cache | Response ${msgs.length} found in cache`)
+  }
+
+  protected async _handlePendingTransactionsFetch(
+    works: PendingWork<string[]>[],
+  ): Promise<number | void> {
+    console.log(`Txs fetching | Start fetching txs ${works.length}`)
+
+    let totalPendings = 0
+
+    let [txs, pending] = await this._fetchFromRPC(works, this.solanaRpc)
+    let retries = 0
+
+    while (pending.length > 0 && retries < 3) {
+      if (retries > 0) await sleep(1000)
+
+      console.log(`⚠️ retrying ${pending.length} txs [${retries}]`)
+
+      const [txs2, pending2] = await this._fetchFromRPC(
+        pending,
+        this.solanaMainPublicRpc,
+      )
+
+      pending = pending2
+      txs = txs.concat(txs2)
+
+      retries++
+    }
+
+    if (pending.length) {
+      console.log(`‼️ ${pending.length} txs not found after 3 retries`)
+      totalPendings += pending.length
+    }
+
+    await this.rawTransactionDAL.save(txs.map(({ tx }) => tx))
+
+    const cacheWorks = txs.map(({ tx, peers }) => ({
+      id: tx.transaction.signatures[0],
+      time: Date.now(),
+      payload: peers,
+    }))
+
+    await this.pendingTransactionsCache.addWork(cacheWorks)
+
+    console.log(
+      `Txs fetching | Response ${txs.length} requests${
+        totalPendings > 0 ? `, ${totalPendings} errors` : ''
+      }`,
+    )
+
+    if (totalPendings > 0) return 1000 * 5
+  }
+
+  /**
+   * Fetch transactions from a RPC Node.
+   * @param works Txn signatures with extra properties as time and payload.
+   */
   protected async _fetchFromRPC(
     works: PendingWork<string[]>[],
     rpc: SolanaRPC,
   ): Promise<[RawTransactionWithPeers[], PendingWork<string[]>[]]> {
     const signatures = works.map(({ id }) => id)
-    const response = await rpc.getConfirmedTransactions(signatures)
+    const response = await rpc.getConfirmedTransactions(signatures, {
+      shallowErrors: true,
+    })
 
     const pendingWork: PendingWork<string[]>[] = []
     const txs: RawTransactionWithPeers[] = []
@@ -498,6 +626,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return [txs, pendingWork]
   }
 
+  /**
+   * Emit txns to the parser.
+   * @param txs Raw txns.
+   */
   protected async emitTransactions(
     txs: RawTransactionWithPeers[],
   ): Promise<void> {
@@ -508,12 +640,20 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     return this.broker.emit('fetcher.txs', txs, [MsIds.Parser])
   }
 
+  /**
+   * Guard to validate a signature.
+   * @param signature Signature to validate.
+   */
   protected isSignature(signature: string): boolean {
     const isSignature = signature.length >= 64 && signature.length <= 88
     if (!isSignature) console.log(`Fetcher Invalid signature ${signature}`)
     return isSignature
   }
 
+  /**
+   * Used to improve performance.
+   * @param count Txns counter.
+   */
   protected addThroughput(count: number): void {
     // @note: Reset if there is an overflow
     const now = Date.now()
@@ -529,6 +669,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     this.throughput += count
   }
 
+  /**
+   * It is used to restart the execution of the fetcher by loading the existing requests.
+   */
   protected async loadExistingRequests(): Promise<void> {
     console.log(`🔗 Loading existing requests ...`)
     const requests = await this.requestDAL.getAllValues()
@@ -553,6 +696,11 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     }
   }
 
+  /**
+   * Removes the existing requests related to a certain account and type of request.
+   * @param type One of the possible requests that can be made to the fetcher service.
+   * @param account Account address.
+   */
   protected async removeExistingRequest(
     type: FetcherOptionsTypes,
     account: string,

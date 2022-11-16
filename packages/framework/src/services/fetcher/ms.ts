@@ -12,6 +12,7 @@ import {
   FetchTransactionsBySignatureRequestArgs,
   SignatureFetcherState,
   TransactionState,
+  DelTransactionsRequestArgs,
 } from './src/types.js'
 
 /**
@@ -69,6 +70,10 @@ export class FetcherMs extends Service {
         getTransactionState: {
           ...shardBalancingStrategy,
           handler: this.getTransactionState,
+        },
+        delTransactionCache: {
+          ...shardBalancingStrategy,
+          handler: this.delTransactionCache,
         },
       },
       started: this.start,
@@ -142,5 +147,9 @@ export class FetcherMs extends Service {
     ctx: Context<CheckTransactionsRequestArgs>,
   ): Promise<TransactionState[]> {
     return this.main.getTransactionState(ctx.params)
+  }
+
+  delTransactionCache(ctx: Context<DelTransactionsRequestArgs>): Promise<void> {
+    return this.main.delTransactionCache(ctx.params)
   }
 }

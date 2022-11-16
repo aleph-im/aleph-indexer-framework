@@ -16,6 +16,7 @@ import {
   SignatureFetcherState,
   TransactionState,
   CheckTransactionsRequestArgs,
+  DelTransactionsRequestArgs,
 } from './src/types.js'
 
 /**
@@ -140,6 +141,21 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     )) as TransactionState[][]
 
     return states.flatMap((state) => state)
+  }
+
+  async delTransactionCache({
+    signatures,
+  }: DelTransactionsRequestArgs): Promise<void> {
+    const groups = this.getTransactionPartitionGroups({ signatures })
+
+    await Promise.all(
+      Object.entries(groups).map(([partitionKey, signatures]) => {
+        return this.broker.call(`${this.msId}.delTransactionCache`, {
+          partitionKey,
+          signatures,
+        })
+      }),
+    )
   }
 
   protected getTransactionPartitionGroups(args: {

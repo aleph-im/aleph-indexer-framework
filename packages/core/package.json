@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/core",
-  "version": "1.0.16",
+  "version": "1.0.21",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -54,7 +54,8 @@
     "level": "^8.0.0",
     "level-read-stream": "^1.1.0",
     "murmurhash": "^2.0.0",
-    "node-cache": "^5.1.2"
+    "node-cache": "^5.1.2",
+    "superstruct": "^0.16.5"
   },
   "typedoc": {
     "entryPoint": "./src/index.ts",

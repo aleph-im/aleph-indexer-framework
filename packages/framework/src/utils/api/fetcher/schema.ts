@@ -1,4 +1,5 @@
 import {
+  GraphQLBoolean,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
@@ -54,6 +55,20 @@ export class FetcherAPISchema extends GraphQLSchema {
               },
             },
             resolve: (_, ctx) => this.domain.getTransactionState(ctx.signature),
+          },
+        },
+      }),
+      mutation: new GraphQLObjectType({
+        name: 'Mutation',
+        fields: {
+          deleteTransactionCache: {
+            type: GraphQLBoolean,
+            args: {
+              signature: {
+                type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
+              },
+            },
+            resolve: (_, ctx) => this.domain.delTransactionCache(ctx.signature),
           },
         },
       }),

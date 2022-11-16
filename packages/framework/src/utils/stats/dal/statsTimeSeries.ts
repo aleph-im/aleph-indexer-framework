@@ -12,6 +12,9 @@ export type StatsTimeSeries<T> = {
   data: T
 }
 
+/**
+ * Stats Time Series Entity Storage.
+ */
 export type StatsTimeSeriesStorage = EntityStorage<StatsTimeSeries<any>>
 
 const accountKey = {
@@ -35,6 +38,9 @@ const startDateKey = {
   length: EntityStorage.TimestampLength,
 }
 
+/**
+ * Creates a stats time series Entity Storage.
+ */
 export function createStatsTimeSeriesDAL(path: string): StatsTimeSeriesStorage {
   return new EntityStorage<StatsTimeSeries<any>>({
     name: 'stats_time_series',

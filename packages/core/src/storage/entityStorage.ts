@@ -38,6 +38,9 @@ export type EntityStorageCallOptions = EntityStorageInvokeOptions
 export type EntityStorageGetStreamOptions<K, V> = StorageGetOptions<K, V> &
   EntityStorageInvokeOptions
 
+/**
+ * Defines the storage handler class for different entities.
+ */
 export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   protected byIndex: Record<string, EntityIndexStorage<Entity, Entity>> = {}
   protected atomicOpMutex: Mutex
@@ -170,38 +173,36 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     toUpdate: Entity[]
     toRemove: Entity[]
   }> {
-    const toRemove: Entity[] = []
-    const toUpdate: Entity[] = []
+    const toRemove: Map<string, Entity> = new Map()
+    const toUpdate: Map<string, Entity> = new Map()
 
     const { updateCheckFn } = this.options
 
-    await Promise.all(
-      entities.map(async (entity) => {
-        const [primaryKey] = this.getKeys(entity)
-        const oldEntity = await this.get(primaryKey)
+    for (const entity of entities) {
+      const [primaryKey] = this.getKeys(entity)
+      const oldEntity = toUpdate.get(primaryKey) || (await this.get(primaryKey))
 
-        if (op === EntityUpdateOp.Update && updateCheckFn) {
-          op = await updateCheckFn(oldEntity, entity)
-        }
+      if (op === EntityUpdateOp.Update && updateCheckFn) {
+        op = await updateCheckFn(oldEntity, entity)
+      }
 
-        switch (op) {
-          case EntityUpdateOp.Update: {
-            toUpdate.push(entity)
-            if (oldEntity) toRemove.push(oldEntity)
-            return
-          }
-          case EntityUpdateOp.Delete: {
-            if (oldEntity) toRemove.push(oldEntity)
-            return
-          }
-          case EntityUpdateOp.Keep: // noopMutex
+      switch (op) {
+        case EntityUpdateOp.Update: {
+          toUpdate.set(primaryKey, entity)
+          if (oldEntity) toRemove.set(primaryKey, oldEntity)
+          break
         }
-      }),
-    )
+        case EntityUpdateOp.Delete: {
+          if (oldEntity) toRemove.set(primaryKey, oldEntity)
+          break
+        }
+        case EntityUpdateOp.Keep: // noopMutex
+      }
+    }
 
     return {
-      toUpdate,
-      toRemove,
+      toUpdate: Array.from(toUpdate.values()),
+      toRemove: Array.from(toRemove.values()),
     }
   }
 

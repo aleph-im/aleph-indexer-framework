@@ -23,6 +23,9 @@ import { DateTime } from 'luxon'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
+/**
+ * Describes an indexer worker domain, capable of stats processing.
+ */
 export type IndexerWorkerDomainWithStats = {
   updateStats(account: string, now: number): Promise<void>
   getTimeSeriesStats(
@@ -33,6 +36,9 @@ export type IndexerWorkerDomainWithStats = {
   getStats(account: string): Promise<AccountStats>
 }
 
+/**
+ * Describes an indexer worker domain, implements some common methods for any instance
+ */
 export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   protected instance!: number
 
@@ -114,6 +120,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   ): Promise<InstructionContextV1[]> {
     if (ctx.tx.parsed === undefined) {
       console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
+      return this.groupInstructions([], ctx)
     }
 
     const instructions = ctx.tx.parsed.message.instructions

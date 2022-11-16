@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/middleware",
-  "version": "1.0.16",
+  "version": "1.0.21",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -29,7 +29,7 @@
     "luxon": "^3.0.4"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.16",
+    "@aleph-indexer/core": "^1.0.21",
     "compression": "^1.7.4"
   },
   "typedoc": {

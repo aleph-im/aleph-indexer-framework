@@ -9,6 +9,7 @@ import {
   TransactionRequest,
   TransactionRequestStorage,
 } from './src/dal/transactionRequest.js'
+import { TransactionRequestIncomingTransactionStorage } from './src/dal/transactionRequestIncomingTransaction.js'
 import { TransactionRequestPendingSignatureStorage } from './src/dal/transactionRequestPendingSignature.js'
 import { TransactionRequestResponseStorage } from './src/dal/transactionRequestResponse.js'
 import {
@@ -49,12 +50,14 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     protected fetcherMsClient: FetcherMsClient,
     protected parserMsClient: ParserMsClient,
     protected transactionRequestDAL: TransactionRequestStorage,
+    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
     protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
     protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
     protected transactionFetcher: TransactionFetcher = new TransactionFetcher(
       fetcherMsClient,
       transactionRequestDAL,
+      transactionRequestIncomingTransactionDAL,
       transactionRequestPendingSignatureDAL,
       transactionRequestResponseDAL,
     ),
@@ -83,11 +86,6 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
   // @todo: Make the Main class moleculer-agnostic by DI
   getAllIndexers(): string[] {
     return getRegistryNodesWithService(this.broker, MsIds.Indexer)
-  }
-
-  async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    // console.log(`💌 ${chunk.length} txs received by the indexer...`)
-    await this.transactionFetcher.onTxs(chunk)
   }
 
   // async fetchTransactions(dateRange: AccountEventsFilters): Promise<void> {
@@ -149,6 +147,11 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
       throw new Error(`Method ${method} does not exists in indexer domain`)
 
     return fn.call(this.domain, account, ...args)
+  }
+
+  protected async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
+    // console.log(`💌 ${chunk.length} txs received by the indexer...`)
+    await this.transactionFetcher.onTxs(chunk)
   }
 
   /**

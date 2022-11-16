@@ -35,6 +35,9 @@ export type StatsState = {
   state: StatsStateStatus
 }
 
+/**
+ * Stats Entity Storage.
+ */
 export type StatsStateStorage = EntityStorage<StatsState>
 
 /**
@@ -70,6 +73,9 @@ const stateKey = {
   length: 1,
 }
 
+/**
+ * Creates a stats Entity Storage.
+ */
 export function createStatsStateDAL(path: string): StatsStateStorage {
   return new EntityStorage<StatsState>({
     name: 'stats_state',
