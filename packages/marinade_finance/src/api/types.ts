@@ -526,7 +526,7 @@ export const DepositEventAccounts = new GraphQLObjectType({
 export const DepositEventData = new GraphQLObjectType({
   name: 'DepositEventData',
   fields: {
-    lamports: { type: new GraphQLNonNull(GraphQLLong) },
+    lamports: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -599,7 +599,7 @@ export const LiquidUnstakeEventAccounts = new GraphQLObjectType({
 export const LiquidUnstakeEventData = new GraphQLObjectType({
   name: 'LiquidUnstakeEventData',
   fields: {
-    msolAmount: { type: new GraphQLNonNull(GraphQLLong) },
+    msolAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -632,7 +632,7 @@ export const AddLiquidityEventAccounts = new GraphQLObjectType({
 export const AddLiquidityEventData = new GraphQLObjectType({
   name: 'AddLiquidityEventData',
   fields: {
-    lamports: { type: new GraphQLNonNull(GraphQLLong) },
+    lamports: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -667,7 +667,7 @@ export const RemoveLiquidityEventAccounts = new GraphQLObjectType({
 export const RemoveLiquidityEventData = new GraphQLObjectType({
   name: 'RemoveLiquidityEventData',
   fields: {
-    tokens: { type: new GraphQLNonNull(GraphQLLong) },
+    tokens: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -695,7 +695,7 @@ export const SetLpParamsEventData = new GraphQLObjectType({
   fields: {
     minFee: { type: new GraphQLNonNull(Fee) },
     maxFee: { type: new GraphQLNonNull(Fee) },
-    liquidityTarget: { type: new GraphQLNonNull(GraphQLLong) },
+    liquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -753,7 +753,7 @@ export const OrderUnstakeEventAccounts = new GraphQLObjectType({
 export const OrderUnstakeEventData = new GraphQLObjectType({
   name: 'OrderUnstakeEventData',
   fields: {
-    msolAmount: { type: new GraphQLNonNull(GraphQLLong) },
+    msolAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
@@ -979,7 +979,7 @@ export const PartialUnstakeEventData = new GraphQLObjectType({
   fields: {
     stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
     validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
-    desiredUnstakeAmount: { type: new GraphQLNonNull(GraphQLLong) },
+    desiredUnstakeAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   }
 })
 
