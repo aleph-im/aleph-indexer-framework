@@ -13,6 +13,8 @@ import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 
+// if you have some errors here most probably will be solved by changing the order of types
+
 export const Fee = new GraphQLObjectType({
   name: 'Fee',
   fields: {
@@ -51,6 +53,16 @@ export const ChangeAuthorityData = new GraphQLObjectType({
     validatorManager: { type: new GraphQLNonNull(GraphQLString) },
     operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
     treasuryMsolAccount: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const ConfigLpParams = new GraphQLObjectType({
+  name: 'ConfigLpParams',
+  fields: {
+    minFee: { type: new GraphQLNonNull(Fee) },
+    maxFee: { type: new GraphQLNonNull(Fee) },
+    liquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    treasuryCut: { type: new GraphQLNonNull(Fee) },
   },
 })
 
@@ -275,28 +287,27 @@ export const AccountsInfo = new GraphQLList(MarinadeFinanceAccountsInfo)
 export const ParsedEvents = new GraphQLEnumType({
   name: 'ParsedEvents',
   values: {
-    Initialize: { value: 'Initialize' },
-    ChangeAuthority: { value: 'ChangeAuthority' },
-    AddValidator: { value: 'AddValidator' },
-    RemoveValidator: { value: 'RemoveValidator' },
-    SetValidatorScore: { value: 'SetValidatorScore' },
-    ConfigValidatorSystem: { value: 'ConfigValidatorSystem' },
-    Deposit: { value: 'Deposit' },
-    DepositStakeAccount: { value: 'DepositStakeAccount' },
-    LiquidUnstake: { value: 'LiquidUnstake' },
-    AddLiquidity: { value: 'AddLiquidity' },
-    RemoveLiquidity: { value: 'RemoveLiquidity' },
-    SetLpParams: { value: 'SetLpParams' },
-    ConfigMarinade: { value: 'ConfigMarinade' },
-    OrderUnstake: { value: 'OrderUnstake' },
-    Claim: { value: 'Claim' },
-    StakeReserve: { value: 'StakeReserve' },
-    UpdateActive: { value: 'UpdateActive' },
-    UpdateDeactivated: { value: 'UpdateDeactivated' },
-    DeactivateStake: { value: 'DeactivateStake' },
-    EmergencyUnstake: { value: 'EmergencyUnstake' },
-    PartialUnstake: { value: 'PartialUnstake' },
-    MergeStakes: { value: 'MergeStakes' },
+    InitializeEvent: { value: 'InitializeEvent' },
+    ChangeAuthorityEvent: { value: 'ChangeAuthorityEvent' },
+    AddValidatorEvent: { value: 'AddValidatorEvent' },
+    RemoveValidatorEvent: { value: 'RemoveValidatorEvent' },
+    SetValidatorScoreEvent: { value: 'SetValidatorScoreEvent' },
+    ConfigValidatorSystemEvent: { value: 'ConfigValidatorSystemEvent' },
+    DepositEvent: { value: 'DepositEvent' },
+    DepositStakeAccountEvent: { value: 'DepositStakeAccountEvent' },
+    LiquidUnstakeEvent: { value: 'LiquidUnstakeEvent' },
+    AddLiquidityEvent: { value: 'AddLiquidityEvent' },
+    RemoveLiquidityEvent: { value: 'RemoveLiquidityEvent' },
+    ConfigMarinadeEvent: { value: 'ConfigMarinadeEvent' },
+    OrderUnstakeEvent: { value: 'OrderUnstakeEvent' },
+    ClaimEvent: { value: 'ClaimEvent' },
+    StakeReserveEvent: { value: 'StakeReserveEvent' },
+    UpdateActiveEvent: { value: 'UpdateActiveEvent' },
+    UpdateDeactivatedEvent: { value: 'UpdateDeactivatedEvent' },
+    DeactivateStakeEvent: { value: 'DeactivateStakeEvent' },
+    EmergencyUnstakeEvent: { value: 'EmergencyUnstakeEvent' },
+    PartialUnstakeEvent: { value: 'PartialUnstakeEvent' },
+    MergeStakesEvent: { value: 'MergeStakesEvent' },
   },
 })
 
@@ -314,8 +325,8 @@ const Event = new GraphQLInterfaceType({
   },
 })
 
-export const Initialize = new GraphQLObjectType({
-  name: 'Initialize',
+export const InitializeEvent = new GraphQLObjectType({
+  name: 'InitializeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.Initialize,
   fields: {
@@ -334,8 +345,8 @@ export const Initialize = new GraphQLObjectType({
   },
 })
 
-export const ChangeAuthority = new GraphQLObjectType({
-  name: 'ChangeAuthority',
+export const ChangeAuthorityEvent = new GraphQLObjectType({
+  name: 'ChangeAuthorityEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.ChangeAuthority,
   fields: {
@@ -345,8 +356,8 @@ export const ChangeAuthority = new GraphQLObjectType({
   },
 })
 
-export const AddValidator = new GraphQLObjectType({
-  name: 'AddValidator',
+export const AddValidatorEvent = new GraphQLObjectType({
+  name: 'AddValidatorEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.AddValidator,
   fields: {
@@ -363,8 +374,8 @@ export const AddValidator = new GraphQLObjectType({
   },
 })
 
-export const RemoveValidator = new GraphQLObjectType({
-  name: 'RemoveValidator',
+export const RemoveValidatorEvent = new GraphQLObjectType({
+  name: 'RemoveValidatorEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.RemoveValidator,
   fields: {
@@ -377,8 +388,8 @@ export const RemoveValidator = new GraphQLObjectType({
   },
 })
 
-export const SetValidatorScore = new GraphQLObjectType({
-  name: 'SetValidatorScore',
+export const SetValidatorScoreEvent = new GraphQLObjectType({
+  name: 'SetValidatorScoreEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.SetValidatorScore,
   fields: {
@@ -389,8 +400,8 @@ export const SetValidatorScore = new GraphQLObjectType({
   },
 })
 
-export const ConfigValidatorSystem = new GraphQLObjectType({
-  name: 'ConfigValidatorSystem',
+export const ConfigValidatorSystemEvent = new GraphQLObjectType({
+  name: 'ConfigValidatorSystemEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.ConfigValidatorSystem,
   fields: {
@@ -400,8 +411,8 @@ export const ConfigValidatorSystem = new GraphQLObjectType({
   },
 })
 
-export const Deposit = new GraphQLObjectType({
-  name: 'Deposit',
+export const DepositEvent = new GraphQLObjectType({
+  name: 'DepositEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.Deposit,
   fields: {
@@ -420,8 +431,8 @@ export const Deposit = new GraphQLObjectType({
   },
 })
 
-export const DepositStakeAccount = new GraphQLObjectType({
-  name: 'DepositStakeAccount',
+export const DepositStakeAccountEvent = new GraphQLObjectType({
+  name: 'DepositStakeAccountEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.DepositStakeAccount,
   fields: {
@@ -444,8 +455,8 @@ export const DepositStakeAccount = new GraphQLObjectType({
   },
 })
 
-export const LiquidUnstake = new GraphQLObjectType({
-  name: 'LiquidUnstake',
+export const LiquidUnstakeEvent = new GraphQLObjectType({
+  name: 'LiquidUnstakeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.LiquidUnstake,
   fields: {
@@ -463,8 +474,8 @@ export const LiquidUnstake = new GraphQLObjectType({
   },
 })
 
-export const AddLiquidity = new GraphQLObjectType({
-  name: 'AddLiquidity',
+export const AddLiquidityEvent = new GraphQLObjectType({
+  name: 'AddLiquidityEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.AddLiquidity,
   fields: {
@@ -481,8 +492,8 @@ export const AddLiquidity = new GraphQLObjectType({
   },
 })
 
-export const RemoveLiquidity = new GraphQLObjectType({
-  name: 'RemoveLiquidity',
+export const RemoveLiquidityEvent = new GraphQLObjectType({
+  name: 'RemoveLiquidityEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.RemoveLiquidity,
   fields: {
@@ -501,19 +512,8 @@ export const RemoveLiquidity = new GraphQLObjectType({
   },
 })
 
-export const SetLpParams = new GraphQLObjectType({
-  name: 'SetLpParams',
-  interfaces: [Event],
-  isTypeOf: (item) => item.type === InstructionType.SetLpParams,
-  fields: {
-    ...commonEventFields,
-    state: { type: new GraphQLNonNull(GraphQLString) },
-    adminauthority: { type: new GraphQLNonNull(GraphQLString) },
-  },
-})
-
-export const ConfigMarinade = new GraphQLObjectType({
-  name: 'ConfigMarinade',
+export const ConfigMarinadeEvent = new GraphQLObjectType({
+  name: 'ConfigMarinadeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.ConfigMarinade,
   fields: {
@@ -523,8 +523,8 @@ export const ConfigMarinade = new GraphQLObjectType({
   },
 })
 
-export const OrderUnstake = new GraphQLObjectType({
-  name: 'OrderUnstake',
+export const OrderUnstakeEvent = new GraphQLObjectType({
+  name: 'OrderUnstakeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.OrderUnstake,
   fields: {
@@ -540,8 +540,8 @@ export const OrderUnstake = new GraphQLObjectType({
   },
 })
 
-export const Claim = new GraphQLObjectType({
-  name: 'Claim',
+export const ClaimEvent = new GraphQLObjectType({
+  name: 'ClaimEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.Claim,
   fields: {
@@ -555,8 +555,8 @@ export const Claim = new GraphQLObjectType({
   },
 })
 
-export const StakeReserve = new GraphQLObjectType({
-  name: 'StakeReserve',
+export const StakeReserveEvent = new GraphQLObjectType({
+  name: 'StakeReserveEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.StakeReserve,
   fields: {
@@ -578,8 +578,8 @@ export const StakeReserve = new GraphQLObjectType({
   },
 })
 
-export const UpdateActive = new GraphQLObjectType({
-  name: 'UpdateActive',
+export const UpdateActiveEvent = new GraphQLObjectType({
+  name: 'UpdateActiveEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.UpdateActive,
   fields: {
@@ -589,8 +589,8 @@ export const UpdateActive = new GraphQLObjectType({
   },
 })
 
-export const UpdateDeactivated = new GraphQLObjectType({
-  name: 'UpdateDeactivated',
+export const UpdateDeactivatedEvent = new GraphQLObjectType({
+  name: 'UpdateDeactivatedEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.UpdateDeactivated,
   fields: {
@@ -601,8 +601,8 @@ export const UpdateDeactivated = new GraphQLObjectType({
   },
 })
 
-export const DeactivateStake = new GraphQLObjectType({
-  name: 'DeactivateStake',
+export const DeactivateStakeEvent = new GraphQLObjectType({
+  name: 'DeactivateStakeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.DeactivateStake,
   fields: {
@@ -624,8 +624,8 @@ export const DeactivateStake = new GraphQLObjectType({
   },
 })
 
-export const EmergencyUnstake = new GraphQLObjectType({
-  name: 'EmergencyUnstake',
+export const EmergencyUnstakeEvent = new GraphQLObjectType({
+  name: 'EmergencyUnstakeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.EmergencyUnstake,
   fields: {
@@ -641,8 +641,8 @@ export const EmergencyUnstake = new GraphQLObjectType({
   },
 })
 
-export const PartialUnstake = new GraphQLObjectType({
-  name: 'PartialUnstake',
+export const PartialUnstakeEvent = new GraphQLObjectType({
+  name: 'PartialUnstakeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.PartialUnstake,
   fields: {
@@ -664,8 +664,8 @@ export const PartialUnstake = new GraphQLObjectType({
   },
 })
 
-export const MergeStakes = new GraphQLObjectType({
-  name: 'MergeStakes',
+export const MergeStakesEvent = new GraphQLObjectType({
+  name: 'MergeStakesEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.MergeStakes,
   fields: {
@@ -687,26 +687,25 @@ export const MergeStakes = new GraphQLObjectType({
 export const Events = new GraphQLList(Event)
 
 export const types = [
-  Initialize,
-  ChangeAuthority,
-  AddValidator,
-  RemoveValidator,
-  SetValidatorScore,
-  ConfigValidatorSystem,
-  Deposit,
-  DepositStakeAccount,
-  LiquidUnstake,
-  AddLiquidity,
-  RemoveLiquidity,
-  SetLpParams,
-  ConfigMarinade,
-  OrderUnstake,
-  Claim,
-  StakeReserve,
-  UpdateActive,
-  UpdateDeactivated,
-  DeactivateStake,
-  EmergencyUnstake,
-  PartialUnstake,
-  MergeStakes,
+  InitializeEvent,
+  ChangeAuthorityEvent,
+  AddValidatorEvent,
+  RemoveValidatorEvent,
+  SetValidatorScoreEvent,
+  ConfigValidatorSystemEvent,
+  DepositEvent,
+  DepositStakeAccountEvent,
+  LiquidUnstakeEvent,
+  AddLiquidityEvent,
+  RemoveLiquidityEvent,
+  ConfigMarinadeEvent,
+  OrderUnstakeEvent,
+  ClaimEvent,
+  StakeReserveEvent,
+  UpdateActiveEvent,
+  UpdateDeactivatedEvent,
+  DeactivateStakeEvent,
+  EmergencyUnstakeEvent,
+  PartialUnstakeEvent,
+  MergeStakesEvent,
 ]
