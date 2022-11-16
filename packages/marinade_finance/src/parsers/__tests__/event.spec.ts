@@ -12,12 +12,13 @@ describe('EventParser', () => {
     const instruction = {
       index: 0,
       parsed: {
-        type: "Initialize",
+        type: "InitializeEvent",
         info: {
           programId: "programId",
         }
       },
       programId: "programId",
+      signer: "signer",
       innerInstructions: [],
       data: "data",
       accounts: [],
@@ -61,7 +62,7 @@ describe('EventParser', () => {
     expect(parsedEvent).toEqual({
       id: "signature:00",
       timestamp: 0,
-      type: "Initialize",
+      type: "InitializeEvent",
       account: "account",
       programId: "programId",
     })
