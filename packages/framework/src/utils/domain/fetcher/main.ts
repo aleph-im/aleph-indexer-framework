@@ -67,7 +67,7 @@ export class FetcherMainDomain {
 
   /**
    * Force to delete the cached transaction (Useful when rpc nodes return flaw txs).
-   * @param args TThe txn signatures to delete the cache for.
+   * @param signatures The txn signatures to delete the cache for.
    */
   async delTransactionCache(signatures: string[] = []): Promise<boolean> {
     await this.context.apiClient.delTransactionCache({

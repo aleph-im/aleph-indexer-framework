@@ -10,6 +10,8 @@ import {
   PartiallyDecodedInstruction,
   VoteAccountInfo as VAI,
   AccountInfo,
+  LoadedAddresses,
+  ParsedAddressTableLookup,
 } from '@solana/web3.js'
 import { ProgramErrorType, TransactionErrorType } from './utils/error.js'
 
@@ -25,14 +27,24 @@ export type RawParsedInstructionData = {
   info: any
 }
 
+/**
+ * Customisation of the solana ParsedInstruction type by modifying
+ * the parsed info and the type of the program address to string,
+ * it defines the raw RPC response without any processing.
+ */
 export type RawParsedInstruction = Omit<
   ParsedInstruction,
   'programId' | 'parsed'
 > & {
   programId: string
-  parsed: RawParsedInstructionData
+  parsed: RawParsedInstructionData | any
 }
 
+/**
+ * Customisation of the solana PartiallyDecodedInstruction type by
+ * modifying the types of accounts array and the program address to
+ * strings, it defines the raw RPC response without any processing.
+ */
 export type RawPartiallyDecodedInstruction = Omit<
   PartiallyDecodedInstruction,
   'programId' | 'accounts'
@@ -41,10 +53,18 @@ export type RawPartiallyDecodedInstruction = Omit<
   accounts: string[]
 }
 
+/**
+ * Raw Instruction type
+ */
 export type RawInstruction =
   | RawParsedInstruction
   | RawPartiallyDecodedInstruction
 
+/**
+ * Customisation of the solana ParsedInnerInstruction type by
+ * modifying the instruction property, it defines the raw RPC
+ * response without any processing.
+ */
 export type RawInnerInstructionList = Omit<
   ParsedInnerInstruction,
   'instructions'
@@ -52,29 +72,73 @@ export type RawInnerInstructionList = Omit<
   instructions: RawInstruction[]
 }
 
-export type RawConfirmedTransactionMeta = Omit<
-  ParsedTransactionMeta,
-  'innerInstructions'
+/**
+ * Customisation of the solana LoadedAddresses type by modifying
+ * the wirtable and readonly properties from PublicKeys to strings,
+ * it defines the raw RPC response without any processing.
+ */
+export type RawLoadedAddresses = Omit<
+  LoadedAddresses,
+  'writable' | 'readonly'
 > & {
-  innerInstructions?: RawInnerInstructionList[] | null
+  writable: string[]
+  readonly: string[]
 }
 
+/**
+ * Customisation of the solana ParsedTransactionMeta type by modifying
+ * the innerInstructions and readonly loadedAddresses to define the raw
+ * RPC response without any processing.
+ */
+export type RawConfirmedTransactionMeta = Omit<
+  ParsedTransactionMeta,
+  'innerInstructions' | 'loadedAddresses'
+> & {
+  innerInstructions?: RawInnerInstructionList[] | null
+  loadedAddresses?: RawLoadedAddresses | null
+}
+
+/**
+ * Customisation of the solana ParsedMessageAccount type by modifying the pubkey
+ * property from PublicKey to string, it defines the raw RPC response without any
+ * processing.
+ */
 export type RawMessageAccount = Omit<ParsedMessageAccount, 'pubkey'> & {
   pubkey: string
 }
 
+export type RawParsedAddressTableLookup = Omit<
+  ParsedAddressTableLookup,
+  'accountKey'
+> & {
+  accountKey: string
+}
+
+/**
+ * Customisation of the solana ParsedMessage type by modifying accountKeys,
+ * instructions and addressTableLookups properties to define the raw RPC
+ * response without any processing.
+ */
 export type RawParsedMessage = Omit<
   ParsedMessage,
-  'accountKeys' | 'instructions'
+  'accountKeys' | 'instructions' | 'addressTableLookups'
 > & {
   accountKeys: RawMessageAccount[]
   instructions: RawInstruction[]
+  addressTableLookups?: RawParsedAddressTableLookup[] | null
 }
 
+/**
+ * Customisation of the ParsedTransaction solana type by modifying the message
+ * property to define the raw RPC response without any processing.
+ */
 export type RawInnerTransaction = Omit<ParsedTransaction, 'message'> & {
   message: RawParsedMessage
 }
 
+/**
+ * Expected JSON RPC response for the "getTransaction" message
+ */
 export type RawParsedTransactionWithMeta = Omit<
   ParsedTransactionWithMeta,
   'meta' | 'transaction'
@@ -83,9 +147,16 @@ export type RawParsedTransactionWithMeta = Omit<
   transaction: RawInnerTransaction
 }
 
+/**
+ * Expected JSON RPC response for the "getTransaction" message and a confirmed
+ * signature with its status
+ */
 export type RawTransaction = ConfirmedSignatureInfo &
   RawParsedTransactionWithMeta
 
+/**
+ * Expected JSON RPC response for the "getTransaction" message
+ */
 export type RawTransactionV1 = RawParsedTransactionWithMeta
 
 export type RawAccountInfo = AccountInfo<Buffer>
@@ -176,6 +247,9 @@ export type RawEventBase = Omit<AlephParsedParsedInstruction, 'parsed'> & {
   programId: string
 }
 
+/**
+ * Defines the instruction event type and its info.
+ */
 export type AlephParsedEvent<EventType, InfoType> = RawEventBase & {
   parsed: {
     type: EventType
@@ -183,8 +257,15 @@ export type AlephParsedEvent<EventType, InfoType> = RawEventBase & {
   }
 }
 
+/**
+ * Defines the common properties for all events.
+ */
 export type EventBase<EventType> = {
   id: string
   timestamp: number
   type: EventType
+  /**
+   * Account where the transaction and therefore the event comes from.
+   */
+  account?: string
 }

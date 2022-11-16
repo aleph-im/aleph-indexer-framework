@@ -69,11 +69,11 @@ export class TransactionFetcher {
     return this.fetcherMsClient.fetchTransactionsBySignature({ signatures })
   }, 1000)
 
-  protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
-    this.storeIncomingTxs.bind(this),
-    1000,
-    1000,
-  )
+  // protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
+  //   this.storeIncomingTxs.bind(this),
+  //   1000,
+  //   1000,
+  // )
 
   constructor(
     protected fetcherMsClient: FetcherMsClient,
@@ -200,7 +200,8 @@ export class TransactionFetcher {
   }
 
   async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
-    await this.onTxsBuffer.add(chunk)
+    // await this.onTxsBuffer.add(chunk)
+    return this.storeIncomingTxs(chunk)
   }
 
   async isRequestComplete(nonce: number): Promise<boolean> {
@@ -396,6 +397,7 @@ export class TransactionFetcher {
   ): Promise<number> {
     const nonce = this.nonce.get()
     const future = this.getFuture(nonce)
+    let count = 0
 
     // @note: Sometimes we receive the responses before inserting the pendings signatures on
     // the db, the purpose of this mutex is to avoid this
@@ -452,9 +454,11 @@ export class TransactionFetcher {
 
         await this.transactionRequestResponseDAL.save(requestResponse)
         await this.transactionRequestPendingSignatureDAL.save(pendingSignatures)
+
+        count++
       }
 
-      const request = { nonce, ...requestParams }
+      const request = { nonce, complete: !count, ...requestParams }
       await this.transactionRequestDAL.save(request)
     } finally {
       release()
@@ -465,6 +469,11 @@ export class TransactionFetcher {
     console.log(`onRequest time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
 
     console.log(`🟡 Request ${nonce} inited`)
+
+    if (!count) {
+      console.log(`🟢 Request ${nonce} complete`)
+      this.resolveFuture(nonce)
+    }
 
     // @note: Will be resolved when the requested txs come asynchronously
     if (waitForResponse) {
@@ -559,15 +568,22 @@ export class TransactionFetcher {
   }
 
   protected getFuture(nonce: number): Utils.Future<number> {
-    const future = new Future<number>()
-    this.requestFutures[nonce] = future
+    let future = this.requestFutures[nonce]
+
+    if (!future) {
+      future = new Future<number>()
+      this.requestFutures[nonce] = future
+    }
+
     return future
   }
 
   protected resolveFuture(nonce: number): void {
-    this.events.emit('response', nonce)
-
     this.requestFutures[nonce]?.resolve(nonce)
-    delete this.requestFutures[nonce]
+
+    setImmediate(() => {
+      this.events.emit('response', nonce)
+      delete this.requestFutures[nonce]
+    })
   }
 }

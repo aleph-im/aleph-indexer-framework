@@ -8,10 +8,10 @@ module.exports = {
 
   globals: { 'ts-jest': { useESM: true } },
 
+  verbose: true, // https://stackoverflow.com/questions/41093368/does-jest-swallow-console-log-statements-is-there-a-way-to-change-this
+
   // from https://stackoverflow.com/a/57916712/15076557
-  // transformIgnorePatterns: [
-  //   'node_modules/(?!(module-that-needs-to-be-transformed)/)',
-  // ],
+  transformIgnorePatterns: ['node_modules/@jest/globals'], // 'node_modules/(?!(module-that-needs-to-be-transformed)/)',
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },

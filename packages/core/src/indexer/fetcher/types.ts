@@ -64,6 +64,9 @@ export type InstructionContext = {
   ix: AlephParsedInstruction | AlephParsedInnerInstruction
 }
 
+/**
+ * Stores ixns and txn info.
+ */
 export type InstructionContextV1 = {
   txContext: ParsedTransactionContextV1
   parentIx?: ParsedInstructionV1
@@ -100,6 +103,9 @@ export type SignatureFetcherBackwardJobRunnerOptions =
   }
 
 export interface SignatureFetcherOptions {
+  /**
+   * Account address.
+   */
   address: string
   forwardJobOptions?: SignatureFetcherForwardJobRunnerOptions
   backwardJobOptions?: SignatureFetcherBackwardJobRunnerOptions
@@ -113,6 +119,10 @@ export type Signature = Omit<
   accountSlotIndex: Record<string, number>
 }
 
+/**
+ * Options where the account address is stored and if it needs to be updated
+ * by fetching new transactions.
+ */
 export interface AccountInfoFetcherOptions {
   address: string
   subscribeChanges?: boolean

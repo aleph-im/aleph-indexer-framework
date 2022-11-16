@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/framework",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -33,13 +33,13 @@
     "luxon": "^3.0.4"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.19",
+    "@aleph-indexer/core": "^1.0.21",
     "@aleph-indexer/layout": "^1.0.14",
     "@solana/web3.js": "^1.65.0",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
     "buffer-layout": "^1.2.2",
-    "moleculer": "^0.14.21",
+    "moleculer": "^0.14.24",
     "nats": "^2.7.1",
     "uuid": "^8.3.2"
   },

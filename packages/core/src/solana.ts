@@ -7,6 +7,22 @@ import {
   SignaturesForAddressOptions,
   SolanaJSONRPCError,
 } from '@solana/web3.js'
+import { config } from './config.js'
+import {
+  type as pick,
+  number,
+  string,
+  array,
+  boolean,
+  literal,
+  union,
+  optional,
+  nullable,
+  coerce,
+  unknown,
+  tuple,
+  assert,
+} from 'superstruct'
 import { Connection } from './lib/solana/web3.js'
 import {
   AlephParsedTransaction,
@@ -78,7 +94,7 @@ export class SolanaRPC {
   }
 
   async getVoteAccount(votePubkey: string): Promise<VoteAccountInfo> {
-    const res = await this.connection._rpcRequest('getVoteAccounts', [
+    const unsafeRes = await this.connection._rpcRequest('getVoteAccounts', [
       {
         commitment: 'finalized',
         keepUnstakedDelinquents: true,
@@ -86,12 +102,21 @@ export class SolanaRPC {
       },
     ])
 
-    if ('error' in res) {
-      throw new Error('failed to get vote accounts: ' + res.error.message)
+    const res = unsafeRes.result
+
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(
+        res.error.message,
+        'failed to get vote accounts: ',
+      )
     }
 
-    const data = res.result.current?.[0] || res.result.delinquent?.[0]
-    data.delinquent = res.result.delinquent.length > 0
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetVoteAccounts)
+    }
+
+    const data = res.current?.[0] || res.delinquent?.[0]
+    data.delinquent = res.delinquent.length > 0
 
     return data
   }
@@ -99,18 +124,24 @@ export class SolanaRPC {
   async getSupply(): Promise<
     RpcResponseAndContext<Omit<Supply, 'nonCirculatingAccounts'>>
   > {
-    const res = await this.connection._rpcRequest('getSupply', [
+    const unsafeRes = await this.connection._rpcRequest('getSupply', [
       {
         commitment: 'finalized',
         excludeNonCirculatingAccountsList: true,
       },
     ])
 
-    if ('error' in res) {
-      throw new Error('failed to get supply: ' + res.error.message)
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(unsafeRes.error, 'failed to get supply:')
     }
 
-    return res.result
+    const res = unsafeRes.result
+
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetSupplyRpcResult)
+    }
+
+    return res
   }
 
   async getSignaturesForAddress(
@@ -133,22 +164,27 @@ export class SolanaRPC {
       },
     ]
 
-    const [, res] = await this.connection._rpcBatchRequest(batch)
+    const [, unsafeRes] = await this.connection._rpcBatchRequest(batch)
 
-    if ('error' in res) {
+    if ('error' in unsafeRes) {
       throw new SolanaJSONRPCError(
-        res.error,
+        unsafeRes.error,
         'failed to get signatures for address',
       )
     }
 
-    return res.result
+    const res = unsafeRes.result
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetSignaturesForAddressRpcResult)
+    }
+
+    return res
   }
 
   async getConfirmedTransaction(
     signature: string,
   ): Promise<RawTransactionV1 | null> {
-    const res = await this.connection._rpcRequest('getTransaction', [
+    const unsafeRes = await this.connection._rpcRequest('getTransaction', [
       signature,
       {
         commitment: 'finalized',
@@ -157,13 +193,17 @@ export class SolanaRPC {
       },
     ])
 
-    if ('error' in res) {
-      throw new Error(
-        'failed to get confirmed transaction: ' + res.error.message,
-      )
+    if ('error' in unsafeRes) {
+      throw new SolanaJSONRPCError(unsafeRes.error, 'failed to get transaction')
     }
 
-    return res.result
+    const res = unsafeRes.result
+
+    if (config.STRICT_CHECK_RPC) {
+      assert(res, GetParsedTransactionRpcResult)
+    }
+
+    return res
   }
 
   async getConfirmedTransactions(
@@ -187,12 +227,12 @@ export class SolanaRPC {
     // @note: getTransaction failse with 429 without adding this
     batch = [{ methodName: 'getBlockHeight' }].concat(batch)
 
-    const res = await this.connection._rpcBatchRequest(batch)
+    const unsafeRes = await this.connection._rpcBatchRequest(batch)
 
     // @note: Drop the response of getBlockHeight
-    res.shift()
+    unsafeRes.shift()
 
-    return res.map(({ error, result }: any) => {
+    return unsafeRes.map(({ error, result }: any) => {
       if (error) {
         const message = `failed to get confirmed transactions: ${error.message}`
 
@@ -201,7 +241,11 @@ export class SolanaRPC {
           return null
         }
 
-        throw new Error(message)
+        throw new SolanaJSONRPCError(error, message)
+      }
+
+      if (config.STRICT_CHECK_RPC) {
+        assert(result, GetParsedTransactionRpcResult)
       }
 
       return result
@@ -424,3 +468,177 @@ export class SolanaRPCRoundRobin {
     }) as unknown as SolanaRPC
   }
 }
+
+const AddressTableLookupStruct = pick({
+  accountKey: string(),
+  writableIndexes: array(number()),
+  readonlyIndexes: array(number()),
+})
+
+const LoadedAddressesResult = pick({
+  writable: array(string()),
+  readonly: array(string()),
+})
+
+const TokenAmountResult = pick({
+  amount: string(),
+  uiAmount: nullable(number()),
+  decimals: number(),
+  uiAmountString: optional(string()),
+})
+
+const TokenBalanceResult = pick({
+  accountIndex: number(),
+  mint: string(),
+  owner: optional(string()),
+  uiTokenAmount: TokenAmountResult,
+})
+
+const TransactionErrorResult = nullable(union([pick({}), string()]))
+
+const RawInstructionResult = pick({
+  accounts: array(string()),
+  data: string(),
+  programId: string(),
+})
+
+const ParsedInstructionResult = pick({
+  parsed: unknown(),
+  program: string(),
+  programId: string(),
+})
+
+const InstructionResult = union([RawInstructionResult, ParsedInstructionResult])
+
+const UnknownInstructionResult = union([
+  pick({
+    parsed: unknown(),
+    program: string(),
+    programId: string(),
+  }),
+  pick({
+    accounts: array(string()),
+    data: string(),
+    programId: string(),
+  }),
+])
+
+const ParsedOrRawInstruction = coerce(
+  InstructionResult,
+  UnknownInstructionResult,
+  (value) => {
+    if ('accounts' in value) {
+      RawInstructionResult
+    } else {
+      ParsedInstructionResult
+    }
+  },
+)
+
+const ParsedConfirmedTransactionResult = pick({
+  signatures: array(string()),
+  message: pick({
+    accountKeys: array(
+      pick({
+        pubkey: string(),
+        signer: boolean(),
+        writable: boolean(),
+        source: optional(
+          union([literal('transaction'), literal('lookupTable')]),
+        ),
+      }),
+    ),
+    instructions: array(ParsedOrRawInstruction),
+    recentBlockhash: string(),
+    addressTableLookups: optional(nullable(array(AddressTableLookupStruct))),
+  }),
+})
+
+const TransactionVersionStruct = union([literal(0), literal('legacy')])
+
+const ParsedConfirmedTransactionMetaResult = pick({
+  err: TransactionErrorResult,
+  fee: number(),
+  innerInstructions: optional(
+    nullable(
+      array(
+        pick({
+          index: number(),
+          instructions: array(ParsedOrRawInstruction),
+        }),
+      ),
+    ),
+  ),
+  preBalances: array(number()),
+  postBalances: array(number()),
+  logMessages: optional(nullable(array(string()))),
+  preTokenBalances: optional(nullable(array(TokenBalanceResult))),
+  postTokenBalances: optional(nullable(array(TokenBalanceResult))),
+  loadedAddresses: optional(LoadedAddressesResult),
+  computeUnitsConsumed: optional(number()),
+})
+
+/**
+ * Expected JSON RPC response for the "getTransaction" message
+ */
+const GetParsedTransactionRpcResult = nullable(
+  pick({
+    slot: number(),
+    transaction: ParsedConfirmedTransactionResult,
+    meta: nullable(ParsedConfirmedTransactionMetaResult),
+    blockTime: optional(nullable(number())),
+    version: optional(TransactionVersionStruct),
+  }),
+)
+
+const VoteAccountInfoResult = pick({
+  votePubkey: string(),
+  nodePubkey: string(),
+  activatedStake: number(),
+  epochVoteAccount: boolean(),
+  epochCredits: array(tuple([number(), number(), number()])),
+  commission: number(),
+  lastVote: number(),
+  rootSlot: nullable(number()),
+})
+
+/**
+ * Expected JSON RPC response for the "getVoteAccounts" message
+ */
+const GetVoteAccounts = pick({
+  current: array(VoteAccountInfoResult),
+  delinquent: array(VoteAccountInfoResult),
+})
+
+const SupplyContext = pick({
+  apiVersion: string(),
+  slot: number(),
+})
+
+const SupplyValue = pick({
+  total: number(),
+  circulating: number(),
+  nonCirculating: number(),
+  nonCirculatingAccounts: array(string()),
+})
+
+/**
+ * Expected JSON RPC response for the "getSupply" message
+ */
+const GetSupplyRpcResult = pick({
+  context: SupplyContext,
+  value: SupplyValue,
+})
+
+/**
+ * Expected JSON RPC response for the "getSignaturesForAddress" message
+ */
+const GetSignaturesForAddressRpcResult = array(
+  pick({
+    signature: string(),
+    slot: number(),
+    err: TransactionErrorResult,
+    memo: nullable(string()),
+    blockTime: optional(nullable(number())),
+  }),
+)
