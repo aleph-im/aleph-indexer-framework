@@ -508,7 +508,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     for (const account of accounts) {
       fetcher = this.fetchers[account]
       if (!fetcher) {
-        const fetcher = new SignatureFetcher(
+        fetcher = new SignatureFetcher(
           account,
           this.signatureDAL,
           this.solanaRpc,
