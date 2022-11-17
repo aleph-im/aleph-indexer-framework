@@ -2,23 +2,35 @@ import {InstructionParserLibrary} from "@aleph-indexer/framework/dist/src/servic
 import path from "path";
 import {TransactionParser} from "@aleph-indexer/framework/dist/src/services/parser/src/transactionParser.js";
 import txn from "../__mocks__/txn.json";
+import txn_legacy from "../__mocks__/txn_legacy.json";
+import txn_v0 from "../__mocks__/txn_v0.json";
 import {fileURLToPath} from "url";
-import {AlephParsedParsedInstruction} from "@aleph-indexer/core";
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const layoutPath = path.join(__dirname, '../layout.js')
+let instructionParserLibrary: InstructionParserLibrary
+let transactionParser: TransactionParser
+
+beforeAll(() => {
+  instructionParserLibrary = new InstructionParserLibrary(layoutPath)
+  transactionParser = new TransactionParser(instructionParserLibrary)
+})
+
 describe('TransactionParser', () => {
-  it('parses a transaction', async () => {
-    const layoutPath = path.join(__dirname, '../layout.js')
-    const instructionParserLibrary = new InstructionParserLibrary(layoutPath)
-    const transactionParser = new TransactionParser(instructionParserLibrary)
-    // @todo: not type safe
+  it('parses a simple transaction', async () => {
     const parsedTxn = await transactionParser.parse(txn as unknown as any)
-    console.log(JSON.stringify(parsedTxn, null, 2))
-    // expect(parsedTxn).toMatchSnapshot()
-    const parsedIxn = (parsedTxn.parsed.message.instructions[1] as AlephParsedParsedInstruction)
-    expect(parsedIxn.parsed.type).toEqual('OrderUnstake')
-    console.log(parsedIxn)
+    expect(parsedTxn).toMatchSnapshot()
+  })
+
+  it('parses a legacy transaction', async () => {
+    const parsedTxn = await transactionParser.parse(txn_legacy as unknown as any)
+    expect(parsedTxn).toMatchSnapshot()
+  })
+
+  it('parses a v0 transaction', async () => {
+    const parsedTxn = await transactionParser.parse(txn_v0 as unknown as any)
+    expect(parsedTxn).toMatchSnapshot()
   })
 })

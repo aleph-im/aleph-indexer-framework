@@ -51,7 +51,7 @@ describe('AccountTimeSeries', () => {
     await accountStats.process(Date.now())
     const stats = await accountStats.getStats()
     console.log("stats", stats)
-    expect(stats.stats.accessingPrograms.has(earliest.data.programId.toString())).toBe(true)
+    expect(stats.stats.accessingPrograms.has(earliest.signer)).toBe(true)
     expect(stats.stats.total.accesses).toEqual(eventCnt)
   })
 })
