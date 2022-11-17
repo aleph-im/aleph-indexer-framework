@@ -31,7 +31,7 @@ export const defaultBrokerConfig: BrokerOptions = {
   requestTimeout: 0,
   serializer: 'JSON',
   internalServices: false,
-  logLevel: 'info',
+  logLevel: 'warn',
   cacher: 'Memory',
   validator: false,
   heartbeatInterval: HEART_BEATS,

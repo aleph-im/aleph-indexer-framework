@@ -29,7 +29,7 @@ export default class MainDomain
   ) {
     super(context, {
       discoveryInterval: 1000 * 60 * 60 * 1,
-      stats: 1000 * 60 * 5,
+      stats: 1000 * 60 * 1,
     })
   }
 

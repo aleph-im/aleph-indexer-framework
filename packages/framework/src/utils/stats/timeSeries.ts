@@ -1,5 +1,5 @@
 import {Utils} from '@aleph-indexer/core'
-import {DateTime} from 'luxon'
+import {DateTime, Interval} from 'luxon'
 import {
   clipDateRangesFromIterable,
   DateRange,
@@ -103,7 +103,6 @@ export class TimeSeriesStats<I, O> {
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
-      console.log("timeFrameIndex", timeFrameIndex, timeFrameName)
 
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
@@ -115,6 +114,7 @@ export class TimeSeriesStats<I, O> {
         pendingDateRanges,
         clipRangesStream,
       )
+      let addedEntries = 0
       for (const pendingRange of pendingTimeFrameDateRanges) {
         const processedIntervalsBuffer = new BufferExec<StatsTimeSeries<O | undefined>>(async (entries) => {
           // @note: Save entries that have any data
@@ -122,6 +122,7 @@ export class TimeSeriesStats<I, O> {
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
           )
           await this.timeSeriesDAL.save(valueEntries)
+          addedEntries += valueEntries.length
 
           // @note: Save states for all interval, either with empty data or not
           const stateEntries: StatsState[] = entries.map(
@@ -174,7 +175,6 @@ export class TimeSeriesStats<I, O> {
           await this.stateDAL.save(stateEntries)
         }, 1000)
         const pendingInterval = getIntervalFromDateRange(pendingRange)
-        console.log("pendingInterval", pendingInterval.toISO())
 
         const intervals = getTimeFrameIntervals(
           pendingInterval,
@@ -182,13 +182,15 @@ export class TimeSeriesStats<I, O> {
           reverse,
         )
 
+        if(timeFrame !== TimeFrame.All) {
+          intervals.push(getPreviousInterval(intervals[0], timeFrame))
+        }
+
         if (!intervals.length) continue
 
         for (const interval of intervals) {
           let { startDate, endDate } = getDateRangeFromInterval(interval)
-          if (timeFrameIndex > 0) {
-            endDate = endDate - 1
-          }
+          endDate = endDate - 1
 
           // const key = [account, type, timeFrame, startDate]
           const cache = {}
@@ -217,8 +219,6 @@ export class TimeSeriesStats<I, O> {
           let data: O | undefined
           for await (const value of inputs) {
             const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
-            if (input.endTimestamp && input.endTimestamp > endDate)
-              console.log("value is older", value, endDate)
             data = await aggregator({
               input,
               interval,
@@ -239,6 +239,12 @@ export class TimeSeriesStats<I, O> {
 
         await processedIntervalsBuffer.drain()
       }
+      console.log(`💹 Added ${addedEntries} entries in ${timeFrameName} for ${account} in range ${
+        Interval.fromDateTimes(
+          DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
+          DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
+        ).toISO()
+      }`, )
     }
   }
 

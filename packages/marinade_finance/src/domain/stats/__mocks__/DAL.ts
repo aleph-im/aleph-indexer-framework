@@ -47,7 +47,7 @@ function generateEvent(): ParsedEvents {
   return {
     id: Math.random().toString(36).substring(2),
     account: "test",
-    timestamp: Math.floor(Date.now() - (Math.random() * 60 * 60 * 24 * 14 * 1000)),
+    timestamp: Math.floor((Math.random() * Date.now())),
     type: getRandomInstructionType(),
     signer: "CNCnPo5Fhfjj5Y7DSc82RDJfQoHEd2haAnTkAwRGfo8z",
     programId: MARINADE_FINANCE_PROGRAM_ID,
