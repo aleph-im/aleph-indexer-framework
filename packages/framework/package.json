@@ -35,7 +35,7 @@
   "dependencies": {
     "@aleph-indexer/core": "^1.0.21",
     "@aleph-indexer/layout": "^1.0.14",
-    "@solana/web3.js": "^1.42.0",
+    "@solana/web3.js": "^1.65.0",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
     "buffer-layout": "^1.2.2",
