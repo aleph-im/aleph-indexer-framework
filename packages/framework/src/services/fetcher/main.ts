@@ -49,7 +49,6 @@ const { StreamBuffer, StreamMap, sleep } = Utils
  * The main class of the fetcher service.
  */
 export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
-  protected fetchers: Record<string, SignatureFetcher> = {}
   protected accounts: PendingWorkPool<string[]>
   protected infoFetchers: Record<string, AccountInfoFetcher> = {}
   protected pendingTransactions: PendingWorkPool<string[]>
@@ -269,9 +268,15 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   }: FetcherAccountPartitionRequestArgs): Promise<
     SignatureFetcherState | undefined
   > {
-    const fetcher = this.fetchers[account]
-    if (!fetcher) return
+    const fetcher = new SignatureFetcher(
+      account,
+      this.signatureDAL,
+      this.solanaRpc,
+      this.solanaMainPublicRpc,
+      this.fetcherStateDAL,
+    )
 
+    await fetcher.init()
     const state = await fetcher.getState()
     if (state) state.fetcher = this.getFetcherId()
 
@@ -285,7 +290,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     fetcher = this.getFetcherId(),
   }: FetcherStateRequestArgs): Promise<FetcherState> {
     const pendingTransactions = await this.pendingTransactions.getCount()
-    const accountFetchers = Object.keys(this.fetchers).length
+    const accountFetchers = await this.accountDAL.getCount()
 
     return {
       fetcher,
@@ -503,23 +508,17 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     console.log(`Accounts | Start handling ${works.length} accounts`)
 
     const accounts = works.map((work) => work.id)
-    let fetcher: SignatureFetcher
 
     for (const account of accounts) {
-      fetcher = this.fetchers[account]
-      if (!fetcher) {
-        fetcher = new SignatureFetcher(
-          account,
-          this.signatureDAL,
-          this.solanaRpc,
-          this.solanaMainPublicRpc,
-          this.fetcherStateDAL,
-        )
+      const fetcher = new SignatureFetcher(
+        account,
+        this.signatureDAL,
+        this.solanaRpc,
+        this.solanaMainPublicRpc,
+        this.fetcherStateDAL,
+      )
 
-        this.fetchers[account] = fetcher
-        await fetcher.init()
-      }
-
+      await fetcher.init()
       await fetcher.run()
       fetcher.stop()
     }
