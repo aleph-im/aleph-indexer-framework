@@ -20,7 +20,7 @@ import {
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
 import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
 import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
-import { createAccountDAL } from '../services/fetcher/src/dal/account'
+import { createAccountDAL } from '../services/fetcher/src/dal/account.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
