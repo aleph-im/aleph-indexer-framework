@@ -75,14 +75,13 @@ export class AccountTimeSeriesStatsManager<V> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
     }
-
+    console.log("stats", JSON.stringify(this.stats, null, 2))
     return this.stats
   }
 
   async process(now: number): Promise<void> {
     console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)
-    console.log(`📊 processing account stats for ${this.config.account}`)
     await this.aggregateAccountStats(now)
   }
 
@@ -131,6 +130,7 @@ export class AccountTimeSeriesStatsManager<V> {
       console.log(`📊 aggregating account stats for ${account}`)
       const stats: V = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }
+      console.log("stats", JSON.stringify(this.stats, null, 2))
       return
     }
   }

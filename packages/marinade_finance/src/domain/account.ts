@@ -17,6 +17,7 @@ export class AccountDomain {
   ) {}
 
   async updateStats(now: number): Promise<void> {
+    console.log('updateStats', this.info.address)
     await this.timeSeriesStats.process(now)
   }
 
@@ -28,6 +29,7 @@ export class AccountDomain {
   }
 
   async getStats(): Promise<AccountStats<MarinadeFinanceAccountStats>> {
+    console.log('getStats', this.info.address)
     return this.timeSeriesStats.getStats()
   }
 

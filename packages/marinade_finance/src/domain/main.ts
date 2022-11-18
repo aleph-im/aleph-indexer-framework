@@ -99,7 +99,6 @@ export default class MainDomain
       args: [startDate, endDate, opts],
     })
 
-    console.log('getAccountEventsByTime stream', typeof stream)
     return stream as StorageStream<string, ParsedEvents>
   }
 
@@ -124,6 +123,7 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<GlobalMarinadeFinanceStats> {
+    console.log(`📊 computing global stats for ${accountAddresses?.length} accounts`)
     const accountsStats = await this.getAccountStats<TimeStats>(
       accountAddresses,
     )
@@ -134,6 +134,8 @@ export default class MainDomain
 
       const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
         accountStats.stats
+
+      console.log(`📊 computing global stats for ${accountStats.account} with ${accesses} accesses`)
 
       const type = this.discoverer.getAccountType(accountStats.account)
 

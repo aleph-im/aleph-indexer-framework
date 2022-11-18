@@ -5,6 +5,7 @@ import {
   DateRange,
   getDateRangeFromInterval,
   getIntervalFromDateRange,
+  getNextInterval,
   getPreviousInterval,
   getTimeFrameIntervals,
   mergeDateRangesFromIterable,
@@ -103,7 +104,7 @@ export class TimeSeriesStats<I, O> {
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
-
+      console.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
         [account, type, timeFrame],
@@ -123,6 +124,11 @@ export class TimeSeriesStats<I, O> {
           )
           await this.timeSeriesDAL.save(valueEntries)
           addedEntries += valueEntries.length
+          if (valueEntries.length === 1) {
+            for (const entry of valueEntries) {
+              console.log(entry)
+            }
+          }
 
           // @note: Save states for all interval, either with empty data or not
           const stateEntries: StatsState[] = entries.map(
@@ -183,7 +189,8 @@ export class TimeSeriesStats<I, O> {
         )
 
         if(timeFrame !== TimeFrame.All) {
-          intervals.push(getPreviousInterval(intervals[0], timeFrame))
+          intervals.unshift(getPreviousInterval(intervals[0], timeFrame))
+          intervals.push(getNextInterval(intervals[intervals.length - 1], timeFrame))
         }
 
         if (!intervals.length) continue
@@ -239,12 +246,14 @@ export class TimeSeriesStats<I, O> {
 
         await processedIntervalsBuffer.drain()
       }
-      console.log(`💹 Added ${addedEntries} entries in ${timeFrameName} for ${account} in range ${
-        Interval.fromDateTimes(
-          DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
-          DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
-        ).toISO()
-      }`, )
+      if (addedEntries) {
+        console.log(`💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${
+          Interval.fromDateTimes(
+            DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
+            DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
+          ).toISO()
+        }`)
+      }
     }
   }
 
