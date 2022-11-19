@@ -126,11 +126,6 @@ export class TimeSeriesStats<I, O> {
           )
           await this.timeSeriesDAL.save(valueEntries)
           addedEntries += valueEntries.length
-          if (valueEntries.length === 1) {
-            for (const entry of valueEntries) {
-              console.log(entry)
-            }
-          }
 
           // @note: Save states for all interval, either with empty data or not
           const stateEntries: StatsState[] = entries.map(
