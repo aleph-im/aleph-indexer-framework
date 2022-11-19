@@ -55,7 +55,6 @@ export function createEventDAL(path: string): EventStorage {
     ],
     mapFn: async function (entry) {
       const { key, value } = entry
-      console.log('mapFn', key, value)
 
       // @note: Stored as hex strings (bn.js "toJSON" method), so we need to cast them to BN always
       for (const prop of mappedBNProps) {
@@ -64,7 +63,6 @@ export function createEventDAL(path: string): EventStorage {
         ;(value as any)[prop] = new BN((value as any)[prop], 'hex')
       }
       for (const prop of mappedPublicKeyProps) {
-        console.log(value, prop in value)
         if (!(prop in value)) continue
         if ((value as any)[prop] instanceof PublicKey) continue
         ;(value as any)[prop] = new PublicKey((value as any)[prop])
