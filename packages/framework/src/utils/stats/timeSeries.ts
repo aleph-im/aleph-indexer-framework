@@ -117,7 +117,9 @@ export class TimeSeriesStats<I, O> {
       )
       let addedEntries = 0
       for (const pendingRange of pendingTimeFrameDateRanges) {
-        const processedIntervalsBuffer = new BufferExec<StatsTimeSeries<O | undefined>>(async (entries) => {
+        const processedIntervalsBuffer = new BufferExec<
+          StatsTimeSeries<O | undefined>
+        >(async (entries) => {
           // @note: Save entries that have any data
           const valueEntries = entries.filter(
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,

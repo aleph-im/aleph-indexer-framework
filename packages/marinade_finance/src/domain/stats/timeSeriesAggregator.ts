@@ -30,13 +30,13 @@ export class AccessTimeSeriesAggregator {
     acc: AccessTimeStats,
     curr: ParsedEvents | AccessTimeStats,
   ): AccessTimeStats {
-    if ((curr as ParsedEvents).signer) {
+    if ((curr as ParsedEvents).timestamp) {
       const event = curr as ParsedEvents
-      let programId: string;
-      programId = event.signer as unknown as string
+      let signer: string;
+      signer = event.signer as unknown as string
       acc.accesses++
-      acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId]
-        ? acc.accessesByProgramId[programId] + 1
+      acc.accessesByProgramId[signer] = acc.accessesByProgramId[signer]
+        ? acc.accessesByProgramId[signer] + 1
         : 1
       if(!acc.startTimestamp || acc.startTimestamp > event.timestamp) {
         acc.startTimestamp = event.timestamp
