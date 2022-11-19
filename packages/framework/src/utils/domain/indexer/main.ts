@@ -193,7 +193,6 @@ export class IndexerMainDomain {
 
     accounts =
       accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
-    console.log('accounts', accounts)
     return Promise.all(
       accounts.map(async (account) => {
         const stats = (await this.context.apiClient.invokeDomainMethod({

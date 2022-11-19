@@ -29,7 +29,6 @@ export class AccountDomain {
   }
 
   async getStats(): Promise<AccountStats<MarinadeFinanceAccountStats>> {
-    console.log('getStats', this.info.address)
     return this.timeSeriesStats.getStats()
   }
 

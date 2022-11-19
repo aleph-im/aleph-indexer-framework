@@ -13,7 +13,6 @@ import {
   MarinadeFinanceAccountStats,
   MarinadeFinanceAccountData,
   MarinadeFinanceAccountInfo,
-  TimeStats,
 } from '../types.js'
 import MarinadeFinanceDiscoverer from './discoverer/marinade_finance.js'
 
@@ -124,7 +123,7 @@ export default class MainDomain
     accountAddresses?: string[],
   ): Promise<GlobalMarinadeFinanceStats> {
     console.log(`📊 computing global stats for ${accountAddresses?.length} accounts`)
-    const accountsStats = await this.getAccountStats<TimeStats>(
+    const accountsStats = await this.getAccountStats<MarinadeFinanceAccountStats>(
       accountAddresses,
     )
     const globalStats: GlobalMarinadeFinanceStats = this.getNewGlobalStats()
@@ -132,10 +131,7 @@ export default class MainDomain
     for (const accountStats of accountsStats) {
       if (!accountStats.stats) continue
 
-      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
-        accountStats.stats
-
-      console.log(`📊 computing global stats for ${accountStats.account} with ${accesses} accesses`)
+      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } = accountStats.stats.total
 
       const type = this.discoverer.getAccountType(accountStats.account)
 
