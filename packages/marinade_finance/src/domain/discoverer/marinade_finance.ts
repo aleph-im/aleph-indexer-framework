@@ -53,7 +53,7 @@ export default class MarinadeFinanceDiscoverer {
           ],
         },
       )
-      accounts.slice(0, 1).map(
+      accounts.map(
         (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
           accountsInfo.push(this.deserializeAccountResponse(value, type)),
       )
