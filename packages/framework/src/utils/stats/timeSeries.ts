@@ -148,6 +148,12 @@ export class TimeSeriesStats<I, O> {
           // taking into account that the first interval can be smaller
           // depending on the date of the first input
           if (stateEntries.length) {
+            // @note: Remove first and last item, as they were included
+            // for including ranges that might be needed in bigger time frames
+            if(timeFrame !== TimeFrame.All) {
+              stateEntries.shift()
+              stateEntries.pop()
+            }
             const firstIndex = reverse ? stateEntries.length - 1 : 0
             const firstItem = stateEntries[firstIndex]
 
