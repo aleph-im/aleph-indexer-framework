@@ -44,6 +44,7 @@ export class EventParser {
 
     const baseEvent = {
       ...parsed.info,
+      signer: txContext.tx.parsed.message.accountKeys[0].pubkey,
       id,
       timestamp,
       type: parsed.type,
