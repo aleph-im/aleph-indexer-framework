@@ -47,6 +47,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   addAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountFetcher`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -54,6 +55,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountFetcher`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -63,6 +65,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<SignatureFetcherState | undefined> {
     return this.broker.call(`${this.msId}.getAccountFetcherState`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
@@ -79,6 +82,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
   ): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountInfoFetcher`, {
       partitionKey: args.account,
+      indexerId: this.broker.nodeID,
       ...args,
     })
   }
