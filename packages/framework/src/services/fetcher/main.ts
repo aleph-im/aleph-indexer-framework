@@ -194,7 +194,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     }
 
     if (work.payload.length === 0) {
-      this.accountDAL.remove(work)
+      await this.accountDAL.remove(work)
     }
   }
 
