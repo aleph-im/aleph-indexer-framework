@@ -38,6 +38,9 @@ export type EntityStorageCallOptions = EntityStorageInvokeOptions
 export type EntityStorageGetStreamOptions<K, V> = StorageGetOptions<K, V> &
   EntityStorageInvokeOptions
 
+/**
+ * Defines the storage handler class for different entities.
+ */
 export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   protected byIndex: Record<string, EntityIndexStorage<Entity, Entity>> = {}
   protected atomicOpMutex: Mutex

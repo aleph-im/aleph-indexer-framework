@@ -79,6 +79,10 @@ export type TransactionFetcherBackwardJobRunnerOptions<C> =
     fetchUntil?: string[]
   }
 
+/**
+ * Options where the account address is stored and if it needs to be updated
+ * by fetching new transactions.
+ */
 export interface AccountInfoFetcherOptions {
   address: string
   subscribeChanges?: boolean

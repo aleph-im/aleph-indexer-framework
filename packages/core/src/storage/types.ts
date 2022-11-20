@@ -26,6 +26,9 @@ export type BasicStream<V> = ReadableStreamNotIterable & {
   [Symbol.asyncIterator](): AsyncIterableIterator<V>
 }
 
+/**
+ * Key-value storage stream
+ */
 export type StorageStream<K, V> = BasicStream<StorageEntry<K, V>>
 export type StorageKeyStream<K> = BasicStream<K>
 export type StorageValueStream<V> = BasicStream<V>

@@ -84,6 +84,17 @@ export class PendingWorkPool<T> {
     this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
   }
 
+  async removeWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
+    work = Array.isArray(work) ? work : [work]
+    if (!work.length) return
+
+    await this.options.dal.remove(work)
+
+    console.log(
+      `PendingWork | Removed ${work.length} items [${this.options.id}]`,
+    )
+  }
+
   async getCount(): Promise<number> {
     return this.options.dal.getCount({ atomic: true })
   }

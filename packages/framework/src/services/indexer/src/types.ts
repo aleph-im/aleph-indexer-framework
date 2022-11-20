@@ -96,7 +96,13 @@ export type AccountIndexerRequestArgs = AccountPartitionRequestArgs & {
   }
 }
 
+/**
+ * Indexer configuration with account information.
+ */
 export type AccountIndexerConfigWithMeta<T> = AccountIndexerRequestArgs & {
+  /**
+   * Account parsed information.
+   */
   meta: T
 }
 

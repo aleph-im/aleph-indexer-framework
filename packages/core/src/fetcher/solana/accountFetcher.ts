@@ -4,10 +4,22 @@ import { Utils } from '../../index.js'
 import { SolanaRPC } from '../../rpc/solana/client.js'
 import { AccountInfoFetcherOptions } from './types.js'
 
+/**
+ * Fetcher account info class: Component of the fetcher that is in charge of managing the
+ * process of obtaining information from the account.
+ */
 export class SolanaAccountInfoFetcher {
   protected debouncedJob: Utils.DebouncedJob<AccountInfo<Buffer>>
   protected subscriptionId: number | undefined
 
+  /**
+   * Initialize the AccountInfoFetcher and saves the account info in the data access layer.
+   * @param opts Options where the account address is stored and if it needs to be updated.
+   * @param dal The account info storage.
+   * @param solanaRpc The solana RPC client to use.
+   * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
+   * @param id Identifier containing the account address.
+   */
   constructor(
     protected opts: AccountInfoFetcherOptions,
     protected dal: AccountInfoStorage,
@@ -23,7 +35,7 @@ export class SolanaAccountInfoFetcher {
         const account = {
           address: opts.address,
           executable: accountInfo.executable,
-          owner: accountInfo.owner.toString(), // found cases where accounts doesnt have owner, if this case is encountered will stop the execution: https://solscan.io/account/6yZ65vJJ3cNGnysVxujkYktRdGtKEdVXSbtb7JQmh7dJ
+          owner: accountInfo.owner.toString(),
           lamports: accountInfo.lamports,
           data: accountData,
           rentEpoch: accountInfo.rentEpoch,
@@ -34,6 +46,9 @@ export class SolanaAccountInfoFetcher {
     )
   }
 
+  /**
+   * Returns account data from the accountInfo argument.
+   */
   protected async parseAccountData<T>(accountInfo: AccountInfo<T>): Promise<T> {
     return accountInfo.data
   }
@@ -43,6 +58,10 @@ export class SolanaAccountInfoFetcher {
     // await this.dal.backup()
   }
 
+  /**
+   * Gets the accountInfo, and if the subscribeChanges flag is true,
+   * registers a callback to be invoked whenever the specified account changes.
+   */
   async run(): Promise<void> {
     const conn = this.solanaRpc.getConnection()
     const address = new PublicKey(this.opts.address)

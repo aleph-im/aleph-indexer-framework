@@ -7,11 +7,19 @@ import {
   BaseFetcherState,
 } from './types.js'
 
+/**
+ * Fetcher abstract class that provides methods to init and stop the fetching
+ * process, also to save and load the work in progress.
+ */
 export class BaseFetcher<C> {
   protected fetcherState!: BaseFetcherState<C>
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
 
+  /**
+   * @param options Fetcher options.
+   * @param fetcherStateDAL Fetcher state storage.
+   */
   constructor(
     protected options: BaseFetcherOptions<C>,
     protected fetcherStateDAL: FetcherStateLevelStorage<C>,
@@ -140,6 +148,10 @@ export class BaseFetcher<C> {
     )
   }
 
+  /**
+   * Initialises the fetcherState class property of the Fetcher instance, could get
+   * the data from the data access layer when the fetching progress is restarted.
+   */
   protected async loadFetcherState(): Promise<void> {
     if (this.fetcherState) return
 
@@ -164,6 +176,9 @@ export class BaseFetcher<C> {
     }
   }
 
+  /**
+   * Saves the fetcher state in the data access layer.
+   */
   protected async saveFetcherState(): Promise<void> {
     if (!this.fetcherState) return
     return this.fetcherStateDAL.save(this.fetcherState)

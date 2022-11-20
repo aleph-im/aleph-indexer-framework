@@ -1,5 +1,6 @@
 import Web3 from 'web3'
 import { BlockTransactionObject } from 'web3-eth'
+import { EthereumFetchBlocksOptions } from '../../fetcher/ethereum.js'
 
 export interface EthereumPaginationCursor {
   height: number
@@ -9,12 +10,6 @@ export interface EthereumPaginationCursor {
 export interface EthereumClientOptions {
   url: string
   rateLimit?: boolean
-}
-
-export type EthereumFetchBlocksOptions = {
-  before?: number
-  until?: number
-  maxLimit?: number
 }
 
 export type EthereumBlocksChunkOptions = {

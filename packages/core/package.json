@@ -39,7 +39,7 @@
   "dependencies": {
     "@graphql-tools/schema": "^9.0.4",
     "@solana/spl-token-registry": "^0.2.7",
-    "@solana/web3.js": "^1.42.0",
+    "@solana/web3.js": "^1.65.0",
     "bn.js": "^5.2.0",
     "cacheable-lookup": "^6.0.4",
     "compression": "^1.7.4",
@@ -55,7 +55,8 @@
     "level-read-stream": "^1.1.0",
     "murmurhash": "^2.0.0",
     "node-cache": "^5.1.2",
-    "web3": "^1.8.1"
+    "web3": "^1.8.1",
+    "superstruct": "^0.16.5"
   },
   "typedoc": {
     "entryPoint": "./src/index.ts",

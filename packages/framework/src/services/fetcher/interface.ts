@@ -1,4 +1,3 @@
-import { Blockchain } from '@aleph-indexer/core/src/types'
 import {
   FetcherAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
@@ -12,10 +11,6 @@ import {
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
 } from './src/types'
-
-export interface FetcherMsOptionsI {
-  supportedBlockchains: Blockchain[]
-}
 
 /**
  * Provides outward facing methods from the fetcher service.
@@ -33,6 +28,11 @@ export interface FetcherMsI {
   getAccountFetcherState(
     args: FetcherAccountPartitionRequestArgs,
   ): Promise<SignatureFetcherState | undefined>
+  /**
+   * Requests to remove a signature fetcher.
+   * @param args The account to remove the fetcher from.
+   */
+  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
   /**
    * Requests a new account info fetcher, which will fetch current account info.
    * @param args Arguments for the fetcher.
@@ -81,11 +81,7 @@ export interface PrivateFetcherMsI {
   getTransactionState(
     args: CheckTransactionsRequestArgs,
   ): Promise<TransactionState[]>
-  /**
-   * Requests to remove a signature fetcher.
-   * @param args The account to remove the fetcher from.
-   */
-  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+
   /**
    * Requests to remove an account info fetcher.
    * @param args The account to remove the fetcher from.

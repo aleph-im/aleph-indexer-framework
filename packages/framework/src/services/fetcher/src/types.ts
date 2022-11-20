@@ -45,6 +45,10 @@ export type TransactionState = {
 
 export type FetcherAccountPartitionRequestArgs = {
   account: string
+  /**
+   * Indexer instance id
+   */
+  indexerId?: string
 }
 
 export type AddAccountInfoFetcherRequestArgs =
