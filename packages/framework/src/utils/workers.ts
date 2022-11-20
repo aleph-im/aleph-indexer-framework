@@ -1,3 +1,4 @@
+import { Blockchain } from '@aleph-indexer/core'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { MessageChannel, MessagePort, Worker } from 'worker_threads'
@@ -36,6 +37,10 @@ export type WorkerInfo = {
    * Name of the project the worker is running for.
    */
   projectId: string
+  /**
+   * Supported blockchains (default: solana)
+   */
+  supportedBlockchains: Blockchain[]
   /**
    * Type of the transport the worker is using.
    */

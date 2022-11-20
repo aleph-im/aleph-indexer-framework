@@ -1,5 +1,5 @@
 import path from 'path'
-import { GraphQLEndpoint, GraphQLServer } from '@aleph-indexer/core'
+import { GraphQLEndpoint, GraphQLServer, Blockchain } from '@aleph-indexer/core'
 import {
   AllWorkerChannels,
   createWorkers,
@@ -37,6 +37,10 @@ export type IndexerConfig = {
    * ID which will be used to prefix the services' IDs.
    */
   projectId: string
+  /**
+   * Supported blockchains (default: solana)
+   */
+  supportedBlockchains: Blockchain[]
   /**
    * The transport layer type to use.
    */
@@ -160,12 +164,19 @@ export class SDK {
     // @todo: External transport (thread by default)
     config.transport = config.transport || TransportType.Thread
 
-    const { projectId, transport, transportConfig } = config
+    const {
+      projectId,
+      transport,
+      transportConfig,
+      supportedBlockchains = [Blockchain.Solana],
+    } = config
+
     const args = {
       projectId,
       transport,
       transportConfig,
       dataPath: this.defaultDataPath,
+      supportedBlockchains,
     }
 
     const indexers = config.indexer
