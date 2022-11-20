@@ -190,7 +190,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     if (work.payload.includes(indexerId)) {
       work.payload = work.payload.filter((id) => id !== indexerId)
-      this.accountDAL.save(work)
+      await this.accountDAL.save(work)
     }
 
     if (work.payload.length === 0) {
