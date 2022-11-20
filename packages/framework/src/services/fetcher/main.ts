@@ -185,16 +185,16 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     indexerId,
   }: FetcherAccountPartitionRequestArgs): Promise<void> {
     if (!indexerId) return
+
     const work = await this.accountDAL.getFirstValueFromTo([account], [account])
     if (!work) return
 
-    if (work.payload.includes(indexerId)) {
-      work.payload = work.payload.filter((id) => id !== indexerId)
-      await this.accountDAL.save(work)
-    }
+    work.payload = work.payload.filter((id) => id !== indexerId)
 
-    if (work.payload.length === 0) {
-      await this.accountDAL.remove(work)
+    if (work.payload.length > 0) {
+      await this.accounts.addWork(work)
+    } else {
+      await this.accounts.removeWork(work)
     }
   }
 
@@ -290,7 +290,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     fetcher = this.getFetcherId(),
   }: FetcherStateRequestArgs): Promise<FetcherState> {
     const pendingTransactions = await this.pendingTransactions.getCount()
-    const accountFetchers = await this.accountDAL.getCount()
+    const accountFetchers = await this.accounts.getCount()
 
     return {
       fetcher,
@@ -516,11 +516,11 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         this.solanaRpc,
         this.solanaMainPublicRpc,
         this.fetcherStateDAL,
+        1,
       )
 
       await fetcher.init()
       await fetcher.run()
-      fetcher.stop()
     }
   }
 
