@@ -173,7 +173,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       payload: indexerId ? [indexerId] : [],
     }
 
-    this.accounts.addWork(work)
+    await this.accounts.addWork(work)
   }
 
   /**
