@@ -1,3 +1,4 @@
+import { Blockchain } from '@aleph-indexer/core/src/types'
 import {
   FetcherAccountPartitionRequestArgs,
   AddAccountInfoFetcherRequestArgs,
@@ -11,6 +12,10 @@ import {
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
 } from './src/types'
+
+export interface FetcherMsOptionsI {
+  supportedBlockchains: Blockchain[]
+}
 
 /**
  * Provides outward facing methods from the fetcher service.

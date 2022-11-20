@@ -1,11 +1,11 @@
 import {
   SolanaRPC,
-  SignatureFetcher as BaseFetcher,
+  SolanaSignatureFetcher as BaseFetcher,
   FetcherStateLevelStorage,
   Signature,
 } from '@aleph-indexer/core'
-import { SignatureDALIndex, SignatureStorage } from './dal/signature.js'
-import { SignatureFetcherState } from './types.js'
+import { SignatureDALIndex, SignatureStorage } from '../dal/signature.js'
+import { SignatureFetcherState } from '../types.js'
 
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
@@ -29,14 +29,15 @@ export class SignatureFetcher extends BaseFetcher {
     super(
       {
         address,
-        forwardJobOptions: {
+        forward: {
           intervalMax: 1000 * 10,
           iterationFetchLimit: Number.MAX_SAFE_INTEGER,
         },
-        backwardJobOptions: {
+        backward: {
           interval: 1000 * 10,
           iterationFetchLimit: 1000,
         },
+        indexSignatures: (...args) => this.indexSignatures(...args),
       },
       fetcherStateDAL,
       solanaRpc,
@@ -60,7 +61,9 @@ export class SignatureFetcher extends BaseFetcher {
         .getFirstValueFromTo([this.address], [this.address])
 
       if (firstItem) {
-        const state = this.fetcherState.addresses[this.address]
+        const state = (this.fetcherState.cursor =
+          this.fetcherState.cursor || {})
+
         state.firstSignature = firstItem.signature
         state.firstSlot = firstItem.slot
         state.firstTimestamp = (firstItem.blockTime || 0) * 1000
@@ -69,7 +72,7 @@ export class SignatureFetcher extends BaseFetcher {
           ...this.fetcherState.backward,
           numRuns: firstItem.accountSlotIndex[this.address],
           complete: false,
-          usePublicRPC: false,
+          useHistoricRPC: false,
         }
       }
 
@@ -78,7 +81,9 @@ export class SignatureFetcher extends BaseFetcher {
         .getLastValueFromTo([this.address], [this.address])
 
       if (lastItem) {
-        const state = this.fetcherState.addresses[this.address]
+        const state = (this.fetcherState.cursor =
+          this.fetcherState.cursor || {})
+
         state.lastSignature = lastItem.signature
         state.lastSlot = lastItem.slot
         state.lastTimestamp = (lastItem.blockTime || 0) * 1000
@@ -87,7 +92,7 @@ export class SignatureFetcher extends BaseFetcher {
           ...this.fetcherState.forward,
           numRuns: lastItem.accountSlotIndex[this.address],
           complete: false,
-          usePublicRPC: false,
+          useHistoricRPC: false,
         }
       }
     }
@@ -102,7 +107,7 @@ export class SignatureFetcher extends BaseFetcher {
       completeHistory: this.isComplete('backward'),
     }
 
-    const addrState = this.fetcherState.addresses[this.address] || {}
+    const addrState = this.fetcherState.cursor || {}
 
     if (addrState) {
       state.firstSignature = addrState.firstSignature
@@ -117,7 +122,10 @@ export class SignatureFetcher extends BaseFetcher {
     return state
   }
 
-  protected async indexSignatures(signatures: Signature[]): Promise<void> {
+  protected async indexSignatures(
+    signatures: Signature[],
+    goingForward: boolean,
+  ): Promise<void> {
     await this.dal.save(signatures)
   }
 }

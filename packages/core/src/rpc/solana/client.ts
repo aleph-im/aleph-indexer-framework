@@ -7,12 +7,12 @@ import {
   SignaturesForAddressOptions,
   SolanaJSONRPCError,
 } from '@solana/web3.js'
-import { Connection } from './lib/solana/web3.js'
+import { Connection } from './connection.js'
 import {
   AlephParsedTransaction,
   RawTransactionV1,
   VoteAccountInfo,
-} from './types.js'
+} from '../../types.js'
 
 export interface PaginationKey {
   signature: string

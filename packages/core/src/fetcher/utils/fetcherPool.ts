@@ -1,8 +1,11 @@
 import { Duration } from 'luxon'
 import { MAX_TIMER_INTEGER } from '../../constants.js'
-import { Fetcher } from './baseFetcher.js'
-import { PendingWork } from './types.js'
-import { PendingWorkOptions, PendingWorkPool } from './pendingWork.js'
+import { BaseFetcher } from '../base/baseFetcher.js'
+import {
+  PendingWork,
+  PendingWorkOptions,
+  PendingWorkPool,
+} from '../../utils/concurrence/pendingWork.js'
 import { PendingWorkDAL } from '../../storage/pendingWork.js'
 
 export interface FetcherPoolOptions<T>
@@ -11,15 +14,17 @@ export interface FetcherPoolOptions<T>
     'checkComplete' | 'handleWork' | 'chunkSize'
   > {
   dal: PendingWorkDAL<T>
-  getFetcher: (work: PendingWork<T>) => Promise<Fetcher> | Fetcher
+  getFetcher: (
+    work: PendingWork<T>,
+  ) => Promise<BaseFetcher<any>> | BaseFetcher<any>
   checkComplete?: (
     work: PendingWork<T>,
-    fetcher?: Fetcher,
+    fetcher?: BaseFetcher<any>,
   ) => Promise<boolean> | boolean
 }
 
 export class FetcherPool<T> extends PendingWorkPool<T> {
-  protected workFetcher: Record<string, Fetcher> = {}
+  protected workFetcher: Record<string, BaseFetcher<any>> = {}
   protected options!: FetcherPoolOptions<T> & PendingWorkOptions<T>
 
   constructor(options: FetcherPoolOptions<T>) {
@@ -73,7 +78,7 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     })
   }
 
-  protected async getFetcher(work: PendingWork<T>): Promise<Fetcher> {
+  protected async getFetcher(work: PendingWork<T>): Promise<BaseFetcher<any>> {
     let fetcher = this.workFetcher[work.id]
 
     if (!fetcher) {
@@ -86,7 +91,7 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
 
   protected defaultCheckComplete(
     work: PendingWork<T>,
-    fetcher?: Fetcher,
+    fetcher?: BaseFetcher<any>,
   ): boolean {
     if (fetcher) {
       return fetcher.isComplete()

@@ -188,3 +188,10 @@ export type EventBase<EventType> = {
   timestamp: number
   type: EventType
 }
+
+// ---------------- Supported blockchains --------------------------
+
+export enum Blockchain {
+  Ethereum = 'ethereum',
+  Solana = 'solana',
+}

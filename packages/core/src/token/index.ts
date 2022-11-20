@@ -2,7 +2,7 @@ import BN from 'bn.js'
 import NodeCache from 'node-cache'
 import { TokenInfo, TokenListProvider } from '@solana/spl-token-registry'
 import { PublicKey, Connection, ParsedAccountData } from '@solana/web3.js'
-import { SolanaRPC } from '../solana.js'
+import { SolanaRPC } from '../rpc/solana/client.js'
 import { WRAPPED_SOL_TOKEN_ADDRESS } from '../constants.js'
 import { Mutex } from '../utils/index.js'
 

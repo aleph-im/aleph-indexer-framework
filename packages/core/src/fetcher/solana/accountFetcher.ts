@@ -1,9 +1,10 @@
 import { AccountInfo, PublicKey } from '@solana/web3.js'
 import { AccountInfoStorage } from '../../storage/accountInfo.js'
-import { AccountInfoFetcherOptions, Utils } from '../../index.js'
-import { SolanaRPC } from '../../solana.js'
+import { Utils } from '../../index.js'
+import { SolanaRPC } from '../../rpc/solana/client.js'
+import { AccountInfoFetcherOptions } from './types.js'
 
-export class AccountInfoFetcher {
+export class SolanaAccountInfoFetcher {
   protected debouncedJob: Utils.DebouncedJob<AccountInfo<Buffer>>
   protected subscriptionId: number | undefined
 

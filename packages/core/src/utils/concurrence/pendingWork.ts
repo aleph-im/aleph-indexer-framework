@@ -4,13 +4,18 @@ import {
   DebouncedJobRunner,
   JobRunner,
   Mutex,
-} from '../../utils/index.js'
+} from '../index.js'
 import { StorageEntry } from '../../storage/index.js'
-import { PendingWork } from './types.js'
 import {
   PendingWorkDAL,
   PendingWorkDALIndex,
 } from '../../storage/pendingWork.js'
+
+export type PendingWork<T> = {
+  id: string
+  time: number
+  payload: T
+}
 
 export interface PendingWorkOptions<T> {
   id: string

@@ -1,22 +1,20 @@
 import { Utils } from '../../index.js'
 import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
 import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
-import { FetcherJobRunnerOptions, FetcherStateV1 } from './types.js'
+import {
+  BaseFetcherJobRunnerOptions,
+  BaseFetcherOptions,
+  BaseFetcherState,
+} from './types.js'
 
-export interface FetcherOptions {
-  id: string
-  forwardJobOptions?: FetcherJobRunnerOptions
-  backwardJobOptions?: FetcherJobRunnerOptions
-}
-
-export abstract class Fetcher {
-  protected fetcherState!: FetcherStateV1
+export class BaseFetcher<C> {
+  protected fetcherState!: BaseFetcherState<C>
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
 
   constructor(
-    protected options: FetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected options: BaseFetcherOptions<C>,
+    protected fetcherStateDAL: FetcherStateLevelStorage<C>,
   ) {}
 
   getId(): string {
@@ -26,12 +24,12 @@ export abstract class Fetcher {
   async init(): Promise<void> {
     await this.loadFetcherState()
 
-    if (this.options.backwardJobOptions) {
+    if (this.options.backward) {
       const { frequency: intervalInit, complete } = this.fetcherState.backward
 
       if (!complete) {
         this.backwardJob = new Utils.JobRunner({
-          ...this.options.backwardJobOptions,
+          ...this.options.backward,
           name: `${this.options.id} ⏪`,
           intervalInit,
           intervalFn: this._runJob.bind(this, 'backward'),
@@ -39,12 +37,12 @@ export abstract class Fetcher {
       }
     }
 
-    if (this.options.forwardJobOptions) {
+    if (this.options.forward) {
       const { frequency: intervalInit, complete } = this.fetcherState.forward
 
       if (!complete) {
         this.forwardJob = new Utils.JobRunner({
-          ...this.options.forwardJobOptions,
+          ...this.options.forward,
           name: `${this.options.id} ⏩`,
           intervalInit,
           intervalFn: this._runJob.bind(this, 'forward'),
@@ -130,15 +128,15 @@ export abstract class Fetcher {
     if (fetcherType) {
       return (
         (fetcherType === 'forward'
-          ? this.options.forwardJobOptions
-          : this.options.backwardJobOptions
+          ? this.options.forward
+          : this.options.backward
         )?.times || Number.POSITIVE_INFINITY
       )
     }
 
     return Math.max(
-      this.options.forwardJobOptions?.times || Number.POSITIVE_INFINITY,
-      this.options.backwardJobOptions?.times || Number.POSITIVE_INFINITY,
+      this.options.forward?.times || Number.POSITIVE_INFINITY,
+      this.options.backward?.times || Number.POSITIVE_INFINITY,
     )
   }
 
@@ -148,21 +146,21 @@ export abstract class Fetcher {
     const id = this.options.id
     this.fetcherState = (await this.fetcherStateDAL.get(id)) || {
       id,
+      cursor: undefined,
       forward: {
-        frequency: this.options.forwardJobOptions?.intervalInit || 0,
+        frequency: this.options.forward?.intervalInit || 0,
         lastRun: 0,
         numRuns: 0,
         complete: false,
-        usePublicRPC: false,
+        useHistoricRPC: false,
       },
       backward: {
-        frequency: this.options.backwardJobOptions?.intervalInit || 0,
+        frequency: this.options.backward?.intervalInit || 0,
         lastRun: 0,
         numRuns: 0,
         complete: false,
-        usePublicRPC: false,
+        useHistoricRPC: false,
       },
-      addresses: {},
     }
   }
 
@@ -179,64 +177,39 @@ export abstract class Fetcher {
     },
   ): Promise<number> {
     const opts = (
-      fetcherType === 'backward'
-        ? this.options.backwardJobOptions
-        : this.options.forwardJobOptions
-    ) as FetcherJobRunnerOptions
+      fetcherType === 'backward' ? this.options.backward : this.options.forward
+    ) as BaseFetcherJobRunnerOptions<C>
 
     const jobState = this.fetcherState[fetcherType]
 
     if (jobState.complete) return JobRunnerReturnCode.Stop
     jobState.lastRun = Date.now()
 
-    const { error, newInterval, lastFetchedKeys } = await opts.intervalFn(ctx)
+    const {
+      error,
+      lastCursor,
+      newInterval = ctx.interval,
+    } = await opts.handleFetch(ctx)
 
     let newTxs = false
 
-    // @note: Update firstKey & lastKey
-    for (const [address, addressKeys] of Object.entries(lastFetchedKeys)) {
-      const state = (this.fetcherState.addresses[address] =
-        this.fetcherState.addresses[address] || {})
+    // @note: Update pagination cursor
+    // @note: Do not update forward job if there is an error
+    if (fetcherType === 'backward' || !error) {
+      const result = await opts.updateCursor({
+        type: fetcherType,
+        prevCursor: this.fetcherState.cursor,
+        lastCursor,
+      })
 
-      if (fetcherType === 'backward') {
-        if (addressKeys.firstSignature) {
-          state.firstSignature = addressKeys.firstSignature
-          state.firstSlot = addressKeys.firstSlot
-          state.firstTimestamp = addressKeys.firstTimestamp
-          newTxs = true
-        }
-
-        if (!state.lastSignature) {
-          state.lastSignature = addressKeys.lastSignature
-          state.lastSlot = addressKeys.lastSlot
-          state.lastTimestamp = addressKeys.lastTimestamp
-        }
-
-        jobState.numRuns++
-      }
-      // @note: Do not update forward job if there is an error
-      else if (!error) {
-        if (addressKeys.lastSignature) {
-          state.lastSignature = addressKeys.lastSignature
-          state.lastSlot = addressKeys.lastSlot
-          state.lastTimestamp = addressKeys.lastTimestamp
-          newTxs = true
-        }
-
-        if (!state.firstSignature) {
-          state.firstSignature = addressKeys.firstSignature
-          state.firstSlot = addressKeys.firstSlot
-          state.firstTimestamp = addressKeys.firstTimestamp
-        }
-
-        jobState.numRuns++
-      }
+      newTxs = newTxs || result.newItems
+      this.fetcherState.cursor = result.newCursor
+      jobState.numRuns++
     }
 
     // @note: Update new frequency
-    if (newInterval > 0) {
-      const intervalMax =
-        this.options.forwardJobOptions?.intervalMax || newInterval
+    if (newInterval && newInterval > 0) {
+      const intervalMax = this.options.forward?.intervalMax || newInterval
 
       jobState.frequency = Math.min(newInterval, intervalMax)
     }
@@ -246,11 +219,11 @@ export abstract class Fetcher {
 
     if (!error) {
       if (fetcherType === 'backward' && !newTxs) {
-        swapToPublicRPC = !jobState.usePublicRPC
+        swapToPublicRPC = !jobState.useHistoricRPC
 
         if (swapToPublicRPC) {
           // @note: Swap to public RPC
-          jobState.usePublicRPC = true
+          jobState.useHistoricRPC = true
         } else {
           // @note: Mark as complete
           jobState.complete = true

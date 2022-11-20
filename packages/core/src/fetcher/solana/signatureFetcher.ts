@@ -1,48 +1,50 @@
-import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { Duration } from 'luxon'
-import { FetchSignaturesOptions, SolanaRPC } from '../../solana.js'
-import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
-import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
-import { Fetcher } from './baseFetcher.js'
+import { ConfirmedSignatureInfo } from '@solana/web3.js'
+import { BaseFetcher } from '../base/baseFetcher.js'
 import {
-  FetcherStateAddressesKeys,
-  Signature,
-  SignatureFetcherOptions,
-} from './types.js'
+  FetcherJobRunnerHandleFetchResult,
+  FetcherJobRunnerUpdateCursorResult,
+} from '../base/types.js'
+import { SolanaSignatureFetcherOptions, SolanaFetcherCursor } from './types.js'
+import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
+import { FetchSignaturesOptions, SolanaRPC } from '../../rpc/index.js'
+import { JobRunnerReturnCode } from '../../utils/index.js'
 
-export abstract class SignatureFetcher extends Fetcher {
+export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
 
   constructor(
-    protected opts: SignatureFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected opts: SolanaSignatureFetcherOptions<SolanaFetcherCursor>,
+    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaFetcherCursor>,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
   ) {
     super(
       {
         id: `signatures:${opts.address}`,
-        forwardJobOptions: opts.forwardJobOptions
+        forward: opts.forward
           ? {
-              ...opts.forwardJobOptions,
-              interval: opts.forwardJobOptions.interval || 0,
-              intervalFn: (ctx) => this.runForward(ctx),
+              ...opts.forward,
+              interval: opts.forward.interval || 0,
+              handleFetch: (ctx) => this.fetchForward(ctx),
+              updateCursor: (ctx) => this.updateCursor(ctx),
             }
           : undefined,
-        backwardJobOptions: opts.backwardJobOptions
+        backward: opts.backward
           ? {
-              ...opts.backwardJobOptions,
-              intervalFn: (ctx) => this.runBackward(ctx),
+              ...opts.backward,
+              handleFetch: (ctx) => this.fetchBackward(ctx),
+              updateCursor: (ctx) => this.updateCursor(ctx),
             }
           : undefined,
       },
       fetcherStateDAL,
     )
 
-    if (opts.forwardJobOptions) {
-      const { ratio, ratioThreshold, interval } = opts.forwardJobOptions
+    if (opts.forward) {
+      const { ratio, ratioThreshold, interval } = opts.forward
 
       if (interval === undefined) {
         this.forwardAutoInterval = true
@@ -52,25 +54,21 @@ export abstract class SignatureFetcher extends Fetcher {
     }
   }
 
-  protected async runForward({
+  protected async fetchForward({
     firstRun,
     interval,
   }: {
     firstRun: boolean
     interval: number
-  }): Promise<{
-    error?: Error
-    newInterval: number
-    lastFetchedKeys: FetcherStateAddressesKeys
-  }> {
-    const { address, forwardJobOptions, errorFetching } = this.opts
+  }): Promise<FetcherJobRunnerHandleFetchResult<SolanaFetcherCursor>> {
+    const { address, forward: forwardJobOptions, errorFetching } = this.opts
 
-    const usePublicRPC = Boolean(this.fetcherState.forward.usePublicRPC)
-    const rpc = usePublicRPC ? this.solanaMainPublicRpc : this.solanaRpc
+    const useHistoricRPC = Boolean(this.fetcherState.forward.useHistoricRPC)
+    const rpc = useHistoricRPC ? this.solanaMainPublicRpc : this.solanaRpc
 
     // @note: not "before" (autodetected by the node (last block height))
     const { lastSignature: until, lastSlot: untilSlot } =
-      this.fetcherState.addresses[address] || {}
+      this.fetcherState.cursor || {}
 
     const maxLimit = !until
       ? 1000
@@ -86,7 +84,7 @@ export abstract class SignatureFetcher extends Fetcher {
       errorFetching,
     }
 
-    const { count, lastFetchedKeys, error } = await this.fetchSignatures(
+    const { count, lastCursor, error } = await this.fetchSignatures(
       options,
       true,
       rpc,
@@ -98,26 +96,22 @@ export abstract class SignatureFetcher extends Fetcher {
       ? this.calculateNewInterval(count, interval)
       : interval
 
-    return { newInterval, lastFetchedKeys, error }
+    return { newInterval, lastCursor, error }
   }
 
-  protected async runBackward({
+  protected async fetchBackward({
     interval,
   }: {
     firstRun: boolean
     interval: number
-  }): Promise<{
-    error?: Error
-    newInterval: number
-    lastFetchedKeys: FetcherStateAddressesKeys
-  }> {
-    const { address, backwardJobOptions, errorFetching } = this.opts
+  }): Promise<FetcherJobRunnerHandleFetchResult<SolanaFetcherCursor>> {
+    const { address, backward: backwardJobOptions, errorFetching } = this.opts
 
-    const usePublicRPC = Boolean(this.fetcherState.backward.usePublicRPC)
-    const rpc = usePublicRPC ? this.solanaMainPublicRpc : this.solanaRpc
+    const useHistoricRPC = Boolean(this.fetcherState.backward.useHistoricRPC)
+    const rpc = useHistoricRPC ? this.solanaMainPublicRpc : this.solanaRpc
 
     // @note: until is autodetected by the node (height 0 / first block)
-    const before = this.fetcherState.addresses[address]?.firstSignature
+    const before = this.fetcherState.cursor?.firstSignature
     const until = backwardJobOptions?.fetchUntil
 
     const maxLimit =
@@ -131,23 +125,17 @@ export abstract class SignatureFetcher extends Fetcher {
       errorFetching,
     }
 
-    const { lastFetchedKeys, error } = await this.fetchSignatures(
+    const { lastCursor, error } = await this.fetchSignatures(
       options,
       false,
       rpc,
     )
 
-    // @note: Stop the indexer if there wasnt more items using public RPC
-    const stop =
-      !error &&
-      usePublicRPC &&
-      !Object.values(lastFetchedKeys).some(
-        ({ firstSignature }) => !!firstSignature,
-      )
-
+    // @note: Stop the indexer if there wasn't more items using historic RPC
+    const stop = !error && useHistoricRPC && !lastCursor?.firstSignature
     const newInterval = stop ? JobRunnerReturnCode.Stop : interval
 
-    return { newInterval, lastFetchedKeys, error }
+    return { newInterval, lastCursor, error }
   }
 
   protected async fetchSignatures(
@@ -157,19 +145,18 @@ export abstract class SignatureFetcher extends Fetcher {
   ): Promise<{
     error?: Error
     count: number
-    lastFetchedKeys: FetcherStateAddressesKeys
+    lastCursor: SolanaFetcherCursor
   }> {
     const { address } = options
 
     let error: undefined | Error
     let count = 0
-    const lastFetchedKeys: FetcherStateAddressesKeys = { [address]: {} }
-    const state = lastFetchedKeys[address]
+    const lastCursor: SolanaFetcherCursor = {}
 
     console.log(`
       fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
         address: ${address}
-        usePublicRPC: ${rpc === this.solanaMainPublicRpc}
+        useHistoricRPC: ${rpc === this.solanaMainPublicRpc}
       }
     `)
 
@@ -187,12 +174,12 @@ export abstract class SignatureFetcher extends Fetcher {
 
         count += chunk.length
 
-        state.firstSignature = step.firstKey?.signature
-        state.firstSlot = step.firstKey?.slot
-        state.firstTimestamp = step.firstKey?.timestamp
-        state.lastSignature = step.lastKey?.signature
-        state.lastSlot = step.lastKey?.slot
-        state.lastTimestamp = step.lastKey?.timestamp
+        lastCursor.firstSignature = step.firstKey?.signature
+        lastCursor.firstSlot = step.firstKey?.slot
+        lastCursor.firstTimestamp = step.firstKey?.timestamp
+        lastCursor.lastSignature = step.lastKey?.signature
+        lastCursor.lastSlot = step.lastKey?.slot
+        lastCursor.lastTimestamp = step.lastKey?.timestamp
       }
     } catch (e) {
       error = e as Error
@@ -201,8 +188,58 @@ export abstract class SignatureFetcher extends Fetcher {
     return {
       error,
       count,
-      lastFetchedKeys,
+      lastCursor,
     }
+  }
+
+  protected async updateCursor({
+    type,
+    prevCursor,
+    lastCursor,
+  }: {
+    type: 'forward' | 'backward'
+    prevCursor?: SolanaFetcherCursor
+    lastCursor: SolanaFetcherCursor
+  }): Promise<FetcherJobRunnerUpdateCursorResult<SolanaFetcherCursor>> {
+    let newItems = false
+    const newCursor: SolanaFetcherCursor = { ...prevCursor }
+
+    switch (type) {
+      case 'backward': {
+        if (lastCursor.firstSignature) {
+          newCursor.firstSignature = lastCursor.firstSignature
+          newCursor.firstSlot = lastCursor.firstSlot
+          newCursor.firstTimestamp = lastCursor.firstTimestamp
+          newItems = true
+        }
+
+        if (!prevCursor?.lastSignature) {
+          newCursor.lastSignature = lastCursor.lastSignature
+          newCursor.lastSlot = lastCursor.lastSlot
+          newCursor.lastTimestamp = lastCursor.lastTimestamp
+        }
+
+        break
+      }
+      case 'forward': {
+        if (lastCursor.lastSignature) {
+          newCursor.lastSignature = lastCursor.lastSignature
+          newCursor.lastSlot = lastCursor.lastSlot
+          newCursor.lastTimestamp = lastCursor.lastTimestamp
+          newItems = true
+        }
+
+        if (!prevCursor?.firstSignature) {
+          newCursor.firstSignature = lastCursor.firstSignature
+          newCursor.firstSlot = lastCursor.firstSlot
+          newCursor.firstTimestamp = lastCursor.firstTimestamp
+        }
+
+        break
+      }
+    }
+
+    return { newCursor, newItems }
   }
 
   protected calculateNewInterval(count: number, interval: number): number {
@@ -214,7 +251,7 @@ export abstract class SignatureFetcher extends Fetcher {
     const newDuration = Duration.fromMillis(newInterval).toISOTime() || '+24h'
 
     console.log(
-      `runForward ratio: {
+      `fetchForward ratio: {
         target: ${this.forwardRatio}
         current: ${count}
         factor: ${ratioFactor.toFixed(2)}
@@ -262,11 +299,6 @@ export abstract class SignatureFetcher extends Fetcher {
       return sig
     })
 
-    await this.indexSignatures(sigs, goingForward)
+    await this.opts.indexSignatures(sigs, goingForward)
   }
-
-  protected abstract indexSignatures(
-    signatures: Signature[],
-    goingForward: boolean,
-  ): Promise<void>
 }

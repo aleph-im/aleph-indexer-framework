@@ -1,4 +1,4 @@
-import { PendingWork } from '../indexer/fetcher/types.js'
+import { PendingWork } from '../utils/index.js'
 import { EntityStorage, EntityStorageOptions } from './entityStorage.js'
 import { EntityUpdateOp, KeySchema } from './types.js'
 

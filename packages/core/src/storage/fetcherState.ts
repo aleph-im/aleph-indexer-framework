@@ -1,21 +1,21 @@
-import { FetcherStateV1 } from '../indexer/fetcher/types.js'
+import { BaseFetcherState } from '../fetcher/base/types.js'
 import {
   EntityIndexStorage,
   EntityIndexStorageOptions,
 } from './entityIndexStorage.js'
 
-export type FetcherStateLevelStorageOptions = Pick<
-  EntityIndexStorageOptions<FetcherStateV1>,
+export type FetcherStateLevelStorageOptions<C = any> = Pick<
+  EntityIndexStorageOptions<BaseFetcherState<C>>,
   'path'
 > & {
   name?: string
 }
 
-export class FetcherStateLevelStorage extends EntityIndexStorage<
-  FetcherStateV1,
-  FetcherStateV1
+export class FetcherStateLevelStorage<C = any> extends EntityIndexStorage<
+  BaseFetcherState<C>,
+  BaseFetcherState<C>
 > {
-  constructor(options: FetcherStateLevelStorageOptions) {
+  constructor(options: FetcherStateLevelStorageOptions<C>) {
     super({
       name: 'fetcher_state',
       key: [{ get: (e) => e.id, length: EntityIndexStorage.VariableLength }],

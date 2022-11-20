@@ -1,15 +1,15 @@
-import { InstructionContext } from '../indexer/index.js'
+import { SolanaInstructionContext } from '../fetcher/index.js'
 import { EventBase, AlephParsedEvent } from '../types.js'
 
 export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
   constructor(
     protected eventToParserMap: Map<
       EventType,
-      (ixCtx: InstructionContext, info: Info) => Event
+      (ixCtx: SolanaInstructionContext, info: Info) => Event
     >,
   ) {}
 
-  parse(ixCtx: InstructionContext): Event {
+  parse(ixCtx: SolanaInstructionContext): Event {
     const { ix, parentIx, parentTx } = ixCtx
     const parsed = (ix as AlephParsedEvent<EventType, Info>).parsed
 

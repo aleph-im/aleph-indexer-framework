@@ -1,5 +1,5 @@
-import { config } from './config.js'
-import { SolanaRPC, SolanaRPCRoundRobin } from './solana.js'
+import { config } from '../../config.js'
+import { SolanaRPC, SolanaRPCRoundRobin } from './client.js'
 
 export const solanaPrivateRPCRoundRobin = new SolanaRPCRoundRobin(
   (config.SOLANA_RPC || '').split(','),

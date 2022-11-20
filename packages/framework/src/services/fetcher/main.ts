@@ -2,7 +2,7 @@ import { pipeline } from 'node:stream'
 import { DateTime } from 'luxon'
 import { ServiceBroker } from 'moleculer'
 import {
-  AccountInfoFetcher,
+  SolanaAccountInfoFetcher,
   AccountInfoStorage,
   FetcherStateLevelStorage,
   PendingWork,
@@ -14,8 +14,12 @@ import {
   StorageEntry,
   Utils,
 } from '@aleph-indexer/core'
-import { SignatureFetcher } from './src/signatureFetcher.js'
-import { FetcherMsI, PrivateFetcherMsI } from './interface.js'
+import { SignatureFetcher } from './src/solana/signatureFetcher.js'
+import {
+  FetcherMsI,
+  FetcherMsOptionsI,
+  PrivateFetcherMsI,
+} from './interface.js'
 import { SignatureDALIndex, SignatureStorage } from './src/dal/signature.js'
 import { RawTransactionStorage } from './src/dal/rawTransaction.js'
 import {
@@ -41,6 +45,8 @@ import {
 } from './src/dal/requests.js'
 import { FetcherMsClient } from './client.js'
 import { RawTransactionWithPeers } from '../parser/src/types.js'
+import { Blockchain } from '@aleph-indexer/core/src/types.js'
+import { BlockFetcher } from './src/ethereum/blockFetcher.js'
 
 const { StreamBuffer, StreamMap, sleep } = Utils
 
@@ -49,7 +55,7 @@ const { StreamBuffer, StreamMap, sleep } = Utils
  */
 export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   protected fetchers: Record<string, SignatureFetcher> = {}
-  protected infoFetchers: Record<string, AccountInfoFetcher> = {}
+  protected infoFetchers: Record<string, SolanaAccountInfoFetcher> = {}
   protected pendingTransactions: PendingWorkPool<string[]>
   protected pendingTransactionsCache: PendingWorkPool<string[]>
   protected pendingTransactionsFetch: PendingWorkPool<string[]>
@@ -71,6 +77,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    */
   constructor(
     protected broker: ServiceBroker,
+    protected options: FetcherMsOptionsI,
     protected signatureDAL: SignatureStorage,
     protected pendingTransactionDAL: PendingTransactionStorage,
     protected pendingTransactionCacheDAL: PendingTransactionStorage,
@@ -83,6 +90,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     protected fetcherStateDAL: FetcherStateLevelStorage,
   ) {
     this.fetcherMsClient = new FetcherMsClient(broker)
+
+    if (this.options.supportedBlockchains.includes(Blockchain.Ethereum)) {
+      new BlockFetcher()
+    }
 
     this.pendingTransactions = new PendingWorkPool({
       id: 'pending-transactions',
@@ -201,7 +212,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
       subscribeChanges,
     }
 
-    fetcher = new AccountInfoFetcher(
+    fetcher = new SolanaAccountInfoFetcher(
       options,
       this.accountInfoDAL,
       this.solanaRpc,

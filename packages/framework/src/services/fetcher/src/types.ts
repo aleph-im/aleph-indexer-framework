@@ -1,6 +1,15 @@
 import { RawTransactionV1 } from '@aleph-indexer/core'
 import { FetcherMsI, PrivateFetcherMsI } from '../interface.js'
 
+export type BlockFetcherState = {
+  fetcher: string
+  firstTimestamp?: number
+  lastTimestamp?: number
+  firstHeight?: number
+  lastHeight?: number
+  completeHistory: boolean
+}
+
 export type SignatureFetcherState = {
   fetcher: string
   account: string

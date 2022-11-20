@@ -1,4 +1,4 @@
-import { AccountInfo } from '../indexer/fetcher/types.js'
+import { AccountInfo } from '../fetcher/solana/types.js'
 import { EntityStorage } from './entityStorage.js'
 
 export type AccountInfoStorage = EntityStorage<AccountInfo>
