@@ -37,7 +37,6 @@ export type RawParsedInstruction = Omit<
   'programId' | 'parsed'
 > & {
   programId: string
-  signer: string
   parsed: RawParsedInstructionData | any
 }
 
@@ -51,7 +50,6 @@ export type RawPartiallyDecodedInstruction = Omit<
   'programId' | 'accounts'
 > & {
   programId: string
-  signer: string
   accounts: string[]
 }
 
@@ -247,7 +245,6 @@ export type ParsedAccountInfoV1 = AlephParsedAccountInfo
 export type RawEventBase = Omit<AlephParsedParsedInstruction, 'parsed'> & {
   program: string
   programId: string
-  signer: string
 }
 
 /**

@@ -75,14 +75,12 @@ export class AccountTimeSeriesStatsManager<V> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
     }
-
     return this.stats
   }
 
   async process(now: number): Promise<void> {
     console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)
-    console.log(`📊 processing account stats for ${this.config.account}`)
     await this.aggregateAccountStats(now)
   }
 

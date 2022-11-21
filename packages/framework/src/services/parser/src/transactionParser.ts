@@ -133,7 +133,6 @@ export class TransactionParser extends StrictParser<
           rawIx,
         )) as ParsedInstructionV1
         resultIx.index = index
-        resultIx.signer = parsedTx.parsed.message.accountKeys[0].pubkey
 
         const innerIxs = innerInstructionsMap[index] || []
 
