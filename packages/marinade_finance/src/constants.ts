@@ -13,7 +13,8 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
   ? Number(config.INDEX_START_DATE)
   : SINCE_DATE
 
-export const MARINADE_FINANCE_PROGRAM_ID = 'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'
+export const MARINADE_FINANCE_PROGRAM_ID =
+  'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'
 export const MARINADE_FINANCE_PROGRAM_ID_PK = new PublicKey(
   MARINADE_FINANCE_PROGRAM_ID,
 )

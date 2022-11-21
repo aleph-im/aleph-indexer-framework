@@ -1,5 +1,7 @@
 import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
+import BN from 'bn.js'
+import { PublicKey } from '@solana/web3.js'
 
 export enum InstructionType {
   Initialize = 'InitializeEvent',
@@ -13,7 +15,7 @@ export enum InstructionType {
   LiquidUnstake = 'LiquidUnstakeEvent',
   AddLiquidity = 'AddLiquidityEvent',
   RemoveLiquidity = 'RemoveLiquidityEvent',
-  SetLpParams = 'SetLpParamsEvent',
+  ConfigLp = 'ConfigLpEvent',
   ConfigMarinade = 'ConfigMarinadeEvent',
   OrderUnstake = 'OrderUnstakeEvent',
   Claim = 'ClaimEvent',
@@ -32,9 +34,11 @@ export type InstructionBase = EventBase<InstructionType> & {
   account: string
 }
 
+/*-----------------------* CUSTOM EVENTS TYPES *-----------------------*/
+
 export type InitializeInfo = {
+  data: solita.InitializeData
   accounts: solita.InitializeInstructionAccounts
-  data: solita.InitializeInstructionArgs
 }
 
 export type InitializeEvent = InstructionBase &
@@ -42,9 +46,11 @@ export type InitializeEvent = InstructionBase &
     type: InstructionType.Initialize
   }
 
+/*----------------------------------------------------------------------*/
+
 export type ChangeAuthorityInfo = {
+  data: solita.ChangeAuthorityData
   accounts: solita.ChangeAuthorityInstructionAccounts
-  data: solita.ChangeAuthorityInstruction
 }
 
 export type ChangeAuthorityEvent = InstructionBase &
@@ -52,9 +58,15 @@ export type ChangeAuthorityEvent = InstructionBase &
     type: InstructionType.ChangeAuthority
   }
 
+/*----------------------------------------------------------------------*/
+
+export type AddValidatorEventData = {
+  score: number
+}
+
 export type AddValidatorInfo = {
+  data: AddValidatorEventData
   accounts: solita.AddValidatorInstructionAccounts
-  data: solita.AddValidatorInstructionArgs
 }
 
 export type AddValidatorEvent = InstructionBase &
@@ -62,9 +74,16 @@ export type AddValidatorEvent = InstructionBase &
     type: InstructionType.AddValidator
   }
 
+/*----------------------------------------------------------------------*/
+
+export type RemoveValidatorEventData = {
+  index: number
+  validatorVote: PublicKey
+}
+
 export type RemoveValidatorInfo = {
+  data: RemoveValidatorEventData
   accounts: solita.RemoveValidatorInstructionAccounts
-  data: solita.RemoveValidatorInstructionArgs
 }
 
 export type RemoveValidatorEvent = InstructionBase &
@@ -72,9 +91,17 @@ export type RemoveValidatorEvent = InstructionBase &
     type: InstructionType.RemoveValidator
   }
 
+/*----------------------------------------------------------------------*/
+
+export type SetValidatorScoreEventData = {
+  index: number
+  validatorVote: PublicKey
+  score: number
+}
+
 export type SetValidatorScoreInfo = {
+  data: SetValidatorScoreEventData
   accounts: solita.SetValidatorScoreInstructionAccounts
-  data: solita.SetValidatorScoreInstructionArgs
 }
 
 export type SetValidatorScoreEvent = InstructionBase &
@@ -82,9 +109,15 @@ export type SetValidatorScoreEvent = InstructionBase &
     type: InstructionType.SetValidatorScore
   }
 
+/*----------------------------------------------------------------------*/
+
+export type ConfigValidatorSystemEventData = {
+  extraRuns: number
+}
+
 export type ConfigValidatorSystemInfo = {
+  data: ConfigValidatorSystemEventData
   accounts: solita.ConfigValidatorSystemInstructionAccounts
-  data: solita.ConfigValidatorSystemInstructionArgs
 }
 
 export type ConfigValidatorSystemEvent = InstructionBase &
@@ -92,9 +125,15 @@ export type ConfigValidatorSystemEvent = InstructionBase &
     type: InstructionType.ConfigValidatorSystem
   }
 
+/*----------------------------------------------------------------------*/
+
+export type DepositEventData = {
+  lamports: BN
+}
+
 export type DepositInfo = {
+  data: DepositEventData
   accounts: solita.DepositInstructionAccounts
-  data: solita.DepositInstructionArgs
 }
 
 export type DepositEvent = InstructionBase &
@@ -102,9 +141,15 @@ export type DepositEvent = InstructionBase &
     type: InstructionType.Deposit
   }
 
+/*----------------------------------------------------------------------*/
+
+export type DepositStakeAccountEventData = {
+  validatorIndex: number
+}
+
 export type DepositStakeAccountInfo = {
+  data: DepositStakeAccountEventData
   accounts: solita.DepositStakeAccountInstructionAccounts
-  data: solita.DepositStakeAccountInstructionArgs
 }
 
 export type DepositStakeAccountEvent = InstructionBase &
@@ -112,9 +157,15 @@ export type DepositStakeAccountEvent = InstructionBase &
     type: InstructionType.DepositStakeAccount
   }
 
+/*----------------------------------------------------------------------*/
+
+export type LiquidUnstakeEventData = {
+  msolAmount: BN
+}
+
 export type LiquidUnstakeInfo = {
+  data: LiquidUnstakeEventData
   accounts: solita.LiquidUnstakeInstructionAccounts
-  data: solita.LiquidUnstakeInstructionArgs
 }
 
 export type LiquidUnstakeEvent = InstructionBase &
@@ -122,9 +173,15 @@ export type LiquidUnstakeEvent = InstructionBase &
     type: InstructionType.LiquidUnstake
   }
 
+/*----------------------------------------------------------------------*/
+
+export type AddLiquidityEventData = {
+  lamports: BN
+}
+
 export type AddLiquidityInfo = {
+  data: AddLiquidityEventData
   accounts: solita.AddLiquidityInstructionAccounts
-  data: solita.AddLiquidityInstructionArgs
 }
 
 export type AddLiquidityEvent = InstructionBase &
@@ -132,9 +189,15 @@ export type AddLiquidityEvent = InstructionBase &
     type: InstructionType.AddLiquidity
   }
 
+/*----------------------------------------------------------------------*/
+
+export type RemoveLiquidityEventData = {
+  tokens: BN
+}
+
 export type RemoveLiquidityInfo = {
+  data: RemoveLiquidityEventData
   accounts: solita.RemoveLiquidityInstructionAccounts
-  data: solita.RemoveLiquidityInstructionArgs
 }
 
 export type RemoveLiquidityEvent = InstructionBase &
@@ -142,19 +205,23 @@ export type RemoveLiquidityEvent = InstructionBase &
     type: InstructionType.RemoveLiquidity
   }
 
-export type SetLpParamsInfo = {
-  accounts: solita.SetLpParamsInstructionAccounts
-  data: solita.SetLpParamsInstructionArgs
+/*----------------------------------------------------------------------*/
+
+export type ConfigLpInfo = {
+  data: solita.ConfigLpParams
+  accounts: solita.ConfigLpInstructionAccounts
 }
 
-export type SetLpParamsEvent = InstructionBase &
-  SetLpParamsInfo & {
-    type: InstructionType.SetLpParams
+export type ConfigLpEvent = InstructionBase &
+  ConfigLpInfo & {
+    type: InstructionType.ConfigLp
   }
 
+/*----------------------------------------------------------------------*/
+
 export type ConfigMarinadeInfo = {
+  data: solita.ConfigMarinadeParams
   accounts: solita.ConfigMarinadeInstructionAccounts
-  data: solita.ConfigMarinadeInstructionArgs
 }
 
 export type ConfigMarinadeEvent = InstructionBase &
@@ -162,9 +229,15 @@ export type ConfigMarinadeEvent = InstructionBase &
     type: InstructionType.ConfigMarinade
   }
 
+/*----------------------------------------------------------------------*/
+
+export type OrderUnstakeEventData = {
+  msolAmount: BN
+}
+
 export type OrderUnstakeInfo = {
+  data: OrderUnstakeEventData
   accounts: solita.OrderUnstakeInstructionAccounts
-  data: solita.OrderUnstakeInstructionArgs
 }
 
 export type OrderUnstakeEvent = InstructionBase &
@@ -172,9 +245,10 @@ export type OrderUnstakeEvent = InstructionBase &
     type: InstructionType.OrderUnstake
   }
 
+/*----------------------------------------------------------------------*/
+
 export type ClaimInfo = {
   accounts: solita.ClaimInstructionAccounts
-  data: {}
 }
 
 export type ClaimEvent = InstructionBase &
@@ -182,9 +256,15 @@ export type ClaimEvent = InstructionBase &
     type: InstructionType.Claim
   }
 
+/*----------------------------------------------------------------------*/
+
+export type StakeReserveEventData = {
+  validatorIndex: number
+}
+
 export type StakeReserveInfo = {
+  data: StakeReserveEventData
   accounts: solita.StakeReserveInstructionAccounts
-  data: solita.StakeReserveInstructionArgs
 }
 
 export type StakeReserveEvent = InstructionBase &
@@ -192,9 +272,16 @@ export type StakeReserveEvent = InstructionBase &
     type: InstructionType.StakeReserve
   }
 
+/*----------------------------------------------------------------------*/
+
+export type UpdateActiveEventData = {
+  stakeIndex: number
+  validatorIndex: number
+}
+
 export type UpdateActiveInfo = {
+  data: UpdateActiveEventData
   accounts: solita.UpdateActiveInstructionAccounts
-  data: solita.UpdateActiveInstructionArgs
 }
 
 export type UpdateActiveEvent = InstructionBase &
@@ -202,9 +289,15 @@ export type UpdateActiveEvent = InstructionBase &
     type: InstructionType.UpdateActive
   }
 
+/*----------------------------------------------------------------------*/
+
+export type UpdateDeactivatedEventData = {
+  stakeIndex: number
+}
+
 export type UpdateDeactivatedInfo = {
+  data: UpdateDeactivatedEventData
   accounts: solita.UpdateDeactivatedInstructionAccounts
-  data: solita.UpdateDeactivatedInstructionArgs
 }
 
 export type UpdateDeactivatedEvent = InstructionBase &
@@ -212,9 +305,16 @@ export type UpdateDeactivatedEvent = InstructionBase &
     type: InstructionType.UpdateDeactivated
   }
 
+/*----------------------------------------------------------------------*/
+
+export type DeactivateStakeEventData = {
+  stakeIndex: number
+  validatorIndex: number
+}
+
 export type DeactivateStakeInfo = {
+  data: DeactivateStakeEventData
   accounts: solita.DeactivateStakeInstructionAccounts
-  data: solita.DeactivateStakeInstructionArgs
 }
 
 export type DeactivateStakeEvent = InstructionBase &
@@ -222,9 +322,16 @@ export type DeactivateStakeEvent = InstructionBase &
     type: InstructionType.DeactivateStake
   }
 
+/*----------------------------------------------------------------------*/
+
+export type EmergencyUnstakeEventData = {
+  stakeIndex: number
+  validatorIndex: number
+}
+
 export type EmergencyUnstakeInfo = {
+  data: EmergencyUnstakeEventData
   accounts: solita.EmergencyUnstakeInstructionAccounts
-  data: solita.EmergencyUnstakeInstructionArgs
 }
 
 export type EmergencyUnstakeEvent = InstructionBase &
@@ -232,9 +339,17 @@ export type EmergencyUnstakeEvent = InstructionBase &
     type: InstructionType.EmergencyUnstake
   }
 
+/*----------------------------------------------------------------------*/
+
+export type PartialUnstakeEventData = {
+  stakeIndex: number
+  validatorIndex: number
+  desiredUnstakeAmount: BN
+}
+
 export type PartialUnstakeInfo = {
+  data: PartialUnstakeEventData
   accounts: solita.PartialUnstakeInstructionAccounts
-  data: solita.PartialUnstakeInstructionArgs
 }
 
 export type PartialUnstakeEvent = InstructionBase &
@@ -242,15 +357,25 @@ export type PartialUnstakeEvent = InstructionBase &
     type: InstructionType.PartialUnstake
   }
 
+/*----------------------------------------------------------------------*/
+
+export type MergeStakesEventData = {
+  destinationStakeIndex: number
+  sourceStakeIndex: number
+  validatorIndex: number
+}
+
 export type MergeStakesInfo = {
+  data: MergeStakesEventData
   accounts: solita.MergeStakesInstructionAccounts
-  data: solita.MergeStakesInstructionArgs
 }
 
 export type MergeStakesEvent = InstructionBase &
   MergeStakesInfo & {
     type: InstructionType.MergeStakes
   }
+
+/*----------------------------------------------------------------------*/
 
 export function getInstructionType(data: Buffer): InstructionType | undefined {
   const discriminator = data.slice(0, 8)
@@ -318,8 +443,8 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined> = new Map<
     InstructionType.RemoveLiquidity,
   ],
   [
-    Buffer.from(solita.setLpParamsInstructionDiscriminator).toString('ascii'),
-    InstructionType.SetLpParams,
+    Buffer.from(solita.configLpInstructionDiscriminator).toString('ascii'),
+    InstructionType.ConfigLp,
   ],
   [
     Buffer.from(solita.configMarinadeInstructionDiscriminator).toString(
@@ -384,7 +509,7 @@ export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
   [InstructionType.LiquidUnstake]: solita.liquidUnstakeStruct,
   [InstructionType.AddLiquidity]: solita.addLiquidityStruct,
   [InstructionType.RemoveLiquidity]: solita.removeLiquidityStruct,
-  [InstructionType.SetLpParams]: solita.setLpParamsStruct,
+  [InstructionType.ConfigLp]: solita.configLpStruct,
   [InstructionType.ConfigMarinade]: solita.configMarinadeStruct,
   [InstructionType.OrderUnstake]: solita.orderUnstakeStruct,
   [InstructionType.Claim]: solita.claimStruct,
@@ -409,7 +534,7 @@ export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
   [InstructionType.LiquidUnstake]: solita.LiquidUnstakeAccounts,
   [InstructionType.AddLiquidity]: solita.AddLiquidityAccounts,
   [InstructionType.RemoveLiquidity]: solita.RemoveLiquidityAccounts,
-  [InstructionType.SetLpParams]: solita.SetLpParamsAccounts,
+  [InstructionType.ConfigLp]: solita.ConfigLpAccounts,
   [InstructionType.ConfigMarinade]: solita.ConfigMarinadeAccounts,
   [InstructionType.OrderUnstake]: solita.OrderUnstakeAccounts,
   [InstructionType.Claim]: solita.ClaimAccounts,
@@ -434,7 +559,7 @@ export type ParsedEventsInfo =
   | LiquidUnstakeInfo
   | AddLiquidityInfo
   | RemoveLiquidityInfo
-  | SetLpParamsInfo
+  | ConfigLpInfo
   | ConfigMarinadeInfo
   | OrderUnstakeInfo
   | ClaimInfo
@@ -458,7 +583,7 @@ export type ParsedEvents =
   | LiquidUnstakeEvent
   | AddLiquidityEvent
   | RemoveLiquidityEvent
-  | SetLpParamsEvent
+  | ConfigLpEvent
   | ConfigMarinadeEvent
   | OrderUnstakeEvent
   | ClaimEvent

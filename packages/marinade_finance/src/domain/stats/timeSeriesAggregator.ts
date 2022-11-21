@@ -32,16 +32,16 @@ export class AccessTimeSeriesAggregator {
   ): AccessTimeStats {
     if ((curr as ParsedEvents).timestamp) {
       const event = curr as ParsedEvents
-      let signer: string;
+      let signer: string
       signer = event.signer as unknown as string
       acc.accesses++
       acc.accessesByProgramId[signer] = acc.accessesByProgramId[signer]
         ? acc.accessesByProgramId[signer] + 1
         : 1
-      if(!acc.startTimestamp || acc.startTimestamp > event.timestamp) {
+      if (!acc.startTimestamp || acc.startTimestamp > event.timestamp) {
         acc.startTimestamp = event.timestamp
       }
-      if(!acc.endTimestamp || acc.endTimestamp < event.timestamp) {
+      if (!acc.endTimestamp || acc.endTimestamp < event.timestamp) {
         acc.endTimestamp = event.timestamp
       }
     } else {
@@ -57,19 +57,20 @@ export class AccessTimeSeriesAggregator {
           },
         )
       }
-      if(!acc.startTimestamp) {
+      if (!acc.startTimestamp) {
         acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
       } else if (
-        (curr as AccessTimeStats).startTimestamp
-        && acc.startTimestamp > ((curr as AccessTimeStats).startTimestamp as number)
+        (curr as AccessTimeStats).startTimestamp &&
+        acc.startTimestamp >
+          ((curr as AccessTimeStats).startTimestamp as number)
       ) {
         acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
       }
-      if(!acc.endTimestamp) {
+      if (!acc.endTimestamp) {
         acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
       } else if (
-        (curr as AccessTimeStats).endTimestamp
-        && acc.endTimestamp < ((curr as AccessTimeStats).endTimestamp as number)
+        (curr as AccessTimeStats).endTimestamp &&
+        acc.endTimestamp < ((curr as AccessTimeStats).endTimestamp as number)
       ) {
         acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
       }

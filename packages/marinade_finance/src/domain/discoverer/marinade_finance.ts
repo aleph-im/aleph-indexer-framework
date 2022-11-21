@@ -43,7 +43,9 @@ export default class MarinadeFinanceDiscoverer {
     const connection = solanaPrivateRPC.getConnection()
     const accountsInfo: MarinadeFinanceAccountInfo[] = []
     // todo: If you want to only index a subset of account types, you can filter them here
-    const accountTypesToFilter: AccountType[] = [AccountType.TicketAccountData]
+    const accountTypesToFilter: AccountType[] = [
+      /*AccountType.*/
+    ]
     for (const type of this.accountTypes) {
       if (accountTypesToFilter.includes(type)) continue
       const accounts = await connection.getProgramAccounts(

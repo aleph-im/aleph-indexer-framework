@@ -34,7 +34,7 @@ export async function createAccountStats(
       ],
       getInputStream: async ({ account, startDate, endDate }) => {
         return await eventDAL
-          .useIndex(EventDALIndex.AccoountTimestamp)
+          .useIndex(EventDALIndex.AccountTimestamp)
           .getAllValuesFromTo([account, startDate], [account, endDate])
       },
       aggregate: ({ input, prevValue }): AccessTimeStats => {

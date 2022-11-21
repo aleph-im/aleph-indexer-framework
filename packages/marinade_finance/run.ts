@@ -20,7 +20,7 @@ async function main() {
   const projectId = 'marinade_finance'
   const dataPath = config.INDEXER_DATA_PATH || undefined // 'data'
   const transport =
-    (config.INDEXER_TRANSPORT as TransportType) || TransportType.Thread
+    (config.INDEXER_TRANSPORT as TransportType) || TransportType.LocalNet
 
   const transportConfig: any =
     tcpUrls || natsUrl ? { tcpUrls, natsUrl } : undefined

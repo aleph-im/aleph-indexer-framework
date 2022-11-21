@@ -88,7 +88,9 @@ export class TicketAccountData implements TicketAccountDataArgs {
    * @param programId - the program that owns the accounts we are filtering
    */
   static gpaBuilder(
-    programId: web3.PublicKey = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+    programId: web3.PublicKey = new web3.PublicKey(
+      'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD',
+    ),
   ) {
     return beetSolana.GpaBuilder.fromStruct(programId, ticketAccountDataBeet)
   }

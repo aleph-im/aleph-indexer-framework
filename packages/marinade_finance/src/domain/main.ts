@@ -122,16 +122,22 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<GlobalMarinadeFinanceStats> {
-    console.log(`📊 computing global stats for ${accountAddresses?.length} accounts`)
-    const accountsStats = await this.getAccountStats<MarinadeFinanceAccountStats>(
-      accountAddresses,
+    console.log(
+      `📊 computing global stats for ${accountAddresses?.length} accounts`,
     )
+    const accountsStats =
+      await this.getAccountStats<MarinadeFinanceAccountStats>(accountAddresses)
     const globalStats: GlobalMarinadeFinanceStats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
       if (!accountStats.stats) continue
 
-      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } = accountStats.stats.total
+      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
+        accountStats.stats.total
+
+      console.log(
+        `📊 computing global stats for ${accountStats.account} with ${accesses} accesses`,
+      )
 
       const type = this.discoverer.getAccountType(accountStats.account)
 

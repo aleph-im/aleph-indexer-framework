@@ -46,8 +46,8 @@ export class StatsAggregator {
     if (total) stats.total = total.data
 
     stats.accessingPrograms = new Set<string>([
-      ...(Object.keys(stats.total?.accessesByProgramId) || [])]
-    )
+      ...(Object.keys(stats.total?.accessesByProgramId) || []),
+    ])
 
     return stats
   }
