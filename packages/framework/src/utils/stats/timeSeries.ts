@@ -123,7 +123,7 @@ export class TimeSeriesStats<I, O> {
       // @note: get the previous time frame, which is able to cleanly divide the current time frame.
       let trueDivideTimeFrameIndex = timeFrameIndex - 1
       while (true) {
-        if (trueDivideTimeFrameIndex < 0) break
+        if (trueDivideTimeFrameIndex === 0) break
         if (timeFrameSize % sortedTimeFrames[trueDivideTimeFrameIndex].as(timeFrameName) === 0) break
         trueDivideTimeFrameIndex--
       }
