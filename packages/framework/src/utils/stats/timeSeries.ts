@@ -1,31 +1,19 @@
-import { Utils } from '@aleph-indexer/core'
-import { DateTime } from 'luxon'
+import {Utils} from '@aleph-indexer/core'
+import {DateTime, Interval} from 'luxon'
 import {
+  clipDateRangesFromIterable,
   DateRange,
   getDateRangeFromInterval,
   getIntervalFromDateRange,
+  getNextInterval,
   getPreviousInterval,
   getTimeFrameIntervals,
-  clipDateRangesFromIterable,
   mergeDateRangesFromIterable,
   TimeFrame,
 } from '../time.js'
-import {
-  StatsStateStorage,
-  StatsStateState,
-  StatsStateDALIndex,
-  StatsState,
-} from './dal/statsState.js'
-import {
-  StatsTimeSeries,
-  StatsTimeSeriesStorage,
-} from './dal/statsTimeSeries.js'
-import {
-  PrevValueFactoryFnArgs,
-  TimeSeriesStatsConfig,
-  TimeSeries,
-  AccountStatsFilters,
-} from './types.js'
+import {StatsState, StatsStateDALIndex, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
+import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
+import {AccountStatsFilters, PrevValueFactoryFnArgs, TimeSeries, TimeSeriesStatsConfig,} from './types.js'
 
 const { BufferExec } = Utils
 
@@ -114,10 +102,9 @@ export class TimeSeriesStats<I, O> {
         { startDate: 0, endDate: startDate - 1 },
       ])
     }
-
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
-
+      console.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
         [account, type, timeFrame],
@@ -128,8 +115,7 @@ export class TimeSeriesStats<I, O> {
         pendingDateRanges,
         clipRangesStream,
       )
-
-      // @todo: reduce the depth of for loops, or at least make it more readable
+      let addedEntries = 0
       for (const pendingRange of pendingTimeFrameDateRanges) {
         const processedIntervalsBuffer = new BufferExec<
           StatsTimeSeries<O | undefined>
@@ -138,8 +124,8 @@ export class TimeSeriesStats<I, O> {
           const valueEntries = entries.filter(
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
           )
-
           await this.timeSeriesDAL.save(valueEntries)
+          addedEntries += valueEntries.length
 
           // @note: Save states for all interval, either with empty data or not
           const stateEntries: StatsState[] = entries.map(
@@ -157,6 +143,12 @@ export class TimeSeriesStats<I, O> {
           // taking into account that the first interval can be smaller
           // depending on the date of the first input
           if (stateEntries.length) {
+            // @note: Remove first and last item, as they were included
+            // for including ranges that might be needed in bigger time frames
+            if(timeFrame !== TimeFrame.All) {
+              stateEntries.shift()
+              stateEntries.pop()
+            }
             const firstIndex = reverse ? stateEntries.length - 1 : 0
             const firstItem = stateEntries[firstIndex]
 
@@ -191,7 +183,6 @@ export class TimeSeriesStats<I, O> {
 
           await this.stateDAL.save(stateEntries)
         }, 1000)
-
         const pendingInterval = getIntervalFromDateRange(pendingRange)
 
         const intervals = getTimeFrameIntervals(
@@ -200,10 +191,16 @@ export class TimeSeriesStats<I, O> {
           reverse,
         )
 
+        if(timeFrame !== TimeFrame.All) {
+          intervals.unshift(getPreviousInterval(intervals[0], timeFrame))
+          intervals.push(getNextInterval(intervals[intervals.length - 1], timeFrame))
+        }
+
         if (!intervals.length) continue
 
         for (const interval of intervals) {
-          const { startDate, endDate } = getDateRangeFromInterval(interval)
+          let { startDate, endDate } = getDateRangeFromInterval(interval)
+          endDate = endDate - 1
 
           // const key = [account, type, timeFrame, startDate]
           const cache = {}
@@ -212,7 +209,7 @@ export class TimeSeriesStats<I, O> {
               ? await getInputStream({
                   account,
                   startDate,
-                  endDate: endDate - 1,
+                  endDate,
                 })
               : await this.timeSeriesDAL.getAllValuesFromTo(
                   [
@@ -225,14 +222,13 @@ export class TimeSeriesStats<I, O> {
                     account,
                     type,
                     sortedTimeFrames[timeFrameIndex - 1],
-                    endDate - 1,
+                    endDate,
                   ],
                 )
 
           let data: O | undefined
-
           for await (const value of inputs) {
-            const input = 'data' in value ? value.data : value
+            const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,
@@ -246,12 +242,20 @@ export class TimeSeriesStats<I, O> {
             type,
             timeFrame,
             startDate,
-            endDate: endDate - 1,
+            endDate,
             data,
           })
         }
 
         await processedIntervalsBuffer.drain()
+      }
+      if (addedEntries) {
+        console.log(`💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${
+          Interval.fromDateTimes(
+            DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
+            DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
+          ).toISO()
+        }`)
       }
     }
   }

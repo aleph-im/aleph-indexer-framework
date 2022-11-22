@@ -92,7 +92,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     this.pendingTransactions = new PendingWorkPool({
       id: 'pending-transactions',
       interval: 0,
-      chunkSize: 1000,
+      chunkSize: 500,
       concurrency: 1,
       dal: this.pendingTransactionDAL,
       handleWork: this._handlePendingTransactions.bind(this),
@@ -112,7 +112,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     this.pendingTransactionsFetch = new PendingWorkPool({
       id: 'pending-transactions-fetch',
       interval: 0,
-      chunkSize: 200,
+      chunkSize: 100,
       concurrency: 5,
       dal: this.pendingTransactionFetchDAL,
       handleWork: this._handlePendingTransactionsFetch.bind(this),
