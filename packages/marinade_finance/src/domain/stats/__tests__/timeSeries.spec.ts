@@ -76,12 +76,12 @@ describe('AccountTimeSeries', () => {
     const accountAddress = 'test'
     const testName = 'AccountStatsSomeSpreadOutEvents'
     const eventDAL = await mockEventDAL(testName, {
-      eventCnt: 3,
+      eventCnt: 1000,
       interval: Interval.fromDateTimes(DateTime.now().minus({year: 1}), DateTime.now())
     })
     const accountStats = await mockAccountStats(eventDAL, accountAddress, testName);
 
-    const events = await eventDAL.getAll()
+    let events = await eventDAL.getAll()
     let eventCnt = 0
     for await (const event of events) {
       eventCnt++;
@@ -97,7 +97,32 @@ describe('AccountTimeSeries', () => {
       timeFrame: TimeFrame.Day
     })
     expect(dayStats.series.length).toBeGreaterThan(0)
-    const accesses = dayStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
-    expect(accesses).toEqual(eventCnt)
+    const dayAccesses = dayStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
+    expect(dayAccesses).toEqual(eventCnt)
+
+    const weekStats = await accountStats.getTimeSeriesStats('access', {
+      timeFrame: TimeFrame.Week
+    })
+    expect(weekStats.series.length).toBeGreaterThan(0)
+    const weekAccesses = weekStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
+    expect(weekAccesses).toEqual(eventCnt)
+
+    const monthStats = await accountStats.getTimeSeriesStats('access', {
+      timeFrame: TimeFrame.Month
+    })
+    expect(monthStats.series.length).toBeGreaterThan(0)
+    const monthAccesses = monthStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
+    expect(monthAccesses).toEqual(eventCnt)
+
+    events = await eventDAL.getAll()
+    for await (const event of events) {
+      const event_d = DateTime.fromMillis(event.value.timestamp)
+      monthStats.series.forEach(s => {
+        const d = DateTime.fromISO(s.date)
+        if(d < event_d && event_d < d.plus({month: 1})) {
+          expect(s.value.accessingPrograms?.has(event.value.signer)).toBe(true)
+        }
+      })
+    }
   })
 })
