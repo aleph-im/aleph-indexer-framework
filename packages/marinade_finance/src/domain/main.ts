@@ -38,11 +38,14 @@ export default class MainDomain
     const accounts = await this.discoverer.loadAccounts()
 
     return accounts.map((meta) => {
+
       return {
         account: meta.address,
         meta,
         index: {
           transactions: {
+            // todo: add initial delay to avoid stampedes
+            // initialDelay: ,
             chunkDelay: 0,
             chunkTimeframe: 1000 * 60 * 60 * 24,
           },
