@@ -39,7 +39,7 @@
   "dependencies": {
     "@graphql-tools/schema": "^9.0.4",
     "@solana/spl-token-registry": "^0.2.7",
-    "@solana/web3.js": "^1.42.0",
+    "@solana/web3.js": "^1.66.2",
     "bn.js": "^5.2.0",
     "cacheable-lookup": "^6.0.4",
     "compression": "^1.7.4",

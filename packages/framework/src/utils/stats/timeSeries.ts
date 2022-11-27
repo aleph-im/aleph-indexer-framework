@@ -1,31 +1,19 @@
-import { Utils } from '@aleph-indexer/core'
+import {Utils} from '@aleph-indexer/core'
 import {DateTime, Interval} from 'luxon'
 import {
+  clipDateRangesFromIterable,
+  DateRange,
+  getDateRangeFromInterval,
   getIntervalFromDateRange,
+  getNextInterval,
   getPreviousInterval,
   getTimeFrameIntervals,
-  mergeIntervals,
-  getMostSignificantDurationUnitAndSize,
-  clipIntervals,
-  getIntervalsFromStorageStream,
-  prepareIntervals,
+  mergeDateRangesFromIterable,
+  TimeFrame,
 } from '../time.js'
-import {
-  StatsStateStorage,
-  StatsStateStatus,
-  StatsStateDALIndex,
-  StatsState,
-} from './dal/statsState.js'
-import {
-  StatsTimeSeries,
-  StatsTimeSeriesStorage,
-} from './dal/statsTimeSeries.js'
-import {
-  PrevValueFactoryFnArgs,
-  TimeSeriesStatsConfig,
-  TimeSeries,
-  AccountStatsFilters,
-} from './types.js'
+import {StatsState, StatsStateDALIndex, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
+import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
+import {AccountStatsFilters, PrevValueFactoryFnArgs, TimeSeries, TimeSeriesStatsConfig,} from './types.js'
 
 const { BufferExec } = Utils
 
@@ -63,8 +51,8 @@ export class TimeSeriesStats<I, O> {
     const { type } = this.config
 
     const values = await this.timeSeriesDAL.getAllValuesFromTo(
-      [account, type, timeFrame.toMillis(), startDate?.toMillis()],
-      [account, type, timeFrame.toMillis(), endDate?.toMillis()],
+      [account, type, timeFrame, startDate],
+      [account, type, timeFrame, endDate],
       { limit, reverse },
     )
 
@@ -89,14 +77,14 @@ export class TimeSeriesStats<I, O> {
    * @todo: refactor for better readability.
    * @param account The account to process the events for.
    * @param now The current unix timestamp.
-   * @param pendingIntervals The requested time frames to process.
+   * @param pendingDateRanges The requested time frames to process.
    * @param minDate @todo: what is this for?
    */
   async process(
     account: string,
     now: number,
-    pendingIntervals: Generator<Interval> | AsyncGenerator<Interval>,
-    minDate: DateTime | undefined,
+    pendingDateRanges: DateRange[],
+    minDate: number | undefined,
   ): Promise<void> {
     const {
       timeFrames,
@@ -110,80 +98,137 @@ export class TimeSeriesStats<I, O> {
     const sortedTimeFrames = timeFrames.sort()
 
     if (startDate !== undefined) {
-      pendingIntervals = clipIntervals(pendingIntervals, [
-        Interval.fromDateTimes(
-          DateTime.fromMillis(0), startDate.minus(1)
-        ),
+      pendingDateRanges = await clipDateRangesFromIterable(pendingDateRanges, [
+        { startDate: 0, endDate: startDate - 1 },
       ])
     }
-
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
-      const { unit: timeFrameName, size: timeFrameSize } = getMostSignificantDurationUnitAndSize(timeFrame)
-
-      // @note: get the previous time frame, which is able to cleanly divide the current time frame.
-      let trueDivideTimeFrameIndex = timeFrameIndex - 1
-      while (true) {
-        if (trueDivideTimeFrameIndex === 0) break
-        if (timeFrameSize % sortedTimeFrames[trueDivideTimeFrameIndex].as(timeFrameName) === 0) break
-        trueDivideTimeFrameIndex--
-      }
-
+      const timeFrameName = TimeFrame[timeFrame]
+      console.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
-        [account, type, timeFrame.toMillis()],
-        [account, type, timeFrame.toMillis()],
+        [account, type, timeFrame],
+        [account, type, timeFrame],
         { reverse: false },
       )
 
-      // @note: sort and clip the pending intervals to the ranges that are already processed.
-      const pendingTimeFrameIntervals = await prepareIntervals(
-        pendingIntervals,
-        getIntervalsFromStorageStream(clipRangesStream)
+      const pendingTimeFrameDateRanges = await clipDateRangesFromIterable(
+        pendingDateRanges,
+        clipRangesStream,
       )
+      let addedEntries = 0
+      for (const pendingRange of pendingTimeFrameDateRanges) {
+        const processedIntervalsBuffer = new BufferExec<
+          StatsTimeSeries<O | undefined>
+        >(async (entries) => {
+          // @note: Save entries that have any data
+          const valueEntries = entries.filter(
+            (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
+          )
+          await this.timeSeriesDAL.save(valueEntries)
+          addedEntries += valueEntries.length
 
-      for (const pendingInterval of pendingTimeFrameIntervals) {
-        const processedIntervalsBuffer = this.getProcessedIntervalsBuffer(
-          reverse,
-          pendingInterval,
-          minDate?.toMillis(),
-          type,
-          timeFrameName
-        )
+          // @note: Save states for all interval, either with empty data or not
+          const stateEntries: StatsState[] = entries.map(
+            ({ account, startDate, endDate, type, timeFrame }) => ({
+              account,
+              startDate,
+              endDate,
+              type,
+              timeFrame,
+              state: StatsStateState.Processed,
+            }),
+          )
 
-        const intervals = await getTimeFrameIntervals(
+          // @note: Exclude first item if it is an incomplete interval
+          // taking into account that the first interval can be smaller
+          // depending on the date of the first input
+          if (stateEntries.length) {
+            // @note: Remove first and last item, as they were included
+            // for including ranges that might be needed in bigger time frames
+            if(timeFrame !== TimeFrame.All) {
+              stateEntries.shift()
+              stateEntries.pop()
+            }
+            const firstIndex = reverse ? stateEntries.length - 1 : 0
+            const firstItem = stateEntries[firstIndex]
+
+            if (
+              firstItem.startDate < pendingRange.startDate &&
+              pendingRange.startDate !== minDate
+            ) {
+              console.log(
+                `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
+                  firstItem,
+                ).toISO()}`,
+              )
+              reverse ? stateEntries.pop() : stateEntries.shift()
+            }
+          }
+
+          // @note: Exclude last item if it is an incomplete interval
+          // so the last interval (real time) will be recalculated always
+          if (stateEntries.length) {
+            const lastIndex = reverse ? 0 : stateEntries.length - 1
+            const lastItem = stateEntries[lastIndex]
+
+            if (lastItem.endDate - 1 > pendingRange.endDate) {
+              console.log(
+                `📊 Recalculate incomplete LAST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
+                  lastItem,
+                ).toISO()}`,
+              )
+              reverse ? stateEntries.shift() : stateEntries.pop()
+            }
+          }
+
+          await this.stateDAL.save(stateEntries)
+        }, 1000)
+        const pendingInterval = getIntervalFromDateRange(pendingRange)
+
+        const intervals = getTimeFrameIntervals(
           pendingInterval,
           timeFrame,
           reverse,
         )
 
+        if(timeFrame !== TimeFrame.All) {
+          intervals.unshift(getPreviousInterval(intervals[0], timeFrame))
+          intervals.push(getNextInterval(intervals[intervals.length - 1], timeFrame))
+        }
+
+        if (!intervals.length) continue
+
         for (const interval of intervals) {
-          const timeFrameInMillis = sortedTimeFrames[trueDivideTimeFrameIndex].toMillis()
+          let { startDate, endDate } = getDateRangeFromInterval(interval)
+          endDate = endDate - 1
+
+          // const key = [account, type, timeFrame, startDate]
           const cache = {}
           const inputs =
-            trueDivideTimeFrameIndex === 0
+            timeFrameIndex === 0
               ? await getInputStream({
                   account,
-                  startDate: interval.start,
-                  endDate: interval.end.minus(1),
+                  startDate,
+                  endDate,
                 })
               : await this.timeSeriesDAL.getAllValuesFromTo(
                   [
                     account,
                     type,
-                    timeFrameInMillis,
-                    interval.start.toMillis(),
+                    sortedTimeFrames[timeFrameIndex - 1],
+                    startDate,
                   ],
                   [
                     account,
                     type,
-                    timeFrameInMillis,
-                    interval.end.toMillis(),
+                    sortedTimeFrames[timeFrameIndex - 1],
+                    endDate,
                   ],
                 )
 
           let data: O | undefined
-
           for await (const value of inputs) {
-            const input = 'data' in value ? value.data : value
+            const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,
@@ -195,147 +240,74 @@ export class TimeSeriesStats<I, O> {
           await processedIntervalsBuffer.add({
             account,
             type,
-            timeFrame: timeFrameInMillis,
-            startDate: interval.start.toMillis(),
-            endDate: interval.end.minus(1).toMillis(),
+            timeFrame,
+            startDate,
+            endDate,
             data,
           })
         }
 
         await processedIntervalsBuffer.drain()
       }
+      if (addedEntries) {
+        console.log(`💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${
+          Interval.fromDateTimes(
+            DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
+            DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
+          ).toISO()
+        }`)
+      }
     }
-  }
-
-  private getProcessedIntervalsBuffer(
-    reverse: boolean | undefined,
-    pendingRange: Interval,
-    minDate: number | undefined,
-    type: string,
-    timeFrameName: string)
-  {
-    return new BufferExec<StatsTimeSeries<O | undefined>>(async (entries) => {
-      // @note: Save entries that have any data
-      const valueEntries = entries.filter(
-        (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
-      )
-
-      await this.timeSeriesDAL.save(valueEntries)
-
-      // @note: Save states for all interval, either with empty data or not
-      const stateEntries: StatsState[] = entries.map(
-        ({account, startDate, endDate, type, timeFrame}) => ({
-          account,
-          startDate,
-          endDate,
-          type,
-          timeFrame,
-          state: StatsStateStatus.Processed,
-        }),
-      )
-
-      // @note: Exclude first item if it is an incomplete interval
-      // taking into account that the first interval can be smaller
-      // depending on the date of the first input
-      if (stateEntries.length) {
-        const firstIndex = reverse ? stateEntries.length - 1 : 0
-        const firstItem = stateEntries[firstIndex]
-
-        if (
-          firstItem.startDate < pendingRange.start.toMillis() &&
-          pendingRange.start.toMillis() !== minDate
-        ) {
-          console.log(
-            `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
-              firstItem.startDate, firstItem.endDate
-            ).toISO()}`,
-          )
-          reverse ? stateEntries.pop() : stateEntries.shift()
-        }
-      }
-
-      // @note: Exclude last item if it is an incomplete interval
-      // so the last interval (real time) will be recalculated always
-      if (stateEntries.length) {
-        const lastIndex = reverse ? 0 : stateEntries.length - 1
-        const lastItem = stateEntries[lastIndex]
-
-        if (lastItem.endDate - 1 > pendingRange.end.toMillis()) {
-          console.log(
-            `📊 Recalculate incomplete LAST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
-              lastItem.startDate, lastItem.endDate
-            ).toISO()}`,
-          )
-          reverse ? stateEntries.shift() : stateEntries.pop()
-        }
-      }
-
-      await this.stateDAL.save(stateEntries)
-    }, 1000);
   }
 
   async getPrevValue({
     account,
     type,
-    timeFrame,
+    timeFrame: frame,
     interval,
     reverse,
   }: PrevValueFactoryFnArgs): Promise<O | undefined> {
-    const prevInterval = getPreviousInterval(interval, timeFrame, reverse)
+    const prevInterval = getPreviousInterval(interval, frame, reverse)
 
-    const timeSeries = await this.timeSeriesDAL.get([
-      account,
-      type,
-      timeFrame.toMillis(),
-      prevInterval.start.toMillis()
-    ])
+    const key = [account, type, frame, prevInterval.start.toMillis()]
+    const timeSeries = await this.timeSeriesDAL.get(key)
 
     return timeSeries?.data
   }
 
-  public async compactStates(account: string): Promise<void> {
-    const { type } = this.config
-    const { Processed } = StatsStateStatus
+  protected async compactStates(account: string): Promise<void> {
+    const { Processed } = StatsStateState
 
-    // @note: entries from DAL are always sorted
     const fetchedRanges = await this.stateDAL
       .useIndex(StatsStateDALIndex.AccountTypeState)
-      .getAllValuesFromTo([account, type, Processed], [account, type, Processed], {
+      .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
       })
 
-    const { newRanges, oldRanges } = await mergeIntervals(
-      getIntervalsFromStorageStream(fetchedRanges),
+    const { newRanges, oldRanges } = await mergeDateRangesFromIterable(
+      fetchedRanges,
     )
 
     if (!newRanges.length) return
 
     const newStates = newRanges.map((range) => {
-      return {
-        startDate: range.start.toMillis(),
-        endDate: range.end.toMillis(),
-        timeFrame: range.toDuration().toMillis(),
-        state: Processed,
-        account,
-        type
-      }
+      const newState = range as StatsState
+      newState.account = account
+      newState.state = Processed
+      return newState
     })
 
     const oldStates = oldRanges.map((range) => {
-      return {
-        startDate: range.start.toMillis(),
-        endDate: range.end.toMillis(),
-        timeFrame: range.toDuration().toMillis(),
-        state: Processed,
-        account,
-        type
-      }
+      const oldState = range as StatsState
+      oldState.account = account
+      oldState.state = Processed
+      return oldState
     })
 
     console.log(
       `💿 compact stats states
-        new ranges to save: ${newStates.length},
-        old ranges to delete: ${oldStates.length}
+        newRanges: ${newStates.length},
+        toDeleteRanges: ${oldStates.length}
       `,
     )
 

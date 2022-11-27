@@ -157,6 +157,7 @@ export class SolanaRPC {
           {
             commitment: 'finalized',
             encoding: 'jsonParsed',
+            maxSupportedTransactionVersion: 0,
             ...options,
           },
         ],
@@ -188,6 +189,7 @@ export class SolanaRPC {
       {
         commitment: 'finalized',
         encoding: 'jsonParsed',
+        maxSupportedTransactionVersion: 0,
       },
     ])
 
@@ -216,6 +218,7 @@ export class SolanaRPC {
           {
             commitment: 'finalized',
             encoding: 'jsonParsed',
+            maxSupportedTransactionVersion: 0,
           },
         ],
       }

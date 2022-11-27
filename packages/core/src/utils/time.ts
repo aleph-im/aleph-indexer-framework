@@ -38,11 +38,11 @@ export function* splitDurationIntoIntervals(
       ? DateTime.fromISO(end, zone)
       : DateTime.fromMillis(end, zone)
 
-  if (startDate >= endDate) {
+  if (startDate > endDate) {
     return []
   }
 
-  let length = Math.ceil(
+  let length = startDate.equals(endDate) ? 1 : Math.ceil(
     endDate
       .diff(startDate, intervalUnit as DurationUnit)
       .get(intervalUnit as DurationUnit) / intervalSize,

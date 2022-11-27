@@ -1,10 +1,15 @@
 import { Utils } from '@aleph-indexer/core'
 import { IndexerMsI } from '../../services/indexer/index.js'
 import {
-  toInterval,
+  DateRange,
+  getDateRangeFromInterval,
+  mergeDateRangesFromIterable,
 } from '../time.js'
 import {
   StatsStateStorage,
+  StatsStateState,
+  StatsStateDALIndex,
+  StatsState,
 } from './dal/statsState.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
 import {
@@ -13,19 +18,18 @@ import {
   AccountTimeSeriesStatsConfig,
   AccountStats,
 } from './types.js'
-import {DateTime, Interval} from "luxon";
 
 const { JobRunner } = Utils
 
 /**
  * Defines the account stats handler class.
  */
-export class AccountTimeSeriesStatsManager {
+export class AccountTimeSeriesStatsManager<V> {
   protected compactionJob!: Utils.JobRunner
-  protected stats!: AccountStats
+  protected stats!: AccountStats<V>
 
   constructor(
-    public config: AccountTimeSeriesStatsConfig,
+    public config: AccountTimeSeriesStatsConfig<V>,
     protected indexerApi: IndexerMsI,
     protected stateDAL: StatsStateStorage,
     protected timeSeriesDAL: StatsTimeSeriesStorage,
@@ -67,15 +71,15 @@ export class AccountTimeSeriesStatsManager {
     }
   }
 
-  async getStats(): Promise<AccountStats> {
+  async getStats(): Promise<AccountStats<V>> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
     }
-
     return this.stats
   }
 
   async process(now: number): Promise<void> {
+    console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)
     await this.aggregateAccountStats(now)
   }
@@ -88,25 +92,23 @@ export class AccountTimeSeriesStatsManager {
 
     if (!state.processed.length) return
 
-    const generatePendingRanges = function* () {
-      for(const isoDateTime of state.processed) {
-        yield Interval.fromISO(isoDateTime)
-      }
-    }
+    const pendingRanges: DateRange[] = state.processed.map(
+      getDateRangeFromInterval,
+    )
 
-    let minDate: DateTime | undefined
+    let minDate
 
     if (state.accurate) {
-      const minProcessedDate = toInterval(
+      const minProcessedDate = getDateRangeFromInterval(
         state.processed[0],
-      ).start
+      ).startDate
 
       if (!state.pending.length) {
         minDate = minProcessedDate
       } else {
-        const minPendingDate = toInterval(
+        const minPendingDate = getDateRangeFromInterval(
           state.pending[0],
-        ).start
+        ).startDate
 
         if (minProcessedDate <= minPendingDate) {
           minDate = minProcessedDate
@@ -115,25 +117,62 @@ export class AccountTimeSeriesStatsManager {
     }
 
     for (const timeSeries of this.config.series) {
-      await timeSeries.process(account, now, generatePendingRanges(), minDate)
+      await timeSeries.process(account, now, pendingRanges, minDate)
     }
   }
 
-  // @todo: check if 'now' is needed
   protected async aggregateAccountStats(now: number): Promise<void> {
     const { account, aggregate } = this.config
     const { timeSeriesDAL } = this
 
     if (aggregate) {
-      const stats = await aggregate({ now: DateTime.now(), account, timeSeriesDAL })
+      console.log(`📊 aggregating account stats for ${account}`)
+      const stats: V = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }
       return
     }
   }
 
   protected async compactStates(): Promise<void> {
-    for (const timeSeries of this.config.series) {
-      await timeSeries.compactStates(this.config.account)
+    const { account } = this.config
+    const { Processed } = StatsStateState
+
+    const fetchedRanges = await this.stateDAL
+      .useIndex(StatsStateDALIndex.AccountTypeState)
+      .getAllValuesFromTo([account, Processed], [account, Processed], {
+        reverse: false,
+      })
+
+    const { newRanges, oldRanges } = await mergeDateRangesFromIterable(
+      fetchedRanges,
+    )
+
+    const newStates = newRanges.map((range) => {
+      const newState = range as StatsState
+      newState.account = account
+      newState.state = Processed
+      return newState
+    })
+
+    const oldStates = oldRanges.map((range) => {
+      const oldState = range as StatsState
+      oldState.account = account
+      oldState.state = Processed
+      return oldState
+    })
+
+    if (newStates.length > 0) {
+      console.log(
+        `💿 compact stats states
+        newRanges: ${newStates.length},
+        toDeleteRanges: ${oldStates.length}
+      `,
+      )
     }
+
+    await Promise.all([
+      this.stateDAL.save(newStates),
+      this.stateDAL.remove(oldStates),
+    ])
   }
 }

@@ -53,10 +53,10 @@ export type TimeSeriesStatsConfig<I, O> = {
   reverse?: boolean
 }
 
-export type AccountTimeSeriesStatsConfig = {
+export type AccountTimeSeriesStatsConfig<V> = {
   account: string
   series: TimeSeriesStats<any, any>[]
-  aggregate?: (args: AccountAggregatorFnArgs) => any
+  aggregate?: (args: AccountAggregatorFnArgs) => Promise<V>
 }
 
 export type TypedValue = { type: string }

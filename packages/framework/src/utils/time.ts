@@ -242,3 +242,19 @@ export function getPreviousInterval(
     ? Interval.after(interval.end, durationObj)
     : Interval.before(interval.start, durationObj)
 }
+
+export function getNextInterval(
+  interval: Interval,
+  timeFrame: TimeFrame,
+  reverse = false,
+): Interval {
+  if (timeFrame === TimeFrame.All)
+    throw new Error('TimeFrame.All does not have a next interval')
+
+  const [unit, num] = TimeFrameDurationUnitsMap[timeFrame]
+  const durationObj = { [unit]: num }
+
+  return reverse
+    ? Interval.before(interval.start, durationObj)
+    : Interval.after(interval.end, durationObj)
+}
