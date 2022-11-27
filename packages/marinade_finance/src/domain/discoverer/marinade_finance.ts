@@ -36,10 +36,18 @@ export default class MarinadeFinanceDiscoverer {
     return this.cache[address].type
   }
 
+  /**
+   * Fetches all accounts from the program. Useful to filter which accounts should be indexed.
+   */
   async getAllAccounts(): Promise<MarinadeFinanceAccountInfo[]> {
     const connection = solanaPrivateRPC.getConnection()
     const accountsInfo: MarinadeFinanceAccountInfo[] = []
+    // todo: If you want to only index a subset of account types, you can filter them here
+    const accountTypesToFilter: AccountType[] = [
+      /*AccountType.*/
+    ]
     for (const type of this.accountTypes) {
+      if (accountTypesToFilter.includes(type)) continue
       const accounts = await connection.getProgramAccounts(
         MARINADE_FINANCE_PROGRAM_ID_PK,
         {

@@ -1,4 +1,5 @@
 export * from './ChangeAuthorityData.js'
+export * from './ConfigLpParams.js'
 export * from './ConfigMarinadeParams.js'
 export * from './Fee.js'
 export * from './InitializeData.js'

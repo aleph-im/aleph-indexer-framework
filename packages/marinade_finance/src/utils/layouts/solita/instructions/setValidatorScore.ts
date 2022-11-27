@@ -51,23 +51,12 @@ export type SetValidatorScoreInstructionAccounts = {
   state: web3.PublicKey
   managerAuthority: web3.PublicKey
   validatorList: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const SetValidatorScoreAccounts = [
-  'state',
-  'managerAuthority',
-  'validatorList',
-]
 
 export const setValidatorScoreInstructionDiscriminator = [
   101, 41, 206, 33, 216, 111, 25, 78,
 ]
-
-export type SetValidatorScoreInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _SetValidatorScore_ instruction.
@@ -82,33 +71,38 @@ export type SetValidatorScoreInstruction = {
 export function createSetValidatorScoreInstruction(
   accounts: SetValidatorScoreInstructionAccounts,
   args: SetValidatorScoreInstructionArgs,
-): SetValidatorScoreInstruction {
-  const { state, managerAuthority, validatorList } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = setValidatorScoreStruct.serialize({
     instructionDiscriminator: setValidatorScoreInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: managerAuthority,
+      pubkey: accounts.managerAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
   ]
 
-  const ix: SetValidatorScoreInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

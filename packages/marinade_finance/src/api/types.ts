@@ -13,8 +13,6 @@ import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 
-// if you have some errors here most probably will be solved by changing the order of types
-
 export const Fee = new GraphQLObjectType({
   name: 'Fee',
   fields: {
@@ -53,6 +51,16 @@ export const ChangeAuthorityData = new GraphQLObjectType({
     validatorManager: { type: new GraphQLNonNull(GraphQLString) },
     operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
     treasuryMsolAccount: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const ConfigLpParams = new GraphQLObjectType({
+  name: 'ConfigLpParams',
+  fields: {
+    minFee: { type: new GraphQLNonNull(Fee) },
+    maxFee: { type: new GraphQLNonNull(Fee) },
+    liquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    treasuryCut: { type: new GraphQLNonNull(Fee) },
   },
 })
 
@@ -146,8 +154,6 @@ export const ValidatorSystem = new GraphQLObjectType({
 })
 
 // ------------------- STATS ---------------------------
-
-// look .src/domain/stats/statsAggregator & ./src/types.ts
 
 export const AccessTimeStats = new GraphQLObjectType({
   name: 'MarinadeFinanceInfo',
@@ -290,7 +296,7 @@ export const ParsedEvents = new GraphQLEnumType({
     LiquidUnstakeEvent: { value: 'LiquidUnstakeEvent' },
     AddLiquidityEvent: { value: 'AddLiquidityEvent' },
     RemoveLiquidityEvent: { value: 'RemoveLiquidityEvent' },
-    SetLpParamsEvent: { value: 'SetLpParamsEvent' },
+    ConfigLpEvent: { value: 'ConfigLpEvent' },
     ConfigMarinadeEvent: { value: 'ConfigMarinadeEvent' },
     OrderUnstakeEvent: { value: 'OrderUnstakeEvent' },
     ClaimEvent: { value: 'ClaimEvent' },
@@ -309,6 +315,7 @@ const commonEventFields = {
   timestamp: { type: GraphQLLong },
   type: { type: new GraphQLNonNull(ParsedEvents) },
   account: { type: new GraphQLNonNull(GraphQLString) },
+  signer: { type: new GraphQLNonNull(GraphQLString) },
 }
 
 const Event = new GraphQLInterfaceType({
@@ -318,23 +325,43 @@ const Event = new GraphQLInterfaceType({
   },
 })
 
+/*-----------------------* CUSTOM EVENTS TYPES *-----------------------*/
+
+export const InitializeEventAccounts = new GraphQLObjectType({
+  name: 'InitializeEventAccounts',
+  fields: {
+    creatorAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    state: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    msolMint: { type: new GraphQLNonNull(GraphQLString) },
+    operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
+    liqPool: { type: new GraphQLNonNull(GraphQLString) },
+    treasuryMsolAccount: { type: new GraphQLNonNull(GraphQLString) },
+    clock: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
 export const InitializeEvent = new GraphQLObjectType({
   name: 'InitializeEvent',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.Initialize,
   fields: {
     ...commonEventFields,
-    creatorauthority: { type: new GraphQLNonNull(GraphQLString) },
+    data: { type: new GraphQLNonNull(InitializeData) },
+    accounts: { type: new GraphQLNonNull(InitializeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const ChangeAuthorityEventAccounts = new GraphQLObjectType({
+  name: 'ChangeAuthorityEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    msolmint: { type: new GraphQLNonNull(GraphQLString) },
-    operationalsolaccount: { type: new GraphQLNonNull(GraphQLString) },
-    liqpool: { type: new GraphQLNonNull(GraphQLString) },
-    treasurymsolaccount: { type: new GraphQLNonNull(GraphQLString) },
-    clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
+    adminAuthority: { type: new GraphQLNonNull(GraphQLString) },
   },
 })
 
@@ -344,8 +371,32 @@ export const ChangeAuthorityEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.ChangeAuthority,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(ChangeAuthorityData) },
+    accounts: { type: new GraphQLNonNull(ChangeAuthorityEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const AddValidatorEventAccounts = new GraphQLObjectType({
+  name: 'AddValidatorEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    adminauthority: { type: new GraphQLNonNull(GraphQLString) },
+    managerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    validatorVote: { type: new GraphQLNonNull(GraphQLString) },
+    duplicationFlag: { type: new GraphQLNonNull(GraphQLString) },
+    rentPayer: { type: new GraphQLNonNull(GraphQLString) },
+    clock: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const AddValidatorEventData = new GraphQLObjectType({
+  name: 'AddValidatorEventData',
+  fields: {
+    score: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -355,15 +406,29 @@ export const AddValidatorEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.AddValidator,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(AddValidatorEventData) },
+    accounts: { type: new GraphQLNonNull(AddValidatorEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const RemoveValidatorEventAccounts = new GraphQLObjectType({
+  name: 'RemoveValidatorEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    managerauthority: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    validatorvote: { type: new GraphQLNonNull(GraphQLString) },
-    duplicationflag: { type: new GraphQLNonNull(GraphQLString) },
-    rentpayer: { type: new GraphQLNonNull(GraphQLString) },
-    clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
+    managerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    duplicationFlag: { type: new GraphQLNonNull(GraphQLString) },
+    operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const RemoveValidatorEventData = new GraphQLObjectType({
+  name: 'RemoveValidatorEventData',
+  fields: {
+    index: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorVote: { type: new GraphQLNonNull(GraphQLString) },
   },
 })
 
@@ -373,11 +438,28 @@ export const RemoveValidatorEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.RemoveValidator,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(RemoveValidatorEventData) },
+    accounts: { type: new GraphQLNonNull(RemoveValidatorEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const SetValidatorScoreEventAccounts = new GraphQLObjectType({
+  name: 'SetValidatorScoreEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    managerauthority: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    duplicationflag: { type: new GraphQLNonNull(GraphQLString) },
-    operationalsolaccount: { type: new GraphQLNonNull(GraphQLString) },
+    managerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const SetValidatorScoreEventData = new GraphQLObjectType({
+  name: 'SetValidatorScoreEventData',
+  fields: {
+    index: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorVote: { type: new GraphQLNonNull(GraphQLString) },
+    score: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -387,9 +469,25 @@ export const SetValidatorScoreEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.SetValidatorScore,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(SetValidatorScoreEventData) },
+    accounts: { type: new GraphQLNonNull(SetValidatorScoreEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const ConfigValidatorSystemEventAccounts = new GraphQLObjectType({
+  name: 'ConfigValidatorSystemEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    managerauthority: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
+    managerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const ConfigValidatorSystemEventData = new GraphQLObjectType({
+  name: 'ConfigValidatorSystemEventData',
+  fields: {
+    extraRuns: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -399,8 +497,34 @@ export const ConfigValidatorSystemEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.ConfigValidatorSystem,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(ConfigValidatorSystemEventData) },
+    accounts: { type: new GraphQLNonNull(ConfigValidatorSystemEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const DepositEventAccounts = new GraphQLObjectType({
+  name: 'DepositEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    managerauthority: { type: new GraphQLNonNull(GraphQLString) },
+    msolMint: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolSolLegPda: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLeg: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLegAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    transferFrom: { type: new GraphQLNonNull(GraphQLString) },
+    mintTo: { type: new GraphQLNonNull(GraphQLString) },
+    msolMintAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const DepositEventData = new GraphQLObjectType({
+  name: 'DepositEventData',
+  fields: {
+    lamports: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -410,17 +534,38 @@ export const DepositEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.Deposit,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(DepositEventData) },
+    accounts: { type: new GraphQLNonNull(DepositEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const DepositStakeAccountEventAccounts = new GraphQLObjectType({
+  name: 'DepositStakeAccountEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    msolmint: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolsollegpda: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsolleg: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsollegauthority: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    transferfrom: { type: new GraphQLNonNull(GraphQLString) },
-    mintto: { type: new GraphQLNonNull(GraphQLString) },
-    msolmintauthority: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    duplicationFlag: { type: new GraphQLNonNull(GraphQLString) },
+    rentPayer: { type: new GraphQLNonNull(GraphQLString) },
+    msolMint: { type: new GraphQLNonNull(GraphQLString) },
+    mintTo: { type: new GraphQLNonNull(GraphQLString) },
+    msolMintAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    clock: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const DepositStakeAccountEventData = new GraphQLObjectType({
+  name: 'DepositStakeAccountEventData',
+  fields: {
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -430,21 +575,33 @@ export const DepositStakeAccountEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.DepositStakeAccount,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(DepositStakeAccountEventData) },
+    accounts: { type: new GraphQLNonNull(DepositStakeAccountEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const LiquidUnstakeEventAccounts = new GraphQLObjectType({
+  name: 'LiquidUnstakeEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    stakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    stakeauthority: { type: new GraphQLNonNull(GraphQLString) },
-    duplicationflag: { type: new GraphQLNonNull(GraphQLString) },
-    rentpayer: { type: new GraphQLNonNull(GraphQLString) },
-    msolmint: { type: new GraphQLNonNull(GraphQLString) },
-    mintto: { type: new GraphQLNonNull(GraphQLString) },
-    msolmintauthority: { type: new GraphQLNonNull(GraphQLString) },
-    clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    msolMint: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolSolLegPda: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLeg: { type: new GraphQLNonNull(GraphQLString) },
+    treasuryMsolAccount: { type: new GraphQLNonNull(GraphQLString) },
+    getMsolFrom: { type: new GraphQLNonNull(GraphQLString) },
+    getMsolFromAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    transferSolTo: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const LiquidUnstakeEventData = new GraphQLObjectType({
+  name: 'LiquidUnstakeEventData',
+  fields: {
+    msolAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -454,16 +611,32 @@ export const LiquidUnstakeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.LiquidUnstake,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(LiquidUnstakeEventData) },
+    accounts: { type: new GraphQLNonNull(LiquidUnstakeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const AddLiquidityEventAccounts = new GraphQLObjectType({
+  name: 'AddLiquidityEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    msolmint: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolsollegpda: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsolleg: { type: new GraphQLNonNull(GraphQLString) },
-    treasurymsolaccount: { type: new GraphQLNonNull(GraphQLString) },
-    getmsolfrom: { type: new GraphQLNonNull(GraphQLString) },
-    getmsolfromauthority: { type: new GraphQLNonNull(GraphQLString) },
-    transfersolto: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
+    lpMint: { type: new GraphQLNonNull(GraphQLString) },
+    lpMintAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLeg: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolSolLegPda: { type: new GraphQLNonNull(GraphQLString) },
+    transferFrom: { type: new GraphQLNonNull(GraphQLString) },
+    mintTo: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const AddLiquidityEventData = new GraphQLObjectType({
+  name: 'AddLiquidityEventData',
+  fields: {
+    lamports: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -473,15 +646,34 @@ export const AddLiquidityEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.AddLiquidity,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(AddLiquidityEventData) },
+    accounts: { type: new GraphQLNonNull(AddLiquidityEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const RemoveLiquidityEventAccounts = new GraphQLObjectType({
+  name: 'RemoveLiquidityEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    lpmint: { type: new GraphQLNonNull(GraphQLString) },
-    lpmintauthority: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsolleg: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolsollegpda: { type: new GraphQLNonNull(GraphQLString) },
-    transferfrom: { type: new GraphQLNonNull(GraphQLString) },
-    mintto: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
+    lpMint: { type: new GraphQLNonNull(GraphQLString) },
+    burnFrom: { type: new GraphQLNonNull(GraphQLString) },
+    burnFromAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    transferSolTo: { type: new GraphQLNonNull(GraphQLString) },
+    transferMsolTo: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolSolLegPda: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLeg: { type: new GraphQLNonNull(GraphQLString) },
+    liqPoolMsolLegAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const RemoveLiquidityEventData = new GraphQLObjectType({
+  name: 'RemoveLiquidityEventData',
+  fields: {
+    tokens: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -491,28 +683,39 @@ export const RemoveLiquidityEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.RemoveLiquidity,
   fields: {
     ...commonEventFields,
-    state: { type: new GraphQLNonNull(GraphQLString) },
-    lpmint: { type: new GraphQLNonNull(GraphQLString) },
-    burnfrom: { type: new GraphQLNonNull(GraphQLString) },
-    burnfromauthority: { type: new GraphQLNonNull(GraphQLString) },
-    transfersolto: { type: new GraphQLNonNull(GraphQLString) },
-    transfermsolto: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolsollegpda: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsolleg: { type: new GraphQLNonNull(GraphQLString) },
-    liqpoolmsollegauthority: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
+    data: { type: new GraphQLNonNull(RemoveLiquidityEventData) },
+    accounts: { type: new GraphQLNonNull(RemoveLiquidityEventAccounts) },
   },
 })
 
-export const SetLpParamsEvent = new GraphQLObjectType({
-  name: 'SetLpParamsEvent',
+/*----------------------------------------------------------------------*/
+
+export const ConfigLpEventAccounts = new GraphQLObjectType({
+  name: 'ConfigLpEventAccounts',
+  fields: {
+    state: { type: new GraphQLNonNull(GraphQLString) },
+    adminAuthority: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const ConfigLpEvent = new GraphQLObjectType({
+  name: 'ConfigLpEvent',
   interfaces: [Event],
-  isTypeOf: (item) => item.type === InstructionType.SetLpParams,
+  isTypeOf: (item) => item.type === InstructionType.ConfigLp,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(ConfigLpParams) },
+    accounts: { type: new GraphQLNonNull(ConfigLpEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const ConfigMarinadeEventAccounts = new GraphQLObjectType({
+  name: 'ConfigMarinadeEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    adminauthority: { type: new GraphQLNonNull(GraphQLString) },
+    adminAuthority: { type: new GraphQLNonNull(GraphQLString) },
   },
 })
 
@@ -522,8 +725,31 @@ export const ConfigMarinadeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.ConfigMarinade,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(ConfigMarinadeParams) },
+    accounts: { type: new GraphQLNonNull(ConfigMarinadeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const OrderUnstakeEventAccounts = new GraphQLObjectType({
+  name: 'OrderUnstakeEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    adminauthority: { type: new GraphQLNonNull(GraphQLString) },
+    msolMint: { type: new GraphQLNonNull(GraphQLString) },
+    burnMsolFrom: { type: new GraphQLNonNull(GraphQLString) },
+    burnMsolAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    newTicketAccount: { type: new GraphQLNonNull(GraphQLString) },
+    clock: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    tokenProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const OrderUnstakeEventData = new GraphQLObjectType({
+  name: 'OrderUnstakeEventData',
+  fields: {
+    msolAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -533,14 +759,22 @@ export const OrderUnstakeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.OrderUnstake,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(OrderUnstakeEventData) },
+    accounts: { type: new GraphQLNonNull(OrderUnstakeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const ClaimEventAccounts = new GraphQLObjectType({
+  name: 'ClaimEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    msolmint: { type: new GraphQLNonNull(GraphQLString) },
-    burnmsolfrom: { type: new GraphQLNonNull(GraphQLString) },
-    burnmsolauthority: { type: new GraphQLNonNull(GraphQLString) },
-    newticketaccount: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    ticketAccount: { type: new GraphQLNonNull(GraphQLString) },
+    transferSolTo: { type: new GraphQLNonNull(GraphQLString) },
     clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    tokenprogram: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
   },
 })
 
@@ -550,12 +784,36 @@ export const ClaimEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.Claim,
   fields: {
     ...commonEventFields,
+    accounts: { type: new GraphQLNonNull(ClaimEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const StakeReserveEventAccounts = new GraphQLObjectType({
+  name: 'StakeReserveEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    ticketaccount: { type: new GraphQLNonNull(GraphQLString) },
-    transfersolto: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    validatorVote: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    stakeDepositAuthority: { type: new GraphQLNonNull(GraphQLString) },
     clock: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
+    epochSchedule: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    stakeHistory: { type: new GraphQLNonNull(GraphQLString) },
+    stakeConfig: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const StakeReserveEventData = new GraphQLObjectType({
+  name: 'StakeReserveEventData',
+  fields: {
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -565,20 +823,26 @@ export const StakeReserveEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.StakeReserve,
   fields: {
     ...commonEventFields,
-    state: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    validatorvote: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    stakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    stakedepositauthority: { type: new GraphQLNonNull(GraphQLString) },
-    clock: { type: new GraphQLNonNull(GraphQLString) },
-    epochschedule: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    stakehistory: { type: new GraphQLNonNull(GraphQLString) },
-    stakeconfig: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    data: { type: new GraphQLNonNull(StakeReserveEventData) },
+    accounts: { type: new GraphQLNonNull(StakeReserveEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const UpdateActiveEventAccounts = new GraphQLObjectType({
+  name: 'UpdateActiveEventAccounts',
+  fields: {
+    common: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const UpdateActiveEventData = new GraphQLObjectType({
+  name: 'UpdateActiveEventData',
+  fields: {
+    stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -588,8 +852,26 @@ export const UpdateActiveEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.UpdateActive,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(UpdateActiveEventData) },
+    accounts: { type: new GraphQLNonNull(UpdateActiveEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const UpdateDeactivatedEventAccounts = new GraphQLObjectType({
+  name: 'UpdateDeactivatedEventAccounts',
+  fields: {
     common: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
+    operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const UpdateDeactivatedEventData = new GraphQLObjectType({
+  name: 'UpdateDeactivatedEventData',
+  fields: {
+    stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -599,9 +881,38 @@ export const UpdateDeactivatedEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.UpdateDeactivated,
   fields: {
     ...commonEventFields,
-    common: { type: new GraphQLNonNull(GraphQLString) },
-    operationalsolaccount: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
+    data: { type: new GraphQLNonNull(UpdateDeactivatedEventData) },
+    accounts: { type: new GraphQLNonNull(UpdateDeactivatedEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const DeactivateStakeEventAccounts = new GraphQLObjectType({
+  name: 'DeactivateStakeEventAccounts',
+  fields: {
+    state: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    stakeDepositAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    splitStakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    splitStakeRentPayer: { type: new GraphQLNonNull(GraphQLString) },
+    clock: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    epochSchedule: { type: new GraphQLNonNull(GraphQLString) },
+    stakeHistory: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const DeactivateStakeEventData = new GraphQLObjectType({
+  name: 'DeactivateStakeEventData',
+  fields: {
+    stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -611,20 +922,32 @@ export const DeactivateStakeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.DeactivateStake,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(DeactivateStakeEventData) },
+    accounts: { type: new GraphQLNonNull(DeactivateStakeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const EmergencyUnstakeEventAccounts = new GraphQLObjectType({
+  name: 'EmergencyUnstakeEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    stakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    stakedepositauthority: { type: new GraphQLNonNull(GraphQLString) },
-    splitstakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    splitstakerentpayer: { type: new GraphQLNonNull(GraphQLString) },
+    validatorManagerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    stakeDepositAuthority: { type: new GraphQLNonNull(GraphQLString) },
     clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    epochschedule: { type: new GraphQLNonNull(GraphQLString) },
-    stakehistory: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const EmergencyUnstakeEventData = new GraphQLObjectType({
+  name: 'EmergencyUnstakeEventData',
+  fields: {
+    stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -634,14 +957,39 @@ export const EmergencyUnstakeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.EmergencyUnstake,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(EmergencyUnstakeEventData) },
+    accounts: { type: new GraphQLNonNull(EmergencyUnstakeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const PartialUnstakeEventAccounts = new GraphQLObjectType({
+  name: 'PartialUnstakeEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    validatormanagerauthority: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    stakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    stakedepositauthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorManagerAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    stakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    stakeDepositAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    reservePda: { type: new GraphQLNonNull(GraphQLString) },
+    splitStakeAccount: { type: new GraphQLNonNull(GraphQLString) },
+    splitStakeRentPayer: { type: new GraphQLNonNull(GraphQLString) },
     clock: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    rent: { type: new GraphQLNonNull(GraphQLString) },
+    stakeHistory: { type: new GraphQLNonNull(GraphQLString) },
+    systemProgram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const PartialUnstakeEventData = new GraphQLObjectType({
+  name: 'PartialUnstakeEventData',
+  fields: {
+    stakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    desiredUnstakeAmount: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
 })
 
@@ -651,20 +999,36 @@ export const PartialUnstakeEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.PartialUnstake,
   fields: {
     ...commonEventFields,
+    data: { type: new GraphQLNonNull(PartialUnstakeEventData) },
+    accounts: { type: new GraphQLNonNull(PartialUnstakeEventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+export const MergeStakesEventAccounts = new GraphQLObjectType({
+  name: 'MergeStakesEventAccounts',
+  fields: {
     state: { type: new GraphQLNonNull(GraphQLString) },
-    validatormanagerauthority: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    stakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    stakedepositauthority: { type: new GraphQLNonNull(GraphQLString) },
-    reservepda: { type: new GraphQLNonNull(GraphQLString) },
-    splitstakeaccount: { type: new GraphQLNonNull(GraphQLString) },
-    splitstakerentpayer: { type: new GraphQLNonNull(GraphQLString) },
+    stakeList: { type: new GraphQLNonNull(GraphQLString) },
+    validatorList: { type: new GraphQLNonNull(GraphQLString) },
+    destinationStake: { type: new GraphQLNonNull(GraphQLString) },
+    sourceStake: { type: new GraphQLNonNull(GraphQLString) },
+    stakeDepositAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    stakeWithdrawAuthority: { type: new GraphQLNonNull(GraphQLString) },
+    operationalSolAccount: { type: new GraphQLNonNull(GraphQLString) },
     clock: { type: new GraphQLNonNull(GraphQLString) },
-    rent: { type: new GraphQLNonNull(GraphQLString) },
-    stakehistory: { type: new GraphQLNonNull(GraphQLString) },
-    systemprogram: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    stakeHistory: { type: new GraphQLNonNull(GraphQLString) },
+    stakeProgram: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+export const MergeStakesEventData = new GraphQLObjectType({
+  name: 'MergeStakesEventData',
+  fields: {
+    destinationStakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    sourceStakeIndex: { type: new GraphQLNonNull(GraphQLInt) },
+    validatorIndex: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -674,19 +1038,12 @@ export const MergeStakesEvent = new GraphQLObjectType({
   isTypeOf: (item) => item.type === InstructionType.MergeStakes,
   fields: {
     ...commonEventFields,
-    state: { type: new GraphQLNonNull(GraphQLString) },
-    stakelist: { type: new GraphQLNonNull(GraphQLString) },
-    validatorlist: { type: new GraphQLNonNull(GraphQLString) },
-    destinationstake: { type: new GraphQLNonNull(GraphQLString) },
-    sourcestake: { type: new GraphQLNonNull(GraphQLString) },
-    stakedepositauthority: { type: new GraphQLNonNull(GraphQLString) },
-    stakewithdrawauthority: { type: new GraphQLNonNull(GraphQLString) },
-    operationalsolaccount: { type: new GraphQLNonNull(GraphQLString) },
-    clock: { type: new GraphQLNonNull(GraphQLString) },
-    stakehistory: { type: new GraphQLNonNull(GraphQLString) },
-    stakeprogram: { type: new GraphQLNonNull(GraphQLString) },
+    data: { type: new GraphQLNonNull(MergeStakesEventData) },
+    accounts: { type: new GraphQLNonNull(MergeStakesEventAccounts) },
   },
 })
+
+/*----------------------------------------------------------------------*/
 
 export const Events = new GraphQLList(Event)
 
@@ -702,7 +1059,7 @@ export const types = [
   LiquidUnstakeEvent,
   AddLiquidityEvent,
   RemoveLiquidityEvent,
-  SetLpParamsEvent,
+  ConfigLpEvent,
   ConfigMarinadeEvent,
   OrderUnstakeEvent,
   ClaimEvent,

@@ -10,8 +10,7 @@ export class StatsAggregator {
     const { now, account, timeSeriesDAL } = args
 
     const stats = this.getEmptyStats()
-
-    const type = 'marinade_finance'
+    const type = 'access'
     const currHour = DateTime.fromMillis(now).startOf('hour')
     const commonFields = [account, type, TimeFrame.Hour]
 
@@ -39,13 +38,16 @@ export class StatsAggregator {
     for await (const event of last7dEvents) {
       last7d = accessAggregator.aggregate(event.data, last7d)
     }
-
     const total = await timeSeriesDAL.get([account, type, TimeFrame.All, 0])
 
     if (last1h) stats.last1h = last1h.data
     if (last24h) stats.last24h = last24h
     if (last7d) stats.last7d = last7d
     if (total) stats.total = total.data
+
+    stats.accessingPrograms = new Set<string>([
+      ...(Object.keys(stats.total?.accessesByProgramId) || []),
+    ])
 
     return stats
   }

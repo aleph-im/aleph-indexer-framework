@@ -7,7 +7,6 @@ export class AccessTimeSeriesAggregator {
     prev?: AccessTimeStats,
   ): AccessTimeStats {
     prev = this.prepareAccessStats(prev)
-
     this.processAccessStats(prev, curr)
 
     return prev
@@ -31,21 +30,50 @@ export class AccessTimeSeriesAggregator {
     acc: AccessTimeStats,
     curr: ParsedEvents | AccessTimeStats,
   ): AccessTimeStats {
-    if ((curr as ParsedEvents).data?.programId) {
-      const programId = (curr as ParsedEvents).data.programId.toBase58()
+    if ((curr as ParsedEvents).timestamp) {
+      const event = curr as ParsedEvents
+      let signer: string
+      signer = event.signer as unknown as string
       acc.accesses++
-      acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId] ? acc.accessesByProgramId[programId] + 1 : 1
-      acc.startTimestamp = acc.startTimestamp || (curr as ParsedEvents).timestamp
-      acc.endTimestamp = (curr as ParsedEvents).timestamp || acc.endTimestamp
-    } else {
-      acc.accesses += (curr as AccessTimeStats).accesses
-      if ((curr as AccessTimeStats).accessesByProgramId) {
-        Object.entries((curr as AccessTimeStats).accessesByProgramId).forEach(([programId, count]) => {
-          acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId] ? acc.accessesByProgramId[programId] + count : count
-        })
+      acc.accessesByProgramId[signer] = acc.accessesByProgramId[signer]
+        ? acc.accessesByProgramId[signer] + 1
+        : 1
+      if (!acc.startTimestamp || acc.startTimestamp > event.timestamp) {
+        acc.startTimestamp = event.timestamp
       }
-      acc.startTimestamp = acc.startTimestamp || (curr as AccessTimeStats).startTimestamp
-      acc.endTimestamp = (curr as AccessTimeStats).endTimestamp || acc.endTimestamp
+      if (!acc.endTimestamp || acc.endTimestamp < event.timestamp) {
+        acc.endTimestamp = event.timestamp
+      }
+    } else {
+      acc.accesses += (curr as AccessTimeStats).accesses || 0
+      if ((curr as AccessTimeStats).accessesByProgramId) {
+        Object.entries((curr as AccessTimeStats).accessesByProgramId).forEach(
+          ([programId, count]) => {
+            acc.accessesByProgramId[programId] = acc.accessesByProgramId[
+              programId
+            ]
+              ? acc.accessesByProgramId[programId] + count
+              : count
+          },
+        )
+      }
+      if (!acc.startTimestamp) {
+        acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
+      } else if (
+        (curr as AccessTimeStats).startTimestamp &&
+        acc.startTimestamp >
+          ((curr as AccessTimeStats).startTimestamp as number)
+      ) {
+        acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
+      }
+      if (!acc.endTimestamp) {
+        acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
+      } else if (
+        (curr as AccessTimeStats).endTimestamp &&
+        acc.endTimestamp < ((curr as AccessTimeStats).endTimestamp as number)
+      ) {
+        acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
+      }
     }
     return acc
   }

@@ -57,28 +57,14 @@ export type LiquidUnstakeInstructionAccounts = {
   getMsolFrom: web3.PublicKey
   getMsolFromAuthority: web3.PublicKey
   transferSolTo: web3.PublicKey
+  systemProgram?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const LiquidUnstakeAccounts = [
-  'state',
-  'msolMint',
-  'liqPoolSolLegPda',
-  'liqPoolMsolLeg',
-  'treasuryMsolAccount',
-  'getMsolFrom',
-  'getMsolFromAuthority',
-  'transferSolTo',
-]
 
 export const liquidUnstakeInstructionDiscriminator = [
   30, 30, 119, 240, 191, 227, 12, 16,
 ]
-
-export type LiquidUnstakeInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _LiquidUnstake_ instruction.
@@ -93,77 +79,73 @@ export type LiquidUnstakeInstruction = {
 export function createLiquidUnstakeInstruction(
   accounts: LiquidUnstakeInstructionAccounts,
   args: LiquidUnstakeInstructionArgs,
-): LiquidUnstakeInstruction {
-  const {
-    state,
-    msolMint,
-    liqPoolSolLegPda,
-    liqPoolMsolLeg,
-    treasuryMsolAccount,
-    getMsolFrom,
-    getMsolFromAuthority,
-    transferSolTo,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = liquidUnstakeStruct.serialize({
     instructionDiscriminator: liquidUnstakeInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMint,
+      pubkey: accounts.msolMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolSolLegPda,
+      pubkey: accounts.liqPoolSolLegPda,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: liqPoolMsolLeg,
+      pubkey: accounts.liqPoolMsolLeg,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: treasuryMsolAccount,
+      pubkey: accounts.treasuryMsolAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: getMsolFrom,
+      pubkey: accounts.getMsolFrom,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: getMsolFromAuthority,
+      pubkey: accounts.getMsolFromAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: transferSolTo,
+      pubkey: accounts.transferSolTo,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: web3.SystemProgram.programId,
+      pubkey: accounts.systemProgram ?? web3.SystemProgram.programId,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: LiquidUnstakeInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

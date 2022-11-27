@@ -15,7 +15,7 @@ import {
   LiquidUnstakeEvent,
   AddLiquidityEvent,
   RemoveLiquidityEvent,
-  SetLpParamsEvent,
+  ConfigLpEvent,
   ConfigMarinadeEvent,
   OrderUnstakeEvent,
   ClaimEvent,
@@ -48,6 +48,7 @@ export class EventParser {
       timestamp,
       type: parsed.type,
       account: txContext.parserContext.account,
+      signer: txContext.tx.parsed.message.accountKeys[0].pubkey,
     }
 
     try {
@@ -107,10 +108,10 @@ export class EventParser {
             ...baseEvent,
           } as RemoveLiquidityEvent
 
-        case InstructionType.SetLpParams:
+        case InstructionType.ConfigLp:
           return {
             ...baseEvent,
-          } as SetLpParamsEvent
+          } as ConfigLpEvent
 
         case InstructionType.ConfigMarinade:
           return {

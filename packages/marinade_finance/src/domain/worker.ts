@@ -14,14 +14,17 @@ import {
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import {AccessTimeStats, MarinadeFinanceAccountInfo} from '../types.js'
+import {
+  MarinadeFinanceAccountStats,
+  MarinadeFinanceAccountInfo,
+} from '../types.js'
 import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { MARINADE_FINANCE_PROGRAM_ID } from '../constants.js'
 
 const { isParsedIx } = Utils
 
-export default class IndexerDomain
+export default class WorkerDomain
   extends IndexerWorkerDomain
   implements IndexerWorkerDomainWithStats
 {
@@ -75,23 +78,27 @@ export default class IndexerDomain
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats> {
-    const oracle = this.getAccount(account)
-    return oracle.getTimeSeriesStats(type, filters)
+    const actual = this.getAccount(account)
+    return actual.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(account: string): Promise<AccountStats<AccessTimeStats>> {
+  async getStats(
+    account: string,
+  ): Promise<AccountStats<MarinadeFinanceAccountStats>> {
     return this.getAccountStats(account)
   }
 
   // ------------- Custom impl methods -------------------
 
-  async getAccountInfo(reserve: string): Promise<MarinadeFinanceAccountInfo> {
-    const res = this.getAccount(reserve)
+  async getAccountInfo(actual: string): Promise<MarinadeFinanceAccountInfo> {
+    const res = this.getAccount(actual)
     return res.info
   }
 
-  async getAccountStats(reserve: string): Promise<AccountStats<AccessTimeStats>> {
-    const res = this.getAccount(reserve)
+  async getAccountStats(
+    actual: string,
+  ): Promise<AccountStats<MarinadeFinanceAccountStats>> {
+    const res = this.getAccount(actual)
     return res.getStats()
   }
 

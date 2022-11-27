@@ -53,26 +53,14 @@ export type OrderUnstakeInstructionAccounts = {
   burnMsolAuthority: web3.PublicKey
   newTicketAccount: web3.PublicKey
   clock: web3.PublicKey
+  rent?: web3.PublicKey
+  tokenProgram?: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const OrderUnstakeAccounts = [
-  'state',
-  'msolMint',
-  'burnMsolFrom',
-  'burnMsolAuthority',
-  'newTicketAccount',
-  'clock',
-]
 
 export const orderUnstakeInstructionDiscriminator = [
   97, 167, 144, 107, 117, 190, 128, 36,
 ]
-
-export type OrderUnstakeInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _OrderUnstake_ instruction.
@@ -87,65 +75,63 @@ export type OrderUnstakeInstruction = {
 export function createOrderUnstakeInstruction(
   accounts: OrderUnstakeInstructionAccounts,
   args: OrderUnstakeInstructionArgs,
-): OrderUnstakeInstruction {
-  const {
-    state,
-    msolMint,
-    burnMsolFrom,
-    burnMsolAuthority,
-    newTicketAccount,
-    clock,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = orderUnstakeStruct.serialize({
     instructionDiscriminator: orderUnstakeInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: msolMint,
+      pubkey: accounts.msolMint,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: burnMsolFrom,
+      pubkey: accounts.burnMsolFrom,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: burnMsolAuthority,
+      pubkey: accounts.burnMsolAuthority,
       isWritable: false,
       isSigner: true,
     },
     {
-      pubkey: newTicketAccount,
+      pubkey: accounts.newTicketAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: web3.SYSVAR_RENT_PUBKEY,
+      pubkey: accounts.rent ?? web3.SYSVAR_RENT_PUBKEY,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: splToken.TOKEN_PROGRAM_ID,
+      pubkey: accounts.tokenProgram ?? splToken.TOKEN_PROGRAM_ID,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: OrderUnstakeInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

@@ -25,9 +25,7 @@ export default class APISchema extends IndexerAPISchema {
     super(domain, {
       types: Types.types,
 
-      customTimeSeriesTypesMap: {
-        marinadeFinanceInfo: Types.AccessTimeStats,
-      },
+      customTimeSeriesTypesMap: { access: Types.AccessTimeStats },
       customStatsType: Types.MarinadeFinanceStats,
 
       query: new GraphQLObjectType({

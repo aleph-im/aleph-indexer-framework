@@ -66,31 +66,12 @@ export type MergeStakesInstructionAccounts = {
   clock: web3.PublicKey
   stakeHistory: web3.PublicKey
   stakeProgram: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const MergeStakesAccounts = [
-  'state',
-  'stakeList',
-  'validatorList',
-  'destinationStake',
-  'sourceStake',
-  'stakeDepositAuthority',
-  'stakeWithdrawAuthority',
-  'operationalSolAccount',
-  'clock',
-  'stakeHistory',
-  'stakeProgram',
-]
 
 export const mergeStakesInstructionDiscriminator = [
   216, 36, 141, 225, 243, 78, 125, 237,
 ]
-
-export type MergeStakesInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _MergeStakes_ instruction.
@@ -105,85 +86,78 @@ export type MergeStakesInstruction = {
 export function createMergeStakesInstruction(
   accounts: MergeStakesInstructionAccounts,
   args: MergeStakesInstructionArgs,
-): MergeStakesInstruction {
-  const {
-    state,
-    stakeList,
-    validatorList,
-    destinationStake,
-    sourceStake,
-    stakeDepositAuthority,
-    stakeWithdrawAuthority,
-    operationalSolAccount,
-    clock,
-    stakeHistory,
-    stakeProgram,
-  } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = mergeStakesStruct.serialize({
     instructionDiscriminator: mergeStakesInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeList,
+      pubkey: accounts.stakeList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: validatorList,
+      pubkey: accounts.validatorList,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: destinationStake,
+      pubkey: accounts.destinationStake,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: sourceStake,
+      pubkey: accounts.sourceStake,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: stakeDepositAuthority,
+      pubkey: accounts.stakeDepositAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeWithdrawAuthority,
+      pubkey: accounts.stakeWithdrawAuthority,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: operationalSolAccount,
+      pubkey: accounts.operationalSolAccount,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: clock,
+      pubkey: accounts.clock,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeHistory,
+      pubkey: accounts.stakeHistory,
       isWritable: false,
       isSigner: false,
     },
     {
-      pubkey: stakeProgram,
+      pubkey: accounts.stakeProgram,
       isWritable: false,
       isSigner: false,
     },
   ]
 
-  const ix: MergeStakesInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

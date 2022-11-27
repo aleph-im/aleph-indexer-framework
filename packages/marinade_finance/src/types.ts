@@ -1,4 +1,3 @@
-import { AccountStats } from '@aleph-indexer/framework'
 import {
   AccountType,
   ParsedEvents,
@@ -14,6 +13,7 @@ export type MarinadeFinanceAccountInfo = {
 }
 
 // -------------------------- STATS --------------------------
+
 export type AccessTimeStats = {
   /**
    * Total number of times the account was accessed
@@ -35,8 +35,7 @@ export type AccessTimeStats = {
   endTimestamp?: number
 }
 
-export type TimeStats =
-  | AccessTimeStats  //@note: Add more types of time stats here
+export type TimeStats = AccessTimeStats //@note: Add more types of time stats here
 
 export type MarinadeFinanceAccountStats = {
   requestsStatsByHour: Record<string, AccessTimeStats>
@@ -66,9 +65,4 @@ export type GlobalMarinadeFinanceStats = {
 export type MarinadeFinanceAccountData = {
   info: MarinadeFinanceAccountInfo
   stats?: MarinadeFinanceAccountStats
-}
-
-export type AccountTypesGlobalStats = {
-  type: AccountType
-  stats: AccountStats<GlobalMarinadeFinanceStats>
 }

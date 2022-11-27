@@ -44,19 +44,12 @@ export const configValidatorSystemStruct = new beet.BeetArgsStruct<
 export type ConfigValidatorSystemInstructionAccounts = {
   state: web3.PublicKey
   managerAuthority: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const ConfigValidatorSystemAccounts = ['state', 'managerAuthority']
 
 export const configValidatorSystemInstructionDiscriminator = [
   27, 90, 97, 209, 17, 115, 7, 40,
 ]
-
-export type ConfigValidatorSystemInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _ConfigValidatorSystem_ instruction.
@@ -71,28 +64,33 @@ export type ConfigValidatorSystemInstruction = {
 export function createConfigValidatorSystemInstruction(
   accounts: ConfigValidatorSystemInstructionAccounts,
   args: ConfigValidatorSystemInstructionArgs,
-): ConfigValidatorSystemInstruction {
-  const { state, managerAuthority } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = configValidatorSystemStruct.serialize({
     instructionDiscriminator: configValidatorSystemInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: managerAuthority,
+      pubkey: accounts.managerAuthority,
       isWritable: false,
       isSigner: true,
     },
   ]
 
-  const ix: ConfigValidatorSystemInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

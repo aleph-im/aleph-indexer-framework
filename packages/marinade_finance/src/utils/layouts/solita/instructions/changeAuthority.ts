@@ -48,19 +48,12 @@ export const changeAuthorityStruct = new beet.FixableBeetArgsStruct<
 export type ChangeAuthorityInstructionAccounts = {
   state: web3.PublicKey
   adminAuthority: web3.PublicKey
+  anchorRemainingAccounts?: web3.AccountMeta[]
 }
-
-export const ChangeAuthorityAccounts = ['state', 'adminAuthority']
 
 export const changeAuthorityInstructionDiscriminator = [
   50, 106, 66, 104, 99, 118, 145, 88,
 ]
-
-export type ChangeAuthorityInstruction = {
-  programId: web3.PublicKey
-  keys: web3.AccountMeta[]
-  data: Buffer
-}
 
 /**
  * Creates a _ChangeAuthority_ instruction.
@@ -75,28 +68,33 @@ export type ChangeAuthorityInstruction = {
 export function createChangeAuthorityInstruction(
   accounts: ChangeAuthorityInstructionAccounts,
   args: ChangeAuthorityInstructionArgs,
-): ChangeAuthorityInstruction {
-  const { state, adminAuthority } = accounts
-
+  programId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'),
+) {
   const [data] = changeAuthorityStruct.serialize({
     instructionDiscriminator: changeAuthorityInstructionDiscriminator,
     ...args,
   })
   const keys: web3.AccountMeta[] = [
     {
-      pubkey: state,
+      pubkey: accounts.state,
       isWritable: true,
       isSigner: false,
     },
     {
-      pubkey: adminAuthority,
+      pubkey: accounts.adminAuthority,
       isWritable: false,
       isSigner: true,
     },
   ]
 
-  const ix: ChangeAuthorityInstruction = new web3.TransactionInstruction({
-    programId: new web3.PublicKey('NONE'),
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+
+  const ix = new web3.TransactionInstruction({
+    programId,
     keys,
     data,
   })

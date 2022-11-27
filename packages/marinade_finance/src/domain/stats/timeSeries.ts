@@ -6,9 +6,9 @@ import {
   TimeFrame,
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
-import {EventDALIndex, EventStorage} from '../../dal/event.js'
-import {ParsedEvents} from '../../utils/layouts/index.js'
-import {AccessTimeStats} from '../../types.js'
+import { EventDALIndex, EventStorage } from '../../dal/event.js'
+import { ParsedEvents } from '../../utils/layouts/index.js'
+import { AccessTimeStats, MarinadeFinanceAccountStats } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import accessAggregator from './timeSeriesAggregator.js'
 
@@ -18,12 +18,9 @@ export async function createAccountStats(
   eventDAL: EventStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
-): Promise<AccountTimeSeriesStatsManager> {
+): Promise<AccountTimeSeriesStatsManager<MarinadeFinanceAccountStats>> {
   // @note: this aggregator is used to aggregate usage stats for the account
-  const accessTimeSeries = new TimeSeriesStats<
-    ParsedEvents,
-    AccessTimeStats
-  >(
+  const accessTimeSeries = new TimeSeriesStats<ParsedEvents, AccessTimeStats>(
     {
       type: 'access',
       startDate: 0,
@@ -35,9 +32,9 @@ export async function createAccountStats(
         TimeFrame.Year,
         TimeFrame.All,
       ],
-      getInputStream: ({ account, startDate, endDate }) => {
-        return eventDAL
-          .useIndex(EventDALIndex.AccoountTimestamp)
+      getInputStream: async ({ account, startDate, endDate }) => {
+        return await eventDAL
+          .useIndex(EventDALIndex.AccountTimestamp)
           .getAllValuesFromTo([account, startDate], [account, endDate])
       },
       aggregate: ({ input, prevValue }): AccessTimeStats => {
@@ -48,10 +45,10 @@ export async function createAccountStats(
     statsTimeSeriesDAL,
   )
 
-  return new AccountTimeSeriesStatsManager(
+  return new AccountTimeSeriesStatsManager<MarinadeFinanceAccountStats>(
     {
       account,
-      series: [accessTimeSeries],  // place your other aggregated stats here
+      series: [accessTimeSeries], // place your other aggregated stats here
       aggregate(args) {
         return statsAggregator.aggregate(args)
       },
