@@ -14,6 +14,7 @@ const zone = { zone: 'utc' }
  * @param end - DateTime object or string in ISO format or timestamp in milliseconds
  * @param intervalUnit - The time units of each interval
  * @param intervalSize - The number of time units of each interval
+ * @param preserveExactBounds Whether to adjust the first and last interval to exactly fit the start and end date
  * @todo: Think about using luxon Interval.splitBy
  */
 export function splitDurationIntoIntervals(
