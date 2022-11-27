@@ -25,15 +25,18 @@ export class SignatureFetcher extends BaseFetcher {
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected times = 1,
   ) {
     super(
       {
         address,
         forwardJobOptions: {
+          times,
           intervalMax: 1000 * 10,
           iterationFetchLimit: Number.MAX_SAFE_INTEGER,
         },
         backwardJobOptions: {
+          times,
           interval: 1000 * 10,
           iterationFetchLimit: 1000,
         },
