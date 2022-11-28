@@ -9,7 +9,6 @@ import { PriceDALIndex, PriceStorage } from '../../dal/price.js'
 import { Candle, Price } from '../../types.js'
 import pythCandleAggregator from './CandleAggregator.js'
 import { TIME_FRAMES } from '../../constants.js'
-import { DateTime } from 'luxon'
 
 export function createCandles(
   account: string,
@@ -17,18 +16,18 @@ export function createCandles(
   priceDAL: PriceStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
-): AccountTimeSeriesStatsManager {
+): AccountTimeSeriesStatsManager<Candle> {
   const timeSeriesStats = new TimeSeriesStats<Price, Candle>(
     {
       type: 'candle',
-      startDate: DateTime.fromMillis(0),
+      startDate: 0,
       timeFrames: TIME_FRAMES.map((tf) => candleIntervalToDuration(tf)),
       getInputStream: ({account, startDate, endDate}) => {
         return priceDAL
           .useIndex(PriceDALIndex.AccountTimestamp)
           .getAllValuesFromTo(
-            [account, startDate.toMillis()],
-            [account, endDate.toMillis()],
+            [account, startDate],
+            [account, endDate],
           )
       },
       aggregate: ({ input, prevValue }): Candle => {
