@@ -1,8 +1,7 @@
 import {DateTime, Duration} from 'luxon'
-import { AccountAggregatorFnArgs } from '@aleph-indexer/framework'
+import { AccountAggregatorFnArgs, MAX_TIMEFRAME } from '@aleph-indexer/framework'
 import { DataFeedStats } from '../../types.js'
 import pythCandleAggregator from './candleAggregator.js'
-import {MAX_TIMEFRAME} from "@aleph-indexer/framework/dist/src/utils/time";
 
 export class StatsAggregator {
   async aggregate(

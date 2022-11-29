@@ -9,7 +9,7 @@ import { PriceDALIndex, PriceStorage } from '../../dal/price.js'
 import {Candle, DataFeedStats, Price} from '../../types.js'
 import pythCandleAggregator from './candleAggregator.js'
 import { TIME_FRAMES_AS_DURATION } from '../../constants.js'
-import statsAggregator from "./statsAggregator";
+import statsAggregator from "./statsAggregator.js";
 
 export function createCandles(
   account: string,
