@@ -4,6 +4,7 @@ import {InstructionType, ParsedEvents} from "../../../utils/layouts";
 import * as fs from "fs";
 import {MARINADE_FINANCE_PROGRAM_ID} from "../../../constants";
 import {DateTime, Interval} from "luxon";
+import base58 from "bs58";
 
 export async function mockEventDAL(testName: string, eventConfig: { interval?: Interval, eventCnt: number }) {
   const eventDAL = createEventDAL(`packages/marinade_finance/src/domain/stats/__mocks__/data/${testName}`);
@@ -62,7 +63,7 @@ function generateEvent(interval?: Interval): ParsedEvents {
     account: "test",
     timestamp,
     type: getRandomInstructionType(),
-    signer: "CNCnPo5Fhfjj5Y7DSc82RDJfQoHEd2haAnTkAwRGfo8z",
+    signer: base58.encode(Buffer.from(Math.random().toString(36).substring(2))),
     programId: MARINADE_FINANCE_PROGRAM_ID,
     data: {} as any,
     accounts: {} as any,
