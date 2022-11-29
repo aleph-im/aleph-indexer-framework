@@ -2,6 +2,8 @@ import BN from 'bn.js'
 import { constants } from '@aleph-indexer/core'
 import { getPythProgramKeyForCluster } from '@pythnetwork/client'
 import { CandleInterval } from './types'
+import { MAX_TIMEFRAME } from "@aleph-indexer/framework";
+import {Duration} from "luxon";
 
 export enum ProgramName {
   Pyth = 'pyth',
@@ -31,6 +33,28 @@ export const TIME_FRAMES: CandleInterval[] = [
   '1year',
   'all',
 ]
+
+export const TIME_FRAMES_AS_DURATION = TIME_FRAMES.map((tf) => {
+  if(tf === 'all') {
+    return MAX_TIMEFRAME
+  } else if (tf.endsWith('year')) {
+    return Duration.fromObject({year: parseInt(tf.replace('year', ''))})
+  } else if (tf.endsWith('month')) {
+    return Duration.fromObject({month: parseInt(tf.replace('month', ''))})
+  } else if (tf.endsWith('week')) {
+    return Duration.fromObject({week: parseInt(tf.replace('week', ''))})
+  } else if (tf.endsWith('day')) {
+    return Duration.fromObject({day: parseInt(tf.replace('day', ''))})
+  } else if (tf.endsWith('hour')) {
+    return Duration.fromObject({hour: parseInt(tf.replace('hour', ''))})
+  } else if (tf.endsWith('minute')) {
+    return Duration.fromObject({minute: parseInt(tf.replace('minute', ''))})
+  } else if (tf.endsWith('second')) {
+    return Duration.fromObject({second: parseInt(tf.replace('second', ''))})
+  } else {
+    throw new Error(`Unknown time frame ${tf}`)
+  }
+})
 
 // WADS
 export const usdDecimals = new BN(constants.usdDecimals)

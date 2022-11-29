@@ -182,7 +182,8 @@ export type DataFeedStats = {
   last1h: Candle
   last24h: Candle
   last7d: Candle
-  last1m: Candle
+  lastMonth: Candle
+  YTD: Candle
   lastYear: Candle
   total: Candle
 

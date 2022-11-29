@@ -87,8 +87,8 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
         resolve: (_, ctx) =>
           domain.getAccountTimeSeriesStats(ctx.account, ctx.type, {
             timeFrame: ctx.timeFrame,
-            startDate: ctx.startDate,
-            endDate: ctx.endDate,
+            startTimestamp: ctx.startDate,
+            endTimestamp: ctx.endDate,
             limit: ctx.limit,
             reverse: ctx.reverse,
           }),

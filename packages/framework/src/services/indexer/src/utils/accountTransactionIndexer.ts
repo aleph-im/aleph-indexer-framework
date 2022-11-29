@@ -14,11 +14,10 @@ import {
   TransactionIndexerHandler,
 } from '../types.js'
 import {
-  clipDateRangesFromIterable,
-  DateRange,
   getIntervalFromDateRange,
-  mergeDateRangesFromIterable,
+  mergeIntervals, clipIntervals, getIntervalsFromStorageStream, generatorToArray,
 } from '../../../../utils/time.js'
+import {DateTime, Interval} from "luxon";
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
@@ -100,41 +99,33 @@ export class AccountTransactionIndexer {
     )
       return
 
-    const toFetchRange = {
-      account,
-      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
-      endDate: state.lastTimestamp,
-    }
+    const toFetchRange = Interval.fromDateTimes(
+      DateTime.fromMillis(state.firstTimestamp + (state.completeHistory ? 0 : 1)),
+      DateTime.fromMillis(state.lastTimestamp),
+    )
 
     const processedRanges = await this.mergeStates()
 
-    const pendingRanges = await clipDateRangesFromIterable(
-      [toFetchRange],
-      processedRanges,
-    )
+    const pendingRanges = clipIntervals([toFetchRange], processedRanges)
 
     const pendingMilis = pendingRanges.reduce(
-      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
+      (acc, curr) => acc + curr.toDuration().as('milliseconds'),
       0,
     )
 
-    const processedMilis = processedRanges.reduce(
-      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
+    const processedMillis = processedRanges.reduce(
+      (acc, curr) => acc + curr.toDuration().as('milliseconds'),
       0,
     )
 
-    const pending = pendingRanges.map((range) =>
-      getIntervalFromDateRange(range).toISO(),
-    )
+    const pending = pendingRanges.map((interval) => interval.toISO())
 
-    const processed = processedRanges.map((range) =>
-      getIntervalFromDateRange(range).toISO(),
-    )
+    const processed = processedRanges.map((interval) => interval.toISO())
 
     const accurate = state?.completeHistory || false
 
     const progress = Number(
-      ((processedMilis / (processedMilis + pendingMilis)) * 100).toFixed(2),
+      ((processedMillis / (processedMillis + pendingMilis)) * 100).toFixed(2),
     )
 
     return {
@@ -146,7 +137,7 @@ export class AccountTransactionIndexer {
     }
   }
 
-  protected async getPendingRanges(account: string): Promise<DateRange[]> {
+  protected async getPendingRanges(account: string): Promise<Interval[]> {
     const state = await this.fetcherMsClient.getAccountFetcherState({ account })
 
     if (
@@ -156,12 +147,10 @@ export class AccountTransactionIndexer {
     )
       return []
 
-    const ranges = await this.calculateRangesToFetch(account, {
-      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
-      endDate: state.lastTimestamp,
-    })
-
-    return ranges
+    return this.calculateRangesToFetch(account, Interval.fromDateTimes(
+      DateTime.fromMillis(state.firstTimestamp + (state.completeHistory ? 0 : 1)),
+      DateTime.fromMillis(state.lastTimestamp),
+    ))
   }
 
   // async fetchRange(dateRange: DateRange): Promise<void> {
@@ -235,26 +224,26 @@ export class AccountTransactionIndexer {
 
     const targetRange = ranges[ranges.length - 1]
 
-    const endDate = targetRange.endDate
-    const startDate = Math.max(
-      targetRange.startDate,
-      endDate - this.config.chunkTimeframe,
+    const endTimestamp = targetRange.end.toMillis()
+    const startTimestamp = Math.max(
+      targetRange.start.toMillis(),
+      endTimestamp - this.config.chunkTimeframe,
     )
 
-    const requests = [{ account, startDate, endDate }]
+    const requests = [{ account, startTimestamp, endTimestamp }]
 
     // @note: if we finished with the latest range, take also the next one and do a request
-    // This prevents from getting stuck on new ranges comming on real time
-    if (endDate - startDate < this.config.chunkTimeframe && ranges.length > 1) {
+    // This prevents from getting stuck on new ranges coming in real time
+    if (endTimestamp - startTimestamp < this.config.chunkTimeframe && ranges.length > 1) {
       const targetRange = ranges[ranges.length - 2]
 
-      const endDate = targetRange.endDate
-      const startDate = Math.max(
-        targetRange.startDate,
-        endDate - this.config.chunkTimeframe,
+      const endTimestamp = targetRange.end.toMillis()
+      const startTimestamp = Math.max(
+        targetRange.start.toMillis(),
+        endTimestamp - this.config.chunkTimeframe,
       )
 
-      requests.push({ account, startDate, endDate })
+      requests.push({ account, startTimestamp, endTimestamp })
     }
 
     await Promise.all(requests.map(this.fetchRangeByDate.bind(this)))
@@ -266,7 +255,7 @@ export class AccountTransactionIndexer {
     await this.mergeStates()
   }
 
-  protected async mergeStates(): Promise<DateRange[]> {
+  protected async mergeStates(): Promise<Interval[]> {
     const { account } = this.config
     const { Processed } = TransactionIndexerStateCode
 
@@ -278,43 +267,42 @@ export class AccountTransactionIndexer {
       })
 
     const { newRanges, oldRanges, mergedRanges } =
-      await mergeDateRangesFromIterable(fetchedRanges)
+      await mergeIntervals(getIntervalsFromStorageStream(fetchedRanges))
 
     if (!newRanges.length) return mergedRanges
 
     const newStates = newRanges.map((range) => {
-      const newState = range as TransactionIndexerState
-      newState.account = account
-      newState.state = Processed
-      newState.requestNonce = undefined
-      return newState
+      return {
+        startTimestamp: range.start.toMillis(),
+        endTimestamp: range.end.toMillis(),
+        timeFrame: range.toDuration().toMillis(),
+        account,
+        state: Processed,
+        requestNonce: undefined
+      } as TransactionIndexerState
     })
 
     const oldStates = oldRanges.map((range) => {
-      const oldState = range as TransactionIndexerState
-      oldState.account = account
-      oldState.state = Processed
-      oldState.requestNonce = undefined
-      return oldState
+      return {
+        startTimestamp: range.start.toMillis(),
+        endTimestamp: range.end.toMillis(),
+        timeFrame: range.toDuration().toMillis(),
+        state: Processed,
+        account,
+        requestNonce: undefined
+      } as TransactionIndexerState
     })
-
-    // console.log(
-    //   `💿 compact fetching states
-    //     newStates: ${newStates.length},
-    //     oldStates: ${oldStates.length}
-    //   `,
-    // )
 
     console.log(
       `💿 compact fetching states *
         newStates: [
           ${newStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
+            .map((s) => `[${s.state}]${getIntervalFromDateRange(s.startTimestamp, s.endTimestamp).toISO()}`)
             .join('\n')}
         ],
         oldStates: [
           ${oldStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
+            .map((s) => `[${s.state}]${getIntervalFromDateRange(s.startTimestamp, s.endTimestamp).toISO()}`)
             .join('\n')}
         ]
       `,
@@ -356,8 +344,8 @@ export class AccountTransactionIndexer {
       // @note: Process the response (delegated to the domain layer)
       await this.handler.onTxDateRange({
         account,
-        startDate: range.startDate,
-        endDate: range.endDate,
+        startTimestamp: range.startTimestamp,
+        endTimestamp: range.endTimestamp,
         txs: response,
       })
 
@@ -408,19 +396,17 @@ export class AccountTransactionIndexer {
 
   protected async calculateRangesToFetch(
     account: string,
-    totalDateRange: DateRange,
+    totalDateRange: Interval,
     clipRanges?: StorageValueStream<TransactionIndexerState>,
-  ): Promise<DateRange[]> {
-    const { endDate } = totalDateRange
-
+  ): Promise<Interval[]> {
     clipRanges =
       clipRanges ||
-      (await this.transactionIndexerStateDAL.getAllValuesFromTo(
+      await this.transactionIndexerStateDAL.getAllValuesFromTo(
         [account, undefined],
-        [account, endDate],
+        [account, totalDateRange.end.toMillis()],
         { reverse: false, atomic: true },
-      ))
+      )
 
-    return clipDateRangesFromIterable([totalDateRange], clipRanges)
+    return clipIntervals([totalDateRange], await generatorToArray(getIntervalsFromStorageStream(clipRanges)))
   }
 }

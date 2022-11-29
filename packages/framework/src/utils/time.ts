@@ -1,12 +1,8 @@
 import { Utils } from '@aleph-indexer/core'
-import {DateTime, DateTimeUnit, Duration, Interval} from 'luxon'
+import { DateTime, DateTimeUnit, Duration, Interval } from 'luxon'
+import { IntervalEntity } from "./stats";
 
 const { splitDurationIntoIntervals } = Utils
-
-export type DateRange = {
-  startDate: number,
-  endDate: number
-}
 
 export const MAX_TIMEFRAME = Duration.fromDurationLike({year: 315});
 // @todo: move time utils from framework to core
@@ -47,6 +43,12 @@ export function getIntervalFromDateRange(startTime: number, endTime: number): In
   )
 }
 
+export async function* getIntervalsFromStorageStream(stream: AsyncIterable<IntervalEntity>): AsyncGenerator<Interval> {
+  for await (const entry of stream) {
+    yield getIntervalFromDateRange(entry.startTimestamp, entry.endTimestamp)
+  }
+}
+
 export async function generatorToArray<T>(generator: AsyncIterable<T> | Iterable<T>): Promise<T[]> {
   const arr: T[] = []
   for await (const item of generator) {
@@ -64,61 +66,67 @@ export type IntervalArrayOrMap = Interval[] | Record<string, Interval>
  * @param intervals The intervals to clip.
  * @param clipRange Single or multiple intervals to clip away.
  */
-function clipIntervals(
+export function clipIntervals(
   intervals: Interval[],
-  clipRange: Interval,
+  clipRange: Interval | Interval[],
 ): Interval[] {
-  for (const [i, currentRange] of intervals.entries()) {
-    // @note: Clipping on the middle
-    if (
-      clipRange.start > currentRange.start &&
-      clipRange.start < currentRange.end &&
-      clipRange.end > currentRange.start &&
-      clipRange.end < currentRange.end
-    ) {
-      const leftRange = Interval.fromDateTimes(
-        currentRange.start,
-        clipRange.start.minus({millisecond: 1})
-      )
-      const rightRange = Interval.fromDateTimes(
-        clipRange.end.plus({millisecond: 1}),
-        currentRange.end,
-      )
-
-      intervals.splice(i, 1, leftRange, rightRange)
+  if(Array.isArray(clipRange)) {
+    for (const clip of clipRange) {
+      intervals = clipIntervals(intervals, clip)
     }
-    // @note: Clipping from the left
-    else if (
-      clipRange.start <= currentRange.start &&
-      clipRange.end >= currentRange.start &&
-      clipRange.end < currentRange.end
-    ) {
-      const rightRange = Interval.fromDateTimes(
-        clipRange.end.plus({millisecond: 1}),
-        currentRange.end,
-      )
+  } else {
+    for (const [i, currentRange] of intervals.entries()) {
+      // @note: Clipping on the middle
+      if (
+        clipRange.start > currentRange.start &&
+        clipRange.start < currentRange.end &&
+        clipRange.end > currentRange.start &&
+        clipRange.end < currentRange.end
+      ) {
+        const leftRange = Interval.fromDateTimes(
+          currentRange.start,
+          clipRange.start.minus({millisecond: 1})
+        )
+        const rightRange = Interval.fromDateTimes(
+          clipRange.end.plus({millisecond: 1}),
+          currentRange.end,
+        )
 
-      intervals.splice(i, 1, rightRange)
-    }
-    // @note: Clipping from the right
-    else if (
-      clipRange.end >= currentRange.end &&
-      clipRange.start <= currentRange.end &&
-      clipRange.start > currentRange.start
-    ) {
-      const leftRange = Interval.fromDateTimes(
-        currentRange.start,
-        clipRange.start.plus({millisecond: 1}),
-      )
+        intervals.splice(i, 1, leftRange, rightRange)
+      }
+      // @note: Clipping from the left
+      else if (
+        clipRange.start <= currentRange.start &&
+        clipRange.end >= currentRange.start &&
+        clipRange.end < currentRange.end
+      ) {
+        const rightRange = Interval.fromDateTimes(
+          clipRange.end.plus({millisecond: 1}),
+          currentRange.end,
+        )
 
-      intervals.splice(i, 1, leftRange)
-    }
-    // @note: Clipping the whole range
-    else if (
-      clipRange.start <= currentRange.start &&
-      clipRange.end >= currentRange.end
-    ) {
-      intervals.splice(i, 1)
+        intervals.splice(i, 1, rightRange)
+      }
+      // @note: Clipping from the right
+      else if (
+        clipRange.end >= currentRange.end &&
+        clipRange.start <= currentRange.end &&
+        clipRange.start > currentRange.start
+      ) {
+        const leftRange = Interval.fromDateTimes(
+          currentRange.start,
+          clipRange.start.plus({millisecond: 1}),
+        )
+
+        intervals.splice(i, 1, leftRange)
+      }
+      // @note: Clipping the whole range
+      else if (
+        clipRange.start <= currentRange.start &&
+        clipRange.end >= currentRange.end
+      ) {
+        intervals.splice(i, 1)
+      }
     }
   }
 
@@ -214,8 +222,20 @@ export async function mergeIntervals(
   }
 }
 
-export function isEqualDateRange(a: DateRange, b: DateRange): boolean {
-  return a.startDate === b.startDate && a.endDate === b.endDate
+export function isEqualIntervalEntity(a: IntervalEntity, b: IntervalEntity): boolean {
+  return a.startTimestamp === b.startTimestamp && a.endTimestamp === b.endTimestamp
+}
+
+/**
+ * Transforms any interval to a duration representing a time frame.
+ * This is useful when you want to convert a saved interval to its corresponding time frame.
+ * A month is always 30 days, a year is always 365 days in terms of time frames.
+ * If an interval is not exactly a time frame, it will be rounded to the nearest time frame.
+ * @param interval The interval to transform.
+ */
+export function intervalToTimeFrameDuration(interval: Interval): Duration {
+  const { unit, amount } = getMostSignificantDurationUnitAndAmount(interval.toDuration())
+  return Duration.fromObject({ [unit]: Math.round(amount) })
 }
 
 // @todo: Create a generator function instead for not filling memory on tiny time frames or/and large intervals
@@ -230,36 +250,35 @@ export function getTimeFrameIntervals(
     ]
   }
 
-  const { unit, size } = getMostSignificantDurationUnitAndSize(timeFrame)
-  const ranges = splitDurationIntoIntervals(interval.start, interval.end, unit, size)
+  const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
+  const ranges = splitDurationIntoIntervals(interval.start, interval.end, unit, amount)
   return reverse ? ranges.reverse() : ranges
 }
 
-export function getMostSignificantDurationUnitAndSize(timeFrame: Duration): { unit: DateTimeUnit, size: number } {
-  timeFrame.shiftTo()
-  if(timeFrame.years !== 0) {
-    return { unit: "year", size: timeFrame.years }
+export function getMostSignificantDurationUnitAndAmount(timeFrame: Duration): { unit: DateTimeUnit, amount: number } {
+  if(timeFrame.years >= 1) {
+    return { unit: "year", amount: timeFrame.years }
   }
-  if(timeFrame.months !== 0) {
-    return { unit: "month", size: timeFrame.months }
+  if(timeFrame.months >= 1) {
+    return { unit: "month", amount: timeFrame.months }
   }
-  if(timeFrame.weeks !== 0) {
-    return { unit: "week", size: timeFrame.weeks }
+  if(timeFrame.weeks >= 1) {
+    return { unit: "week", amount: timeFrame.weeks }
   }
-  if(timeFrame.days !== 0) {
-    return { unit: "day", size: timeFrame.days }
+  if(timeFrame.days >= 1) {
+    return { unit: "day", amount: timeFrame.days }
   }
-  if(timeFrame.hours !== 0) {
-    return { unit: "hour", size: timeFrame.hours }
+  if(timeFrame.hours >= 1) {
+    return { unit: "hour", amount: timeFrame.hours }
   }
-  if(timeFrame.minutes !== 0) {
-    return { unit: "minute", size: timeFrame.minutes }
+  if(timeFrame.minutes >= 1) {
+    return { unit: "minute", amount: timeFrame.minutes }
   }
-  if(timeFrame.seconds !== 0) {
-    return { unit: "second", size: timeFrame.seconds }
+  if(timeFrame.seconds >= 1) {
+    return { unit: "second", amount: timeFrame.seconds }
   }
-  if(timeFrame.milliseconds !== 0) {
-    return { unit: "millisecond", size: timeFrame.milliseconds }
+  if(timeFrame.milliseconds >= 1) {
+    return { unit: "millisecond", amount: timeFrame.milliseconds }
   }
   throw new Error("Invalid time frame")
 }
@@ -272,8 +291,8 @@ export function getPreviousInterval(
   if (timeFrame.equals(MAX_TIMEFRAME))
     throw new Error('TimeFrame.All does not have a prev interval')
 
-  const { unit, size } = getMostSignificantDurationUnitAndSize(timeFrame)
-  const durationObj = { [unit]: size }
+  const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
+  const durationObj = { [unit]: amount }
   Interval.fromDateTimes(interval.start.minus(durationObj), interval.end.minus(durationObj))
 
   return reverse
@@ -289,8 +308,8 @@ export function getNextInterval(
   if (timeFrame.equals(MAX_TIMEFRAME))
     throw new Error('TimeFrame.All does not have a next interval')
 
-  const { unit, size } = getMostSignificantDurationUnitAndSize(timeFrame)
-  const durationObj = { [unit]: size }
+  const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
+  const durationObj = { [unit]: amount }
   Interval.fromDateTimes(interval.start.minus(durationObj), interval.end.minus(durationObj))
 
   return reverse

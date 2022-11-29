@@ -14,9 +14,10 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
-import { TimeFrame as TF } from '../../time.js'
 import { TimeInfo } from '../types.js'
 import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
+import {Duration} from "luxon";
+import {MAX_TIMEFRAME} from "../../time";
 
 // State
 
@@ -63,12 +64,12 @@ export const TransactionRequestList = new GraphQLList(TransactionRequest)
 export const TimeFrame = new GraphQLEnumType({
   name: 'TimeFrame',
   values: {
-    Hour: { value: TF.Hour },
-    Day: { value: TF.Day },
-    Week: { value: TF.Week },
-    Month: { value: TF.Month },
-    Year: { value: TF.Year },
-    All: { value: TF.All },
+    Hour: { value: Duration.fromDurationLike({hour: 1}).toMillis() },
+    Day: { value: Duration.fromDurationLike({day: 1}).toMillis() },
+    Week: { value: Duration.fromDurationLike({week: 1}).toMillis() },
+    Month: { value: Duration.fromDurationLike({month: 1}).toMillis() },
+    Year: { value: Duration.fromDurationLike({year: 1}).toMillis() },
+    All: { value: MAX_TIMEFRAME.toMillis() },
   },
 })
 

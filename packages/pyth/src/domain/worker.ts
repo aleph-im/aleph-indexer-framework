@@ -7,7 +7,6 @@ import {
   IndexerWorkerDomainWithStats,
   createStatsStateDAL,
   createStatsTimeSeriesDAL,
-  candleIntervalToDuration,
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
@@ -116,7 +115,7 @@ export default class WorkerDomain
   // @note: replaces getTimeSeriesStats
   async getCandles(
     dataFeed: string,
-    candleSize: CandleInterval,
+    timeFrame: number,
     startDate: DateTime,
     endDate: DateTime,
     opts: any,
@@ -124,11 +123,11 @@ export default class WorkerDomain
     const { limit, reverse } = opts
     const feed = this.getDataFeed(dataFeed)
     return await feed.getTimeSeriesStats('candle', {
-      startDate: startDate,
-      endDate: endDate,
+      startTimestamp: startDate.toMillis(),
+      endTimestamp: endDate.toMillis(),
       limit,
       reverse,
-      timeFrame: candleIntervalToDuration(candleSize),
+      timeFrame,
     })
   }
 

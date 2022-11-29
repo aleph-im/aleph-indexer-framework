@@ -16,8 +16,8 @@ export {
  */
 export type AccountDateRange = {
   account: string
-  startDate: number
-  endDate: number
+  startTimestamp: number
+  endTimestamp: number
 }
 
 /**

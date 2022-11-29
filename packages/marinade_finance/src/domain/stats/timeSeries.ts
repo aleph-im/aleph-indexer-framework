@@ -3,14 +3,15 @@ import {
   IndexerMsI,
   StatsStateStorage,
   StatsTimeSeriesStorage,
-  TimeFrame,
   TimeSeriesStats,
+  MAX_TIMEFRAME
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
 import { AccessTimeStats, MarinadeFinanceAccountStats } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import accessAggregator from './timeSeriesAggregator.js'
+import {Duration} from "luxon";
 
 export async function createAccountStats(
   account: string,
@@ -23,19 +24,19 @@ export async function createAccountStats(
   const accessTimeSeries = new TimeSeriesStats<ParsedEvents, AccessTimeStats>(
     {
       type: 'access',
-      startDate: 0,
+      startTimestamp: 0,
       timeFrames: [
-        TimeFrame.Hour,
-        TimeFrame.Day,
-        TimeFrame.Week,
-        TimeFrame.Month,
-        TimeFrame.Year,
-        TimeFrame.All,
+        Duration.fromDurationLike({hours: 1}),
+        Duration.fromDurationLike({days: 1}),
+        Duration.fromDurationLike({week: 1}),
+        Duration.fromDurationLike({month: 1}),
+        Duration.fromDurationLike({year: 1}),
+        MAX_TIMEFRAME
       ],
-      getInputStream: async ({ account, startDate, endDate }) => {
+      getInputStream: async ({ account, startTimestamp, endTimestamp }) => {
         return await eventDAL
           .useIndex(EventDALIndex.AccountTimestamp)
-          .getAllValuesFromTo([account, startDate], [account, endDate])
+          .getAllValuesFromTo([account, startTimestamp], [account, endTimestamp])
       },
       aggregate: ({ input, prevValue }): AccessTimeStats => {
         return accessAggregator.aggregate(input, prevValue)

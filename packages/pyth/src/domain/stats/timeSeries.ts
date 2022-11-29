@@ -1,14 +1,15 @@
 import {
-  AccountTimeSeriesStatsManager, candleIntervalToDuration,
+  AccountTimeSeriesStatsManager,
   IndexerMsI,
   StatsStateStorage,
   StatsTimeSeriesStorage,
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { PriceDALIndex, PriceStorage } from '../../dal/price.js'
-import { Candle, Price } from '../../types.js'
-import pythCandleAggregator from './CandleAggregator.js'
-import { TIME_FRAMES } from '../../constants.js'
+import {Candle, DataFeedStats, Price} from '../../types.js'
+import pythCandleAggregator from './candleAggregator.js'
+import { TIME_FRAMES_AS_DURATION } from '../../constants.js'
+import statsAggregator from "./statsAggregator";
 
 export function createCandles(
   account: string,
@@ -16,18 +17,18 @@ export function createCandles(
   priceDAL: PriceStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
-): AccountTimeSeriesStatsManager<Candle> {
+): AccountTimeSeriesStatsManager<DataFeedStats> {
   const timeSeriesStats = new TimeSeriesStats<Price, Candle>(
     {
       type: 'candle',
-      startDate: 0,
-      timeFrames: TIME_FRAMES.map((tf) => candleIntervalToDuration(tf)),
-      getInputStream: ({account, startDate, endDate}) => {
+      startTimestamp: 0,
+      timeFrames: TIME_FRAMES_AS_DURATION,
+      getInputStream: ({account, startTimestamp, endTimestamp}) => {
         return priceDAL
           .useIndex(PriceDALIndex.AccountTimestamp)
           .getAllValuesFromTo(
-            [account, startDate],
-            [account, endDate],
+            [account, startTimestamp],
+            [account, endTimestamp],
           )
       },
       aggregate: ({ input, prevValue }): Candle => {
@@ -38,10 +39,13 @@ export function createCandles(
     statsTimeSeriesDAL,
   )
 
-  return new AccountTimeSeriesStatsManager(
+  return new AccountTimeSeriesStatsManager<DataFeedStats>(
     {
       account,
       series: [timeSeriesStats],
+      aggregate(args) {
+        return statsAggregator.aggregate(args)
+      },
     },
     indexerApi,
     statsStateDAL,

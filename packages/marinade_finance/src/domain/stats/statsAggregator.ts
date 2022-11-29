@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { TimeFrame, AccountAggregatorFnArgs } from '@aleph-indexer/framework'
+import {DateTime, Duration} from 'luxon'
+import { AccountAggregatorFnArgs, MAX_TIMEFRAME } from '@aleph-indexer/framework'
 import { MarinadeFinanceAccountStats } from '../../types.js'
 import accessAggregator from './timeSeriesAggregator.js'
 
@@ -12,7 +12,7 @@ export class StatsAggregator {
     const stats = this.getEmptyStats()
     const type = 'access'
     const currHour = DateTime.fromMillis(now).startOf('hour')
-    const commonFields = [account, type, TimeFrame.Hour]
+    const commonFields = [account, type, Duration.fromDurationLike({ hours: 1 }).toMillis()]
 
     const last1h = await timeSeriesDAL.get([
       ...commonFields,
@@ -38,7 +38,7 @@ export class StatsAggregator {
     for await (const event of last7dEvents) {
       last7d = accessAggregator.aggregate(event.data, last7d)
     }
-    const total = await timeSeriesDAL.get([account, type, TimeFrame.All, 0])
+    const total = await timeSeriesDAL.get([account, type, MAX_TIMEFRAME.toMillis(), 0])
 
     if (last1h) stats.last1h = last1h.data
     if (last24h) stats.last24h = last24h

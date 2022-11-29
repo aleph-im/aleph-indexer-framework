@@ -1,12 +1,10 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { TimeFrame } from '../../time.js'
+import {IntervalEntity} from "../types";
 
-export type StatsTimeSeries<T> = {
+export type StatsTimeSeries<T> = IntervalEntity & {
   account: string
   type: string
-  timeFrame: TimeFrame
-  startDate: number
-  endDate: number
+  timeFrame: number
   data: T
 }
 
@@ -32,7 +30,7 @@ const timeFrameKey = {
 
 // @note: start date in millis of the interval
 const startDateKey = {
-  get: (e: StatsTimeSeries<unknown>) => e.startDate,
+  get: (e: StatsTimeSeries<unknown>) => e.startTimestamp,
   length: EntityStorage.TimestampLength,
 }
 

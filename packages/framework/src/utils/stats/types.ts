@@ -1,21 +1,25 @@
-import { Interval } from 'luxon'
+import {Duration, Interval} from 'luxon'
 import { StorageValueStream } from '@aleph-indexer/core'
-import { TimeFrame } from '../time.js'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
+
+export type IntervalEntity = {
+  startTimestamp: number
+  endTimestamp: number
+}
 
 export type PrevValueFactoryFnArgs = {
   account: string
   type: string
-  timeFrame: TimeFrame
+  timeFrame: Duration
   interval: Interval
   reverse?: boolean
 }
 
 export type InputStreamFactoryFnArgs = {
   account: string
-  startDate: number
-  endDate: number
+  startTimestamp: number
+  endTimestamp: number
 }
 
 export type TimeSeriesAggregatorFnArgs<I, O> = {
@@ -36,8 +40,8 @@ export type AccountAggregatorFnArgs = {
 
 export type TimeSeriesStatsConfig<I, O> = {
   type: string
-  startDate: number
-  timeFrames: TimeFrame[]
+  startTimestamp: number
+  timeFrames: Duration[]
   getInputStream: (
     args: InputStreamFactoryFnArgs,
   ) => Promise<StorageValueStream<I>>
@@ -70,7 +74,7 @@ export type TimeSeries<V = any> = TimeSeriesItem<V>[]
 export type AccountTimeSeriesStats<V = any> = {
   account: string
   type: string
-  timeFrame: TimeFrame
+  timeFrame: Duration
   series: TimeSeries<V>
 }
 
@@ -86,9 +90,9 @@ export type AccountStats<V = any> = {
  * Transformations and clipping to apply to the time-series.
  */
 export type AccountStatsFilters = {
-  timeFrame: TimeFrame
-  startDate?: number
-  endDate?: number
+  timeFrame: number
+  startTimestamp?: number
+  endTimestamp?: number
   limit?: number
   reverse?: boolean
 }

@@ -1,9 +1,9 @@
 import { Utils } from '@aleph-indexer/core'
 import { IndexerMsI } from '../../services/indexer/index.js'
 import {
-  DateRange,
-  getDateRangeFromInterval,
-  mergeDateRangesFromIterable,
+  getIntervalsFromStorageStream,
+  mergeIntervals,
+  intervalToTimeFrameDuration
 } from '../time.js'
 import {
   StatsStateStorage,
@@ -18,6 +18,7 @@ import {
   AccountTimeSeriesStatsConfig,
   AccountStats,
 } from './types.js'
+import {Duration, Interval} from "luxon";
 
 const { JobRunner } = Utils
 
@@ -66,7 +67,7 @@ export class AccountTimeSeriesStatsManager<V> {
     return {
       account,
       type,
-      timeFrame,
+      timeFrame: Duration.fromMillis(timeFrame),
       series,
     }
   }
@@ -90,26 +91,30 @@ export class AccountTimeSeriesStatsManager<V> {
     const state = await this.indexerApi.getAccountState({ account })
     if (!state) return
 
+    //@note: If no transactions have been processed, nothing to do
     if (!state.processed.length) return
 
-    const pendingRanges: DateRange[] = state.processed.map(
-      getDateRangeFromInterval,
-    )
+    //@note: The processed transactions are now pending to be aggregated
+    const pendingIntervals: Interval[] = state.processed.map((interval) => {
+      return Interval.fromISO(interval)
+    })
+
+    const unfetchedIntervals = state.pending.map((interval) => {
+      return Interval.fromISO(interval)
+    })
 
     let minDate
 
     if (state.accurate) {
-      const minProcessedDate = getDateRangeFromInterval(
-        state.processed[0],
-      ).startDate
+      const minProcessedDate = pendingIntervals[0].start.toMillis()
 
       if (!state.pending.length) {
+        //@note: If there are no pending transactions, we can aggregate all the processed transactions
         minDate = minProcessedDate
       } else {
-        const minPendingDate = getDateRangeFromInterval(
-          state.pending[0],
-        ).startDate
+        const minPendingDate = unfetchedIntervals[0].start.toMillis()
 
+        //@note: If there are gaps in the processed transactions, then get the minimum date of the pending transactions
         if (minProcessedDate <= minPendingDate) {
           minDate = minProcessedDate
         }
@@ -117,7 +122,7 @@ export class AccountTimeSeriesStatsManager<V> {
     }
 
     for (const timeSeries of this.config.series) {
-      await timeSeries.process(account, now, pendingRanges, minDate)
+      await timeSeries.process(account, now, pendingIntervals, minDate)
     }
   }
 
@@ -137,42 +142,52 @@ export class AccountTimeSeriesStatsManager<V> {
     const { account } = this.config
     const { Processed } = StatsStateState
 
-    const fetchedRanges = await this.stateDAL
-      .useIndex(StatsStateDALIndex.AccountTypeState)
-      .getAllValuesFromTo([account, Processed], [account, Processed], {
-        reverse: false,
+    for (const timeSeries of this.config.series) {
+      const fetchedRanges = await this.stateDAL
+        .useIndex(StatsStateDALIndex.AccountTypeState)
+        .getAllValuesFromTo([account, timeSeries.config.type, Processed], [account, timeSeries.config.type, Processed], {
+          reverse: false,
+        })
+
+      const { newRanges, oldRanges } = await mergeIntervals(
+        getIntervalsFromStorageStream(fetchedRanges)
+      )
+
+      const newStates = newRanges.map((range) => {
+        return {
+          account,
+          state: StatsStateState.Processed,
+          startTimestamp: range.start.toMillis(),
+          endTimestamp: range.end.toMillis(),
+          type: timeSeries.config.type,
+          timeFrame: intervalToTimeFrameDuration(range).toMillis(),
+        }
       })
 
-    const { newRanges, oldRanges } = await mergeDateRangesFromIterable(
-      fetchedRanges,
-    )
+      const oldStates = oldRanges.map((range) => {
+        return {
+          account,
+          state: StatsStateState.Processed,
+          startTimestamp: range.start.toMillis(),
+          endTimestamp: range.end.toMillis(),
+          type: timeSeries.config.type,
+          timeFrame: intervalToTimeFrameDuration(range).toMillis(),
+        }
+      })
 
-    const newStates = newRanges.map((range) => {
-      const newState = range as StatsState
-      newState.account = account
-      newState.state = Processed
-      return newState
-    })
+      if (newStates.length > 0) {
+        console.log(
+          `💿 compact stats states
+          newRanges: ${newStates.length},
+          toDeleteRanges: ${oldStates.length}
+        `,
+        )
+      }
 
-    const oldStates = oldRanges.map((range) => {
-      const oldState = range as StatsState
-      oldState.account = account
-      oldState.state = Processed
-      return oldState
-    })
-
-    if (newStates.length > 0) {
-      console.log(
-        `💿 compact stats states
-        newRanges: ${newStates.length},
-        toDeleteRanges: ${oldStates.length}
-      `,
-      )
+      await Promise.all([
+        this.stateDAL.save(newStates),
+        this.stateDAL.remove(oldStates),
+      ])
     }
-
-    await Promise.all([
-      this.stateDAL.save(newStates),
-      this.stateDAL.remove(oldStates),
-    ])
   }
 }

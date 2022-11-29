@@ -1,17 +1,15 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { TimeFrame } from '../../time.js'
+import {IntervalEntity} from "../types";
 
 export enum StatsStateState {
   Processing = 0,
   Processed = 1,
 }
 
-export type StatsState = {
+export type StatsState = IntervalEntity & {
   account: string
   type: string
-  timeFrame: TimeFrame
-  startDate: number
-  endDate: number
+  timeFrame: number
   state: StatsStateState
 }
 
@@ -41,7 +39,7 @@ const timeFrameKey = {
 
 // @note: start date in millis of the interval
 const startDateKey = {
-  get: (e: StatsState) => e.startDate,
+  get: (e: StatsState) => e.startTimestamp,
   length: EntityStorage.TimestampLength,
 }
 

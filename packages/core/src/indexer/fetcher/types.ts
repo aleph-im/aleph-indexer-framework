@@ -49,8 +49,8 @@ export type FetcherStateV1 = {
 
 export type ParserContextV1 = {
   account: string
-  startDate: number
-  endDate: number
+  startTimestamp: number
+  endTimestamp: number
 }
 
 export type ParsedTransactionContextV1 = {

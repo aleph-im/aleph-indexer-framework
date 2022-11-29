@@ -63,7 +63,13 @@ export class CandleAggregator {
   }
 
   protected prepareCandleItem(prev?: Candle): Candle {
-    prev = prev || {
+    prev = prev || this.getEmptyCandle()
+
+    return prev
+  }
+
+  getEmptyCandle() {
+    return {
       openPrice: 0,
       openConfidence: 0,
       openTimestamp: 0,
@@ -76,9 +82,7 @@ export class CandleAggregator {
       closePrice: 0,
       closeConfidence: 0,
       closeTimestamp: 0,
-    }
-
-    return prev
+    };
   }
 }
 
