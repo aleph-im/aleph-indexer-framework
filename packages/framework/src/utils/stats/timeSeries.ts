@@ -5,7 +5,6 @@ import {
   generatorToArray,
   getIntervalFromDateRange,
   getIntervalsFromStorageStream,
-  getMostSignificantDurationUnitAndAmount,
   getNextInterval,
   getPreviousInterval,
   getTimeFrameIntervals, MAX_TIMEFRAME,
@@ -13,6 +12,7 @@ import {
 import {StatsState, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
 import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
 import {AccountStatsFilters, TimeSeries, TimeSeriesStatsConfig,} from './types.js'
+import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
 
 const { BufferExec } = Utils
 
@@ -94,7 +94,7 @@ export class TimeSeriesStats<I, O> {
       reverse,
     } = this.config
 
-    const sortedTimeFrames = timeFrames.sort()
+    const sortedTimeFrames = timeFrames.sort((a, b) => a.toMillis() - b.toMillis())
 
     if (startTimestamp !== undefined) {
       pendingIntervals = clipIntervals(pendingIntervals, Interval.fromDateTimes(
@@ -104,7 +104,6 @@ export class TimeSeriesStats<I, O> {
     }
     for (const [timeFrameIndex, pendingTimeFrame] of sortedTimeFrames.entries()) {
       let { unit: timeFrameUnit, amount: timeFrameAmount } = getMostSignificantDurationUnitAndAmount(pendingTimeFrame)
-      console.log(`📈 processing ${type} ${timeFrameAmount}${timeFrameUnit} for ${account}`)
 
       // @note: get the previous time frame, which is able to cleanly divide the current time frame.
       let previousTimeFrameIndex = timeFrameIndex - 1
@@ -116,6 +115,16 @@ export class TimeSeriesStats<I, O> {
           if (timeFrameMillis % smallerSize === 0) break
           previousTimeFrameIndex--
         }
+      }
+
+      let usedUnit, usedAmount
+      if (previousTimeFrameIndex < 0) {
+      console.log(`📈 processing ${type} ${timeFrameAmount}${timeFrameUnit} with events for ${account}`)
+      } else {
+        const { unit, amount } = getMostSignificantDurationUnitAndAmount(sortedTimeFrames[previousTimeFrameIndex])
+        usedUnit = unit
+        usedAmount = amount
+        console.log(`📈 processing ${type} ${timeFrameAmount}${timeFrameUnit} with ${usedAmount}${usedUnit} for ${account}`)
       }
 
       // @note: get intervals which have already been processed
@@ -213,7 +222,7 @@ export class TimeSeriesStats<I, O> {
         }
 
         if (!intervals.length) continue
-
+        let aggregatedValues = 0
         for (const interval of intervals) {
           const startTimestamp = interval.start.toMillis()
           const endTimestamp = interval.end.toMillis() - 1
@@ -245,7 +254,8 @@ export class TimeSeriesStats<I, O> {
           // @note: aggregate the data
           let data: O | undefined
           for await (const value of inputs) {
-            const input = 'data' in value && previousTimeFrameIndex !== 0 ? value.data : value
+            aggregatedValues++
+            const input = 'data' in value && previousTimeFrameIndex >= 0 ? value.data : value
             data = await aggregator({
               input,
               interval,
@@ -266,6 +276,12 @@ export class TimeSeriesStats<I, O> {
         }
 
         await processedIntervalsBuffer.drain()
+
+        if (aggregatedValues) {
+        console.log(`💹 Aggregated ${aggregatedValues} ${usedAmount}${usedUnit} entries for ${account} in range ${
+          pendingInterval.toISO()
+        }`)
+      }
       }
       if (addedEntries) {
         console.log(`💹 Added ${addedEntries} ${timeFrameUnit} entries for ${account} in range ${

@@ -1,6 +1,7 @@
-import { Utils } from '@aleph-indexer/core'
-import { DateTime, DateTimeUnit, Duration, Interval } from 'luxon'
-import { IntervalEntity } from "./stats";
+import {Utils} from '@aleph-indexer/core'
+import {DateTime, DateTimeUnit, Duration, Interval} from 'luxon'
+import {IntervalEntity} from "./stats";
+import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
 
 const { splitDurationIntoIntervals } = Utils
 
@@ -253,34 +254,6 @@ export function getTimeFrameIntervals(
   const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
   const ranges = splitDurationIntoIntervals(interval.start, interval.end, unit, amount)
   return reverse ? ranges.reverse() : ranges
-}
-
-export function getMostSignificantDurationUnitAndAmount(timeFrame: Duration): { unit: DateTimeUnit, amount: number } {
-  if(timeFrame.years >= 1) {
-    return { unit: "year", amount: timeFrame.years }
-  }
-  if(timeFrame.months >= 1) {
-    return { unit: "month", amount: timeFrame.months }
-  }
-  if(timeFrame.weeks >= 1) {
-    return { unit: "week", amount: timeFrame.weeks }
-  }
-  if(timeFrame.days >= 1) {
-    return { unit: "day", amount: timeFrame.days }
-  }
-  if(timeFrame.hours >= 1) {
-    return { unit: "hour", amount: timeFrame.hours }
-  }
-  if(timeFrame.minutes >= 1) {
-    return { unit: "minute", amount: timeFrame.minutes }
-  }
-  if(timeFrame.seconds >= 1) {
-    return { unit: "second", amount: timeFrame.seconds }
-  }
-  if(timeFrame.milliseconds >= 1) {
-    return { unit: "millisecond", amount: timeFrame.milliseconds }
-  }
-  throw new Error("Invalid time frame")
 }
 
 export function getPreviousInterval(

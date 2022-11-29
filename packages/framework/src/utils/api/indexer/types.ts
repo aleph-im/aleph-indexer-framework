@@ -17,7 +17,7 @@ import { GraphQLJSONObject } from '@aleph-indexer/core'
 import { TimeInfo } from '../types.js'
 import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
 import {Duration} from "luxon";
-import {MAX_TIMEFRAME} from "../../time";
+import {MAX_TIMEFRAME} from "../../time.js";
 
 // State
 

@@ -25,7 +25,7 @@ const typeKey = {
 
 const timeFrameKey = {
   get: (e: StatsTimeSeries<unknown>) => e.timeFrame,
-  length: 3,
+  length: EntityStorage.VariableLength,
 }
 
 // @note: start date in millis of the interval
