@@ -1,9 +1,8 @@
 import {Utils} from '@aleph-indexer/core'
 import {DateTime, DateTimeUnit, Duration, Interval} from 'luxon'
 import {IntervalEntity} from "./stats";
-import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
 
-const { splitDurationIntoIntervals } = Utils
+const { splitDurationIntoIntervals, getMostSignificantDurationUnitAndAmount } = Utils
 
 export const MAX_TIMEFRAME = Duration.fromDurationLike({year: 315});
 // @todo: move time utils from framework to core

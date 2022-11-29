@@ -11,10 +11,9 @@ import {
 } from '../time.js'
 import {StatsState, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
 import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
-import {AccountStatsFilters, TimeSeries, TimeSeriesStatsConfig,} from './types.js'
-import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
+import {AccountStatsFilters, TimeSeries, TimeSeriesStatsConfig} from './types.js'
 
-const { BufferExec } = Utils
+const { BufferExec, getMostSignificantDurationUnitAndAmount } = Utils
 
 /**
  * Base class for time series stats.
@@ -181,11 +180,11 @@ export class TimeSeriesStats<I, O> {
               firstItem.startTimestamp < pendingInterval.start.toMillis() &&
               pendingInterval.start.toMillis() !== minDate
             ) {
-              console.log(
-                `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
-                  firstItem.startTimestamp, firstItem.endTimestamp,
-                ).toISO()}`,
-              )
+              //console.log(
+              //  `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
+              //    firstItem.startTimestamp, firstItem.endTimestamp,
+              //  ).toISO()}`,
+              //)
               reverse ? stateEntries.pop() : stateEntries.shift()
             }
           }
@@ -197,11 +196,11 @@ export class TimeSeriesStats<I, O> {
             const lastItem = stateEntries[lastIndex]
 
             if (lastItem.endTimestamp - 1 > pendingInterval.end.toMillis()) {
-              console.log(
-                `📊 Recalculate incomplete LAST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
-                  lastItem.startTimestamp, lastItem.endTimestamp
-                ).toISO()}`,
-              )
+              //console.log(
+              //  `📊 Recalculate incomplete LAST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
+              //    lastItem.startTimestamp, lastItem.endTimestamp
+              //  ).toISO()}`,
+              //)
               reverse ? stateEntries.shift() : stateEntries.pop()
             }
           }
