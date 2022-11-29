@@ -2,10 +2,9 @@ import {jest} from '@jest/globals'
 import {createAccountStats} from '../timeSeries.js'
 import {mockEventDAL, mockStatsStateDAL, mockStatsTimeSeriesDAL,} from '../__mocks__/DAL.js'
 import {mockMainIndexer} from "../__mocks__/indexer.js";
-import {DateTime, Interval} from "luxon";
+import {DateTime, Duration, Interval} from "luxon";
 import {ParsedEvents} from "../../../utils/layouts/index.js";
 import {EventStorage} from "../../../dal/event.js";
-import {TimeFrame} from "@aleph-indexer/framework/dist/src/utils";
 // jest.useFakeTimers()
 jest.setTimeout(30000)
 
@@ -23,7 +22,7 @@ async function mockAccountStats(eventDAL: EventStorage, account: string, testNam
 }
 
 describe('AccountTimeSeries', () => {
-  it('getStats with one event far in the past', async () => {
+  it.skip('getStats with one event far in the past', async () => {
     const accountAddress = 'test'
     const testName = 'AccountStatsOneEventFarInThePast'
     const eventDAL = await mockEventDAL('AccountStatsOneEventFarInThePast', {
@@ -49,7 +48,7 @@ describe('AccountTimeSeries', () => {
     expect(stats.stats.total.accesses).toEqual(eventCnt)
   })
 
-  it('getStats with many recent events', async () => {
+  it.skip('getStats with many recent events', async () => {
     const accountAddress = 'test'
     const testName = 'AccountStatsManyRecentEvents'
     const eventDAL = await mockEventDAL(testName, {
@@ -95,7 +94,7 @@ describe('AccountTimeSeries', () => {
 
     // Check day stats
     const dayStats = await accountStats.getTimeSeriesStats('access', {
-      timeFrame: TimeFrame.Day
+      timeFrame: Duration.fromDurationLike({days: 1}).toMillis(),
     })
     expect(dayStats.series.length).toBeGreaterThan(0)
     const dayAccesses = dayStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
@@ -116,7 +115,7 @@ describe('AccountTimeSeries', () => {
 
     // Check week stats
     const weekStats = await accountStats.getTimeSeriesStats('access', {
-      timeFrame: TimeFrame.Week
+      timeFrame: Duration.fromDurationLike({weeks: 1}).toMillis(),
     })
     expect(weekStats.series.length).toBeGreaterThan(0)
     const weekAccesses = weekStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
@@ -137,7 +136,7 @@ describe('AccountTimeSeries', () => {
 
     // Check month stats
     const monthStats = await accountStats.getTimeSeriesStats('access', {
-      timeFrame: TimeFrame.Month
+      timeFrame: Duration.fromDurationLike({months: 1}).toMillis(),
     })
     expect(monthStats.series.length).toBeGreaterThan(0)
     const monthAccesses = monthStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
