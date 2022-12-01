@@ -375,6 +375,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         })
         return signatures
       }),
+      async () => {
+        // Not implemented
+      },
     )
   }
 
@@ -422,6 +425,9 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         })
         return signatures
       }),
+      async () => {
+        // Not implemented
+      },
     )
   }
 
