@@ -19,7 +19,6 @@ import {
 } from '../services/fetcher/src/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
 import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
-import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
 import { createAccountDAL } from '../services/fetcher/src/dal/account.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
@@ -67,7 +66,6 @@ async function main() {
     createPendingTransactionFetchDAL(basePath),
     createRawTransactionDAL(basePath),
     createAccountInfoDAL(basePath),
-    createRequestsDAL(basePath),
     solanaPrivateRPC,
     solanaMainPublicRPC,
     new FetcherStateLevelStorage({ path: basePath }),
