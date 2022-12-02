@@ -114,7 +114,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     this.accounts = new PendingWorkPool({
       id: 'accounts',
-      interval: 0,
+      interval: 1000 * 60 * 1, // Execute it every 1 minute
       chunkSize: 100,
       concurrency: 1,
       dal: this.accountDAL,
