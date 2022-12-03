@@ -139,6 +139,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     this.pendingTransactions.stop().catch(() => 'ignore')
     this.pendingTransactionsCache.stop().catch(() => 'ignore')
     this.pendingTransactionsFetch.stop().catch(() => 'ignore')
+    this.accounts.stop().catch(() => 'ignore')
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
@@ -149,12 +150,10 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   /**
    * Assigns to a fetcher instance an account owned by the specific program
    * and initializes it.
-   * @param args Account address to asign to the fetcher instance,
+   * @param args Account address to assign to the fetcher instance
    */
   async addAccountFetcher(
     args: FetcherAccountPartitionRequestArgs,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    save = true,
   ): Promise<void> {
     const { account, indexerId } = args
 
@@ -170,6 +169,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   /**
    * Stops the fetching process of that instance of the fetcher for that account.
    * @param account The account address to stop the fetching process.
+   * @param indexerId Indexer that have made the request
    */
   async delAccountFetcher({
     account,
@@ -194,6 +194,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    * Allows to obtain the current state of the account
    * @param args Consists of the account address and a boolean to determine
    * whether to update its status if neccesary
+   * @param save Save the request on the database
    */
   async addAccountInfoFetcher(
     args: AddAccountInfoFetcherRequestArgs,
@@ -384,6 +385,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   /**
    * Fetch transactions from an account by slot.
    * @param args accountAddress, startDate, endDate and indexerId.
+   * @param save Save the request on the database
    */
   async fetchAccountTransactionsBySlot(
     args: FetchAccountTransactionsBySlotRequestArgs,
@@ -588,6 +590,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   /**
    * Fetch transactions from a RPC Node.
    * @param works Txn signatures with extra properties as time and payload.
+   * @param rpc RPC endpoint to use
    */
   protected async _fetchFromRPC(
     works: PendingWork<string[]>[],

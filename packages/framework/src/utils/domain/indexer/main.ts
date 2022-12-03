@@ -188,7 +188,9 @@ export class IndexerMainDomain {
    * Returns the global stats for the given accounts.
    * @param accounts The accounts to get the summary from.
    */
-  async getAccountStats<V>(accounts: string[] = []): Promise<AccountStats<V>[]> {
+  async getAccountStats<V>(
+    accounts: string[] = [],
+  ): Promise<AccountStats<V>[]> {
     this.checkStats()
 
     accounts =
