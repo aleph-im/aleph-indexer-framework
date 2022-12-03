@@ -29,6 +29,12 @@ export interface IndexerMsI {
    * @param args The account, the method and additional arguments to pass to the method.
    */
   invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown>
+
+  /**
+   * Remove the indexer for the given account, either for transactions or content or both.
+   * @param config The indexer configuration.
+   */
+  deleteAccount(config: AccountIndexerRequestArgs): Promise<void>
 }
 
 /**
