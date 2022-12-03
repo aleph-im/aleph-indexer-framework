@@ -25,7 +25,6 @@ import {
   FetchAccountTransactionsByDateRequestArgs,
   FetchAccountTransactionsBySlotRequestArgs,
   FetcherAccountPartitionRequestArgs,
-  FetcherOptionsTypes,
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
@@ -34,11 +33,6 @@ import {
 } from './src/types.js'
 import { PendingTransactionStorage } from './src/dal/pendingTransaction.js'
 import { MsIds } from '../common.js'
-import {
-  createFetcherOptions,
-  FetcherOptionsStorage,
-  RequestsDALIndex,
-} from './src/dal/requests.js'
 import { FetcherMsClient } from './client.js'
 import { RawTransactionWithPeers } from '../parser/src/types.js'
 import { AccountStorage } from './src/dal/account'
@@ -68,7 +62,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
    * @param pendingTransactionFetchDAL
    * @param rawTransactionDAL The raw transactions' storage.
    * @param accountInfoDAL The account info storage.
-   * @param requestDAL The fetcher requests' storage.
    * @param solanaRpc The solana RPC client to use.
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    * @param fetcherStateDAL The fetcher state storage.
@@ -82,7 +75,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     protected pendingTransactionFetchDAL: PendingTransactionStorage,
     protected rawTransactionDAL: RawTransactionStorage,
     protected accountInfoDAL: AccountInfoStorage,
-    protected requestDAL: FetcherOptionsStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
@@ -122,7 +114,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     this.accounts = new PendingWorkPool({
       id: 'accounts',
-      interval: 0,
+      interval: 1000 * 60 * 1, // Execute it every 1 minute
       chunkSize: 100,
       concurrency: 1,
       dal: this.accountDAL,
@@ -141,8 +133,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     this.pendingTransactionsCache.start().catch(() => 'ignore')
     this.pendingTransactionsFetch.start().catch(() => 'ignore')
     this.accounts.start().catch(() => 'ignore')
-
-    await this.loadExistingRequests()
   }
 
   async stop(): Promise<void> {
@@ -229,15 +219,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     this.infoFetchers[account] = fetcher
 
-    if (save) {
-      const fetcherOptions = createFetcherOptions(
-        FetcherOptionsTypes.AccountInfoFetcher,
-        args,
-      )
-
-      await this.requestDAL.save(fetcherOptions)
-    }
-
     await fetcher.init()
     fetcher.run()
   }
@@ -254,11 +235,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     await fetcher.stop()
     delete this.infoFetchers[account]
-
-    await this.removeExistingRequest(
-      FetcherOptionsTypes.AccountInfoFetcher,
-      account,
-    )
   }
 
   /**
@@ -365,14 +341,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
 
-    const fetcherOptions = createFetcherOptions(
-      FetcherOptionsTypes.AccountTransactionDateFetcher,
-      args,
-    )
-    if (save) {
-      await this.requestDAL.save(fetcherOptions)
-    }
-
     const {
       completeHistory,
       firstTimestamp = Number.MAX_SAFE_INTEGER,
@@ -408,10 +376,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         })
         return signatures
       }),
-      async (err) => {
-        if (!err && save) {
-          await this.requestDAL.remove(fetcherOptions).catch(() => 'ignore')
-        }
+      async () => {
+        // Not implemented
       },
     )
   }
@@ -429,15 +395,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
-
-    const fetcherOptions = createFetcherOptions(
-      FetcherOptionsTypes.AccountTransactionSlotFetcher,
-      args,
-    )
-
-    if (save) {
-      await this.requestDAL.save(fetcherOptions)
-    }
 
     const {
       completeHistory,
@@ -470,10 +427,8 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
         })
         return signatures
       }),
-      async (err) => {
-        if (!err && save) {
-          await this.requestDAL.remove(fetcherOptions).catch(() => 'ignore')
-        }
+      async () => {
+        // Not implemented
       },
     )
   }
@@ -705,53 +660,6 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
     }
 
     this.throughput += count
-  }
-
-  /**
-   * It is used to restart the execution of the fetcher by loading the existing requests.
-   */
-  protected async loadExistingRequests(): Promise<void> {
-    console.log(`🔗 Loading existing requests ...`)
-    const requests = await this.requestDAL.getAllValues()
-
-    for await (const value of requests) {
-      const { type, options } = value
-
-      switch (type) {
-        case FetcherOptionsTypes.AccountFetcher:
-          await this.addAccountFetcher(options)
-          break
-        case FetcherOptionsTypes.AccountInfoFetcher:
-          await this.addAccountInfoFetcher(options, false)
-          break
-        case FetcherOptionsTypes.AccountTransactionDateFetcher:
-          await this.fetchAccountTransactionsByDate(options, false)
-          break
-        case FetcherOptionsTypes.AccountTransactionSlotFetcher:
-          await this.fetchAccountTransactionsBySlot(options, false)
-          break
-      }
-    }
-  }
-
-  /**
-   * Removes the existing requests related to a certain account and type of request.
-   * @param type One of the possible requests that can be made to the fetcher service.
-   * @param account Account address.
-   */
-  protected async removeExistingRequest(
-    type: FetcherOptionsTypes,
-    account: string,
-  ): Promise<void> {
-    if (type === FetcherOptionsTypes.TransactionSignatureFetcher) return
-
-    const requests = await this.requestDAL
-      .useIndex(RequestsDALIndex.TypeAccount)
-      .getAllValuesFromTo([type, account], [type, account])
-
-    for await (const value of requests) {
-      this.requestDAL.remove(value)
-    }
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
