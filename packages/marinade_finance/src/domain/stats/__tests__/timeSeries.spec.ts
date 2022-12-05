@@ -8,8 +8,9 @@ import {EventStorage} from "../../../dal/event.js";
 import {AccountTimeSeriesStats} from "@aleph-indexer/framework/dist";
 import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
 import {StorageStream} from "@aleph-indexer/core/dist";
+import {AccessTimeStats} from "../../../types";
 // jest.useFakeTimers()
-jest.setTimeout(30000)
+jest.setTimeout(30000000)
 
 async function mockAccountStats(eventDAL: EventStorage, account: string, testName: string) {
   const statsStateDAL = mockStatsStateDAL(testName)
@@ -24,15 +25,16 @@ async function mockAccountStats(eventDAL: EventStorage, account: string, testNam
   );
 }
 
-async function checkEventInStats(events: StorageStream<string, ParsedEvents>, stats: AccountTimeSeriesStats) {
+async function checkEventInStats(events: StorageStream<string, ParsedEvents>, stats: AccountTimeSeriesStats<AccessTimeStats>) {
   const notInStats = []
   const accesses = stats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
+  const {unit, amount} = getMostSignificantDurationUnitAndAmount(stats.timeFrame)
   for await (const event of events) {
     const event_d = DateTime.fromMillis(event.value.timestamp)
     let found = false
     for (const s of stats.series) {
       const series_d = DateTime.fromISO(s.date)
-      if (series_d <= event_d && event_d < series_d.plus(stats.timeFrame)) {
+      if (series_d <= event_d && event_d < series_d.endOf(unit).plus({"millisecond": 1})) {
         expect(Object.keys(s.value.accessesByProgramId)?.find(s => s === event.value.signer)).toBeDefined()
         found = true
         break
@@ -43,7 +45,6 @@ async function checkEventInStats(events: StorageStream<string, ParsedEvents>, st
     }
   }
   if(notInStats.length > 0) {
-    const {unit, amount} = getMostSignificantDurationUnitAndAmount(stats.timeFrame)
     const timeFrameStr = `${amount}${unit}`
     console.log(`notIn${timeFrameStr}Stats`, JSON.stringify(notInStats, null, 2))
     console.log(`${timeFrameStr}Accesses`, accesses)
@@ -53,7 +54,7 @@ async function checkEventInStats(events: StorageStream<string, ParsedEvents>, st
 }
 
 describe('AccountTimeSeries', () => {
-  it.skip('getStats with one event far in the past', async () => {
+  it('getStats with one event far in the past', async () => {
     const accountAddress = 'test'
     const testName = 'AccountStatsOneEventFarInThePast'
     const eventDAL = await mockEventDAL('AccountStatsOneEventFarInThePast', {
@@ -79,7 +80,7 @@ describe('AccountTimeSeries', () => {
     expect(stats.stats.total.accesses).toEqual(eventCnt)
   })
 
-  it.skip('getStats with many recent events', async () => {
+  it('getStats with many recent events', async () => {
     const accountAddress = 'test'
     const testName = 'AccountStatsManyRecentEvents'
     const eventDAL = await mockEventDAL(testName, {

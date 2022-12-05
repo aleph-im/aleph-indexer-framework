@@ -265,7 +265,6 @@ export function getPreviousInterval(
 
   const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
   const durationObj = { [unit]: amount }
-  Interval.fromDateTimes(interval.start.minus(durationObj), interval.end.minus(durationObj))
 
   return reverse
     ? Interval.after(interval.end, durationObj)
@@ -282,9 +281,8 @@ export function getNextInterval(
 
   const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
   const durationObj = { [unit]: amount }
-  Interval.fromDateTimes(interval.start.minus(durationObj), interval.end.minus(durationObj))
 
   return reverse
-    ? Interval.after(interval.start, durationObj)
-    : Interval.before(interval.end, durationObj)
+    ? Interval.before(interval.start, durationObj)
+    : Interval.after(interval.end, durationObj)
 }

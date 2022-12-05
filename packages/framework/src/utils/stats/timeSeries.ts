@@ -3,7 +3,6 @@ import {DateTime, Interval} from 'luxon'
 import {
   clipIntervals,
   generatorToArray,
-  getIntervalFromDateRange,
   getIntervalsFromStorageStream,
   getNextInterval,
   getPreviousInterval,
@@ -75,13 +74,13 @@ export class TimeSeriesStats<I, O> {
    * @todo: refactor for better readability.
    * @param account The account to process the events for.
    * @param now The current unix timestamp.
-   * @param pendingIntervals The requested time frames to process.
+   * @param intervalsToProcess The requested time frames to process.
    * @param minDate @todo: what is this for?
    */
   async process(
     account: string,
     now: number,
-    pendingIntervals: Interval[],
+    intervalsToProcess: Interval[],
     minDate: number | undefined,
   ): Promise<void> {
     const {
@@ -96,7 +95,7 @@ export class TimeSeriesStats<I, O> {
     const sortedTimeFrames = timeFrames.sort((a, b) => a.toMillis() - b.toMillis())
 
     if (startTimestamp !== undefined) {
-      pendingIntervals = clipIntervals(pendingIntervals, Interval.fromDateTimes(
+      intervalsToProcess = clipIntervals(intervalsToProcess, Interval.fromDateTimes(
         DateTime.fromMillis(0),
         DateTime.fromMillis(startTimestamp - 1),
       ))
@@ -117,14 +116,6 @@ export class TimeSeriesStats<I, O> {
       }
 
       let usedUnit, usedAmount
-      if (previousTimeFrameIndex < 0) {
-      console.log(`📈 processing ${type} ${timeFrameAmount}${timeFrameUnit} with events for ${account}`)
-      } else {
-        const { unit, amount } = getMostSignificantDurationUnitAndAmount(sortedTimeFrames[previousTimeFrameIndex])
-        usedUnit = unit
-        usedAmount = amount
-        console.log(`📈 processing ${type} ${timeFrameAmount}${timeFrameUnit} with ${usedAmount}${usedUnit} for ${account}`)
-      }
 
       // @note: get intervals which have already been processed
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
@@ -134,11 +125,10 @@ export class TimeSeriesStats<I, O> {
       )
 
       // @note: remove these processed intervals from the pending intervals
-      pendingIntervals = clipIntervals(
-        pendingIntervals,
+      const pendingIntervals = clipIntervals(
+        intervalsToProcess,
         await generatorToArray(getIntervalsFromStorageStream(clipRangesStream)),
       )
-
       // @note: aggregate intervals one by one
       let addedEntries = 0
       for (const pendingInterval of pendingIntervals) {
@@ -214,13 +204,14 @@ export class TimeSeriesStats<I, O> {
           reverse,
         )
 
+        if (!intervals.length) continue
+
         // @note: add the previous and following intervals to be calculated in case they might have been clipped
         if(!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
           intervals.unshift(getPreviousInterval(intervals[0], pendingTimeFrame))
           intervals.push(getNextInterval(intervals[intervals.length - 1], pendingTimeFrame))
         }
 
-        if (!intervals.length) continue
         let aggregatedValues = 0
         for (const interval of intervals) {
           const startTimestamp = interval.start.toMillis()
@@ -277,16 +268,20 @@ export class TimeSeriesStats<I, O> {
         await processedIntervalsBuffer.drain()
 
         if (aggregatedValues) {
-        console.log(`💹 Aggregated ${aggregatedValues} ${usedAmount}${usedUnit} entries for ${account} in range ${
-          pendingInterval.toISO()
-        }`)
+          if (previousTimeFrameIndex < 0) {
+            console.log(
+              `💹 ${type} ${timeFrameAmount}${timeFrameUnit} with ${aggregatedValues} events processed`,
+            )
+          } else {
+            console.log(`💹 ${type} ${timeFrameAmount}${timeFrameUnit} with ${aggregatedValues} ${usedAmount}${usedUnit} entries processed`)
+          }
       }
       }
       if (addedEntries) {
         console.log(`💹 Added ${addedEntries} ${timeFrameUnit} entries for ${account} in range ${
           Interval.fromDateTimes(
-            pendingIntervals[0].start,
-            pendingIntervals[pendingIntervals.length - 1].end
+            intervalsToProcess[0].start,
+            intervalsToProcess[intervalsToProcess.length - 1].end
           ).toISO()
         }`)
       }
