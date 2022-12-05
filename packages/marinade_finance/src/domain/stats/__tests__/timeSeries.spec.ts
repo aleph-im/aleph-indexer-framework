@@ -5,6 +5,9 @@ import {mockMainIndexer} from "../__mocks__/indexer.js";
 import {DateTime, Duration, Interval} from "luxon";
 import {ParsedEvents} from "../../../utils/layouts/index.js";
 import {EventStorage} from "../../../dal/event.js";
+import {AccountTimeSeriesStats} from "@aleph-indexer/framework/dist";
+import {getMostSignificantDurationUnitAndAmount} from "@aleph-indexer/core/dist/utils";
+import {StorageStream} from "@aleph-indexer/core/dist";
 // jest.useFakeTimers()
 jest.setTimeout(30000)
 
@@ -19,6 +22,34 @@ async function mockAccountStats(eventDAL: EventStorage, account: string, testNam
     statsStateDAL,
     statsTimeSeriesDAL
   );
+}
+
+async function checkEventInStats(events: StorageStream<string, ParsedEvents>, stats: AccountTimeSeriesStats) {
+  const notInStats = []
+  const accesses = stats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
+  for await (const event of events) {
+    const event_d = DateTime.fromMillis(event.value.timestamp)
+    let found = false
+    for (const s of stats.series) {
+      const series_d = DateTime.fromISO(s.date)
+      if (series_d <= event_d && event_d < series_d.plus(stats.timeFrame)) {
+        expect(Object.keys(s.value.accessesByProgramId)?.find(s => s === event.value.signer)).toBeDefined()
+        found = true
+        break
+      }
+    }
+    if (!found) {
+      notInStats.push(event)
+    }
+  }
+  if(notInStats.length > 0) {
+    const {unit, amount} = getMostSignificantDurationUnitAndAmount(stats.timeFrame)
+    const timeFrameStr = `${amount}${unit}`
+    console.log(`notIn${timeFrameStr}Stats`, JSON.stringify(notInStats, null, 2))
+    console.log(`${timeFrameStr}Accesses`, accesses)
+    console.log(`notIn${timeFrameStr}Stats.length`, notInStats.length)
+  }
+  expect(notInStats.length).toBe(0)
 }
 
 describe('AccountTimeSeries', () => {
@@ -85,74 +116,37 @@ describe('AccountTimeSeries', () => {
     for await (const event of events) {
       eventCnt++;
     }
+    console.log('eventCnt', eventCnt)
 
     await accountStats.init()
     await accountStats.process(Date.now())
-    const stats = await accountStats.getStats()
-    expect(stats.stats.total.accesses).toEqual(eventCnt)
-    expect(stats.stats.accessingPrograms.size).toBeGreaterThan(0)
+
+    // Check day stats
+    const hourStats = await accountStats.getTimeSeriesStats('access', {
+      timeFrame: Duration.fromDurationLike({days: 1}).toMillis(),
+    })
+    events = await eventDAL.getAll()
+    await checkEventInStats(events, hourStats)
 
     // Check day stats
     const dayStats = await accountStats.getTimeSeriesStats('access', {
       timeFrame: Duration.fromDurationLike({days: 1}).toMillis(),
     })
-    expect(dayStats.series.length).toBeGreaterThan(0)
-    const dayAccesses = dayStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
-    expect(dayAccesses).toEqual(eventCnt)
     events = await eventDAL.getAll()
-    for await (const event of events) {
-      const event_d = DateTime.fromMillis(event.value.timestamp)
-      let eventFound = false
-      dayStats.series.forEach(s => {
-        const series_d = DateTime.fromISO(s.date)
-        if(series_d < event_d && event_d < series_d.plus({day: 1})) {
-          expect(Object.keys(s.value.accessesByProgramId)?.find(s => s === event.value.signer)).toBeDefined()
-          eventFound = true
-        }
-      })
-      expect(eventFound).toBe(true)
-    }
+    await checkEventInStats(events, dayStats)
 
     // Check week stats
     const weekStats = await accountStats.getTimeSeriesStats('access', {
       timeFrame: Duration.fromDurationLike({weeks: 1}).toMillis(),
     })
-    expect(weekStats.series.length).toBeGreaterThan(0)
-    const weekAccesses = weekStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
-    expect(weekAccesses).toEqual(eventCnt)
     events = await eventDAL.getAll()
-    for await (const event of events) {
-      const event_d = DateTime.fromMillis(event.value.timestamp)
-      let eventFound = false
-      weekStats.series.forEach(s => {
-        const series_d = DateTime.fromISO(s.date)
-        if(series_d < event_d && event_d < series_d.plus({week: 1})) {
-          expect(Object.keys(s.value.accessesByProgramId)?.find(s => s === event.value.signer)).toBeDefined()
-          eventFound = true
-        }
-      })
-      expect(eventFound).toBe(true)
-    }
+    await checkEventInStats(events, weekStats)
 
     // Check month stats
     const monthStats = await accountStats.getTimeSeriesStats('access', {
       timeFrame: Duration.fromDurationLike({months: 1}).toMillis(),
     })
-    expect(monthStats.series.length).toBeGreaterThan(0)
-    const monthAccesses = monthStats.series.map(s => s.value.accesses).reduce((a, b) => a + b, 0)
-    expect(monthAccesses).toEqual(eventCnt)
     events = await eventDAL.getAll()
-    for await (const event of events) {
-      const event_d = DateTime.fromMillis(event.value.timestamp)
-      let eventFound = false
-      monthStats.series.forEach(s => {
-        const series_d = DateTime.fromISO(s.date)
-        if(series_d < event_d && event_d < series_d.plus({month: 1})) {
-          expect(Object.keys(s.value.accessesByProgramId)?.find(s => s === event.value.signer)).toBeDefined()
-          eventFound = true
-        }
-      })
-      expect(eventFound).toBe(true)
-    }
+    await checkEventInStats(events, monthStats)
   })
 })
