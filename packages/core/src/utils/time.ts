@@ -146,6 +146,7 @@ export function getJitter(i: number, amplitude: number): number {
 }
 
 export function getMostSignificantDurationUnitAndAmount(timeFrame: Duration): { unit: DateTimeUnit, amount: number } {
+  timeFrame = timeFrame.shiftTo('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds')
   if (timeFrame.years >= 1) {
     return {unit: "year", amount: timeFrame.years}
   }
