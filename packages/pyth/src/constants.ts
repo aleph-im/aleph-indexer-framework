@@ -13,43 +13,43 @@ export const PYTH_PROGRAM_ID_PK = getPythProgramKeyForCluster('mainnet-beta')
 export const PYTH_PROGRAM_ID = PYTH_PROGRAM_ID_PK.toBase58()
 
 export const TIME_FRAMES: CandleInterval[] = [
-  '1minute',
-  '5minute',
-  '10minute',
-  '15minute',
-  '30minute',
-  '1hour',
-  '2hour',
-  '3hour',
-  '4hour',
-  '6hour',
-  '8hour',
-  '12hour',
-  '1day',
-  '1week',
-  '2week',
-  '1month',
-  '3month',
-  '1year',
+  'minute1',
+  'minute5',
+  'minute10',
+  'minute15',
+  'minute30',
+  'hour1',
+  'hour2',
+  'hour3',
+  'hour4',
+  'hour6',
+  'hour8',
+  'hour12',
+  'day1',
+  'week1',
+  'week2',
+  'month1',
+  'month3',
+  'year1',
   'all',
 ]
 
 export const TIME_FRAMES_AS_DURATION = TIME_FRAMES.map((tf) => {
   if(tf === 'all') {
     return MAX_TIMEFRAME
-  } else if (tf.endsWith('year')) {
+  } else if (tf.startsWith('year')) {
     return Duration.fromObject({year: parseInt(tf.replace('year', ''))})
-  } else if (tf.endsWith('month')) {
+  } else if (tf.startsWith('month')) {
     return Duration.fromObject({month: parseInt(tf.replace('month', ''))})
-  } else if (tf.endsWith('week')) {
+  } else if (tf.startsWith('week')) {
     return Duration.fromObject({week: parseInt(tf.replace('week', ''))})
-  } else if (tf.endsWith('day')) {
+  } else if (tf.startsWith('day')) {
     return Duration.fromObject({day: parseInt(tf.replace('day', ''))})
-  } else if (tf.endsWith('hour')) {
+  } else if (tf.startsWith('hour')) {
     return Duration.fromObject({hour: parseInt(tf.replace('hour', ''))})
-  } else if (tf.endsWith('minute')) {
+  } else if (tf.startsWith('minute')) {
     return Duration.fromObject({minute: parseInt(tf.replace('minute', ''))})
-  } else if (tf.endsWith('second')) {
+  } else if (tf.startsWith('second')) {
     return Duration.fromObject({second: parseInt(tf.replace('second', ''))})
   } else {
     throw new Error(`Unknown time frame ${tf}`)
