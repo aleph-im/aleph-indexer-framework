@@ -11,7 +11,7 @@ The Aleph Indexer Framework is a high-level abstraction for building multithread
 
 ## Creating an Indexer
 In order to run your own indexer, you need to start by creating a new project:
-- either using the [Anchor Indexer Generator](https://github.com/aleph-im/anchor-ts-generator)
+- either using the [Anchor Indexer Generator](https://github.com/aleph-im/solana-indexer-library/tree/main/packages/indexer-generator#indexer-generator)
 - or by using one of the customized indexers in the [indexer library](https://github.com/aleph-im/solana-indexer-library) repository
 - or by creating a new project from scratch.
 
