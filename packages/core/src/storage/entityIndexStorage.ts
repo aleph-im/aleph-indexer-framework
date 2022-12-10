@@ -54,6 +54,10 @@ export class EntityIndexStorage<
   static TimestampLength = 13
   static VariableLength = 0
 
+  // @note: Refactor
+  // @note: 20 bytes (40chars)
+  static EthereumAddressLength = 40
+
   protected self: typeof EntityIndexStorage
   protected noopMutex = Promise.resolve((): void => {})
   protected count = 0

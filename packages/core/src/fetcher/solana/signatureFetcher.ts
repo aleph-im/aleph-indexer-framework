@@ -2,18 +2,22 @@ import { Duration } from 'luxon'
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { BaseFetcher } from '../base/baseFetcher.js'
 import {
+  BaseFetcherOptions,
+  BaseFetcherPaginationCursors,
   FetcherJobRunnerHandleFetchResult,
-  FetcherJobRunnerUpdateCursorResult,
 } from '../base/types.js'
-import { SolanaSignatureFetcherOptions, SolanaFetcherCursor } from './types.js'
+import {
+  SolanaSignatureFetcherOptions,
+  SolanaSignaturePaginationCursor,
+} from './types.js'
 import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
-import { FetchSignaturesOptions, SolanaRPC } from '../../rpc/index.js'
+import { SolanaFetchSignaturesOptions, SolanaRPC } from '../../rpc/index.js'
 import { JobRunnerReturnCode } from '../../utils/index.js'
 
 /**
  * Handles the fetching and processing of signatures on an account.
  */
-export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
+export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginationCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
@@ -26,35 +30,41 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    */
   constructor(
-    protected opts: SolanaSignatureFetcherOptions<SolanaFetcherCursor>,
-    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaFetcherCursor>,
+    protected opts: SolanaSignatureFetcherOptions,
+    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaSignaturePaginationCursor>,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
   ) {
-    super(
-      {
-        id: `signatures:${opts.address}`,
-        forward: opts.forward
-          ? {
-              ...opts.forward,
-              interval: opts.forward.interval || 0,
-              handleFetch: (ctx) => this.fetchForward(ctx),
-              updateCursor: (ctx) => this.updateCursor(ctx),
-            }
-          : undefined,
-        backward: opts.backward
-          ? {
-              ...opts.backward,
-              handleFetch: (ctx) => this.fetchBackward(ctx),
-              updateCursor: (ctx) => this.updateCursor(ctx),
-            }
-          : undefined,
-      },
-      fetcherStateDAL,
-    )
+    const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
+    const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    if (opts.forward) {
-      const { ratio, ratioThreshold, interval } = opts.forward
+    const config: BaseFetcherOptions<SolanaSignaturePaginationCursor> = {
+      id: `solana:signature:${opts.address}`,
+    }
+
+    if (forward) {
+      config.jobs = config.jobs || {}
+      config.jobs.forward = {
+        ...forward,
+        interval: forward.interval || 0,
+        intervalMax: forward.intervalMax || 1000 * 10,
+        handleFetch: (ctx) => this.fetchForward(ctx),
+      }
+    }
+
+    if (backward) {
+      config.jobs = config.jobs || {}
+      config.jobs.backward = {
+        ...backward,
+        interval: backward.interval || 1000 * 10,
+        handleFetch: (ctx) => this.fetchBackward(ctx),
+      }
+    }
+
+    super(config, fetcherStateDAL)
+
+    if (forward) {
+      const { ratio, ratioThreshold, interval } = forward
 
       if (interval === undefined) {
         this.forwardAutoInterval = true
@@ -70,22 +80,28 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
   }: {
     firstRun: boolean
     interval: number
-  }): Promise<FetcherJobRunnerHandleFetchResult<SolanaFetcherCursor>> {
-    const { address, forward: forwardJobOptions, errorFetching } = this.opts
+  }): Promise<
+    FetcherJobRunnerHandleFetchResult<SolanaSignaturePaginationCursor>
+  > {
+    const { address, errorFetching } = this.opts
+    const forward =
+      typeof this.opts.forward === 'boolean' ? {} : this.opts.forward
 
-    const useHistoricRPC = Boolean(this.fetcherState.forward.useHistoricRPC)
+    const useHistoricRPC = Boolean(
+      this.fetcherState.jobs.forward.useHistoricRPC,
+    )
     const rpc = useHistoricRPC ? this.solanaMainPublicRpc : this.solanaRpc
 
     // @note: not "before" (autodetected by the node (last block height))
-    const { lastSignature: until, lastSlot: untilSlot } =
-      this.fetcherState.cursor || {}
+    const { signature: until, slot: untilSlot } =
+      this.fetcherState.cursors?.forward || {}
 
     const maxLimit = !until
       ? 1000
-      : forwardJobOptions?.iterationFetchLimit ||
+      : forward?.iterationFetchLimit ||
         (firstRun ? 1000 : Number.MAX_SAFE_INTEGER)
 
-    const options: FetchSignaturesOptions = {
+    const options: SolanaFetchSignaturesOptions = {
       before: undefined,
       address,
       until,
@@ -94,7 +110,7 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
       errorFetching,
     }
 
-    const { count, lastCursor, error } = await this.fetchSignatures(
+    const { count, lastCursors, error } = await this.fetchSignatures(
       options,
       true,
       rpc,
@@ -106,7 +122,7 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
       ? this.calculateNewInterval(count, interval)
       : interval
 
-    return { newInterval, lastCursor, error }
+    return { newInterval, lastCursors, error }
   }
 
   protected async fetchBackward({
@@ -114,20 +130,24 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
   }: {
     firstRun: boolean
     interval: number
-  }): Promise<FetcherJobRunnerHandleFetchResult<SolanaFetcherCursor>> {
-    const { address, backward: backwardJobOptions, errorFetching } = this.opts
+  }): Promise<
+    FetcherJobRunnerHandleFetchResult<SolanaSignaturePaginationCursor>
+  > {
+    const { address, errorFetching } = this.opts
+    const backward =
+      typeof this.opts.backward === 'boolean' ? {} : this.opts.backward
 
-    const useHistoricRPC = Boolean(this.fetcherState.backward.useHistoricRPC)
+    const useHistoricRPC = Boolean(
+      this.fetcherState.jobs.backward.useHistoricRPC,
+    )
     const rpc = useHistoricRPC ? this.solanaMainPublicRpc : this.solanaRpc
 
     // @note: until is autodetected by the node (height 0 / first block)
-    const before = this.fetcherState.cursor?.firstSignature
-    const until = backwardJobOptions?.fetchUntil
+    const before = this.fetcherState.cursors?.backward?.signature
+    const until = backward?.fetchUntil
+    const maxLimit = backward?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
 
-    const maxLimit =
-      backwardJobOptions?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
-
-    const options: FetchSignaturesOptions = {
+    const options: SolanaFetchSignaturesOptions = {
       until,
       before,
       address,
@@ -135,33 +155,34 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
       errorFetching,
     }
 
-    const { lastCursor, error } = await this.fetchSignatures(
+    const { lastCursors, error } = await this.fetchSignatures(
       options,
       false,
       rpc,
     )
 
     // @note: Stop the indexer if there wasn't more items using historic RPC
-    const stop = !error && useHistoricRPC && !lastCursor?.firstSignature
+    const stop = !error && useHistoricRPC && !lastCursors?.backward?.signature
     const newInterval = stop ? JobRunnerReturnCode.Stop : interval
 
-    return { newInterval, lastCursor, error }
+    return { newInterval, lastCursors, error }
   }
 
   protected async fetchSignatures(
-    options: FetchSignaturesOptions,
+    options: SolanaFetchSignaturesOptions,
     goingForward: boolean,
     rpc = this.solanaRpc,
   ): Promise<{
     error?: Error
     count: number
-    lastCursor: SolanaFetcherCursor
+    lastCursors: BaseFetcherPaginationCursors<SolanaSignaturePaginationCursor>
   }> {
     const { address } = options
 
     let error: undefined | Error
     let count = 0
-    const lastCursor: SolanaFetcherCursor = {}
+    let lastCursors: BaseFetcherPaginationCursors<SolanaSignaturePaginationCursor> =
+      {}
 
     console.log(`
       fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
@@ -171,7 +192,8 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
     `)
 
     const runMod =
-      this.fetcherState[goingForward ? 'forward' : 'backward'].numRuns % 100
+      this.fetcherState.jobs[goingForward ? 'forward' : 'backward'].numRuns %
+      100
     const runOffset = goingForward ? runMod : 99 - runMod
 
     try {
@@ -184,12 +206,7 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
 
         count += chunk.length
 
-        lastCursor.firstSignature = step.firstKey?.signature
-        lastCursor.firstSlot = step.firstKey?.slot
-        lastCursor.firstTimestamp = step.firstKey?.timestamp
-        lastCursor.lastSignature = step.lastKey?.signature
-        lastCursor.lastSlot = step.lastKey?.slot
-        lastCursor.lastTimestamp = step.lastKey?.timestamp
+        lastCursors = step.cursors
       }
     } catch (e) {
       error = e as Error
@@ -198,58 +215,8 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaFetcherCursor> {
     return {
       error,
       count,
-      lastCursor,
+      lastCursors,
     }
-  }
-
-  protected async updateCursor({
-    type,
-    prevCursor,
-    lastCursor,
-  }: {
-    type: 'forward' | 'backward'
-    prevCursor?: SolanaFetcherCursor
-    lastCursor: SolanaFetcherCursor
-  }): Promise<FetcherJobRunnerUpdateCursorResult<SolanaFetcherCursor>> {
-    let newItems = false
-    const newCursor: SolanaFetcherCursor = { ...prevCursor }
-
-    switch (type) {
-      case 'backward': {
-        if (lastCursor.firstSignature) {
-          newCursor.firstSignature = lastCursor.firstSignature
-          newCursor.firstSlot = lastCursor.firstSlot
-          newCursor.firstTimestamp = lastCursor.firstTimestamp
-          newItems = true
-        }
-
-        if (!prevCursor?.lastSignature) {
-          newCursor.lastSignature = lastCursor.lastSignature
-          newCursor.lastSlot = lastCursor.lastSlot
-          newCursor.lastTimestamp = lastCursor.lastTimestamp
-        }
-
-        break
-      }
-      case 'forward': {
-        if (lastCursor.lastSignature) {
-          newCursor.lastSignature = lastCursor.lastSignature
-          newCursor.lastSlot = lastCursor.lastSlot
-          newCursor.lastTimestamp = lastCursor.lastTimestamp
-          newItems = true
-        }
-
-        if (!prevCursor?.firstSignature) {
-          newCursor.firstSignature = lastCursor.firstSignature
-          newCursor.firstSlot = lastCursor.firstSlot
-          newCursor.firstTimestamp = lastCursor.firstTimestamp
-        }
-
-        break
-      }
-    }
-
-    return { newCursor, newItems }
   }
 
   protected calculateNewInterval(count: number, interval: number): number {

@@ -1,7 +1,7 @@
 import { pipeline } from 'stream'
 import { promisify } from 'util'
 import {
-  InstructionContextV1,
+  SolanaInstructionContextV1,
   ParsedInnerInstructionV1,
   ParsedInstructionV1,
   ParsedTransactionV1,
@@ -88,8 +88,8 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
     ixs: (ParsedInstructionV1 | ParsedInnerInstructionV1)[],
     ctx: ParsedTransactionContextV1,
     parentIx?: ParsedInstructionV1,
-    ixsCtx: InstructionContextV1[] = [],
-  ): InstructionContextV1[] {
+    ixsCtx: SolanaInstructionContextV1[] = [],
+  ): SolanaInstructionContextV1[] {
     for (const ix of ixs) {
       // @note: index inner ixs before
       if ('innerInstructions' in ix && ix.innerInstructions) {
@@ -116,7 +116,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
 
   protected async mapTransaction(
     ctx: ParsedTransactionContextV1,
-  ): Promise<InstructionContextV1[]> {
+  ): Promise<SolanaInstructionContextV1[]> {
     if (ctx.tx.parsed === undefined) {
       console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
       return this.groupInstructions([], ctx)
@@ -127,10 +127,10 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
   }
 
   protected abstract filterInstructions(
-    ixsContext: InstructionContextV1[],
-  ): Promise<InstructionContextV1[]>
+    ixsContext: SolanaInstructionContextV1[],
+  ): Promise<SolanaInstructionContextV1[]>
 
   protected abstract indexInstructions(
-    ixsContext: InstructionContextV1[],
+    ixsContext: SolanaInstructionContextV1[],
   ): Promise<void>
 }

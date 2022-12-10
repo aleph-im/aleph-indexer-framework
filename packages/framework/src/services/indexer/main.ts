@@ -98,11 +98,13 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
   // }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {
-    const { transactions, content } = args.index
+    const { blockchainId, account, index } = args
+    const { transactions, content } = index
 
     if (transactions) {
       await this.indexAccountTransactions({
-        account: args.account,
+        blockchainId,
+        account,
         ...(typeof transactions !== 'boolean'
           ? transactions
           : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
@@ -111,7 +113,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
 
     if (content) {
       await this.indexAccountContent({
-        account: args.account,
+        account,
         ...(typeof content !== 'boolean'
           ? content
           : { snapshotDelay: 1000 * 60 * 60 }),
@@ -129,7 +131,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     const indexer = this.accountTransactionsIndexers[account]
     if (!indexer) return
 
-    const state: any = await indexer.getIndexingState(account)
+    const state: any = await indexer.getIndexingState()
     if (!state) return
 
     state.indexer = this.getIndexerId()

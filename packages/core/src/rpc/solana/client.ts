@@ -29,8 +29,9 @@ import {
   RawTransactionV1,
   VoteAccountInfo,
 } from '../../types.js'
+import { SolanaSignaturePaginationResponse } from '../../fetcher/index.js'
 
-export interface PaginationKey {
+export interface SolanaPaginationKey {
   signature: string
   slot: number
   timestamp: number
@@ -45,20 +46,20 @@ export interface SolanaTxL1Cache {
   getBySignature(signature: string): Promise<AlephParsedTransaction | undefined>
 }
 
-export type FetchSignaturesOptions = {
+export type SolanaFetchSignaturesOptions = {
   address: string
   before?: string
   until?: string
   maxLimit?: number
-  errorFetching?: ErrorFetching
+  errorFetching?: SolanaErrorFetching
   signatureBlacklist?: Set<string>
   untilSlot?: number
 }
 
-export type OptimizedHistoryOptions = {
+export type SolanaOptimizedHistoryOptions = {
   minSignatures: number
   addressPubkey: PublicKey
-  errorFetching: ErrorFetching
+  errorFetching: SolanaErrorFetching
   limit?: number
   before?: string
   until?: string
@@ -66,14 +67,14 @@ export type OptimizedHistoryOptions = {
   untilSlot?: number
 }
 
-export type OptimizedHistoryResponse = {
+export type SolanaOptimizedHistoryResponse = {
   chunk: (AlephParsedTransaction | ConfirmedSignatureInfo)[]
   firstItem?: ConfirmedSignatureInfo
   lastItem?: ConfirmedSignatureInfo
   count: number
 }
 
-export enum ErrorFetching {
+export enum SolanaErrorFetching {
   SkipErrors = -1,
   OnlyErrors = 1,
 }
@@ -258,13 +259,9 @@ export class SolanaRPC {
     until,
     untilSlot,
     maxLimit = 1000,
-    errorFetching = ErrorFetching.SkipErrors,
+    errorFetching = SolanaErrorFetching.SkipErrors,
     signatureBlacklist,
-  }: FetchSignaturesOptions): AsyncGenerator<{
-    firstKey: undefined | PaginationKey
-    lastKey: undefined | PaginationKey
-    chunk: ConfirmedSignatureInfo[]
-  }> {
+  }: SolanaFetchSignaturesOptions): AsyncGenerator<SolanaSignaturePaginationResponse> {
     const addressPubkey = new PublicKey(address)
     let firstKey
     let lastKey
@@ -312,7 +309,7 @@ export class SolanaRPC {
 
       if (count === 0) break
 
-      yield { chunk, firstKey, lastKey }
+      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 
@@ -329,8 +326,8 @@ export class SolanaRPC {
     until,
     untilSlot,
     signatureBlacklist,
-  }: OptimizedHistoryOptions): Promise<OptimizedHistoryResponse> {
-    let chunk: OptimizedHistoryResponse['chunk'] = []
+  }: SolanaOptimizedHistoryOptions): Promise<SolanaOptimizedHistoryResponse> {
+    let chunk: SolanaOptimizedHistoryResponse['chunk'] = []
     let count = 0
     let firstItem
     let lastItem
@@ -406,13 +403,16 @@ export class SolanaRPC {
 
   protected filterSignature(
     item: ConfirmedSignatureInfo,
-    errorFetching?: ErrorFetching,
+    errorFetching?: SolanaErrorFetching,
     signatureBlacklist?: Set<string>,
   ): TransactionSignature | undefined {
     if (errorFetching) {
-      if (errorFetching === ErrorFetching.SkipErrors && item.err) {
+      if (errorFetching === SolanaErrorFetching.SkipErrors && item.err) {
         return
-      } else if (errorFetching === ErrorFetching.OnlyErrors && !item.err) {
+      } else if (
+        errorFetching === SolanaErrorFetching.OnlyErrors &&
+        !item.err
+      ) {
         return
       }
     }

@@ -1,53 +1,80 @@
 import Web3 from 'web3'
 import { BlockTransactionObject } from 'web3-eth'
-import { EthereumFetchBlocksOptions } from '../../fetcher/ethereum.js'
+import {
+  EthereumBlockPaginationResponse,
+  EthereumFetchBlocksOptions,
+  EthereumFetchSignaturesOptions,
+  EthereumSignaturePaginationResponse,
+} from '../../fetcher/ethereum/index.js'
+import {
+  createEthereumSignatureDAL,
+  EthereumSignatureDALIndex,
+  EthereumSignatureEntity,
+  EthereumSignatureStorage,
+} from './dal.js'
 
-export interface EthereumPaginationCursor {
-  height: number
-  timestamp: number
-}
+// Common
 
 export interface EthereumClientOptions {
   url: string
+  dbPath: string
   rateLimit?: boolean
+  indexBlockSignatures?: boolean
 }
+
+// Blocks
 
 export type EthereumBlocksChunkOptions = {
   limit: number
   before: number
   until: number
-  concurrency?: number
+  retries?: number
 }
 
-export type EthereumOptimizedHistoryResponse = {
+export type EthereumBlocksChunkResponse = {
   chunk: BlockTransactionObject[]
   firstItem?: BlockTransactionObject
   lastItem?: BlockTransactionObject
   count: number
 }
 
+// Signatures
+
+export type EthereumSignaturesChunkOptions = {
+  account: string
+  limit: number
+  before: number
+  until: number
+}
+
+export type EthereumSignaturesChunkResponse = {
+  chunk: EthereumSignatureEntity[]
+  firstItem?: EthereumSignatureEntity
+  lastItem?: EthereumSignatureEntity
+  count: number
+}
+
 export class EthereumClient {
   protected sdk: Web3
-  protected rateLimit = false
+  protected signatureDAL: EthereumSignatureStorage
 
-  constructor(options: EthereumClientOptions) {
+  constructor(protected options: EthereumClientOptions) {
     this.sdk = new Web3(options.url)
-    this.rateLimit = options.rateLimit || false
+    this.signatureDAL = createEthereumSignatureDAL(options.dbPath)
   }
 
   getSDK(): Web3 {
     return this.sdk
   }
 
-  async *fetchBlocks(args: EthereumFetchBlocksOptions): AsyncGenerator<{
-    firstKey: undefined | EthereumPaginationCursor
-    lastKey: undefined | EthereumPaginationCursor
-    chunk: any[]
-  }> {
+  async *fetchBlocks(
+    args: EthereumFetchBlocksOptions,
+  ): AsyncGenerator<EthereumBlockPaginationResponse> {
     let firstKey
     let lastKey
 
-    const { until = 0 } = args
+    const { until = -1 } = args
+
     let {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
       maxLimit = 1000,
@@ -77,6 +104,7 @@ export class EthereumClient {
         lastKey = {
           height: lastItem.number,
           timestamp: Number(lastItem.timestamp),
+          signature: lastItem.hash,
         }
       }
 
@@ -84,10 +112,11 @@ export class EthereumClient {
         firstKey = {
           height: firstItem.number,
           timestamp: Number(firstItem.timestamp),
+          signature: firstItem.hash,
         }
       }
 
-      yield { chunk, firstKey, lastKey }
+      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 
@@ -95,24 +124,164 @@ export class EthereumClient {
     }
   }
 
+  async *fetchSignatures(
+    args: EthereumFetchSignaturesOptions,
+  ): AsyncGenerator<EthereumSignaturePaginationResponse> {
+    let firstKey
+    let lastKey
+
+    const { account, until = -1 } = args
+
+    let {
+      before = (await this.sdk.eth.getBlockNumber()) + 1,
+      maxLimit = 1000,
+    } = args
+
+    while (maxLimit > 0) {
+      const limit = Math.min(maxLimit, 1000)
+      maxLimit = maxLimit - limit
+
+      console.log(`
+        fetch signatures { 
+          account: ${account}
+          before: ${before}
+          until: ${until}
+          maxLimit: ${maxLimit}
+        }
+      `)
+
+      const { chunk, count, firstItem, lastItem } =
+        await this.getSignaturesChunk({
+          account,
+          limit,
+          before,
+          until,
+        })
+
+      if (count === 0) break
+
+      if (!lastKey && lastItem) {
+        lastKey = {
+          height: lastItem.height,
+          timestamp: Number(lastItem.timestamp),
+          signature: lastItem.signature,
+        }
+      }
+
+      if (firstItem) {
+        firstKey = {
+          height: firstItem.height,
+          timestamp: Number(firstItem.timestamp),
+          signature: firstItem.signature,
+        }
+      }
+
+      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+
+      if (count < limit) break
+
+      before = firstKey?.height as number
+    }
+  }
+
+  async indexBlockSignatures(blocks: BlockTransactionObject[]): Promise<void> {
+    const signatures = blocks.flatMap((block) =>
+      block.transactions.map((tx) => {
+        const accounts = [tx.from]
+        if (tx.to) accounts.push(tx.to)
+
+        const sig: EthereumSignatureEntity = {
+          signature: tx.hash,
+          height: block.number,
+          timestamp: Number(block.timestamp),
+          index: tx.transactionIndex as number,
+          accounts,
+        }
+
+        return sig
+      }),
+    )
+
+    await this.signatureDAL.save(signatures)
+  }
+
   protected async getBlocksChunk({
     before,
     until,
     limit,
-  }: EthereumBlocksChunkOptions): Promise<EthereumOptimizedHistoryResponse> {
-    const size = Math.min(limit, before - until)
-    let cursor = before - 1
+    retries = 1,
+  }: EthereumBlocksChunkOptions): Promise<EthereumBlocksChunkResponse> {
+    const size = Math.min(limit, Math.max(before - (until + 1), 0))
+    const cursor = before - 1
 
     const chunk = await Promise.all(
-      Array.from({ length: size }).map((_, i) =>
-        this.sdk.eth.getBlock(cursor - i, true),
-      ),
+      Array.from({ length: size }).map(async (_, i) => {
+        const height = cursor - i
+        let block
+        let ret = retries
+
+        while (!block && ret-- >= 0) {
+          block = await this.sdk.eth.getBlock(height, true)
+        }
+
+        if (!block) throw new Error(`Invalid block ${height}`)
+
+        return block
+      }),
     )
 
+    const count = chunk.length
     const lastItem = chunk[0]
     const firstItem = chunk[chunk.length - 1]
+
+    if (chunk.length > 0)
+      console.log(
+        'block chunk => ',
+        chunk.length,
+        chunk[chunk.length - 1].number,
+        chunk[0].number,
+      )
+
+    if (this.options.indexBlockSignatures) {
+      await this.indexBlockSignatures(chunk)
+    }
+
+    return {
+      chunk,
+      count,
+      firstItem,
+      lastItem,
+    }
+  }
+
+  protected async getSignaturesChunk({
+    account,
+    before,
+    until,
+    limit,
+  }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
+    const chunk = []
+
+    const signatures = await this.signatureDAL
+      .useIndex(EthereumSignatureDALIndex.AccountHeightIndex)
+      .getAllValuesFromTo([account, before], [account, until], {
+        atomic: true,
+        limit,
+      })
+
+    for await (const sig of signatures) chunk.push(sig)
+
     const count = chunk.length
-    cursor -= chunk.length
+    const lastItem = chunk[0]
+    const firstItem = chunk[chunk.length - 1]
+
+    if (chunk.length > 0)
+      console.log(
+        'signature chunk => ',
+        chunk.length,
+        chunk[chunk.length - 1].height,
+        chunk[0].height,
+      )
 
     return {
       chunk,

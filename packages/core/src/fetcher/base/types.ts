@@ -1,16 +1,28 @@
 import { JobRunnerOptions } from '../../utils/index.js'
 
+// ---------------------- Pagination --------------------------
+
+export interface BaseFetcherPaginationCursors<C> {
+  backward?: C
+  forward?: C
+}
+
+export type BaseFetcherPaginationResponse<D, C> = {
+  cursors: BaseFetcherPaginationCursors<C>
+  chunk: D[]
+}
+
 // ------------------------ Options ---------------------
 
 export type FetcherJobRunnerHandleFetchResult<C> = {
   error?: Error
   newInterval?: number
-  lastCursor: C
+  lastCursors: BaseFetcherPaginationCursors<C>
 }
 
 export type FetcherJobRunnerUpdateCursorResult<C> = {
   newItems: boolean
-  newCursor: C
+  newCursors: BaseFetcherPaginationCursors<C>
 }
 
 export type BaseFetcherJobRunnerOptions<C> = Omit<
@@ -21,38 +33,43 @@ export type BaseFetcherJobRunnerOptions<C> = Omit<
     firstRun: boolean
     interval: number
   }) => Promise<FetcherJobRunnerHandleFetchResult<C>>
-  updateCursor: (ctx: {
-    type: 'forward' | 'backward'
-    prevCursor?: C
-    lastCursor: C
+  updateCursors?: (ctx: {
+    prevCursors?: BaseFetcherPaginationCursors<C>
+    lastCursors: BaseFetcherPaginationCursors<C>
   }) => Promise<FetcherJobRunnerUpdateCursorResult<C>>
+  checkComplete?: (ctx: {
+    fetcherState: BaseFetcherState<C>
+    jobState: BaseFetcherJobState
+    newItems: boolean
+    error?: Error
+  }) => Promise<boolean>
 }
 
 export interface BaseFetcherOptions<C> {
   id: string
-  forward?: BaseFetcherJobRunnerOptions<C>
-  backward?: BaseFetcherJobRunnerOptions<C>
+  jobs?: {
+    forward?: BaseFetcherJobRunnerOptions<C>
+    backward?: BaseFetcherJobRunnerOptions<C>
+  }
 }
 
 // ---------------------- State --------------------------
 
-export type BaseFetcherJobState<C> = {
-  frequency: number
+export type BaseFetcherJobState = {
+  frequency?: number
   lastRun: number
   numRuns: number
   complete: boolean
   useHistoricRPC: boolean
 }
 
-export type BaseFetcherState<C> = {
-  id: string
-  forward: BaseFetcherJobState<C>
-  backward: BaseFetcherJobState<C>
-  cursor?: C
+export type BaseFetcherJobStates = {
+  forward: BaseFetcherJobState
+  backward: BaseFetcherJobState
 }
 
-export type ParserContext = {
-  account: string
-  startDate: number
-  endDate: number
+export type BaseFetcherState<C> = {
+  id: string
+  jobs: BaseFetcherJobStates
+  cursors?: BaseFetcherPaginationCursors<C>
 }

@@ -9,6 +9,10 @@ async function main() {
   const tcpUrls = process.env['INDEXER_FRAMEWORK_TCP_URLS'] || undefined
   const natsUrl = process.env['INDEXER_FRAMEWORK_NATS_URL'] || undefined
   const projectId = process.env['INDEXER_FRAMEWORK_NAMESPACE'] || 'global'
+  const supportedBlockchains = (
+    process.env['INDEXER_FRAMEWORK_BLOCKCHAINS'] || 'solana,ethereum'
+  ).split(',')
+
   const instanceOffset = Number(
     process.env['INDEXER_FRAMEWORK_INSTANCE_OFFSET'] || 0,
   )
@@ -24,6 +28,7 @@ async function main() {
 
   let config: any = {
     projectId,
+    supportedBlockchains,
     transport,
     transportConfig,
     apiPort,

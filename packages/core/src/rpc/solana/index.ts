@@ -1,2 +1,2 @@
 export * from './client.js'
-export * from './solanaRpc.js'
+export * from './instance.js'

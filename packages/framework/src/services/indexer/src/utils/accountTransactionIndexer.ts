@@ -61,14 +61,14 @@ export class AccountTransactionIndexer {
   }
 
   async start(): Promise<void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
 
     await this.initPendingRanges()
 
     // @note: Subscribe to range request responses
     this.transactionFetcher.onResponse(this.txResponseHandler)
 
-    await this.fetcherMsClient.addAccountFetcher({ account })
+    await this.fetcherMsClient.addAccountFetcher({ blockchainId, account })
 
     this.fetchAllJob.start().catch(() => 'ignore')
     this.compactionJob.start().catch(() => 'ignore')
@@ -76,22 +76,25 @@ export class AccountTransactionIndexer {
   }
 
   async stop(): Promise<void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
 
     // @note: Unsubscribe from range request responses
     this.transactionFetcher.offResponse(this.txResponseHandler)
 
-    await this.fetcherMsClient.delAccountFetcher({ account })
+    await this.fetcherMsClient.delAccountFetcher({ blockchainId, account })
 
     this.fetchAllJob.stop().catch(() => 'ignore')
     this.compactionJob.stop().catch(() => 'ignore')
     this.processorJob.stop().catch(() => 'ignore')
   }
 
-  async getIndexingState(
-    account: string,
-  ): Promise<AccountIndexerState | undefined> {
-    const state = await this.fetcherMsClient.getAccountFetcherState({ account })
+  async getIndexingState(): Promise<AccountIndexerState | undefined> {
+    const { blockchainId, account } = this.config
+
+    const state = await this.fetcherMsClient.getAccountFetcherState({
+      blockchainId,
+      account,
+    })
 
     if (
       !state ||
@@ -146,8 +149,13 @@ export class AccountTransactionIndexer {
     }
   }
 
-  protected async getPendingRanges(account: string): Promise<DateRange[]> {
-    const state = await this.fetcherMsClient.getAccountFetcherState({ account })
+  protected async getPendingRanges(): Promise<DateRange[]> {
+    const { blockchainId, account } = this.config
+
+    const state = await this.fetcherMsClient.getAccountFetcherState({
+      blockchainId,
+      account,
+    })
 
     if (
       !state ||
@@ -230,7 +238,7 @@ export class AccountTransactionIndexer {
   }): Promise<number | void> {
     const { account } = this.config
 
-    const ranges = await this.getPendingRanges(account)
+    const ranges = await this.getPendingRanges()
     if (!ranges.length) return interval + 1000 // @note: delay 1sec
 
     const targetRange = ranges[ranges.length - 1]

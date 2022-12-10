@@ -4,8 +4,8 @@ import {
   FetcherStateLevelStorage,
   Signature,
 } from '@aleph-indexer/core'
-import { SignatureDALIndex, SignatureStorage } from '../dal/signature.js'
-import { SignatureFetcherState } from '../types.js'
+import { SignatureDALIndex, SignatureStorage } from './dal/signature.js'
+import { SolanaSignatureFetcherState } from '../types.js'
 
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
@@ -32,12 +32,10 @@ export class SignatureFetcher extends BaseFetcher {
         address,
         forward: {
           times,
-          intervalMax: 1000 * 10,
           iterationFetchLimit: Number.MAX_SAFE_INTEGER,
         },
         backward: {
           times,
-          interval: 1000 * 10,
           iterationFetchLimit: 1000,
         },
         indexSignatures: (...args) => this.indexSignatures(...args),
@@ -64,15 +62,17 @@ export class SignatureFetcher extends BaseFetcher {
         .getFirstValueFromTo([this.address], [this.address])
 
       if (firstItem) {
-        const state = (this.fetcherState.cursor =
-          this.fetcherState.cursor || {})
+        this.fetcherState.cursors = this.fetcherState.cursors || {}
 
-        state.firstSignature = firstItem.signature
-        state.firstSlot = firstItem.slot
-        state.firstTimestamp = (firstItem.blockTime || 0) * 1000
+        const backwardState = (this.fetcherState.cursors.backward =
+          this.fetcherState.cursors.backward || {})
 
-        this.fetcherState.backward = {
-          ...this.fetcherState.backward,
+        backwardState.signature = firstItem.signature
+        backwardState.slot = firstItem.slot
+        backwardState.timestamp = (firstItem.blockTime || 0) * 1000
+
+        this.fetcherState.jobs.backward = {
+          ...this.fetcherState.jobs.backward,
           numRuns: firstItem.accountSlotIndex[this.address],
           complete: false,
           useHistoricRPC: false,
@@ -84,15 +84,17 @@ export class SignatureFetcher extends BaseFetcher {
         .getLastValueFromTo([this.address], [this.address])
 
       if (lastItem) {
-        const state = (this.fetcherState.cursor =
-          this.fetcherState.cursor || {})
+        this.fetcherState.cursors = this.fetcherState.cursors || {}
 
-        state.lastSignature = lastItem.signature
-        state.lastSlot = lastItem.slot
-        state.lastTimestamp = (lastItem.blockTime || 0) * 1000
+        const forwardState = (this.fetcherState.cursors.forward =
+          this.fetcherState.cursors.forward || {})
 
-        this.fetcherState.forward = {
-          ...this.fetcherState.forward,
+        forwardState.signature = lastItem.signature
+        forwardState.slot = lastItem.slot
+        forwardState.timestamp = (lastItem.blockTime || 0) * 1000
+
+        this.fetcherState.jobs.forward = {
+          ...this.fetcherState.jobs.forward,
           numRuns: lastItem.accountSlotIndex[this.address],
           complete: false,
           useHistoricRPC: false,
@@ -103,23 +105,27 @@ export class SignatureFetcher extends BaseFetcher {
     return super.run()
   }
 
-  public async getState(): Promise<SignatureFetcherState> {
-    const state: SignatureFetcherState = {
+  public async getState(): Promise<SolanaSignatureFetcherState> {
+    const state: SolanaSignatureFetcherState = {
       fetcher: 'unknown',
       account: this.address,
       completeHistory: this.isComplete('backward'),
     }
 
-    const addrState = this.fetcherState.cursor || {}
+    const forward = this.fetcherState.cursors?.forward
 
-    if (addrState) {
-      state.firstSignature = addrState.firstSignature
-      state.firstSlot = addrState.firstSlot
-      state.firstTimestamp = addrState.firstTimestamp
+    if (forward) {
+      state.lastSlot = forward.slot
+      state.lastTimestamp = forward.timestamp
+      state.lastSignature = forward.signature
+    }
 
-      state.lastSignature = addrState.lastSignature
-      state.lastSlot = addrState.lastSlot
-      state.lastTimestamp = addrState.lastTimestamp
+    const backward = this.fetcherState.cursors?.backward
+
+    if (backward) {
+      state.firstSlot = backward.slot
+      state.firstTimestamp = backward.timestamp
+      state.firstSignature = backward.signature
     }
 
     return state

@@ -1,4 +1,4 @@
-import { SolanaInstructionContext } from '../fetcher/index.js'
+import { SolanaInstructionContext } from './types.js'
 import { EventBase, AlephParsedEvent } from '../types.js'
 
 /**
@@ -14,7 +14,7 @@ export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
       EventType,
       (ixCtx: SolanaInstructionContext, info: Info) => Event
     >,
-  ) { }
+  ) {}
 
   /**
    * Processes the instruction to obtain an event.
@@ -24,8 +24,9 @@ export class EventParser<EventType, Info, Event extends EventBase<EventType>> {
     const { ix, parentIx, parentTx } = ixCtx
     const parsed = (ix as AlephParsedEvent<EventType, Info>).parsed
 
-    const id = `${parentTx.signature}${parentIx ? `:${parentIx.index.toString().padStart(2, '0')}` : ''
-      }:${ix.index.toString().padStart(2, '0')}`
+    const id = `${parentTx.signature}${
+      parentIx ? `:${parentIx.index.toString().padStart(2, '0')}` : ''
+    }:${ix.index.toString().padStart(2, '0')}`
 
     const timestamp = parentTx.blockTime
       ? parentTx.blockTime * 1000

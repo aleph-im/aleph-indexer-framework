@@ -23,3 +23,9 @@ export class FetcherStateLevelStorage<C = any> extends EntityIndexStorage<
     })
   }
 }
+
+export function createFetcherStateDAL(path: string): FetcherStateLevelStorage {
+  return new FetcherStateLevelStorage({
+    path,
+  })
+}

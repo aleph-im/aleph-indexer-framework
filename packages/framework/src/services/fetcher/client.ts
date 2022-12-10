@@ -13,10 +13,13 @@ import {
   FetchTransactionsBySignatureRequestArgs,
   FetcherStateRequestArgs,
   FetcherState,
-  SignatureFetcherState,
+  SolanaSignatureFetcherState,
   TransactionState,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
+  AddAccountFetcherRequestArgs,
+  GetAccountFetcherStateRequestArgs,
+  DelAccountFetcherRequestArgs,
 } from './src/types.js'
 
 /**
@@ -44,7 +47,7 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
-  addAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
+  addAccountFetcher(args: AddAccountFetcherRequestArgs): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountFetcher`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
@@ -52,18 +55,18 @@ export class FetcherMsClient implements FetcherMsI, PrivateFetcherMsI {
     })
   }
 
-  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void> {
-    return this.broker.call(`${this.msId}.delAccountFetcher`, {
+  getAccountFetcherState(
+    args: GetAccountFetcherStateRequestArgs,
+  ): Promise<SolanaSignatureFetcherState | undefined> {
+    return this.broker.call(`${this.msId}.getAccountFetcherState`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       ...args,
     })
   }
 
-  getAccountFetcherState(
-    args: FetcherAccountPartitionRequestArgs,
-  ): Promise<SignatureFetcherState | undefined> {
-    return this.broker.call(`${this.msId}.getAccountFetcherState`, {
+  delAccountFetcher(args: DelAccountFetcherRequestArgs): Promise<void> {
+    return this.broker.call(`${this.msId}.delAccountFetcher`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       ...args,

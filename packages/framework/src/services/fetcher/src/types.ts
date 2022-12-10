@@ -1,16 +1,7 @@
-import { RawTransactionV1 } from '@aleph-indexer/core'
+import { Blockchain, RawTransactionV1 } from '@aleph-indexer/core'
 import { FetcherMsI, PrivateFetcherMsI } from '../interface.js'
 
-export type BlockFetcherState = {
-  fetcher: string
-  firstTimestamp?: number
-  lastTimestamp?: number
-  firstHeight?: number
-  lastHeight?: number
-  completeHistory: boolean
-}
-
-export type SignatureFetcherState = {
+export type SolanaSignatureFetcherState = {
   fetcher: string
   account: string
   firstTimestamp?: number
@@ -43,6 +34,10 @@ export type TransactionState = {
   data?: RawTransactionV1
 }
 
+export type FetcherCommonRequestArgs = {
+  blockchainId: Blockchain
+}
+
 export type FetcherAccountPartitionRequestArgs = {
   account: string
   /**
@@ -51,13 +46,14 @@ export type FetcherAccountPartitionRequestArgs = {
   indexerId?: string
 }
 
-export type AddAccountInfoFetcherRequestArgs =
-  FetcherAccountPartitionRequestArgs & {
-    /**
-     * Whether to subscribe to future account updates.
-     */
-    subscribeChanges: boolean
-  }
+export type AddAccountFetcherRequestArgs = FetcherCommonRequestArgs &
+  FetcherAccountPartitionRequestArgs
+
+export type GetAccountFetcherStateRequestArgs = FetcherCommonRequestArgs &
+  FetcherAccountPartitionRequestArgs
+
+export type DelAccountFetcherRequestArgs = FetcherCommonRequestArgs &
+  FetcherAccountPartitionRequestArgs
 
 /**
  * Accounts and timestamp range to get the signatures for.
@@ -70,6 +66,16 @@ export type FetchAccountTransactionsByDateRequestArgs =
      * Indexer instance id, the result will be delivered here
      */
     indexerId?: string
+  }
+
+// ------------------ Solana specific methods ----------------------
+
+export type AddAccountInfoFetcherRequestArgs =
+  FetcherAccountPartitionRequestArgs & {
+    /**
+     * Whether to subscribe to future account updates.
+     */
+    subscribeChanges: boolean
   }
 
 /**

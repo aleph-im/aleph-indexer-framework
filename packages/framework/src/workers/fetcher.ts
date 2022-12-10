@@ -4,23 +4,10 @@
 import path from 'path'
 import { workerData } from 'worker_threads'
 import {
-  FetcherStateLevelStorage,
-  solanaPrivateRPC,
-  solanaMainPublicRPC,
   solanaPrivateRPCRoundRobin,
   solanaMainPublicRPCRoundRobin,
 } from '@aleph-indexer/core'
 import { FetcherMs, FetcherMsMain } from '../services/fetcher/index.js'
-import { createAccountInfoDAL } from '../services/fetcher/src/dal/accountInfo.js'
-import {
-  createPendingTransactionCacheDAL,
-  createPendingTransactionDAL,
-  createPendingTransactionFetchDAL,
-} from '../services/fetcher/src/dal/pendingTransaction.js'
-import { createRawTransactionDAL } from '../services/fetcher/src/dal/rawTransaction.js'
-import { createSignatureDAL } from '../services/fetcher/src/dal/signature.js'
-import { createRequestsDAL } from '../services/fetcher/src/dal/requests.js'
-import { createAccountDAL } from '../services/fetcher/src/dal/account.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -29,7 +16,7 @@ import { MsIds } from '../services/common.js'
 initThreadContext()
 
 async function main() {
-  const { name, transport, transportConfig, channels } =
+  const { name, transport, transportConfig, channels, supportedBlockchains } =
     workerData as WorkerInfo
 
   const basePath = path.join(workerData.dataPath, name)
@@ -58,19 +45,20 @@ async function main() {
         })
       : localBroker
 
+  const fetchers = await Promise.all(
+    supportedBlockchains.map(async (blockchainId) => {
+      const module = await import(`./impl/fetcher/${blockchainId}.js`)
+      const factory = module.default
+      const fetcherBasePath = path.join(basePath, blockchainId)
+
+      const fetcher = factory(broker, fetcherBasePath)
+      return [blockchainId, fetcher]
+    }),
+  )
+
   const fetcherServiceMain = new FetcherMsMain(
     broker,
-    createSignatureDAL(basePath),
-    createAccountDAL(basePath),
-    createPendingTransactionDAL(basePath),
-    createPendingTransactionCacheDAL(basePath),
-    createPendingTransactionFetchDAL(basePath),
-    createRawTransactionDAL(basePath),
-    createAccountInfoDAL(basePath),
-    createRequestsDAL(basePath),
-    solanaPrivateRPC,
-    solanaMainPublicRPC,
-    new FetcherStateLevelStorage({ path: basePath }),
+    Object.fromEntries(fetchers),
   )
 
   FetcherMs.mainFactory = () => fetcherServiceMain

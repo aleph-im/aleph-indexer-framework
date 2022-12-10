@@ -1,71 +1,17 @@
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
-import { ErrorFetching } from '../../rpc/index.js'
-import { BaseFetcherJobRunnerOptions, ParserContext } from '../base/index.js'
+import { SolanaErrorFetching } from '../../rpc/index.js'
 import {
-  AlephParsedInnerInstruction,
-  AlephParsedInstruction,
-  AlephParsedTransaction,
-  ParsedInnerInstructionV1,
-  ParsedInstructionV1,
-  ParsedTransactionV1,
-} from '../../types.js'
+  BaseFetcherJobRunnerOptions,
+  BaseFetcherPaginationResponse,
+} from '../base/index.js'
 
-export type SolanaFetcherCursor = {
-  firstSignature?: string
-  firstSlot?: number
-  firstTimestamp?: number
-  lastSignature?: string
-  lastSlot?: number
-  lastTimestamp?: number
+export type SolanaSignaturePaginationCursor = {
+  signature?: string
+  slot?: number
+  timestamp?: number
 }
 
-// --------------------------
-
-export type ParsedTransactionContextV1 = {
-  tx: ParsedTransactionV1
-  parserContext: ParserContext
-}
-
-export type SolanaInstructionContext = {
-  parentTx: AlephParsedTransaction
-  parentIx?: AlephParsedInstruction
-  ix: AlephParsedInstruction | AlephParsedInnerInstruction
-}
-
-export type SolanaInstructionContextV1 = {
-  txContext: ParsedTransactionContextV1
-  parentIx?: ParsedInstructionV1
-  ix: ParsedInstructionV1 | ParsedInnerInstructionV1
-}
-
-export type SolanaSignatureFetcherJobRunnerOptions<C> = Omit<
-  BaseFetcherJobRunnerOptions<C>,
-  'handleFetch' | 'updateCursor'
-> & {
-  iterationFetchLimit?: number
-}
-
-export type SolanaSignatureFetcherForwardJobRunnerOptions<C> = Omit<
-  SolanaSignatureFetcherJobRunnerOptions<C>,
-  'interval'
-> & {
-  interval?: number
-  ratio?: number
-  ratioThreshold?: number
-}
-
-export type SolanaSignatureFetcherBackwardJobRunnerOptions<C> =
-  SolanaSignatureFetcherJobRunnerOptions<C> & {
-    fetchUntil?: string
-  }
-
-export interface SolanaSignatureFetcherOptions<C> {
-  address: string
-  forward?: SolanaSignatureFetcherForwardJobRunnerOptions<C>
-  backward?: SolanaSignatureFetcherBackwardJobRunnerOptions<C>
-  errorFetching?: ErrorFetching
-  indexSignatures(signatures: Signature[], goingForward: boolean): Promise<void>
-}
+export type SolanaSignature = ConfirmedSignatureInfo
 
 export type Signature = Omit<
   ConfirmedSignatureInfo,
@@ -74,21 +20,45 @@ export type Signature = Omit<
   accountSlotIndex: Record<string, number>
 }
 
-export type TransactionFetcherBackwardJobRunnerOptions<C> =
-  SolanaSignatureFetcherJobRunnerOptions<C> & {
-    fetchUntil?: string[]
+// --------------------------
+
+export type SolanaSignatureFetcherJobRunnerOptions = Omit<
+  BaseFetcherJobRunnerOptions<SolanaSignaturePaginationCursor>,
+  'handleFetch' | 'updateCursor' | 'interval'
+> & {
+  interval?: number
+  iterationFetchLimit?: number
+}
+
+export type SolanaSignatureFetcherForwardJobRunnerOptions =
+  SolanaSignatureFetcherJobRunnerOptions & {
+    ratio?: number
+    ratioThreshold?: number
   }
+
+export type SolanaSignatureFetcherBackwardJobRunnerOptions =
+  SolanaSignatureFetcherJobRunnerOptions & {
+    fetchUntil?: string
+  }
+
+export type SolanaSignatureFetcherOptions = {
+  address: string
+  forward?: boolean | SolanaSignatureFetcherForwardJobRunnerOptions
+  backward?: boolean | SolanaSignatureFetcherBackwardJobRunnerOptions
+  errorFetching?: SolanaErrorFetching
+  indexSignatures(signatures: Signature[], goingForward: boolean): Promise<void>
+}
 
 /**
  * Options where the account address is stored and if it needs to be updated
  * by fetching new transactions.
  */
-export interface AccountInfoFetcherOptions {
+export type AccountInfoFetcherOptions = {
   address: string
   subscribeChanges?: boolean
 }
 
-export interface AccountInfo {
+export type AccountInfo = {
   address: string
   executable: boolean
   owner: string
@@ -96,3 +66,8 @@ export interface AccountInfo {
   data: any
   rentEpoch?: number
 }
+
+export type SolanaSignaturePaginationResponse = BaseFetcherPaginationResponse<
+  SolanaSignature,
+  SolanaSignaturePaginationCursor
+>

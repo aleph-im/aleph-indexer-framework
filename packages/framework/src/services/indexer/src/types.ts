@@ -1,11 +1,11 @@
-import { StorageValueStream } from '@aleph-indexer/core'
+import { Blockchain, StorageValueStream } from '@aleph-indexer/core'
 import { TransportType } from '../../../utils/index.js'
 import { IndexerMsI, PrivateIndexerMsI } from '../interface.js'
 import { TransactionRequestType } from './dal/transactionRequest.js'
 import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
 
 export {
-  InstructionContextV1,
+  SolanaInstructionContextV1,
   ParsedTransactionV1,
   ParsedInstructionV1,
   ParsedInnerInstructionV1,
@@ -37,6 +37,10 @@ export type TransactionDateRangeResponse = AccountDateRange & {
 }
 
 export type AccountTransactionsIndexerArgs = {
+  /**
+   * Blockchain where the account belongs.
+   */
+  blockchainId: Blockchain
   /**
    * Account to index.
    */
@@ -82,17 +86,25 @@ export type IndexerPartitionRequestArgs = {
 
 export type AccountIndexerRequestArgs = AccountPartitionRequestArgs & {
   /**
+   * Blockchain network where the account belongs.
+   */
+  blockchainId: Blockchain
+  /**
    * Indexer options.
    */
   index: {
     /**
      * Whether to index transactions or arguments to the transaction indexer.
      */
-    transactions: boolean | Omit<AccountTransactionsIndexerArgs, 'account'>
+    transactions:
+      | boolean
+      | Omit<AccountTransactionsIndexerArgs, 'account' | 'blockchainId'>
     /**
      * Whether to index account content or arguments to the account indexer.
      */
-    content: boolean | Omit<AccountContentIndexerArgs, 'account'>
+    content?:
+      | boolean
+      | Omit<AccountContentIndexerArgs, 'account' | 'blockchainId'>
   }
 }
 

@@ -3,54 +3,61 @@ import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
 import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
 import { BaseFetcher } from '../base/baseFetcher.js'
 import {
+  BaseFetcherJobState,
+  BaseFetcherOptions,
+  BaseFetcherState,
   FetcherJobRunnerHandleFetchResult,
-  FetcherJobRunnerUpdateCursorResult,
 } from '../base/types.js'
 import {
   EthereumBlockFetcherOptions,
-  EthereumFetcherCursor,
+  EthereumBlockPaginationCursor,
+  EthereumBlockPaginationCursors,
   EthereumFetchBlocksOptions,
 } from './types.js'
 
-export class EthereumBlockFetcher extends BaseFetcher<EthereumFetcherCursor> {
+export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCursor> {
   constructor(
-    protected opts: EthereumBlockFetcherOptions<EthereumFetcherCursor>,
-    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumFetcherCursor>,
-    protected ethereumRpc: EthereumClient,
+    protected opts: EthereumBlockFetcherOptions,
+    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockPaginationCursor>,
+    protected ethereumClient: EthereumClient,
   ) {
-    super(
-      {
-        id: `eth:blocks`,
-        forward: opts.forward
-          ? {
-              ...opts.forward,
-              interval: opts.forward.interval || 0,
-              handleFetch: (ctx) => this.runForward(ctx),
-              updateCursor: (ctx) => this.updateCursor(ctx),
-            }
-          : undefined,
-        backward: opts.backward
-          ? {
-              ...opts.backward,
-              handleFetch: (ctx) => this.runBackward(ctx),
-              updateCursor: (ctx) => this.updateCursor(ctx),
-            }
-          : undefined,
-      },
-      fetcherStateDAL,
-    )
+    const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
+    const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
+
+    const config: BaseFetcherOptions<EthereumBlockPaginationCursor> = {
+      id: `ethereum:block`,
+    }
+
+    if (forward) {
+      config.jobs = config.jobs || {}
+      config.jobs.forward = {
+        ...forward,
+        interval: forward.interval || 1000 * 10,
+        intervalMax: forward.intervalMax || 1000 * 10,
+        handleFetch: () => this.runForward(),
+        checkComplete: async () => false,
+      }
+    }
+
+    if (backward) {
+      config.jobs = config.jobs || {}
+      config.jobs.backward = {
+        ...backward,
+        interval: backward.interval || 0,
+        handleFetch: () => this.runBackward(),
+        checkComplete: (ctx) => this.checkCompleteBackward(ctx),
+      }
+    }
+
+    super(config, fetcherStateDAL)
   }
 
-  protected async runForward({
-    firstRun,
-  }: {
-    firstRun: boolean
-    interval: number
-  }): Promise<FetcherJobRunnerHandleFetchResult<EthereumFetcherCursor>> {
+  protected async runForward(): Promise<
+    FetcherJobRunnerHandleFetchResult<EthereumBlockPaginationCursor>
+  > {
     // @note: not "before" (autodetected by the node (last block height))
-    const { lastHeight: until } = this.fetcherState.cursor || {}
-
-    const maxLimit = !until || firstRun ? 1000 : Number.MAX_SAFE_INTEGER
+    const until = this.fetcherState.cursors?.forward?.height
+    const maxLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchBlocksOptions = {
       before: undefined,
@@ -58,20 +65,17 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumFetcherCursor> {
       maxLimit,
     }
 
-    const { lastCursor, error } = await this.fetchBlocks(options, true)
+    const { lastCursors, error } = await this.fetchBlocks(options, true)
 
-    return { lastCursor, error }
+    return { lastCursors, error }
   }
 
-  protected async runBackward({
-    interval,
-  }: {
-    firstRun: boolean
-    interval: number
-  }): Promise<FetcherJobRunnerHandleFetchResult<EthereumFetcherCursor>> {
+  protected async runBackward(): Promise<
+    FetcherJobRunnerHandleFetchResult<EthereumBlockPaginationCursor>
+  > {
     // @note: until is autodetected by the node (height 0 / first block)
-    const before = this.fetcherState.cursor?.firstHeight
-    const maxLimit = Number.MAX_SAFE_INTEGER
+    const before = this.fetcherState.cursors?.backward?.height
+    const maxLimit = 1000
 
     const options: EthereumFetchBlocksOptions = {
       until: undefined,
@@ -79,13 +83,13 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumFetcherCursor> {
       maxLimit,
     }
 
-    const { lastCursor, error } = await this.fetchBlocks(options, false)
+    const { lastCursors, error } = await this.fetchBlocks(options, false)
 
     // @note: Stop the indexer if there wasnt more items
-    const stop = !error && !lastCursor?.firstHeight
-    const newInterval = stop ? JobRunnerReturnCode.Stop : interval
+    const stop = !error && !lastCursors?.backward?.height
+    const newInterval = stop ? JobRunnerReturnCode.Stop : undefined
 
-    return { newInterval, lastCursor, error }
+    return { newInterval, lastCursors, error }
   }
 
   protected async fetchBlocks(
@@ -93,25 +97,22 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumFetcherCursor> {
     goingForward: boolean,
   ): Promise<{
     error?: Error
-    lastCursor: EthereumFetcherCursor
+    lastCursors: EthereumBlockPaginationCursors
   }> {
     let error: undefined | Error
-    const lastCursor: EthereumFetcherCursor = {}
+    let lastCursors: EthereumBlockPaginationCursors = {}
 
     console.log(`fetchBlocks [${goingForward ? 'forward' : 'backward'}]`)
 
     try {
-      const blocks = this.ethereumRpc.fetchBlocks(options)
+      const blocks = this.ethereumClient.fetchBlocks(options)
 
       for await (const step of blocks) {
         const { chunk } = step
 
         await this.opts.indexBlocks(chunk, goingForward)
 
-        lastCursor.firstHeight = step.firstKey?.height
-        lastCursor.firstTimestamp = step.firstKey?.timestamp
-        lastCursor.lastHeight = step.lastKey?.height
-        lastCursor.lastTimestamp = step.lastKey?.timestamp
+        lastCursors = step.cursors
       }
     } catch (e) {
       error = e as Error
@@ -119,53 +120,19 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumFetcherCursor> {
 
     return {
       error,
-      lastCursor,
+      lastCursors,
     }
   }
 
-  protected async updateCursor({
-    type,
-    prevCursor,
-    lastCursor,
-  }: {
-    type: 'forward' | 'backward'
-    prevCursor?: EthereumFetcherCursor
-    lastCursor: EthereumFetcherCursor
-  }): Promise<FetcherJobRunnerUpdateCursorResult<EthereumFetcherCursor>> {
-    let newItems = false
-    const newCursor: EthereumFetcherCursor = { ...prevCursor }
+  protected async checkCompleteBackward(ctx: {
+    fetcherState: BaseFetcherState<EthereumBlockPaginationCursor>
+    jobState: BaseFetcherJobState
+    newItems: boolean
+    error?: Error
+  }): Promise<boolean> {
+    const { fetcherState, error } = ctx
+    const lastHeight = fetcherState?.cursors?.backward?.height
 
-    switch (type) {
-      case 'backward': {
-        if (lastCursor.firstHeight) {
-          newCursor.firstHeight = lastCursor.firstHeight
-          newCursor.firstTimestamp = lastCursor.firstTimestamp
-          newItems = true
-        }
-
-        if (!prevCursor?.lastHeight) {
-          newCursor.lastHeight = lastCursor.lastHeight
-          newCursor.lastTimestamp = lastCursor.lastTimestamp
-        }
-
-        break
-      }
-      case 'forward': {
-        if (lastCursor.lastHeight) {
-          newCursor.lastHeight = lastCursor.lastHeight
-          newCursor.lastTimestamp = lastCursor.lastTimestamp
-          newItems = true
-        }
-
-        if (!prevCursor?.firstHeight) {
-          newCursor.firstHeight = lastCursor.firstHeight
-          newCursor.firstTimestamp = lastCursor.firstTimestamp
-        }
-
-        break
-      }
-    }
-
-    return { newCursor, newItems }
+    return !error && lastHeight === 0
   }
 }

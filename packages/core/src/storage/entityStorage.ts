@@ -49,6 +49,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   static AddressLength = EntityIndexStorage.AddressLength
   static TimestampLength = EntityIndexStorage.TimestampLength
   static VariableLength = EntityIndexStorage.VariableLength
+  static EthereumAddressLength = EntityIndexStorage.EthereumAddressLength
 
   constructor(
     protected options: EntityStorageOptions<Entity>,

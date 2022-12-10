@@ -1,8 +1,8 @@
-import { Utils } from '@aleph-indexer/core'
+import { Blockchain, Utils } from '@aleph-indexer/core'
 import {
   FetcherMainDomainContext,
   FetcherState,
-  SignatureFetcherState,
+  SolanaSignatureFetcherState,
   TransactionState,
 } from '../../../services/fetcher/src/types.js'
 
@@ -22,17 +22,19 @@ export class FetcherMainDomain {
    * @param accounts The accounts of which to get the fetchers.
    */
   async getAccountFetcherState(
+    blockchainId: Blockchain,
     accounts: string[] = [],
-  ): Promise<SignatureFetcherState[]> {
+  ): Promise<SolanaSignatureFetcherState[]> {
     return (
       await Promise.all(
         accounts.map((account) =>
           this.context.apiClient.getAccountFetcherState({
+            blockchainId,
             account,
           }),
         ),
       )
-    ).filter((info): info is SignatureFetcherState => !!info)
+    ).filter((info): info is SolanaSignatureFetcherState => !!info)
   }
 
   /**

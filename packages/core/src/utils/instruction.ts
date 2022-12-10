@@ -9,7 +9,7 @@ import { TOKEN_PROGRAM_ID } from '../constants.js'
 import {
   SolanaInstructionContext,
   SolanaInstructionContextV1,
-} from '../fetcher/index.js'
+} from '../parser/types.js'
 
 export function isTokenInstruction(
   ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,

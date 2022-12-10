@@ -10,9 +10,12 @@ import {
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
-  SignatureFetcherState,
+  SolanaSignatureFetcherState,
   TransactionState,
   DelTransactionsRequestArgs,
+  AddAccountFetcherRequestArgs,
+  GetAccountFetcherStateRequestArgs,
+  DelAccountFetcherRequestArgs,
 } from './src/types.js'
 
 /**
@@ -89,22 +92,18 @@ export class FetcherMs extends Service {
     return this.main.stop()
   }
 
-  addAccountFetcher(
-    ctx: Context<FetcherAccountPartitionRequestArgs>,
-  ): Promise<void> {
+  addAccountFetcher(ctx: Context<AddAccountFetcherRequestArgs>): Promise<void> {
     return this.main.addAccountFetcher(ctx.params)
   }
 
-  delAccountFetcher(
-    ctx: Context<FetcherAccountPartitionRequestArgs>,
-  ): Promise<void> {
-    return this.main.delAccountFetcher(ctx.params)
+  getAccountFetcherState(
+    ctx: Context<GetAccountFetcherStateRequestArgs>,
+  ): Promise<SolanaSignatureFetcherState | undefined> {
+    return this.main.getAccountFetcherState(ctx.params)
   }
 
-  getAccountFetcherState(
-    ctx: Context<FetcherAccountPartitionRequestArgs>,
-  ): Promise<SignatureFetcherState | undefined> {
-    return this.main.getAccountFetcherState(ctx.params)
+  delAccountFetcher(ctx: Context<DelAccountFetcherRequestArgs>): Promise<void> {
+    return this.main.delAccountFetcher(ctx.params)
   }
 
   addAccountInfoFetcher(

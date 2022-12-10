@@ -4,56 +4,64 @@ import {
   EthereumBlockFetcher as BaseFetcher,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/core'
-import { SignatureStorage } from '../dal/signature.js'
-import { BlockFetcherState } from '../types.js'
+import { EthereumBlockFetcherState } from './types.js'
+import { EthereumBlockStorage } from './dal/block.js'
 
 /**
- * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
+ * Fetches blocks for a given account. Needs to be initialized and started with init() and run() respectively.
  */
 export class BlockFetcher extends BaseFetcher {
   /**
-   * Initializes the signature fetcher.
-   * @param address The account address to fetch related signatures for.
-   * @param dal The signature storage.
-   * @param solanaRpc The Solana RPC client.
-   * @param solanaMainPublicRpc The Solana mainnet public RPC client.
+   * Initializes the block fetcher.
+   * @param ethereumClient The Ethereum RPC client.
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
-    protected dal: SignatureStorage,
-    protected ethereumRpc: EthereumClient,
+    protected ethereumClient: EthereumClient,
+    protected blockDAL: EthereumBlockStorage,
     protected fetcherStateDAL: FetcherStateLevelStorage,
   ) {
     super(
       {
-        forward: {
-          interval: 1000 * 10,
-          intervalMax: 1000 * 10,
-        },
-        backward: {
-          interval: 1000 * 10,
-        },
+        forward: true,
+        backward: true,
         indexBlocks: (...args) => this.indexBlocks(...args),
       },
       fetcherStateDAL,
-      ethereumRpc,
+      ethereumClient,
     )
   }
 
-  public async getState(): Promise<BlockFetcherState> {
-    const state: BlockFetcherState = {
+  // async init() {
+  //   console.log('BLOCK FETCHER => ')
+
+  //   // for await (const { value } of await this.blockDAL.getAll()) {
+  //   //   console.log('->', !!value, value?.number)
+  //   // }
+
+  //   console.log('BLOCK FETCHER END => ')
+
+  //   await super.init()
+  // }
+
+  public async getState(): Promise<EthereumBlockFetcherState> {
+    const state: EthereumBlockFetcherState = {
       fetcher: 'unknown',
       completeHistory: this.isComplete('backward'),
     }
 
-    const addrState = this.fetcherState.cursor || {}
+    const forward = this.fetcherState.cursors?.forward
 
-    if (addrState) {
-      state.firstHeight = addrState.firstHeight
-      state.firstTimestamp = addrState.firstTimestamp
+    if (forward) {
+      state.lastHeight = forward.height
+      state.lastTimestamp = forward.timestamp
+    }
 
-      state.lastHeight = addrState.lastHeight
-      state.lastTimestamp = addrState.lastTimestamp
+    const backward = this.fetcherState.cursors?.backward
+
+    if (backward) {
+      state.firstHeight = backward.height
+      state.firstTimestamp = backward.timestamp
     }
 
     return state
@@ -63,6 +71,9 @@ export class BlockFetcher extends BaseFetcher {
     blocks: EthereumBlock[],
     goingForward: boolean,
   ): Promise<void> {
-    await this.dal.save(blocks)
+    await Promise.all([
+      this.blockDAL.save(blocks),
+      this.ethereumClient.indexBlockSignatures(blocks),
+    ])
   }
 }

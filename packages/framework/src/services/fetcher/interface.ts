@@ -6,10 +6,13 @@ import {
   FetchTransactionsBySignatureRequestArgs,
   FetcherState,
   FetcherStateRequestArgs,
-  SignatureFetcherState,
+  SolanaSignatureFetcherState,
   TransactionState,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
+  AddAccountFetcherRequestArgs,
+  DelAccountFetcherRequestArgs,
+  GetAccountFetcherStateRequestArgs,
 } from './src/types'
 
 /**
@@ -20,19 +23,19 @@ export interface FetcherMsI {
    * Requests a new signature fetcher, which will fetch all txn signatures including a given account.
    * @param args Arguments for the fetcher.
    */
-  addAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+  addAccountFetcher(args: AddAccountFetcherRequestArgs): Promise<void>
   /**
    * Returns a signature fetcher's state.
    * @param args The account to get the fetcher's state from.
    */
   getAccountFetcherState(
-    args: FetcherAccountPartitionRequestArgs,
-  ): Promise<SignatureFetcherState | undefined>
+    args: GetAccountFetcherStateRequestArgs,
+  ): Promise<SolanaSignatureFetcherState | undefined>
   /**
    * Requests to remove a signature fetcher.
    * @param args The account to remove the fetcher from.
    */
-  delAccountFetcher(args: FetcherAccountPartitionRequestArgs): Promise<void>
+  delAccountFetcher(args: DelAccountFetcherRequestArgs): Promise<void>
   /**
    * Requests a new account info fetcher, which will fetch current account info.
    * @param args Arguments for the fetcher.
