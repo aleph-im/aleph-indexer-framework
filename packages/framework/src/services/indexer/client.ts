@@ -64,6 +64,35 @@ export class IndexerMsClient implements IndexerMsI, PrivateIndexerMsI {
     })
   }
 
+  async deleteAccount(
+    args: AccountIndexerRequestArgs,
+    broadcast = false,
+  ): Promise<void> {
+    if (broadcast) {
+      const nodes = Object.keys(this.broker.registry.nodes.nodes)
+
+      await Promise.all(
+        nodes.map((nodeID) =>
+          this.broker.call(
+            `${this.msId}.deleteAccount`,
+            {
+              partitionKey: args.partitionKey || args.account,
+              ...args,
+            },
+            { nodeID },
+          ),
+        ),
+      )
+
+      return
+    }
+
+    return this.broker.call(`${this.msId}.deleteAccount`, {
+      partitionKey: args.partitionKey || args.account,
+      ...args,
+    })
+  }
+
   getAccountState(
     args: GetAccountIndexingStateRequestArgs,
   ): Promise<AccountIndexerState | undefined> {

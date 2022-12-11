@@ -123,6 +123,20 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     await this.domain.onNewAccount(args)
   }
 
+  async deleteAccount(args: AccountIndexerRequestArgs): Promise<void> {
+    const { transactions, content } = args.index
+
+    if (transactions) {
+      const accountIndexer = this.accountTransactionsIndexers[args.account]
+      if (!accountIndexer) return
+      await accountIndexer.stop()
+    }
+
+    if (content) {
+      // @todo
+    }
+  }
+
   async getAccountState({
     account,
   }: GetAccountIndexingStateRequestArgs): Promise<

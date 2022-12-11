@@ -24,12 +24,12 @@ const { JobRunner } = Utils
 /**
  * Defines the account stats handler class.
  */
-export class AccountTimeSeriesStatsManager {
+export class AccountTimeSeriesStatsManager<V> {
   protected compactionJob!: Utils.JobRunner
-  protected stats!: AccountStats
+  protected stats!: AccountStats<V>
 
   constructor(
-    public config: AccountTimeSeriesStatsConfig,
+    public config: AccountTimeSeriesStatsConfig<V>,
     protected indexerApi: IndexerMsI,
     protected stateDAL: StatsStateStorage,
     protected timeSeriesDAL: StatsTimeSeriesStorage,
@@ -71,15 +71,15 @@ export class AccountTimeSeriesStatsManager {
     }
   }
 
-  async getStats(): Promise<AccountStats> {
+  async getStats(): Promise<AccountStats<V>> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
     }
-
     return this.stats
   }
 
   async process(now: number): Promise<void> {
+    console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)
     await this.aggregateAccountStats(now)
   }
@@ -126,7 +126,8 @@ export class AccountTimeSeriesStatsManager {
     const { timeSeriesDAL } = this
 
     if (aggregate) {
-      const stats = await aggregate({ now, account, timeSeriesDAL })
+      console.log(`📊 aggregating account stats for ${account}`)
+      const stats: V = await aggregate({ now, account, timeSeriesDAL })
       this.stats = { account, stats }
       return
     }

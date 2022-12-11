@@ -24,7 +24,6 @@ import {
   FetchAccountTransactionsByDateRequestArgs,
   FetchAccountTransactionsBySlotRequestArgs,
   FetcherAccountPartitionRequestArgs,
-  FetcherOptionsTypes,
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
@@ -33,11 +32,6 @@ import {
 } from '../types.js'
 import { PendingTransactionStorage } from '../dal/pendingTransaction.js'
 import { MsIds } from '../../../common.js'
-import {
-  createFetcherOptions,
-  FetcherOptionsStorage,
-  RequestsDALIndex,
-} from '../dal/requests.js'
 import { FetcherMsClient } from '../../client.js'
 import { RawTransactionWithPeers } from '../../../parser/src/types.js'
 import { AccountStorage } from '../dal/account.js'
@@ -82,7 +76,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
     protected pendingTransactionFetchDAL: PendingTransactionStorage,
     protected rawTransactionDAL: RawTransactionStorage,
     protected accountInfoDAL: AccountInfoStorage,
-    protected requestDAL: FetcherOptionsStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
@@ -140,8 +133,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
     this.pendingTransactions.start().catch(() => 'ignore')
     this.pendingTransactionsCache.start().catch(() => 'ignore')
     this.pendingTransactionsFetch.start().catch(() => 'ignore')
-
-    await this.loadExistingRequests()
   }
 
   async stop(): Promise<void> {
@@ -162,8 +153,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
    */
   async addAccountFetcher(
     args: FetcherAccountPartitionRequestArgs,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    save = true,
   ): Promise<void> {
     const { account, indexerId } = args
 
@@ -206,7 +195,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
    */
   async addAccountInfoFetcher(
     args: AddAccountInfoFetcherRequestArgs,
-    save = true,
   ): Promise<void> {
     const { account, subscribeChanges = true } = args
 
@@ -227,15 +215,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
 
     this.infoFetchers[account] = fetcher
 
-    if (save) {
-      const fetcherOptions = createFetcherOptions(
-        FetcherOptionsTypes.AccountInfoFetcher,
-        args,
-      )
-
-      await this.requestDAL.save(fetcherOptions)
-    }
-
     await fetcher.init()
     fetcher.run()
   }
@@ -251,12 +230,8 @@ export class SolanaFetcher implements BlockchainFetcherI {
     if (!fetcher) return
 
     await fetcher.stop()
-    delete this.infoFetchers[account]
 
-    await this.removeExistingRequest(
-      FetcherOptionsTypes.AccountInfoFetcher,
-      account,
-    )
+    delete this.infoFetchers[account]
   }
 
   /**
@@ -356,20 +331,11 @@ export class SolanaFetcher implements BlockchainFetcherI {
 
   async fetchAccountTransactionsByDate(
     args: FetchAccountTransactionsByDateRequestArgs,
-    save = true,
   ): Promise<void | AsyncIterable<string[]>> {
     const { account, startDate, endDate, indexerId } = args
 
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
-
-    const fetcherOptions = createFetcherOptions(
-      FetcherOptionsTypes.AccountTransactionDateFetcher,
-      args,
-    )
-    if (save) {
-      await this.requestDAL.save(fetcherOptions)
-    }
 
     const {
       completeHistory,
@@ -406,11 +372,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
         })
         return signatures
       }),
-      async (err) => {
-        if (!err && save) {
-          await this.requestDAL.remove(fetcherOptions).catch(() => 'ignore')
-        }
-      },
     )
   }
 
@@ -420,21 +381,11 @@ export class SolanaFetcher implements BlockchainFetcherI {
    */
   async fetchAccountTransactionsBySlot(
     args: FetchAccountTransactionsBySlotRequestArgs,
-    save = true,
   ): Promise<void | AsyncIterable<string[]>> {
     const { account, startSlot, endSlot, indexerId } = args
 
     const state = await this.getAccountFetcherState({ account })
     if (!state) return
-
-    const fetcherOptions = createFetcherOptions(
-      FetcherOptionsTypes.AccountTransactionSlotFetcher,
-      args,
-    )
-
-    if (save) {
-      await this.requestDAL.save(fetcherOptions)
-    }
 
     const {
       completeHistory,
@@ -467,11 +418,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
         })
         return signatures
       }),
-      async (err) => {
-        if (!err && save) {
-          await this.requestDAL.remove(fetcherOptions).catch(() => 'ignore')
-        }
-      },
     )
   }
 
@@ -701,53 +647,6 @@ export class SolanaFetcher implements BlockchainFetcherI {
     }
 
     this.throughput += count
-  }
-
-  /**
-   * It is used to restart the execution of the fetcher by loading the existing requests.
-   */
-  protected async loadExistingRequests(): Promise<void> {
-    console.log(`🔗 Loading existing requests ...`)
-    const requests = await this.requestDAL.getAllValues()
-
-    for await (const value of requests) {
-      const { type, options } = value
-
-      switch (type) {
-        case FetcherOptionsTypes.AccountFetcher:
-          await this.addAccountFetcher(options, false)
-          break
-        case FetcherOptionsTypes.AccountInfoFetcher:
-          await this.addAccountInfoFetcher(options, false)
-          break
-        case FetcherOptionsTypes.AccountTransactionDateFetcher:
-          await this.fetchAccountTransactionsByDate(options, false)
-          break
-        case FetcherOptionsTypes.AccountTransactionSlotFetcher:
-          await this.fetchAccountTransactionsBySlot(options, false)
-          break
-      }
-    }
-  }
-
-  /**
-   * Removes the existing requests related to a certain account and type of request.
-   * @param type One of the possible requests that can be made to the fetcher service.
-   * @param account Account address.
-   */
-  protected async removeExistingRequest(
-    type: FetcherOptionsTypes,
-    account: string,
-  ): Promise<void> {
-    if (type === FetcherOptionsTypes.TransactionSignatureFetcher) return
-
-    const requests = await this.requestDAL
-      .useIndex(RequestsDALIndex.TypeAccount)
-      .getAllValuesFromTo([type, account], [type, account])
-
-    for await (const value of requests) {
-      this.requestDAL.remove(value)
-    }
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI

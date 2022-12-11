@@ -1,8 +1,9 @@
 import { SolanaParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
 import { DefinedParser } from './parser.js'
-import { InstructionParser } from './instructionParser.js'
+import { SplInstructionParser } from './splInstructionParser.js'
 import { LayoutImplementation } from './layout/types.js'
+import { AnchorInstructionParser } from "./anchorInstructionParser.js";
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
@@ -62,13 +63,24 @@ export class InstructionParserLibrary extends DefinedParser<
 
     if (!implementation) return
 
-    parser = new InstructionParser(
-      implementation.programID,
-      implementation.name,
-      implementation.getInstructionType,
-      implementation.accountLayoutMap,
-      implementation.dataLayoutMap,
-    )
+    // @note: deserialize() is used in Beet, so we will use AnchorInstructionParser here
+    if (Object.values(implementation.dataLayoutMap)[0].deserialize) {
+      parser = new AnchorInstructionParser(
+        implementation.programID,
+        implementation.name,
+        implementation.getInstructionType,
+        implementation.accountLayoutMap,
+        implementation.dataLayoutMap
+      )
+    } else {
+      parser = new SplInstructionParser(
+        implementation.programID,
+        implementation.name,
+        implementation.getInstructionType,
+        implementation.accountLayoutMap,
+        implementation.dataLayoutMap,
+      )
+    }
 
     this.instructionParsers[programId] = parser
 

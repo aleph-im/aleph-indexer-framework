@@ -73,7 +73,7 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
   /**
    * Assigns to a fetcher instance an account owned by the specific program
    * and initializes it.
-   * @param args Account address to asign to the fetcher instance,
+   * @param args Account address to assign to the fetcher instance
    */
   async addAccountFetcher(args: AddAccountFetcherRequestArgs): Promise<void> {
     const fetcher = this.blockchainFetchers[args.blockchainId]

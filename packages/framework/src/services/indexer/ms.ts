@@ -30,6 +30,10 @@ export class IndexerMs extends Service {
           ...shardBalancingStrategy,
           handler: this.indexAccount,
         },
+        deleteAccount: {
+          ...shardBalancingStrategy,
+          handler: this.deleteAccount,
+        },
         getAccountState: {
           ...shardBalancingStrategy,
           handler: this.getAccountState,
@@ -58,6 +62,11 @@ export class IndexerMs extends Service {
 
   indexAccount(ctx: Context<AccountIndexerRequestArgs>): Promise<void> {
     return this.main.indexAccount(ctx.params)
+  }
+
+  deleteAccount(ctx: Context<AccountIndexerRequestArgs>): Promise<void> {
+    this.logger.info('🏀', ctx.params.account)
+    return this.main.deleteAccount(ctx.params)
   }
 
   getAccountState(
