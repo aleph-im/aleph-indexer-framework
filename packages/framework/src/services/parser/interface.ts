@@ -1,6 +1,6 @@
 import {
-  ParsedTransactionV1,
-  ParsedInstructionV1,
+  SolanaParsedTransactionV1,
+  SolanaParsedInstructionV1,
   ParsedAccountInfoV1,
   RawTransactionV1,
   RawInstruction,
@@ -14,7 +14,7 @@ export interface ParserMsI {
    */
   parseTransaction(
     payload: RawTransactionV1,
-  ): Promise<ParsedTransactionV1>
+  ): Promise<SolanaParsedTransactionV1>
 
   /**
    * Parses a raw instruction.
@@ -23,7 +23,7 @@ export interface ParserMsI {
    */
   parseInstruction(
     payload: RawInstruction,
-  ): Promise<RawInstruction | ParsedInstructionV1>
+  ): Promise<RawInstruction | SolanaParsedInstructionV1>
 
   /**
    * Parses a raw account info.

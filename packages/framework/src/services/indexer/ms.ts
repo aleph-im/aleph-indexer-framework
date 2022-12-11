@@ -57,7 +57,6 @@ export class IndexerMs extends Service {
   }
 
   indexAccount(ctx: Context<AccountIndexerRequestArgs>): Promise<void> {
-    this.logger.info('🏀', ctx.params.account)
     return this.main.indexAccount(ctx.params)
   }
 

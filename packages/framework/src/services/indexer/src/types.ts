@@ -6,9 +6,9 @@ import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
 
 export {
   SolanaInstructionContextV1,
-  ParsedTransactionV1,
-  ParsedInstructionV1,
-  ParsedInnerInstructionV1,
+  SolanaParsedTransactionV1 as ParsedTransactionV1,
+  SolanaParsedInstructionV1 as ParsedInstructionV1,
+  SolanaParsedInnerInstructionV1 as ParsedInnerInstructionV1,
 } from '@aleph-indexer/core'
 
 /**
@@ -33,6 +33,7 @@ export type AccountSlotRange = {
  * {@link AccountDateRange} bundled with fetched transactions.
  */
 export type TransactionDateRangeResponse = AccountDateRange & {
+  blockchainId: Blockchain
   txs: StorageValueStream<TransactionParsedResponse>
 }
 
@@ -170,6 +171,10 @@ export type IndexerCommonDomainContext = {
    * Name of the project to which the indexer belongs.
    */
   projectId: string
+  /**
+   * Supported blockchains
+   */
+  supportedBlockchains: Blockchain[]
   /**
    * Transport type used to communicate inside the indexer.
    */

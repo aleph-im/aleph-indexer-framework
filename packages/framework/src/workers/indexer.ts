@@ -20,8 +20,15 @@ import { WorkerInfo } from '../utils/workers.js'
 initThreadContext()
 
 async function main() {
-  const { name, projectId, transport, transportConfig, channels, domainPath } =
-    workerData as Required<WorkerInfo>
+  const {
+    name,
+    projectId,
+    transport,
+    transportConfig,
+    channels,
+    domainPath,
+    supportedBlockchains,
+  } = workerData as Required<WorkerInfo>
 
   const dataPath = path.join(workerData.dataPath, name)
 
@@ -59,6 +66,7 @@ async function main() {
     apiClient: indexerMain,
     dataPath,
     projectId,
+    supportedBlockchains,
     transport,
   } as IndexerDomainContext)
   ;(indexerMain as any).domain = domain

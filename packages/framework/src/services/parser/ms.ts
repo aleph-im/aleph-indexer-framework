@@ -1,8 +1,8 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
 import {
   ParsedAccountInfoV1,
-  ParsedInstructionV1,
-  ParsedTransactionV1,
+  SolanaParsedInstructionV1,
+  SolanaParsedTransactionV1,
   RawAccountInfo,
   RawInstruction,
   RawTransaction,
@@ -43,14 +43,14 @@ export class ParserMs extends Service {
 
   async parseTransaction(
     ctx: Context<{ payload: RawTransaction }>,
-  ): Promise<ParsedTransactionV1> {
+  ): Promise<SolanaParsedTransactionV1> {
     const { payload } = ctx.params
     return this.main.parseTransaction(payload)
   }
 
   parseInstruction(
     ctx: Context<{ payload: RawInstruction }>,
-  ): Promise<RawInstruction | ParsedInstructionV1> {
+  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
     const { payload } = ctx.params
     return this.main.parseInstruction(payload)
   }

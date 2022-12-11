@@ -1,7 +1,7 @@
 import {
   AlephParsedErrorIx,
-  ParsedInstructionV1,
-  ParsedTransactionV1,
+  SolanaParsedInstructionV1,
+  SolanaParsedTransactionV1,
   RawInstruction,
   RawTransactionV1,
   ProgramErrorType,
@@ -17,7 +17,7 @@ import { InstructionParserLibrary } from './instructionParserLibrary.js'
  */
 export class TransactionParser extends StrictParser<
   RawTransactionV1,
-  ParsedTransactionV1
+  SolanaParsedTransactionV1
 > {
   /**
    * @param instructionParserAggregator Aggregates all available instruction parsers for use.
@@ -31,13 +31,13 @@ export class TransactionParser extends StrictParser<
    * @param rawTx The raw or partly-parsed transaction to parse.
    */
   async parse(
-    rawTx: RawTransactionV1 | ParsedTransactionV1,
-  ): Promise<ParsedTransactionV1> {
-    if ('parsed' in rawTx) return rawTx as ParsedTransactionV1
+    rawTx: RawTransactionV1 | SolanaParsedTransactionV1,
+  ): Promise<SolanaParsedTransactionV1> {
+    if ('parsed' in rawTx) return rawTx as SolanaParsedTransactionV1
     if (!('transaction' in rawTx))
       throw new Error(`‼️ Empty rawTx ${JSON.stringify(rawTx, null, 2)}`)
 
-    const parsedTx = rawTx as unknown as ParsedTransactionV1
+    const parsedTx = rawTx as unknown as SolanaParsedTransactionV1
     parsedTx.parsed =
       rawTx.transaction as unknown as AlephParsedInnerTransaction
 
@@ -62,7 +62,7 @@ export class TransactionParser extends StrictParser<
    * @param parsedTx The parsed transaction to parse the errors of.
    * @protected
    */
-  protected parseError(parsedTx: ParsedTransactionV1): void {
+  protected parseError(parsedTx: SolanaParsedTransactionV1): void {
     const err = parsedTx.meta?.err as Record<
       string,
       [number, Record<string, number>]
@@ -118,7 +118,7 @@ export class TransactionParser extends StrictParser<
    * @protected
    */
   protected async parseInstructions(
-    parsedTx: ParsedTransactionV1,
+    parsedTx: SolanaParsedTransactionV1,
   ): Promise<void> {
     const instructions = parsedTx.parsed.message.instructions
     const innerInstructions = parsedTx.meta?.innerInstructions || []
@@ -131,7 +131,7 @@ export class TransactionParser extends StrictParser<
       instructions.map(async (rawIx, index) => {
         const resultIx = (await this.instructionParserAggregator.parse(
           rawIx,
-        )) as ParsedInstructionV1
+        )) as SolanaParsedInstructionV1
         resultIx.index = index
 
         const innerIxs = innerInstructionsMap[index] || []
@@ -142,7 +142,7 @@ export class TransactionParser extends StrictParser<
           for (const rawIix of innerIxs) {
             const resultIix = (await this.instructionParserAggregator.parse(
               rawIix,
-            )) as ParsedInstructionV1
+            )) as SolanaParsedInstructionV1
             resultIix.index = resultIx.innerInstructions.push(resultIix) - 1
           }
         }

@@ -1,15 +1,14 @@
 import Web3 from 'web3'
-import { BlockTransactionObject } from 'web3-eth'
 import {
   EthereumBlockPaginationResponse,
   EthereumFetchBlocksOptions,
   EthereumFetchSignaturesOptions,
   EthereumSignaturePaginationResponse,
 } from '../../fetcher/ethereum/index.js'
+import { EthereumBlock, EthereumSignature } from '../../types/ethereum.js'
 import {
   createEthereumSignatureDAL,
   EthereumSignatureDALIndex,
-  EthereumSignatureEntity,
   EthereumSignatureStorage,
 } from './dal.js'
 
@@ -32,9 +31,9 @@ export type EthereumBlocksChunkOptions = {
 }
 
 export type EthereumBlocksChunkResponse = {
-  chunk: BlockTransactionObject[]
-  firstItem?: BlockTransactionObject
-  lastItem?: BlockTransactionObject
+  chunk: EthereumBlock[]
+  firstItem?: EthereumBlock
+  lastItem?: EthereumBlock
   count: number
 }
 
@@ -48,9 +47,9 @@ export type EthereumSignaturesChunkOptions = {
 }
 
 export type EthereumSignaturesChunkResponse = {
-  chunk: EthereumSignatureEntity[]
-  firstItem?: EthereumSignatureEntity
-  lastItem?: EthereumSignatureEntity
+  chunk: EthereumSignature[]
+  firstItem?: EthereumSignature
+  lastItem?: EthereumSignature
   count: number
 }
 
@@ -184,13 +183,13 @@ export class EthereumClient {
     }
   }
 
-  async indexBlockSignatures(blocks: BlockTransactionObject[]): Promise<void> {
+  async indexBlockSignatures(blocks: EthereumBlock[]): Promise<void> {
     const signatures = blocks.flatMap((block) =>
       block.transactions.map((tx) => {
         const accounts = [tx.from]
         if (tx.to) accounts.push(tx.to)
 
-        const sig: EthereumSignatureEntity = {
+        const sig: EthereumSignature = {
           signature: tx.hash,
           height: block.number,
           timestamp: Number(block.timestamp),

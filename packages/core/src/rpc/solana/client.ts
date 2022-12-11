@@ -24,12 +24,13 @@ import {
 } from 'superstruct'
 import { Connection } from './connection.js'
 import { config } from '../../config.js'
+
+import { SolanaSignaturePaginationResponse } from '../../fetcher/index.js'
 import {
   AlephParsedTransaction,
   RawTransactionV1,
   VoteAccountInfo,
-} from '../../types.js'
-import { SolanaSignaturePaginationResponse } from '../../fetcher/index.js'
+} from '../../types/index.js'
 
 export interface SolanaPaginationKey {
   signature: string

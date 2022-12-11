@@ -1,5 +1,4 @@
-import { BlockTransactionObject } from 'web3-eth'
-import { EthereumSignatureEntity } from '../../rpc/ethereum/dal.js'
+import { EthereumBlock, EthereumSignature } from '../../types/ethereum.js'
 import {
   BaseFetcherJobRunnerOptions,
   BaseFetcherPaginationCursors,
@@ -7,10 +6,6 @@ import {
 } from '../base/index.js'
 
 // Common
-
-export type EthereumBlock = BlockTransactionObject
-
-export type EthereumSignature = EthereumSignatureEntity
 
 export type EthereumFetcherJobRunnerOptions<C> = Omit<
   BaseFetcherJobRunnerOptions<C>,

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 
 import {
-  ParsedTransactionV1,
+  SolanaParsedTransactionV1,
   PendingWork,
   PendingWorkPool,
   StorageValueStream,
@@ -54,7 +54,7 @@ export class TransactionFetcher {
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
-  protected incomingTransactions: PendingWorkPool<ParsedTransactionV1>
+  protected incomingTransactions: PendingWorkPool<SolanaParsedTransactionV1>
 
   protected toRemoveBuffer = new BufferExec<TransactionRequestPendingSignature>(
     async (pendings) => {
@@ -199,7 +199,7 @@ export class TransactionFetcher {
     return requests
   }
 
-  async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
+  async onTxs(chunk: SolanaParsedTransactionV1[]): Promise<void> {
     // await this.onTxsBuffer.add(chunk)
     return this.storeIncomingTxs(chunk)
   }
@@ -253,7 +253,7 @@ export class TransactionFetcher {
   // }
 
   protected async storeIncomingTxs(
-    chunk: ParsedTransactionV1[],
+    chunk: SolanaParsedTransactionV1[],
   ): Promise<void> {
     const works = chunk.map((tx) => ({
       id: tx.signature,
@@ -265,7 +265,7 @@ export class TransactionFetcher {
   }
 
   protected async handleIncomingTxs(
-    works: PendingWork<ParsedTransactionV1>[],
+    works: PendingWork<SolanaParsedTransactionV1>[],
   ): Promise<void> {
     const chunk = works.map((work) => work.payload)
 
@@ -276,8 +276,8 @@ export class TransactionFetcher {
     try {
       const requests = await this.transactionRequestDAL.getAllValues()
 
-      let filteredTxs: ParsedTransactionV1[] = []
-      let remainingTxs: ParsedTransactionV1[] = chunk
+      let filteredTxs: SolanaParsedTransactionV1[] = []
+      let remainingTxs: SolanaParsedTransactionV1[] = chunk
       let requestCount = 0
       const requestCountId = []
 
@@ -319,14 +319,14 @@ export class TransactionFetcher {
   }
 
   protected filterTxsByRequest(
-    txs: ParsedTransactionV1[],
+    txs: SolanaParsedTransactionV1[],
     request: TransactionRequest,
   ): {
-    filteredTxs: ParsedTransactionV1[]
-    remainingTxs: ParsedTransactionV1[]
+    filteredTxs: SolanaParsedTransactionV1[]
+    remainingTxs: SolanaParsedTransactionV1[]
   } {
-    const filteredTxs: ParsedTransactionV1[] = []
-    const remainingTxs: ParsedTransactionV1[] = []
+    const filteredTxs: SolanaParsedTransactionV1[] = []
+    const remainingTxs: SolanaParsedTransactionV1[] = []
 
     switch (request.type) {
       case TransactionRequestType.ByDateRange: {

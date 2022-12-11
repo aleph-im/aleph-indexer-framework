@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
-  ParsedTransactionV1,
-  ParsedInstructionV1,
+  SolanaParsedTransactionV1,
+  SolanaParsedInstructionV1,
   ParsedAccountInfoV1,
   RawTransaction,
   RawInstruction,
@@ -54,13 +54,13 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
 
   async parseTransaction(
     payload: RawTransaction,
-  ): Promise<ParsedTransactionV1> {
+  ): Promise<SolanaParsedTransactionV1> {
     return this.transactionParser.parse(payload)
   }
 
   async parseInstruction(
     payload: RawInstruction,
-  ): Promise<RawInstruction | ParsedInstructionV1> {
+  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
     return await this.instructionParserLibrary.parse(payload)
   }
 
@@ -99,8 +99,11 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
 
   protected groupTransactions(
     msgs: ParsedTransactionMsg[],
-  ): [Record<string, ParsedTransactionV1[]>, ParsedTransactionV1[]] {
-    const broadcastGroup: ParsedTransactionV1[] = []
+  ): [
+    Record<string, SolanaParsedTransactionV1[]>,
+    SolanaParsedTransactionV1[],
+  ] {
+    const broadcastGroup: SolanaParsedTransactionV1[] = []
 
     const groups = msgs.reduce((acc, { tx, peers }) => {
       if (!peers || peers.length === 0) {
@@ -114,7 +117,7 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
       })
 
       return acc
-    }, {} as Record<string, ParsedTransactionV1[]>)
+    }, {} as Record<string, SolanaParsedTransactionV1[]>)
 
     return [groups, broadcastGroup]
   }

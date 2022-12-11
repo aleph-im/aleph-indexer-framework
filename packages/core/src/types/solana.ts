@@ -13,9 +13,9 @@ import {
   LoadedAddresses,
   ParsedAddressTableLookup,
 } from '@solana/web3.js'
-import { ProgramErrorType, TransactionErrorType } from './utils/error.js'
+import { ProgramErrorType, TransactionErrorType } from '../utils/error.js'
 
-export { ProgramErrorType, TransactionErrorType } from './utils/error.js'
+export { ProgramErrorType, TransactionErrorType } from '../utils/error.js'
 
 export type ErrorCatalogItem = { code: number; name: string; msg?: string }
 export type ErrorCatalog = ErrorCatalogItem[]
@@ -178,14 +178,14 @@ export type AlephParsedInstruction =
   | AlephParsedParsedInstruction
   | AlephParsedPartiallyDecodedInstruction
 
-export type ParsedInstructionV1 = AlephParsedInstruction
+export type SolanaParsedInstructionV1 = AlephParsedInstruction
 
 export type AlephParsedInnerInstruction = Omit<
   AlephParsedInstruction,
   'innerInstructions'
 >
 
-export type ParsedInnerInstructionV1 = AlephParsedInnerInstruction
+export type SolanaParsedInnerInstructionV1 = AlephParsedInnerInstruction
 
 export type AlephParsedErrorIx = {
   index: number
@@ -214,7 +214,7 @@ export type AlephParsedTransaction = Omit<RawTransaction, 'parsed'> & {
   index: number
 }
 
-export type ParsedTransactionV1 = Omit<
+export type SolanaParsedTransactionV1 = Omit<
   RawTransactionV1,
   'parsed' | 'transaction'
 > & {
@@ -250,29 +250,9 @@ export type RawEventBase = Omit<AlephParsedParsedInstruction, 'parsed'> & {
 /**
  * Defines the instruction event type and its info.
  */
-export type AlephParsedEvent<EventType, InfoType> = RawEventBase & {
+export type SolanaParsedEvent<EventType, InfoType> = RawEventBase & {
   parsed: {
     type: EventType
     info: InfoType
   }
-}
-
-/**
- * Defines the common properties for all events.
- */
-export type EventBase<EventType> = {
-  id: string
-  timestamp: number
-  type: EventType
-  /**
-   * Account where the transaction and therefore the event comes from.
-   */
-  account?: string
-}
-
-// ---------------- Supported blockchains --------------------------
-
-export enum Blockchain {
-  Ethereum = 'ethereum',
-  Solana = 'solana',
 }

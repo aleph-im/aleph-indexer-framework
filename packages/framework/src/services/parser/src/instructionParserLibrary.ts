@@ -1,4 +1,4 @@
-import { ParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
+import { SolanaParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
 import { DefinedParser } from './parser.js'
 import { InstructionParser } from './instructionParser.js'
@@ -11,7 +11,7 @@ import { LayoutImplementation } from './layout/types.js'
  */
 export class InstructionParserLibrary extends DefinedParser<
   RawInstruction,
-  ParsedInstructionV1
+  SolanaParsedInstructionV1
 > {
   constructor(protected layoutPath?: string) {
     super()
@@ -19,7 +19,7 @@ export class InstructionParserLibrary extends DefinedParser<
 
   protected instructionParsers: Record<
     string,
-    DefinedParser<RawInstruction, RawInstruction | ParsedInstructionV1>
+    DefinedParser<RawInstruction, RawInstruction | SolanaParsedInstructionV1>
   > = {}
 
   /**
@@ -27,15 +27,15 @@ export class InstructionParserLibrary extends DefinedParser<
    * @param payload The raw instruction to parse.
    */
   async parse(
-    payload: RawInstruction | ParsedInstructionV1,
-  ): Promise<RawInstruction | ParsedInstructionV1> {
+    payload: RawInstruction | SolanaParsedInstructionV1,
+  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
     const { programId } = payload
 
     const parser = await this.getParser(programId)
     if (!parser) return payload
 
     const parsedData = await parser.parse(payload)
-    return parsedData as ParsedInstructionV1
+    return parsedData as SolanaParsedInstructionV1
   }
 
   /**
@@ -46,7 +46,7 @@ export class InstructionParserLibrary extends DefinedParser<
   protected async getParser(
     programId: string,
   ): Promise<
-    | DefinedParser<RawInstruction, RawInstruction | ParsedInstructionV1>
+    | DefinedParser<RawInstruction, RawInstruction | SolanaParsedInstructionV1>
     | undefined
   > {
     let parser = this.instructionParsers[programId]

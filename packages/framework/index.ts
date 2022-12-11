@@ -284,7 +284,7 @@ export class SDK {
   ): Promise<void> {
     if (!config.indexer) return
 
-    const { projectId, transport } = config
+    const { projectId, transport, supportedBlockchains } = config
     const { domainPath, apiSchemaPath } = config.indexer.main
 
     const mainName = `${projectId}-${WorkerKind.Indexer}-${WorkerKind.Main}`
@@ -310,6 +310,7 @@ export class SDK {
       apiClient: indexerMsClient,
       dataPath,
       projectId,
+      supportedBlockchains,
       transport,
     } as IndexerMainDomainContext)
 

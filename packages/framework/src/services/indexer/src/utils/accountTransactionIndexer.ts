@@ -342,7 +342,7 @@ export class AccountTransactionIndexer {
   }: {
     interval: number
   }): Promise<number | void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
     const { Ready, Processed } = TransactionIndexerStateCode
 
     const completeRanges = await this.transactionIndexerStateDAL
@@ -363,6 +363,7 @@ export class AccountTransactionIndexer {
 
       // @note: Process the response (delegated to the domain layer)
       await this.handler.onTxDateRange({
+        blockchainId,
         account,
         startDate: range.startDate,
         endDate: range.endDate,

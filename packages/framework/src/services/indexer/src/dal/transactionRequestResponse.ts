@@ -1,7 +1,7 @@
 import {
   EntityStorage,
   EntityUpdateOp,
-  ParsedTransactionV1,
+  SolanaParsedTransactionV1,
 } from '@aleph-indexer/core'
 
 export type TransactionSignatureResponse = {
@@ -9,7 +9,7 @@ export type TransactionSignatureResponse = {
   nonceIndexes: Record<string, number>
 }
 
-export type TransactionParsedResponse = ParsedTransactionV1 &
+export type TransactionParsedResponse = SolanaParsedTransactionV1 &
   TransactionSignatureResponse
 
 export type TransactionRequestResponse =

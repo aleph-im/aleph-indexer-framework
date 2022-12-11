@@ -1,12 +1,7 @@
 import { EntityStorage, EntityUpdateOp } from '../../storage/index.js'
+import { EthereumSignature } from '../../types/ethereum.js'
 
-export type EthereumSignatureEntity = {
-  signature: string
-  height: number
-  timestamp: number
-  index: number
-  accounts: string[]
-}
+export type EthereumSignatureEntity = EthereumSignature
 
 export type EthereumSignatureStorage = EntityStorage<EthereumSignatureEntity>
 

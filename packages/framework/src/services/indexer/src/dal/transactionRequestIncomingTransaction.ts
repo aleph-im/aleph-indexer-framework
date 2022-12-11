@@ -1,12 +1,12 @@
 import {
   EntityUpdateOp,
-  ParsedTransactionV1,
+  SolanaParsedTransactionV1,
   PendingWork,
   PendingWorkStorage,
 } from '@aleph-indexer/core'
 
 export type TransactionRequestIncomingTransactionStorage =
-  PendingWorkStorage<ParsedTransactionV1>
+  PendingWorkStorage<SolanaParsedTransactionV1>
 
 /**
  * Creates a new pending transaction storage for the fetcher.
@@ -20,8 +20,8 @@ export function createTransactionRequestIncomingTransactionDAL(
     path,
     count: true,
     async updateCheckFn(
-      oldEntity: PendingWork<ParsedTransactionV1> | undefined,
-      newEntity: PendingWork<ParsedTransactionV1>,
+      oldEntity: PendingWork<SolanaParsedTransactionV1> | undefined,
+      newEntity: PendingWork<SolanaParsedTransactionV1>,
     ): Promise<EntityUpdateOp> {
       if (oldEntity) {
         newEntity.time = oldEntity.time

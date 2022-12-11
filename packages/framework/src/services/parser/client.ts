@@ -1,8 +1,8 @@
 import { ServiceBroker } from 'moleculer'
 import {
   ParsedAccountInfoV1,
-  ParsedInstructionV1,
-  ParsedTransactionV1,
+  SolanaParsedInstructionV1,
+  SolanaParsedTransactionV1,
   RawAccountInfo,
   RawInstruction,
   RawTransactionV1,
@@ -46,7 +46,7 @@ export class ParserMsClient
 
   async parseTransaction(
     payload: RawTransactionV1,
-  ): Promise<ParsedTransactionV1> {
+  ): Promise<SolanaParsedTransactionV1> {
     return this.broker.call(`${this.msId}.parseTransaction`, {
       payload,
     })
@@ -54,7 +54,7 @@ export class ParserMsClient
 
   async parseInstruction(
     payload: RawInstruction,
-  ): Promise<RawInstruction | ParsedInstructionV1> {
+  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
     return this.broker.call(`${this.msId}.parseTransaction`, {
       payload,
     })

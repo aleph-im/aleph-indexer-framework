@@ -1,4 +1,4 @@
-import { ErrorCatalog } from '../types.js'
+import { ErrorCatalog } from '../types/index.js'
 import { sleep, BackoffFunction, linealBackoff } from './time.js'
 
 export interface TryAndRetryOpts {

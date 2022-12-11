@@ -1,4 +1,4 @@
-import { ParsedTransactionV1 } from '@aleph-indexer/core'
+import { SolanaParsedTransactionV1 } from '@aleph-indexer/core'
 import { ServiceBroker } from 'moleculer'
 import { getRegistryNodesWithService, MsIds } from '../common.js'
 import { FetcherMsClient } from '../fetcher/client.js'
@@ -34,7 +34,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     string,
     AccountTransactionIndexer
   > = {}
-  protected txsHandler: (chunk: ParsedTransactionV1[]) => Promise<void>
+  protected txsHandler: (chunk: SolanaParsedTransactionV1[]) => Promise<void>
 
   /**
    * @param fetcherMsClient Allows communication with the fetcher service.
@@ -151,7 +151,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     return fn.call(this.domain, account, ...args)
   }
 
-  protected async onTxs(chunk: ParsedTransactionV1[]): Promise<void> {
+  protected async onTxs(chunk: SolanaParsedTransactionV1[]): Promise<void> {
     // console.log(`💌 ${chunk.length} txs received by the indexer...`)
     await this.transactionFetcher.onTxs(chunk)
   }
@@ -177,8 +177,9 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
       this.transactionIndexerStateDAL,
     )
 
-    this.accountTransactionsIndexers[args.account] = accountIndexer
     await accountIndexer.start()
+
+    this.accountTransactionsIndexers[args.account] = accountIndexer
   }
 
   /**

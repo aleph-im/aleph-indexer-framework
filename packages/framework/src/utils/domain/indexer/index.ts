@@ -1,2 +1,2 @@
-export * from './worker.js'
+export * from './worker/index.js'
 export * from './main.js'
