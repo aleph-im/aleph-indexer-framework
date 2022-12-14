@@ -9,7 +9,12 @@ import {
 } from 'graphql'
 import { IndexerAPISchema } from '@aleph-indexer/framework'
 import * as Types from './types.js'
-import { APIResolver, CandlesFilters, PricesFilters } from './resolvers.js'
+import {
+  APIResolver,
+  CandlesFilters,
+  PricesFilters,
+  AccountsFilters,
+} from './resolvers.js'
 import MainDomain from '../domain/main.js'
 
 export default class APISchema extends IndexerAPISchema {
@@ -19,23 +24,26 @@ export default class APISchema extends IndexerAPISchema {
   ) {
     super(domain, {
       customTimeSeriesTypesMap: { candle: Types.Candle },
-      customStatsType: Types.DataFeedStats,
+      customStatsType: Types.PythAccountStats,
 
       query: new GraphQLObjectType({
         name: 'Query',
         fields: {
-          dataFeeds: {
-            type: Types.DataFeedInfo,
-            args: {},
-            resolve: () => this.resolver.getDataFeeds(),
-          },
-
-          dataFeedStats: {
-            type: Types.DataFeedStats,
+          accounts: {
+            type: Types.AccountsInfo,
             args: {
-              dataFeeds: { type: new GraphQLList(GraphQLString) },
+              types: { type: new GraphQLList(GraphQLString) },
+              accounts: { type: new GraphQLList(GraphQLString) },
             },
-            resolve: () => this.resolver.getDataFeedStats(),
+            resolve: (_, ctx, __, info) => {
+              ctx.includeStats =
+                !!info.fieldNodes[0].selectionSet?.selections.find(
+                  (item) =>
+                    item.kind === 'Field' && item.name.value === 'stats',
+                )
+
+              return this.resolver.getAccounts(ctx as AccountsFilters)
+            },
           },
 
           prices: {

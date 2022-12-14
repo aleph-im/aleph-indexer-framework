@@ -4,7 +4,7 @@
     "packages/layout",
     "packages/middleware",
     "packages/framework",
-    "packages/marinade_finance"
+    "packages/pyth"
   ],
   "version": "1.0.21"
 }

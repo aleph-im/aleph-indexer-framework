@@ -6,10 +6,10 @@ import {
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { PriceDALIndex, PriceStorage } from '../../dal/price.js'
-import {Candle, DataFeedStats, Price} from '../../types.js'
+import { Candle, PythAccountStats, Price } from '../../types.js'
 import pythCandleAggregator from './candleAggregator.js'
 import { TIME_FRAMES_AS_DURATION } from '../../constants.js'
-import statsAggregator from "./statsAggregator.js";
+import statsAggregator from './statsAggregator.js'
 
 export function createCandles(
   account: string,
@@ -17,13 +17,13 @@ export function createCandles(
   priceDAL: PriceStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
-): AccountTimeSeriesStatsManager<DataFeedStats> {
+): AccountTimeSeriesStatsManager<PythAccountStats> {
   const timeSeriesStats = new TimeSeriesStats<Price, Candle>(
     {
       type: 'candle',
       startTimestamp: 0,
       timeFrames: TIME_FRAMES_AS_DURATION,
-      getInputStream: ({account, startTimestamp, endTimestamp}) => {
+      getInputStream: ({ account, startTimestamp, endTimestamp }) => {
         return priceDAL
           .useIndex(PriceDALIndex.AccountTimestamp)
           .getAllValuesFromTo(
@@ -39,7 +39,7 @@ export function createCandles(
     statsTimeSeriesDAL,
   )
 
-  return new AccountTimeSeriesStatsManager<DataFeedStats>(
+  return new AccountTimeSeriesStatsManager<PythAccountStats>(
     {
       account,
       series: [timeSeriesStats],

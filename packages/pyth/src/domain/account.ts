@@ -5,28 +5,28 @@ import {
   AccountTimeSeriesStatsManager,
 } from '@aleph-indexer/framework'
 import { PriceDALIndex, PriceStorage } from '../dal/price.js'
-import { DataFeedInfo, DataFeedStats, Price } from '../types.js'
+import { PythAccountInfo, PythAccountStats, Price } from '../types.js'
 import { StorageStream } from '@aleph-indexer/core'
 
-export class DataFeed {
+export class AccountDomain {
   constructor(
-    public info: DataFeedInfo,
+    public info: PythAccountInfo,
     protected priceDAL: PriceStorage,
-    protected timeSeriesStats: AccountTimeSeriesStatsManager<DataFeedStats>,
+    protected timeSeriesStats: AccountTimeSeriesStatsManager<PythAccountStats>,
   ) {}
 
   async updateStats(now: number): Promise<void> {
     await this.timeSeriesStats.process(now)
   }
 
-  getTimeSeriesStats(
+  async getTimeSeriesStats(
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats> {
     return this.timeSeriesStats.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(): Promise<AccountStats> {
+  async getStats(): Promise<AccountStats<PythAccountStats>> {
     return this.timeSeriesStats.getStats()
   }
 

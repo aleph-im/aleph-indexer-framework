@@ -1,5 +1,4 @@
 import { EventBase } from '@aleph-indexer/core'
-import { ProductData } from './utils/pyth-sdk.js'
 import {
   AddMappingInstruction,
   AddPriceInstruction,
@@ -15,8 +14,20 @@ import {
   UpdPriceNoFailOnErrorInstruction,
   UpdProductInstruction,
 } from './layouts/ts/instructions.js'
+import { PriceStatus, ProductData, PriceData, Base } from '@pythnetwork/client'
+import { AccountsType } from './layouts/accounts.js'
 
-import { PriceStatus } from '@pythnetwork/client'
+export type PythAccountInfo = {
+  name: string
+  programId: string
+  address: string
+  type: AccountsType
+  data: ParsedAccountsData
+}
+
+export type ParsedAccountsData = Base & SpecificData
+
+type SpecificData = ProductData | PriceData
 
 export {
   ParsedPythInstruction,
@@ -150,11 +161,6 @@ export type ResizeAccountEvent = PythEventBase &
     type: PythEventType.ResizeAccount
   }
 
-// -------------- DATA FEED INFO -------------------
-export type DataFeedInfo = ProductData & {
-  address: string
-}
-
 // -------------- STATS -------------------
 
 export type CandleInterval =
@@ -178,7 +184,7 @@ export type CandleInterval =
   | 'year1'
   | 'all'
 
-export type DataFeedStats = {
+export type PythAccountStats = {
   last1h: Candle
   last24h: Candle
   last7d: Candle
@@ -189,10 +195,6 @@ export type DataFeedStats = {
 
   markPrice: number
   confidence: number
-}
-
-export type DataFeedStatsWithAddress = DataFeedStats & {
-  address: string
 }
 
 export type Candle = {
@@ -220,7 +222,7 @@ export type GlobalPythStats = {
   totalMetalDataFeeds: number
 }
 
-export type DataFeedData = {
-  info: DataFeedInfo
-  stats?: DataFeedStats
+export type PythAccountData = {
+  info: PythAccountInfo
+  stats?: PythAccountStats
 }

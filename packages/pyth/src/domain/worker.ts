@@ -16,13 +16,13 @@ import { priceParser as pParser } from '../parsers/price.js'
 import { createPriceDAL } from '../dal/price.js'
 import {
   Candle,
-  CandleInterval,
-  DataFeedInfo,
+  PythAccountInfo,
   Price,
   PythEventType,
   UpdatePriceEvent,
+  PythAccountStats,
 } from '../types.js'
-import { DataFeed } from './data-feed.js'
+import { AccountDomain } from './account.js'
 import { createCandles } from './stats/timeSeries.js'
 import { PYTH_PROGRAM_ID } from '../constants.js'
 import { DateTime } from 'luxon'
@@ -33,8 +33,7 @@ export default class WorkerDomain
   extends IndexerWorkerDomain
   implements IndexerWorkerDomainWithStats
 {
-  protected dataFeedsByAccount: Record<string, DataFeed> = {}
-  protected dataFeedsBySymbol: Record<string, DataFeed> = {}
+  protected accounts: Record<string, AccountDomain> = {}
 
   constructor(
     protected context: IndexerDomainContext,
@@ -53,7 +52,7 @@ export default class WorkerDomain
   }
 
   async onNewAccount(
-    config: AccountIndexerConfigWithMeta<DataFeedInfo>,
+    config: AccountIndexerConfigWithMeta<PythAccountInfo>,
   ): Promise<void> {
     const { account, meta } = config
 
@@ -65,16 +64,21 @@ export default class WorkerDomain
       this.statsTimeSeriesDAL,
     )
 
-    const dataFeed = new DataFeed(meta, this.priceDAL, accountTimeSeries)
-    this.dataFeedsByAccount[account] = dataFeed
-    this.dataFeedsBySymbol[dataFeed.info.product.symbol] = dataFeed
+    this.accounts[account] = new AccountDomain(
+      meta,
+      this.priceDAL,
+      accountTimeSeries,
+    )
+    //const dataFeed = new AccountDomain(meta, this.priceDAL, accountTimeSeries)
+    //this.dataFeedsByAccount[account] = dataFeed
+    //this.dataFeedsBySymbol[dataFeed.info.product.symbol] = dataFeed
 
     console.log('Account indexing', this.context.instanceName, account)
   }
 
   async updateStats(account: string, now: number): Promise<void> {
-    const dataFeed = this.getDataFeed(account)
-    await dataFeed.updateStats(now)
+    const actual = this.getAccount(account)
+    await actual.updateStats(now)
   }
 
   async getTimeSeriesStats(
@@ -82,24 +86,26 @@ export default class WorkerDomain
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats> {
-    const dataFeed = this.getDataFeed(account)
-    return dataFeed.getTimeSeriesStats(type, filters)
+    const actual = this.getAccount(account)
+    return actual.getTimeSeriesStats(type, filters)
   }
 
   async getStats(account: string): Promise<AccountStats> {
-    return this.getDataFeedStats(account)
+    return this.getAccountStats(account)
   }
 
   // ------------- Custom impl methods -------------------
 
-  async getDataFeedInfo(dataFeed: string): Promise<DataFeedInfo> {
-    const feed = this.getDataFeed(dataFeed)
-    return feed.info
+  async getAccountInfo(actual: string): Promise<PythAccountInfo> {
+    const res = this.getAccount(actual)
+    return res.info
   }
 
-  async getDataFeedStats(dataFeed: string): Promise<AccountStats> {
-    const feed = this.getDataFeed(dataFeed)
-    return feed.getStats()
+  async getAccountStats(
+    actual: string,
+  ): Promise<AccountStats<PythAccountStats>> {
+    const res = this.getAccount(actual)
+    return res.getStats()
   }
 
   async getHistoricalPrices(
@@ -108,20 +114,20 @@ export default class WorkerDomain
     endDate: number,
     opts: any,
   ): Promise<StorageStream<string, Price>> {
-    const feed = this.getDataFeed(dataFeed)
+    const feed = this.getAccount(dataFeed)
     return await feed.getHistoricalPrices(startDate, endDate, opts)
   }
 
   // @note: replaces getTimeSeriesStats
   async getCandles(
-    dataFeed: string,
+    account: string,
     timeFrame: number,
     startDate: DateTime,
     endDate: DateTime,
     opts: any,
   ): Promise<AccountTimeSeriesStats<Candle>> {
     const { limit, reverse } = opts
-    const feed = this.getDataFeed(dataFeed)
+    const feed = this.getAccount(account)
     return await feed.getTimeSeriesStats('candle', {
       startTimestamp: startDate.toMillis(),
       endTimestamp: endDate.toMillis(),
@@ -182,11 +188,9 @@ export default class WorkerDomain
     await this.priceDAL.save(parsedPrices)
   }
 
-  private getDataFeed(dataFeed: string): DataFeed {
-    const dataFeedInstance =
-      this.dataFeedsBySymbol[dataFeed] ?? this.dataFeedsByAccount[dataFeed]
-    if (!dataFeedInstance)
-      throw new Error(`data feed ${dataFeed} does not exist`)
-    return dataFeedInstance
+  private getAccount(account: string): AccountDomain {
+    const accountInstance = this.accounts[account]
+    if (!accountInstance) throw new Error(`Account ${account} does not exist`)
+    return accountInstance
   }
 }

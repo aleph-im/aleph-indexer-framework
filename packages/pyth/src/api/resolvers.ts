@@ -1,12 +1,13 @@
 import {
   Candle,
   CandleInterval,
-  DataFeedData,
-  DataFeedStatsWithAddress,
   GlobalPythStats,
   Price,
-} from '../types'
+  PythAccountData,
+  PythAccountInfo,
+} from '../types.js'
 import MainDomain from '../domain/main.js'
+import { AccountsType } from '../layouts/accounts.js'
 
 export type PricesFilters = {
   address: string
@@ -17,25 +18,44 @@ export type PricesFilters = {
   reverse?: boolean
 }
 
+export type AccountsFilters = {
+  types?: AccountsType[]
+  accounts?: string[]
+  includeStats?: boolean
+}
+
 export type CandlesFilters = PricesFilters & { candleInterval: CandleInterval }
 
 export class APIResolver {
   constructor(protected domain: MainDomain) {}
 
-  async getDataFeeds(): Promise<DataFeedData[]> {
-    const result = await this.domain.getDataFeeds(false)
-    return Object.values(result)
+  async getAccounts(args: AccountsFilters): Promise<PythAccountInfo[]> {
+    const acountsData = await this.filterAccounts(args)
+    return acountsData.map(({ info, stats }) => ({ ...info, stats }))
   }
 
-  async getDataFeedStats(): Promise<DataFeedStatsWithAddress[]> {
-    const result = await this.domain.getDataFeeds(true)
-    return Object.entries(result).map(([k, v]) => {
-      return {
-        address: k,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        ...v.stats!,
-      }
-    })
+  protected async filterAccounts({
+    types,
+    accounts,
+    includeStats,
+  }: AccountsFilters): Promise<PythAccountData[]> {
+    const accountMap = await this.domain.getAccounts(includeStats)
+
+    accounts =
+      accounts ||
+      Object.values(accountMap).map((account) => account.info.address)
+
+    let accountsData = accounts
+      .map((address) => accountMap[address])
+      .filter((account) => !!account)
+
+    if (types !== undefined) {
+      accountsData = accountsData.filter(({ info }) =>
+        types!.includes(info.type),
+      )
+    }
+
+    return accountsData
   }
 
   async getPrices({

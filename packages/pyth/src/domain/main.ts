@@ -10,14 +10,16 @@ import {
 import {
   Candle,
   CandleInterval,
-  DataFeedData,
-  DataFeedInfo,
-  DataFeedStats,
+  PythAccountData,
+  PythAccountStats,
   GlobalPythStats,
   Price,
+  PythAccountInfo,
 } from '../types.js'
-import { DiscoveryHelper, discoveryHelper } from './discovery.js'
+import DiscoveryHelper from './discovery.js'
 import { StorageStream } from '@aleph-indexer/core'
+import { ParsedAccountsData } from '../layouts/solita/index.js'
+import { ProductData } from '../utils/pyth-sdk.js'
 
 export default class MainDomain
   extends IndexerMainDomain
@@ -27,7 +29,7 @@ export default class MainDomain
 
   constructor(
     protected context: IndexerMainDomainContext,
-    protected discoverer: DiscoveryHelper = discoveryHelper,
+    protected discoverer: DiscoveryHelper = new DiscoveryHelper(),
   ) {
     super(context, {
       discoveryInterval: 1000 * 60 * 60 * 1,
@@ -40,9 +42,9 @@ export default class MainDomain
   }
 
   async discoverAccounts(): Promise<
-    AccountIndexerConfigWithMeta<DataFeedInfo>[]
+    AccountIndexerConfigWithMeta<PythAccountInfo>[]
   > {
-    const products = await this.discoverer.loadProducts()
+    const products = await this.discoverer.loadAccounts()
 
     return products.map((meta) => {
       return {
@@ -59,36 +61,36 @@ export default class MainDomain
     })
   }
 
-  async getDataFeeds(
+  async getAccounts(
     includeStats?: boolean,
-  ): Promise<Record<string, DataFeedData>> {
-    const dataFeedData: Record<string, DataFeedData> = {}
+  ): Promise<Record<string, PythAccountData>> {
+    const accounts: Record<string, PythAccountData> = {}
 
     await Promise.all(
       Array.from(this.accounts || []).map(async (account) => {
-        const feedData = await this.getDataFeed(account, includeStats)
-        dataFeedData[account] = feedData as DataFeedData
+        const actual = await this.getAccount(account, includeStats)
+        accounts[account] = actual as PythAccountData
       }),
     )
 
-    return dataFeedData
+    return accounts
   }
 
-  async getDataFeed(
+  async getAccount(
     account: string,
     includeStats?: boolean,
-  ): Promise<DataFeedData> {
+  ): Promise<PythAccountData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'getDataFeedInfo',
-    })) as DataFeedInfo
+      method: 'getPythAccountInfo',
+    })) as PythAccountInfo
 
     if (!includeStats) return { info }
 
     const { stats } = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'getDataFeedStats',
-    })) as AccountStats<DataFeedStats>
+      method: 'getPythAccountStats',
+    })) as AccountStats<PythAccountStats>
 
     return { info, stats }
   }
@@ -129,28 +131,36 @@ export default class MainDomain
   }
 
   protected async computeGlobalStats(): Promise<GlobalPythStats> {
-    const dataFeeds = await this.getDataFeeds(false)
+    const accounts = await this.getAccounts(false)
 
     const globalStats: GlobalPythStats = this.getNewGlobalStats()
-    for (const dataFeed of Object.values(dataFeeds)) {
-      globalStats.totalDataFeeds++
-
-      switch (dataFeed.info.product.asset_type) {
-        case 'Crypto':
-          globalStats.totalCryptoDataFeeds++
-          break
-        case 'Equity':
-          globalStats.totalEquityDataFeeds++
-          break
-        case 'FX':
-          globalStats.totalFXDataFeeds++
-          break
-        case 'Metal':
-          globalStats.totalMetalDataFeeds++
-          break
+    for (const account of Object.values(accounts)) {
+      const data = account.info.data
+      if (this.isProductAccount(data)) {
+        globalStats.totalDataFeeds++
+        switch (data.product.assetType) {
+          case 'Crypto':
+            globalStats.totalCryptoDataFeeds++
+            break
+          case 'Equity':
+            globalStats.totalEquityDataFeeds++
+            break
+          case 'FX':
+            globalStats.totalFXDataFeeds++
+            break
+          case 'Metal':
+            globalStats.totalMetalDataFeeds++
+            break
+        }
       }
     }
     return globalStats
+  }
+
+  protected isProductAccount(
+    accountInfo: ParsedAccountsData,
+  ): accountInfo is ProductData {
+    return (accountInfo as ProductData).priceAccountKey !== undefined
   }
 
   protected getNewGlobalStats(): GlobalPythStats {

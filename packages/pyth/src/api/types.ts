@@ -1,10 +1,14 @@
+import { GraphQLBigNumber } from '@aleph-indexer/core/dist/index.js'
 import {
   GraphQLEnumType,
   GraphQLFloat,
   GraphQLInt,
+  GraphQLInterfaceType,
+  GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
+  GraphQLUnionType,
 } from 'graphql'
 import { GraphQLDateTime } from 'graphql-scalars'
 import { TIME_FRAMES } from '../constants.js'
@@ -62,19 +66,8 @@ export const Candle = new GraphQLObjectType({
   },
 })
 
-export const DataFeedInfo = new GraphQLObjectType({
-  name: 'DataFeedInfo',
-  fields: {
-    address: { type: GraphQLNonNull(GraphQLString) },
-    symbol: { type: GraphQLNonNull(GraphQLString) },
-    assetType: { type: GraphQLNonNull(AssetType) },
-    quoteCurrency: { type: GraphQLNonNull(GraphQLString) },
-    tenor: { type: GraphQLNonNull(GraphQLString) },
-  },
-})
-
-export const DataFeedStats = new GraphQLObjectType({
-  name: 'DataFeedStats',
+export const PythAccountStats = new GraphQLObjectType({
+  name: 'PythAccountStats',
   fields: {
     address: { type: GraphQLNonNull(GraphQLString) },
     last1h: { type: GraphQLNonNull(Candle) },
@@ -98,3 +91,150 @@ export const GlobalStats = new GraphQLObjectType({
     totalMetalDataFeeds: { type: GraphQLNonNull(GraphQLInt) },
   },
 })
+
+// ------------------- TYPES ---------------------------
+
+export const AccountHeader = new GraphQLObjectType({
+  name: 'AccountHeader',
+  fields: {
+    magic: { type: new GraphQLNonNull(GraphQLInt) },
+    version: { type: new GraphQLNonNull(GraphQLInt) },
+    type: { type: new GraphQLNonNull(GraphQLInt) },
+    size: { type: new GraphQLNonNull(GraphQLInt) },
+  },
+})
+
+export const PriceEma = new GraphQLObjectType({
+  name: 'PriceEma',
+  fields: {
+    valueComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    value: { type: new GraphQLNonNull(GraphQLInt) },
+    numerator: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    denominator: { type: new GraphQLNonNull(GraphQLBigNumber) },
+  },
+})
+
+export const PriceInfo = new GraphQLObjectType({
+  name: 'PriceInfo',
+  fields: {
+    priceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    price: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    confidenceComponent: { type: new GraphQLNonNull(GraphQLInt) },
+    confidence: { type: new GraphQLNonNull(GraphQLInt) },
+    publishSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    corporateAction: { type: new GraphQLNonNull(GraphQLInt) },
+    status: { type: new GraphQLNonNull(GraphQLInt) },
+  },
+})
+
+export const PriceComponent = new GraphQLObjectType({
+  name: 'PriceComponent',
+  fields: {
+    publisher: { type: new GraphQLNonNull(GraphQLString) },
+    aggregate: { type: new GraphQLNonNull(PriceInfo) },
+    latest: { type: new GraphQLNonNull(PriceInfo) },
+  },
+})
+
+export const Product = new GraphQLObjectType({
+  name: 'Product',
+  fields: {
+    symbol: { type: new GraphQLNonNull(GraphQLString) },
+    assetType: { type: new GraphQLNonNull(GraphQLString) },
+    quoteCurrency: { type: new GraphQLNonNull(GraphQLString) },
+    tenor: { type: new GraphQLNonNull(GraphQLString) },
+    priceAccount: { type: new GraphQLNonNull(GraphQLString) },
+    index: { type: new GraphQLNonNull(GraphQLString) },
+  },
+})
+
+// ------------------- ACCOUNTS ---------------------------
+
+export const AccountsEnum = new GraphQLEnumType({
+  name: 'AccountsEnum',
+  values: {
+    PriceAccount: { value: 'PriceAccount' },
+    ProductAccount: { value: 'ProductAccount' },
+  },
+})
+
+export const PriceAccount = new GraphQLObjectType({
+  name: 'PriceAccount',
+  fields: {
+    header: { type: new GraphQLNonNull(AccountHeader) },
+    priceType: { type: new GraphQLNonNull(GraphQLInt) },
+    exponent: { type: new GraphQLNonNull(GraphQLInt) },
+    numComponentPrices: { type: new GraphQLNonNull(GraphQLInt) },
+    numQuoters: { type: new GraphQLNonNull(GraphQLInt) },
+    lastSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    validSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    emaPrice: { type: new GraphQLNonNull(PriceEma) },
+    emaConfidence: { type: new GraphQLNonNull(PriceEma) },
+    timestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    minPublishers: { type: new GraphQLNonNull(GraphQLInt) },
+    drv2: { type: new GraphQLNonNull(GraphQLInt) },
+    drv3: { type: new GraphQLNonNull(GraphQLInt) },
+    drv4: { type: new GraphQLNonNull(GraphQLInt) },
+    productAccountKey: { type: new GraphQLNonNull(GraphQLString) },
+    nextPriceAccountKey: { type: new GraphQLNonNull(GraphQLString) },
+    previousSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousPriceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousPrice: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousConfidenceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousConfidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousTimestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    priceComponents: { type: new GraphQLNonNull(PriceComponent) },
+    aggregate: { type: new GraphQLNonNull(PriceInfo) },
+    price: { type: GraphQLInt },
+    confidence: { type: GraphQLInt },
+    status: { type: PriceStatus },
+  },
+})
+
+export const ProductAccount = new GraphQLObjectType({
+  name: 'ProductAccount',
+  fields: {
+    header: { type: new GraphQLNonNull(AccountHeader) },
+    priceAccountKey: { type: new GraphQLNonNull(GraphQLString) },
+    product: { type: new GraphQLNonNull(Product) },
+  },
+})
+
+export const ParsedAccountsData = new GraphQLUnionType({
+  name: 'ParsedAccountsData',
+  types: [PriceAccount, ProductAccount],
+  resolveType: (obj) => {
+    // here is selected a unique property of each account to discriminate between types
+    if (obj.aggregate) {
+      return 'PriceAccount'
+    }
+    if (obj.product) {
+      return 'ProductAccount'
+    }
+  },
+})
+
+const commonAccountInfoFields = {
+  name: { type: new GraphQLNonNull(GraphQLString) },
+  programId: { type: new GraphQLNonNull(GraphQLString) },
+  address: { type: new GraphQLNonNull(GraphQLString) },
+  type: { type: new GraphQLNonNull(AccountsEnum) },
+}
+
+const Account = new GraphQLInterfaceType({
+  name: 'Account',
+  fields: {
+    ...commonAccountInfoFields,
+  },
+})
+
+export const PythAccountsInfo = new GraphQLObjectType({
+  name: 'PythAccountsInfo',
+  interfaces: [Account],
+  fields: {
+    ...commonAccountInfoFields,
+    data: { type: new GraphQLNonNull(ParsedAccountsData) },
+  },
+})
+
+export const AccountsInfo = new GraphQLList(PythAccountsInfo)

@@ -1,16 +1,28 @@
-import {Utils} from '@aleph-indexer/core'
-import {DateTime, Interval} from 'luxon'
+import { Utils } from '@aleph-indexer/core'
+import { DateTime, Interval } from 'luxon'
 import {
   clipIntervals,
   generatorToArray,
   getIntervalsFromStorageStream,
   getNextInterval,
   getPreviousInterval,
-  getTimeFrameIntervals, MAX_TIMEFRAME,
+  getTimeFrameIntervals,
+  MAX_TIMEFRAME,
 } from '../time.js'
-import {StatsState, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
-import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
-import {AccountStatsFilters, TimeSeries, TimeSeriesStatsConfig} from './types.js'
+import {
+  StatsState,
+  StatsStateState,
+  StatsStateStorage,
+} from './dal/statsState.js'
+import {
+  StatsTimeSeries,
+  StatsTimeSeriesStorage,
+} from './dal/statsTimeSeries.js'
+import {
+  AccountStatsFilters,
+  TimeSeries,
+  TimeSeriesStatsConfig,
+} from './types.js'
 
 const { BufferExec, getMostSignificantDurationUnitAndAmount } = Utils
 
@@ -92,24 +104,37 @@ export class TimeSeriesStats<I, O> {
       reverse,
     } = this.config
 
-    const sortedTimeFrames = timeFrames.sort((a, b) => a.toMillis() - b.toMillis())
+    const sortedTimeFrames = timeFrames.sort(
+      (a, b) => a.toMillis() - b.toMillis(),
+    )
 
     if (startTimestamp !== undefined) {
-      intervalsToProcess = clipIntervals(intervalsToProcess, Interval.fromDateTimes(
-        DateTime.fromMillis(0),
-        DateTime.fromMillis(startTimestamp - 1),
-      ))
+      intervalsToProcess = clipIntervals(
+        intervalsToProcess,
+        Interval.fromDateTimes(
+          DateTime.fromMillis(0),
+          DateTime.fromMillis(startTimestamp - 1),
+        ),
+      )
     }
-    for (const [timeFrameIndex, pendingTimeFrame] of sortedTimeFrames.entries()) {
-      let { unit: timeFrameUnit, amount: timeFrameAmount } = getMostSignificantDurationUnitAndAmount(pendingTimeFrame)
+    for (const [
+      timeFrameIndex,
+      pendingTimeFrame,
+    ] of sortedTimeFrames.entries()) {
+      let { unit: timeFrameUnit, amount: timeFrameAmount } =
+        getMostSignificantDurationUnitAndAmount(pendingTimeFrame)
 
       // @note: get the previous time frame, which is able to cleanly divide the current time frame.
       let previousTimeFrameIndex = timeFrameIndex - 1
-      if (!pendingTimeFrame.equals(MAX_TIMEFRAME) && previousTimeFrameIndex > 0) {
+      if (
+        !pendingTimeFrame.equals(MAX_TIMEFRAME) &&
+        previousTimeFrameIndex > 0
+      ) {
         const timeFrameMillis = pendingTimeFrame.toMillis()
         while (true) {
           if (previousTimeFrameIndex <= 0) break
-          const smallerSize = sortedTimeFrames[previousTimeFrameIndex].toMillis()
+          const smallerSize =
+            sortedTimeFrames[previousTimeFrameIndex].toMillis()
           if (timeFrameMillis % smallerSize === 0) break
           previousTimeFrameIndex--
         }
@@ -133,7 +158,9 @@ export class TimeSeriesStats<I, O> {
       let addedEntries = 0
       for (const pendingInterval of pendingIntervals) {
         // @note: prepare the storage buffer that saves the processed intervals in batches
-        const processedIntervalsBuffer = new BufferExec<StatsTimeSeries<O | undefined>>(async (entries) => {
+        const processedIntervalsBuffer = new BufferExec<
+          StatsTimeSeries<O | undefined>
+        >(async (entries) => {
           // @note: Save entries that have any data
           const valueEntries = entries.filter(
             (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
@@ -159,7 +186,7 @@ export class TimeSeriesStats<I, O> {
           if (stateEntries.length) {
             // @note: Remove first and last item, as they were included
             // for including ranges that might be needed in bigger time frames
-            if(!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
+            if (!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
               stateEntries.shift()
               stateEntries.pop()
             }
@@ -207,9 +234,11 @@ export class TimeSeriesStats<I, O> {
         if (!intervals.length) continue
 
         // @note: add the previous and following intervals to be calculated in case they might have been clipped
-        if(!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
+        if (!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
           intervals.unshift(getPreviousInterval(intervals[0], pendingTimeFrame))
-          intervals.push(getNextInterval(intervals[intervals.length - 1], pendingTimeFrame))
+          intervals.push(
+            getNextInterval(intervals[intervals.length - 1], pendingTimeFrame),
+          )
         }
 
         let aggregatedValues = 0
@@ -244,8 +273,8 @@ export class TimeSeriesStats<I, O> {
           // @note: aggregate the data
           let data: O | undefined
           for await (const value of inputs) {
-            aggregatedValues++
-            const input = 'data' in value && previousTimeFrameIndex >= 0 ? value.data : value
+            const input =
+              'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,
@@ -273,17 +302,19 @@ export class TimeSeriesStats<I, O> {
               `💹 ${type} ${timeFrameAmount}${timeFrameUnit} with ${aggregatedValues} events processed`,
             )
           } else {
-            console.log(`💹 ${type} ${timeFrameAmount}${timeFrameUnit} with ${aggregatedValues} ${usedAmount}${usedUnit} entries processed`)
+            console.log(
+              `💹 ${type} ${timeFrameAmount}${timeFrameUnit} with ${aggregatedValues} ${usedAmount}${usedUnit} entries processed`,
+            )
           }
-      }
+        }
       }
       if (addedEntries) {
-        console.log(`💹 Added ${addedEntries} ${timeFrameUnit} entries for ${account} in range ${
-          Interval.fromDateTimes(
+        console.log(
+          `💹 Added ${addedEntries} ${timeFrameUnit} entries for ${account} in range ${Interval.fromDateTimes(
             intervalsToProcess[0].start,
-            intervalsToProcess[intervalsToProcess.length - 1].end
-          ).toISO()
-        }`)
+            intervalsToProcess[intervalsToProcess.length - 1].end,
+          ).toISO()}`,
+        )
       }
     }
   }

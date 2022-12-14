@@ -2,8 +2,8 @@ import BN from 'bn.js'
 import { constants } from '@aleph-indexer/core'
 import { getPythProgramKeyForCluster } from '@pythnetwork/client'
 import { CandleInterval } from './types'
-import { MAX_TIMEFRAME } from "@aleph-indexer/framework";
-import {Duration} from "luxon";
+import { MAX_TIMEFRAME } from '@aleph-indexer/framework'
+import { Duration } from 'luxon'
 
 export enum ProgramName {
   Pyth = 'pyth',
@@ -35,22 +35,22 @@ export const TIME_FRAMES: CandleInterval[] = [
 ]
 
 export const TIME_FRAMES_AS_DURATION = TIME_FRAMES.map((tf) => {
-  if(tf === 'all') {
+  if (tf === 'all') {
     return MAX_TIMEFRAME
   } else if (tf.startsWith('year')) {
-    return Duration.fromObject({year: parseInt(tf.replace('year', ''))})
+    return Duration.fromObject({ year: parseInt(tf.replace('year', '')) })
   } else if (tf.startsWith('month')) {
-    return Duration.fromObject({month: parseInt(tf.replace('month', ''))})
+    return Duration.fromObject({ month: parseInt(tf.replace('month', '')) })
   } else if (tf.startsWith('week')) {
-    return Duration.fromObject({week: parseInt(tf.replace('week', ''))})
+    return Duration.fromObject({ week: parseInt(tf.replace('week', '')) })
   } else if (tf.startsWith('day')) {
-    return Duration.fromObject({day: parseInt(tf.replace('day', ''))})
+    return Duration.fromObject({ day: parseInt(tf.replace('day', '')) })
   } else if (tf.startsWith('hour')) {
-    return Duration.fromObject({hour: parseInt(tf.replace('hour', ''))})
+    return Duration.fromObject({ hour: parseInt(tf.replace('hour', '')) })
   } else if (tf.startsWith('minute')) {
-    return Duration.fromObject({minute: parseInt(tf.replace('minute', ''))})
+    return Duration.fromObject({ minute: parseInt(tf.replace('minute', '')) })
   } else if (tf.startsWith('second')) {
-    return Duration.fromObject({second: parseInt(tf.replace('second', ''))})
+    return Duration.fromObject({ second: parseInt(tf.replace('second', '')) })
   } else {
     throw new Error(`Unknown time frame ${tf}`)
   }
