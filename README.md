@@ -1,4 +1,11 @@
-# Aleph Indexer Framework v0.1
+# Start Here!
+
+There are two crucial repos you should be aware of:
+1. Solana indexer framework: (You're here already!) Consisting of the main building blocks that the indexer library needs to create an indexer. Changes made in the framework will reflect all future indexers. If you want to contribute to the framework, you're in the correct repo. If you want to create your indexer, head to point two of this section.
+2. [Solana indexer library](https://github.com/aleph-im/solana-indexer-library): This is where you need to start if you want to create your own indexer.
+
+
+## Aleph Indexer Framework v0.1
 
 The Aleph Indexer Framework is a high-level abstraction for building multithreaded indexers on Aleph. It is designed to be used by developers who want to build an indexer for a specific Solana program, but don't want to worry about:
 - Fetching blocks from the Solana cluster
@@ -9,13 +16,8 @@ The Aleph Indexer Framework is a high-level abstraction for building multithread
 - Reading the indexer state from disk
 - Exposing the indexer state over a GraphQL API
 
-## Creating an Indexer
-In order to run your own indexer, you need to start by creating a new project:
-- either using the [Anchor Indexer Generator](https://github.com/aleph-im/solana-indexer-library/tree/main/packages/indexer-generator#indexer-generator)
-- or by using one of the customized indexers in the [indexer library](https://github.com/aleph-im/solana-indexer-library) repository
-- or by creating a new project from scratch.
 
-## Running the indexer locally
+## Running the indexer framework locally
 First, you need to make sure that the framework is running:
 ```bash
 npm run start framework
@@ -25,9 +27,6 @@ When the services of the framework are ready, you need to run your custom  index
 npm run start your-indexer-name
 ```
 
-## Examples of indexers on Aleph
-
-We have some examples in [this repository](https://github.com/aleph-im/solana-indexer-library) with the concrete steps to deploy an Indexer inside Aleph.im network.
 
 ## Architecture
 The framework provides three services:
