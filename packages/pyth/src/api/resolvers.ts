@@ -7,7 +7,6 @@ import {
   PythAccountInfo,
 } from '../types.js'
 import MainDomain from '../domain/main.js'
-import { AccountsType } from '../layouts/accounts.js'
 
 export type PricesFilters = {
   address: string
@@ -19,7 +18,6 @@ export type PricesFilters = {
 }
 
 export type AccountsFilters = {
-  types?: AccountsType[]
   accounts?: string[]
   includeStats?: boolean
 }
@@ -35,7 +33,6 @@ export class APIResolver {
   }
 
   protected async filterAccounts({
-    types,
     accounts,
     includeStats,
   }: AccountsFilters): Promise<PythAccountData[]> {
@@ -45,15 +42,9 @@ export class APIResolver {
       accounts ||
       Object.values(accountMap).map((account) => account.info.address)
 
-    let accountsData = accounts
+    const accountsData = accounts
       .map((address) => accountMap[address])
       .filter((account) => !!account)
-
-    if (types !== undefined) {
-      accountsData = accountsData.filter(({ info }) =>
-        types!.includes(info.type),
-      )
-    }
 
     return accountsData
   }

@@ -18,8 +18,6 @@ import {
 } from '../types.js'
 import DiscoveryHelper from './discovery.js'
 import { StorageStream } from '@aleph-indexer/core'
-import { ParsedAccountsData } from '../layouts/solita/index.js'
-import { ProductData } from '../utils/pyth-sdk.js'
 
 export default class MainDomain
   extends IndexerMainDomain
@@ -82,14 +80,14 @@ export default class MainDomain
   ): Promise<PythAccountData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'getPythAccountInfo',
+      method: 'getAccountInfo',
     })) as PythAccountInfo
 
     if (!includeStats) return { info }
 
     const { stats } = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'getPythAccountStats',
+      method: 'getAccountStats',
     })) as AccountStats<PythAccountStats>
 
     return { info, stats }
@@ -136,31 +134,23 @@ export default class MainDomain
     const globalStats: GlobalPythStats = this.getNewGlobalStats()
     for (const account of Object.values(accounts)) {
       const data = account.info.data
-      if (this.isProductAccount(data)) {
-        globalStats.totalDataFeeds++
-        switch (data.product.assetType) {
-          case 'Crypto':
-            globalStats.totalCryptoDataFeeds++
-            break
-          case 'Equity':
-            globalStats.totalEquityDataFeeds++
-            break
-          case 'FX':
-            globalStats.totalFXDataFeeds++
-            break
-          case 'Metal':
-            globalStats.totalMetalDataFeeds++
-            break
-        }
+      globalStats.totalDataFeeds++
+      switch (data.product.assetType) {
+        case 'Crypto':
+          globalStats.totalCryptoDataFeeds++
+          break
+        case 'Equity':
+          globalStats.totalEquityDataFeeds++
+          break
+        case 'FX':
+          globalStats.totalFXDataFeeds++
+          break
+        case 'Metal':
+          globalStats.totalMetalDataFeeds++
+          break
       }
     }
     return globalStats
-  }
-
-  protected isProductAccount(
-    accountInfo: ParsedAccountsData,
-  ): accountInfo is ProductData {
-    return (accountInfo as ProductData).priceAccountKey !== undefined
   }
 
   protected getNewGlobalStats(): GlobalPythStats {

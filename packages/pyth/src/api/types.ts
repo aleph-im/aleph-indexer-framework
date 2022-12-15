@@ -8,7 +8,6 @@ import {
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
-  GraphQLUnionType,
 } from 'graphql'
 import { GraphQLDateTime } from 'graphql-scalars'
 import { TIME_FRAMES } from '../constants.js'
@@ -16,16 +15,6 @@ import { TIME_FRAMES } from '../constants.js'
 export const CandleInterval = new GraphQLEnumType({
   name: 'CandleInterval',
   values: Object.fromEntries(TIME_FRAMES.map((value) => [value, { value }])),
-})
-
-export const PriceStatus = new GraphQLEnumType({
-  name: 'PriceStatus',
-  values: {
-    Unknown: { value: 'Unknown' },
-    Trading: { value: 'Trading' },
-    Halted: { value: 'Halted' },
-    Auction: { value: 'Auction' },
-  },
 })
 
 export const AssetType = new GraphQLEnumType({
@@ -44,7 +33,7 @@ export const Price = new GraphQLObjectType({
     timestamp: { type: new GraphQLNonNull(GraphQLDateTime) },
     price: { type: new GraphQLNonNull(GraphQLFloat) },
     confidence: { type: new GraphQLNonNull(GraphQLFloat) },
-    status: { type: new GraphQLNonNull(PriceStatus) },
+    status: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
@@ -118,19 +107,19 @@ export const PriceInfo = new GraphQLObjectType({
   name: 'PriceInfo',
   fields: {
     priceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    price: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    confidenceComponent: { type: new GraphQLNonNull(GraphQLInt) },
+    price: { type: new GraphQLNonNull(GraphQLInt) },
+    confidenceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
     confidence: { type: new GraphQLNonNull(GraphQLInt) },
-    publishSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    corporateAction: { type: new GraphQLNonNull(GraphQLInt) },
     status: { type: new GraphQLNonNull(GraphQLInt) },
+    corporateAction: { type: new GraphQLNonNull(GraphQLInt) },
+    publishSlot: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
 
 export const PriceComponent = new GraphQLObjectType({
   name: 'PriceComponent',
   fields: {
-    publisher: { type: new GraphQLNonNull(GraphQLString) },
+    publisher: { type: GraphQLString },
     aggregate: { type: new GraphQLNonNull(PriceInfo) },
     latest: { type: new GraphQLNonNull(PriceInfo) },
   },
@@ -153,13 +142,12 @@ export const Product = new GraphQLObjectType({
 export const AccountsEnum = new GraphQLEnumType({
   name: 'AccountsEnum',
   values: {
-    PriceAccount: { value: 'PriceAccount' },
     ProductAccount: { value: 'ProductAccount' },
   },
 })
 
-export const PriceAccount = new GraphQLObjectType({
-  name: 'PriceAccount',
+export const ParsedAccountsData = new GraphQLObjectType({
+  name: 'ParsedAccountsData',
   fields: {
     header: { type: new GraphQLNonNull(AccountHeader) },
     priceType: { type: new GraphQLNonNull(GraphQLInt) },
@@ -176,41 +164,21 @@ export const PriceAccount = new GraphQLObjectType({
     drv3: { type: new GraphQLNonNull(GraphQLInt) },
     drv4: { type: new GraphQLNonNull(GraphQLInt) },
     productAccountKey: { type: new GraphQLNonNull(GraphQLString) },
-    nextPriceAccountKey: { type: new GraphQLNonNull(GraphQLString) },
+    nextPriceAccountKey: { type: GraphQLString },
     previousSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
     previousPriceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    previousPrice: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousPrice: { type: new GraphQLNonNull(GraphQLInt) },
     previousConfidenceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    previousConfidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    previousConfidence: { type: new GraphQLNonNull(GraphQLInt) },
     previousTimestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    priceComponents: { type: new GraphQLNonNull(PriceComponent) },
+    priceComponents: { type: new GraphQLNonNull(GraphQLList(PriceComponent)) },
     aggregate: { type: new GraphQLNonNull(PriceInfo) },
     price: { type: GraphQLInt },
     confidence: { type: GraphQLInt },
-    status: { type: PriceStatus },
-  },
-})
+    status: { type: new GraphQLNonNull(GraphQLInt) },
 
-export const ProductAccount = new GraphQLObjectType({
-  name: 'ProductAccount',
-  fields: {
-    header: { type: new GraphQLNonNull(AccountHeader) },
     priceAccountKey: { type: new GraphQLNonNull(GraphQLString) },
     product: { type: new GraphQLNonNull(Product) },
-  },
-})
-
-export const ParsedAccountsData = new GraphQLUnionType({
-  name: 'ParsedAccountsData',
-  types: [PriceAccount, ProductAccount],
-  resolveType: (obj) => {
-    // here is selected a unique property of each account to discriminate between types
-    if (obj.aggregate) {
-      return 'PriceAccount'
-    }
-    if (obj.product) {
-      return 'ProductAccount'
-    }
   },
 })
 
@@ -228,8 +196,8 @@ const Account = new GraphQLInterfaceType({
   },
 })
 
-export const PythAccountsInfo = new GraphQLObjectType({
-  name: 'PythAccountsInfo',
+export const PythOracleAccountsInfo = new GraphQLObjectType({
+  name: 'PythOracleAccountsInfo',
   interfaces: [Account],
   fields: {
     ...commonAccountInfoFields,
@@ -237,4 +205,4 @@ export const PythAccountsInfo = new GraphQLObjectType({
   },
 })
 
-export const AccountsInfo = new GraphQLList(PythAccountsInfo)
+export const AccountsInfo = new GraphQLList(PythOracleAccountsInfo)

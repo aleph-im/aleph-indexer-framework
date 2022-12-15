@@ -14,8 +14,17 @@ import {
   UpdPriceNoFailOnErrorInstruction,
   UpdProductInstruction,
 } from './layouts/ts/instructions.js'
-import { PriceStatus, ProductData, PriceData, Base } from '@pythnetwork/client'
+import {
+  PriceStatus,
+  PriceData,
+  Ema,
+  PriceComponent,
+  Product,
+  Price as PythPrice,
+} from '@pythnetwork/client'
+import { PublicKey } from '@solana/web3.js'
 import { AccountsType } from './layouts/accounts.js'
+import BN from 'bn.js'
 
 export type PythAccountInfo = {
   name: string
@@ -25,9 +34,65 @@ export type PythAccountInfo = {
   data: ParsedAccountsData
 }
 
-export type ParsedAccountsData = Base & SpecificData
+export type ProductDataWithoutHeader = {
+  priceAccountKey: PublicKey
+  product: Product
+}
 
-type SpecificData = ProductData | PriceData
+export type EmaBN = Omit<
+  Ema,
+  'valueComponent' | 'numerator' | 'denominator'
+> & {
+  valueComponent: BN
+  numerator: BN
+  denominator: BN
+}
+
+export type PriceComponentBN = Omit<
+  PriceComponent,
+  'publisher' | 'aggregate' | 'latest'
+> & {
+  publisher: PublicKey | null
+  aggregate: PriceBN
+  latest: PriceBN
+}
+
+export type PriceBN = Omit<
+  PythPrice,
+  'priceComponent' | 'confidenceComponent'
+> & {
+  priceComponent: BN
+  confidenceComponent: BN
+}
+
+export type PriceDataBN = Omit<
+  PriceData,
+  | 'lastSlot'
+  | 'validSlot'
+  | 'emaPrice'
+  | 'emaConfidence'
+  | 'timestamp'
+  | 'previousSlot'
+  | 'previousPriceComponent'
+  | 'previousConfidenceComponent'
+  | 'previousTimestamp'
+  | 'priceComponents'
+  | 'aggregate'
+> & {
+  lastSlot: BN
+  validSlot: BN
+  emaPrice: EmaBN
+  emaConfidence: EmaBN
+  timestamp: BN
+  previousSlot: BN
+  previousPriceComponent: BN
+  previousConfidenceComponent: BN
+  previousTimestamp: BN
+  priceComponents: PriceComponentBN[]
+  aggregate: PriceBN
+}
+
+export type ParsedAccountsData = ProductDataWithoutHeader & PriceDataBN
 
 export {
   ParsedPythInstruction,
