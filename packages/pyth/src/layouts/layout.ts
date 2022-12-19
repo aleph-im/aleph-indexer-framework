@@ -8,7 +8,7 @@ import {PythEventType} from "../types.js";
 
 export default {
   [PYTH_PROGRAM_ID]: {
-    name: 'marinade_finance',
+    name: 'pyth_oracle',
     programID: PYTH_PROGRAM_ID,
     accountLayoutMap: IX_ACCOUNTS_LAYOUT,
     dataLayoutMap: IX_DATA_LAYOUT,
