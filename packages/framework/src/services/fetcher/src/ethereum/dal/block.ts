@@ -29,7 +29,7 @@ const heightKey = {
  */
 export function createEthereumBlockDAL(path: string): EthereumBlockStorage {
   return new EntityStorage<EthereumBlock>({
-    name: 'fetcher_blocks',
+    name: 'fetcher_block',
     path,
     key: [signatureKey],
     indexes: [

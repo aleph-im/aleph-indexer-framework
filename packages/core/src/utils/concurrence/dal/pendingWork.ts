@@ -1,6 +1,9 @@
-import { PendingWork } from '../utils/index.js'
-import { EntityStorage, EntityStorageOptions } from './entityStorage.js'
-import { EntityUpdateOp, KeySchema } from './types.js'
+import { PendingWork } from '../../index.js'
+import {
+  EntityStorage,
+  EntityStorageOptions,
+} from '../../../storage/entityStorage.js'
+import { EntityUpdateOp, KeySchema } from '../../../storage/types.js'
 
 export type PendingWorkStorageOptions<T> = Pick<
   EntityStorageOptions<PendingWork<T>>,

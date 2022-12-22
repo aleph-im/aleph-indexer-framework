@@ -5,13 +5,7 @@ import { FetcherMsClient } from '../fetcher/client.js'
 import { ParserMsClient } from '../parser/client.js'
 import { IndexerMsI, PrivateIndexerMsI } from './interface.js'
 import { TransactionIndexerStateStorage } from './src/dal/transactionIndexerState.js'
-import {
-  TransactionRequest,
-  TransactionRequestStorage,
-} from './src/dal/transactionRequest.js'
-import { TransactionRequestIncomingTransactionStorage } from './src/dal/transactionRequestIncomingTransaction.js'
-import { TransactionRequestPendingSignatureStorage } from './src/dal/transactionRequestPendingSignature.js'
-import { TransactionRequestResponseStorage } from './src/dal/transactionRequestResponse.js'
+import { TransactionRequest } from './src/dal/transactionRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
@@ -39,9 +33,7 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
   /**
    * @param fetcherMsClient Allows communication with the fetcher service.
    * @param parserMsClient Allows communication with the parser service.
-   * @param transactionRequestDAL Stores the transaction requests.
-   * @param transactionRequestPendingSignatureDAL Stores pending signatures for transaction requests.
-   * @param transactionRequestResponseDAL Stores the transaction request responses.
+
    * @param transactionIndexerStateDAL Stores the transaction indexer state.
    * @param transactionFetcher Fetches actual transaction data by their signatures.
    */
@@ -49,18 +41,8 @@ export class IndexerMsMain implements IndexerMsI, PrivateIndexerMsI {
     protected broker: ServiceBroker,
     protected fetcherMsClient: FetcherMsClient,
     protected parserMsClient: ParserMsClient,
-    protected transactionRequestDAL: TransactionRequestStorage,
-    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
-    protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
-    protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
-    protected transactionFetcher: TransactionFetcher = new TransactionFetcher(
-      fetcherMsClient,
-      transactionRequestDAL,
-      transactionRequestIncomingTransactionDAL,
-      transactionRequestPendingSignatureDAL,
-      transactionRequestResponseDAL,
-    ),
+    protected transactionFetcher: TransactionFetcher,
   ) {
     this.txsHandler = this.onTxs.bind(this)
   }

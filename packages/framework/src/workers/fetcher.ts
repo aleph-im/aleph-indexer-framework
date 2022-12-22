@@ -7,7 +7,11 @@ import {
   solanaPrivateRPCRoundRobin,
   solanaMainPublicRPCRoundRobin,
 } from '@aleph-indexer/core'
-import { FetcherMs, FetcherMsMain } from '../services/fetcher/index.js'
+import {
+  FetcherMs,
+  FetcherMsClient,
+  FetcherMsMain,
+} from '../services/fetcher/index.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -45,7 +49,7 @@ async function main() {
         })
       : localBroker
 
-  const fetchers = await Promise.all(
+  const blockchainFetcherMains = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {
       const module = await import(`./impl/fetcher/${blockchainId}.js`)
       const factory = module.default
@@ -56,9 +60,24 @@ async function main() {
     }),
   )
 
-  const fetcherServiceMain = new FetcherMsMain(
+  const blockchainFetcherClients = await Promise.all(
+    supportedBlockchains.map(async (blockchainId) => {
+      const module = await import(
+        `../services/fetcher/src/${blockchainId}/client.js`
+      )
+      const clazz = module.default
+      return [blockchainId, new clazz(blockchainId, broker)]
+    }),
+  )
+
+  const fetcherMsClient = new FetcherMsClient(
     broker,
-    Object.fromEntries(fetchers),
+    Object.fromEntries(blockchainFetcherClients),
+  )
+
+  const fetcherServiceMain = new FetcherMsMain(
+    fetcherMsClient,
+    Object.fromEntries(blockchainFetcherMains),
   )
 
   FetcherMs.mainFactory = () => fetcherServiceMain

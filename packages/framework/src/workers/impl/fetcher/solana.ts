@@ -1,32 +1,69 @@
+/* eslint-disable prettier/prettier */
 import { ServiceBroker } from 'moleculer'
 import {
   solanaPrivateRPC,
   solanaMainPublicRPC,
   createFetcherStateDAL,
+  SolanaAccountState,
 } from '@aleph-indexer/core'
 import { SolanaFetcher } from '../../../services/fetcher/src/solana/fetcher.js'
-import { createAccountInfoDAL } from '../../../services/fetcher/src/dal/accountInfo.js'
 import {
   createPendingTransactionCacheDAL,
   createPendingTransactionDAL,
   createPendingTransactionFetchDAL,
-} from '../../../services/fetcher/src/dal/pendingTransaction.js'
-import { createRawTransactionDAL } from '../../../services/fetcher/src/dal/rawTransaction.js'
-import { createSignatureDAL } from '../../../services/fetcher/src/solana/dal/signature.js'
-import { createAccountDAL } from '../../../services/fetcher/src/dal/account.js'
-import { BlockchainFetcherI } from '../../../services/fetcher/src/blockchainFetcher.js'
+} from '../../../services/fetcher/src/base/dal/pendingTransaction.js'
+import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/rawTransaction.js'
+import { createSolanaAccountSignatureDAL } from '../../../services/fetcher/src/solana/dal/accountSignature.js'
+import { createPendingAccountDAL } from '../../../services/fetcher/src/base/dal/account.js'
+import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
+import { SolanaTransactionFetcher } from '../../../services/fetcher/src/solana/transactionFetcher.js'
+import { SolanaTransactionHistoryFetcher } from '../../../services/fetcher/src/solana/transactionHistoryFetcher.js'
+import { SolanaAccountStateFetcher } from '../../../services/fetcher/src/solana/accountStateFetcher.js'
+import { FetcherMsClient } from '../../../services/fetcher/client.js'
+import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
 
-export default (broker: ServiceBroker, basePath: string): BlockchainFetcherI =>
-  new SolanaFetcher(
+export default (
+  broker: ServiceBroker,
+  fetcherClient: FetcherMsClient,
+  basePath: string,
+): BlockchainFetcherI => {
+  // DALs
+  const accountSignatureDAL = createSolanaAccountSignatureDAL(basePath)
+  const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath)
+  const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
+  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_transaction_history_pending_account')
+  const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_account_state_pending_account')
+
+  const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
+    solanaPrivateRPC,
+    solanaMainPublicRPC,
+    transactionHistoryFetcherStateDAL,
+    fetcherClient,
+    accountSignatureDAL,
+    transactionHistoryPendingAccountDAL,
+  )
+
+  const transactionFetcher = new SolanaTransactionFetcher(
+    solanaPrivateRPC,
+    solanaMainPublicRPC,
     broker,
-    createSignatureDAL(basePath),
-    createAccountDAL(basePath),
     createPendingTransactionDAL(basePath),
     createPendingTransactionCacheDAL(basePath),
     createPendingTransactionFetchDAL(basePath),
     createRawTransactionDAL(basePath),
-    createAccountInfoDAL(basePath),
+  )
+
+  const accountStateFetcher = new SolanaAccountStateFetcher(
     solanaPrivateRPC,
     solanaMainPublicRPC,
-    createFetcherStateDAL(basePath),
+    accountStateDAL,
+    accountStatePendingAccountDAL,
   )
+
+  return new SolanaFetcher(
+    broker,
+    transactionHistoryFetcher,
+    transactionFetcher,
+    accountStateFetcher,
+  )
+}

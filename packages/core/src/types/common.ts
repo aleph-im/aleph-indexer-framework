@@ -13,6 +13,15 @@ export type EventBase<EventType> = {
   account?: string
 }
 
+export type RawTransaction = {
+  signature: string
+}
+
+export type ParsedTransaction<P> = {
+  signature: string
+  parsed: P
+}
+
 // ---------------- Supported blockchains --------------------------
 
 export enum Blockchain {

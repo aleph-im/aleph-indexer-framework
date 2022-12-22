@@ -1,11 +1,11 @@
 import {
   EntityStorage,
-  AccountInfo,
-  AccountInfoStorage,
+  AccountState,
+  AccountStateStorage,
 } from '@aleph-indexer/core'
 
 const accountKey = {
-  get: (e: AccountInfo) => e.address,
+  get: (e: AccountState) => e.account,
   length: EntityStorage.AddressLength,
 }
 
@@ -13,9 +13,11 @@ const accountKey = {
  * Creates a new account info storage for the fetcher.
  * @param path Path to the database.
  */
-export function createAccountInfoDAL(path: string): AccountInfoStorage {
-  return new EntityStorage<AccountInfo>({
-    name: 'fetcher_accounts_info',
+export function createAccountStateDAL<T extends AccountState>(
+  path: string,
+): AccountStateStorage<T> {
+  return new EntityStorage<T>({
+    name: 'fetcher_account_state',
     path,
     key: [accountKey],
   })

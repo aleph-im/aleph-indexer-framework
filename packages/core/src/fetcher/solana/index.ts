@@ -1,3 +1,3 @@
-export * from './signatureFetcher.js'
-export * from './accountFetcher.js'
+export * from './accountSignatureHistoryFetcher.js'
+export * from './accountStateFetcher.js'
 export * from './types.js'

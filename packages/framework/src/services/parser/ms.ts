@@ -2,10 +2,12 @@ import { ServiceBroker, Context, Service } from 'moleculer'
 import {
   ParsedAccountInfoV1,
   SolanaParsedInstructionV1,
-  SolanaParsedTransactionV1,
   RawAccountInfo,
   RawInstruction,
   RawTransaction,
+  SolanaRawTransaction,
+  AlephParsedInnerTransaction,
+  ParsedTransaction,
 } from '@aleph-indexer/core'
 import { MsIds, MainFactory } from '../common.js'
 import { ParserMsMain } from './main.js'
@@ -14,15 +16,19 @@ import { RawTransactionMsg } from './src/types.js'
 /**
  * A wrapper of the Molueculer service to expose the main fetcher service through the broker.
  */
-export class ParserMs extends Service {
+export class ParserMs<
+  T extends RawTransaction = SolanaRawTransaction,
+  P = AlephParsedInnerTransaction,
+  PT extends ParsedTransaction<P> = ParsedTransaction<P>,
+> extends Service {
   public static mainFactory: MainFactory<ParserMsMain>
 
-  protected main!: ParserMsMain
+  protected main!: ParserMsMain<T, P, PT>
 
   constructor(broker: ServiceBroker) {
     super(broker)
 
-    this.main = ParserMs.mainFactory(broker)
+    this.main = ParserMs.mainFactory(broker) as any
 
     this.parseServiceSchema({
       name: MsIds.Parser,
@@ -37,13 +43,11 @@ export class ParserMs extends Service {
     })
   }
 
-  onTxs(chunk: RawTransactionMsg[]): Promise<void> {
+  onTxs(chunk: RawTransactionMsg<T>[]): Promise<void> {
     return this.main.onTxs(chunk)
   }
 
-  async parseTransaction(
-    ctx: Context<{ payload: RawTransaction }>,
-  ): Promise<SolanaParsedTransactionV1> {
+  async parseTransaction(ctx: Context<{ payload: T }>): Promise<PT> {
     const { payload } = ctx.params
     return this.main.parseTransaction(payload)
   }

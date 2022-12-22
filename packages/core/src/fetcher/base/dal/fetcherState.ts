@@ -1,8 +1,8 @@
-import { BaseFetcherState } from '../fetcher/base/types.js'
+import { BaseFetcherState } from '../types.js'
 import {
   EntityIndexStorage,
   EntityIndexStorageOptions,
-} from './entityIndexStorage.js'
+} from '../../../storage/entityIndexStorage.js'
 
 export type FetcherStateLevelStorageOptions<C = any> = Pick<
   EntityIndexStorageOptions<BaseFetcherState<C>>,
@@ -17,15 +17,19 @@ export class FetcherStateLevelStorage<C = any> extends EntityIndexStorage<
 > {
   constructor(options: FetcherStateLevelStorageOptions<C>) {
     super({
-      name: 'fetcher_state',
+      name: options.name || 'fetcher_state',
       key: [{ get: (e) => e.id, length: EntityIndexStorage.VariableLength }],
       ...options,
     })
   }
 }
 
-export function createFetcherStateDAL(path: string): FetcherStateLevelStorage {
+export function createFetcherStateDAL(
+  path: string,
+  name?: string,
+): FetcherStateLevelStorage {
   return new FetcherStateLevelStorage({
     path,
+    name,
   })
 }

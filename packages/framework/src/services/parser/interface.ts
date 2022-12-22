@@ -2,19 +2,20 @@ import {
   SolanaParsedTransactionV1,
   SolanaParsedInstructionV1,
   ParsedAccountInfoV1,
-  RawTransactionV1,
+  SolanaRawTransaction,
   RawInstruction,
   RawAccountInfo,
 } from '@aleph-indexer/core'
 
-export interface ParserMsI {
+export interface ParserMsI<
+  T = SolanaRawTransaction,
+  PT = SolanaParsedTransactionV1,
+> {
   /**
    * Parses a raw transaction.
    * @param payload The raw transaction to parse.
    */
-  parseTransaction(
-    payload: RawTransactionV1,
-  ): Promise<SolanaParsedTransactionV1>
+  parseTransaction(payload: T): Promise<PT>
 
   /**
    * Parses a raw instruction.

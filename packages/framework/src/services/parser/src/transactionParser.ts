@@ -3,7 +3,7 @@ import {
   SolanaParsedInstructionV1,
   SolanaParsedTransactionV1,
   RawInstruction,
-  RawTransactionV1,
+  SolanaRawTransaction,
   ProgramErrorType,
   TransactionErrorType,
   AlephParsedInnerTransaction,
@@ -16,7 +16,7 @@ import { InstructionParserLibrary } from './instructionParserLibrary.js'
  * instructions.
  */
 export class TransactionParser extends StrictParser<
-  RawTransactionV1,
+  SolanaRawTransaction,
   SolanaParsedTransactionV1
 > {
   /**
@@ -31,7 +31,7 @@ export class TransactionParser extends StrictParser<
    * @param rawTx The raw or partly-parsed transaction to parse.
    */
   async parse(
-    rawTx: RawTransactionV1 | SolanaParsedTransactionV1,
+    rawTx: SolanaRawTransaction | SolanaParsedTransactionV1,
   ): Promise<SolanaParsedTransactionV1> {
     if ('parsed' in rawTx) return rawTx as SolanaParsedTransactionV1
     if (!('transaction' in rawTx))

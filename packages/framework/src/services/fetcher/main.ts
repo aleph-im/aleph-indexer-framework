@@ -1,46 +1,41 @@
-import { ServiceBroker } from 'moleculer'
 import { Blockchain } from '@aleph-indexer/core'
-import { FetcherMsI, PrivateFetcherMsI } from './interface.js'
+import { FetcherMsI } from './interface.js'
 import {
-  AddAccountFetcherRequestArgs,
-  AddAccountInfoFetcherRequestArgs,
-  CheckTransactionsRequestArgs,
-  DelAccountFetcherRequestArgs,
-  DelTransactionsRequestArgs,
+  AddAccountTransactionRequestArgs,
+  AddAccountStateRequestArgs,
+  BlockchainFetcherI,
+  DelAccountTransactionRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
-  FetchAccountTransactionsBySlotRequestArgs,
-  FetcherAccountPartitionRequestArgs,
-  FetcherPartitionRequestArgs,
   FetcherState,
   FetchTransactionsBySignatureRequestArgs,
-  GetAccountFetcherStateRequestArgs,
-  SolanaSignatureFetcherState,
+  GetAccountTransactionStateRequestArgs,
+  AccountTransactionHistoryState,
+  DelAccountStateRequestArgs,
+  GetAccountStateStateRequestArgs,
+  AccountStateState,
+  InvokeBlockchainMethodRequestArgs,
+  CheckTransactionsRequestArgs,
   TransactionState,
-} from './src/types.js'
+  DelTransactionsRequestArgs,
+  FetcherStateRequestArgs,
+} from './src/base/types.js'
 import { FetcherMsClient } from './client.js'
-import { BlockchainFetcherI } from './src/blockchainFetcher.js'
-import { SolanaFetcher } from './src/solana/fetcher.js'
 
 /**
  * The main class of the fetcher service.
  */
-export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
-  protected fetcherMsClient: FetcherMsClient
-  protected throughput = 0
-  protected throughputInit = Date.now()
+export class FetcherMsMain implements FetcherMsI {
   protected inited = false
 
   /**
    * Initialize the fetcher service.
-   * @param broker The moleculer broker to assign to the service.
+   * @param fetcherClient The fetcher ms client.
    * @param blockchainFetchers A dictionary of instances that implements BlockchainFetcherI interface
    */
   constructor(
-    protected broker: ServiceBroker,
+    protected fetcherClient: FetcherMsClient,
     protected blockchainFetchers: Record<Blockchain, BlockchainFetcherI>,
-  ) {
-    this.fetcherMsClient = new FetcherMsClient(broker)
-  }
+  ) {}
 
   /**
    * Initialize the fetcher service.
@@ -67,98 +62,133 @@ export class FetcherMsMain implements FetcherMsI, PrivateFetcherMsI {
 
   // @todo: Make the Main class moleculer-agnostic by DI
   getAllFetchers(): string[] {
-    return this.fetcherMsClient.getAllFetchers()
+    return this.fetcherClient.getAllFetchers()
   }
 
-  /**
-   * Assigns to a fetcher instance an account owned by the specific program
-   * and initializes it.
-   * @param args Account address to assign to the fetcher instance
-   */
-  async addAccountFetcher(args: AddAccountFetcherRequestArgs): Promise<void> {
-    const fetcher = this.blockchainFetchers[args.blockchainId]
-    if (!fetcher) throw new Error(`${args.blockchainId} not supported`)
+  async getFetcherState(
+    args: FetcherStateRequestArgs,
+  ): Promise<Record<Blockchain, FetcherState>> {
+    const { blockchainId } = args
 
-    await fetcher.addAccountFetcher(args)
+    const blockchainFetchers = blockchainId
+      ? [blockchainId, this.getBlockchainFetcher(blockchainId)]
+      : Object.entries(this.blockchainFetchers)
+
+    const fetcherState = await Promise.all(
+      Object.entries(blockchainFetchers).map(
+        async ([blockchainId, fetcher]) => {
+          const state = await fetcher.getFetcherState(args)
+          return [blockchainId, state]
+        },
+      ),
+    )
+
+    return Object.fromEntries(fetcherState)
   }
 
-  async getAccountFetcherState(
-    args: GetAccountFetcherStateRequestArgs,
-  ): Promise<SolanaSignatureFetcherState | undefined> {
-    const fetcher = this.blockchainFetchers[args.blockchainId]
-    if (!fetcher) throw new Error(`${args.blockchainId} not supported`)
+  // Account transaction
 
-    return fetcher.getAccountFetcherState(args)
+  async addAccountTransactionFetcher(
+    args: AddAccountTransactionRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    await fetcher.addAccountTransactionFetcher(args)
   }
 
-  async delAccountFetcher(args: DelAccountFetcherRequestArgs): Promise<void> {
-    const fetcher = this.blockchainFetchers[args.blockchainId]
-    if (!fetcher) throw new Error(`${args.blockchainId} not supported`)
-
-    await fetcher.delAccountFetcher(args)
+  async delAccountTransactionFetcher(
+    args: DelAccountTransactionRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    await fetcher.delAccountTransactionFetcher(args)
   }
 
-  // @todo: Refactor specific blockchain ethods with extended api calls
+  async getAccountTransactionFetcherState(
+    args: GetAccountTransactionStateRequestArgs,
+  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.getAccountTransactionFetcherState(args)
+  }
+
+  // Account state
+
+  async addAccountStateFetcher(
+    args: AddAccountStateRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    await fetcher.addAccountTransactionFetcher(args)
+  }
+
+  async delAccountStateFetcher(
+    args: DelAccountStateRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    await fetcher.delAccountTransactionFetcher(args)
+  }
+
+  async getAccountStateFetcherState(
+    args: GetAccountStateStateRequestArgs,
+  ): Promise<AccountStateState<unknown> | undefined> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.getAccountStateFetcherState(args)
+  }
+
+  // Transactions
 
   fetchAccountTransactionsByDate(
     args: FetchAccountTransactionsByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).fetchAccountTransactionsByDate(args)
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.fetchAccountTransactionsByDate(args)
   }
 
-  getFetcherState(args: FetcherPartitionRequestArgs): Promise<FetcherState> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).getFetcherState(args)
+  fetchTransactionsBySignature(
+    args: FetchTransactionsBySignatureRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.fetchTransactionsBySignature(args)
   }
 
   getTransactionState(
     args: CheckTransactionsRequestArgs,
   ): Promise<TransactionState[]> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).getTransactionState(args)
-  }
-
-  delAccountInfoFetcher(
-    args: FetcherAccountPartitionRequestArgs,
-  ): Promise<void> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).delAccountInfoFetcher(args)
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.getTransactionState(args)
   }
 
   delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).delTransactionCache(args)
+    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    return fetcher.delTransactionCache(args)
   }
 
-  addAccountInfoFetcher(args: AddAccountInfoFetcherRequestArgs): Promise<void> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).addAccountInfoFetcher(args)
+  // Extended methods
+
+  async invokeBlockchainMethod<R, A>(
+    args: InvokeBlockchainMethodRequestArgs<A>,
+  ): Promise<R> {
+    const { blockchainId, method, args: params } = args
+    const fetcher = this.getBlockchainFetcher(blockchainId)
+
+    if (!(method in fetcher)) {
+      throw new Error(
+        `Method "${method}" not supported in ${blockchainId} blockchain`,
+      )
+    }
+
+    return (fetcher as any)[method]({ blockchainId, ...params })
   }
 
-  fetchAccountTransactionsBySlot(
-    args: FetchAccountTransactionsBySlotRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).fetchAccountTransactionsBySlot(args)
-  }
-  fetchTransactionsBySignature(
-    args: FetchTransactionsBySignatureRequestArgs,
-  ): Promise<void> {
-    // @todo: Refactor it
-    const fetcher = this.blockchainFetchers[Blockchain.Solana]
-    return (fetcher as SolanaFetcher).fetchTransactionsBySignature(args)
+  protected getBlockchainFetcher(blockchainId: Blockchain): BlockchainFetcherI {
+    const fetcher = this.blockchainFetchers[blockchainId]
+
+    if (!fetcher) {
+      throw new Error(`${blockchainId} blockchain not supported`)
+    }
+
+    return fetcher
   }
 
   // @todo: Make the Main class moleculer-agnostic by DI
   protected getFetcherId(): string {
-    return this.broker.nodeID
+    return this.fetcherClient.getNodeId()
   }
 }

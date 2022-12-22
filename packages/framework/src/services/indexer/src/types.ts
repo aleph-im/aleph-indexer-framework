@@ -14,7 +14,16 @@ export {
 /**
  * Describes a date range associated with an account.
  */
+export type SignatureRange = {
+  blockchainId: Blockchain
+  signatures: string[]
+}
+
+/**
+ * Describes a date range associated with an account.
+ */
 export type AccountDateRange = {
+  blockchainId: Blockchain
   account: string
   startDate: number
   endDate: number
@@ -24,6 +33,7 @@ export type AccountDateRange = {
  * Describes a slot range associated with an account.
  */
 export type AccountSlotRange = {
+  blockchainId: Blockchain
   account: string
   startSlot: number
   endSlot: number

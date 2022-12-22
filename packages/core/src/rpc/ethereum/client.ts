@@ -5,11 +5,14 @@ import {
   EthereumFetchSignaturesOptions,
   EthereumSignaturePaginationResponse,
 } from '../../fetcher/ethereum/index.js'
-import { EthereumBlock, EthereumSignature } from '../../types/ethereum.js'
 import {
-  createEthereumSignatureDAL,
-  EthereumSignatureDALIndex,
-  EthereumSignatureStorage,
+  EthereumBlock,
+  EthereumRawTransaction,
+  EthereumSignature,
+} from '../../types/ethereum.js'
+import {
+  EthereumAccountSignatureDALIndex,
+  EthereumAccountSignatureStorage,
 } from './dal.js'
 
 // Common
@@ -55,15 +58,46 @@ export type EthereumSignaturesChunkResponse = {
 
 export class EthereumClient {
   protected sdk: Web3
-  protected signatureDAL: EthereumSignatureStorage
 
-  constructor(protected options: EthereumClientOptions) {
+  constructor(
+    protected options: EthereumClientOptions,
+    protected accountSignatureDAL: EthereumAccountSignatureStorage,
+  ) {
     this.sdk = new Web3(options.url)
-    this.signatureDAL = createEthereumSignatureDAL(options.dbPath)
   }
 
   getSDK(): Web3 {
     return this.sdk
+  }
+
+  getBalance(account: string): Promise<string> {
+    return this.sdk.eth.getBalance(account)
+  }
+
+  getTransactions(
+    signatures: string[],
+    options?: { shallowErrors?: boolean },
+  ): Promise<(EthereumRawTransaction | null)[]> {
+    return Promise.all(
+      signatures.map(async (signature) => {
+        try {
+          const tx = (await this.sdk.eth.getTransaction(
+            signature,
+          )) as EthereumRawTransaction | null
+
+          if (tx) tx.signature = tx.hash
+
+          return tx
+        } catch (error) {
+          if (options?.shallowErrors) {
+            console.log(error)
+            return null
+          }
+
+          throw error
+        }
+      }),
+    )
   }
 
   async *fetchBlocks(
@@ -201,7 +235,7 @@ export class EthereumClient {
       }),
     )
 
-    await this.signatureDAL.save(signatures)
+    await this.accountSignatureDAL.save(signatures)
   }
 
   protected async getBlocksChunk({
@@ -261,8 +295,8 @@ export class EthereumClient {
   }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
     const chunk = []
 
-    const signatures = await this.signatureDAL
-      .useIndex(EthereumSignatureDALIndex.AccountHeightIndex)
+    const signatures = await this.accountSignatureDAL
+      .useIndex(EthereumAccountSignatureDALIndex.AccountHeightIndex)
       .getAllValuesFromTo([account, before], [account, until], {
         atomic: true,
         limit,

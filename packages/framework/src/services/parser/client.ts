@@ -5,7 +5,7 @@ import {
   SolanaParsedTransactionV1,
   RawAccountInfo,
   RawInstruction,
-  RawTransactionV1,
+  SolanaRawTransaction,
 } from '@aleph-indexer/core'
 import {
   EventOptions,
@@ -45,7 +45,7 @@ export class ParserMsClient
   }
 
   async parseTransaction(
-    payload: RawTransactionV1,
+    payload: SolanaRawTransaction,
   ): Promise<SolanaParsedTransactionV1> {
     return this.broker.call(`${this.msId}.parseTransaction`, {
       payload,

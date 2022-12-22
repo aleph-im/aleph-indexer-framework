@@ -1,7 +1,7 @@
 import { EthereumClient } from '../../rpc/ethereum/client.js'
-import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
+import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
-import { BaseFetcher } from '../base/baseFetcher.js'
+import { BaseHistoryFetcher } from '../base/baseFetcher.js'
 import {
   BaseFetcherJobState,
   BaseFetcherOptions,
@@ -10,22 +10,22 @@ import {
 } from '../base/types.js'
 import {
   EthereumBlockFetcherOptions,
-  EthereumBlockPaginationCursor,
-  EthereumBlockPaginationCursors,
+  EthereumBlockHistoryPaginationCursor,
+  EthereumBlockHistoryPaginationCursors,
   EthereumFetchBlocksOptions,
 } from './types.js'
 
-export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCursor> {
+export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBlockHistoryPaginationCursor> {
   constructor(
     protected opts: EthereumBlockFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockPaginationCursor>,
+    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    const config: BaseFetcherOptions<EthereumBlockPaginationCursor> = {
-      id: `ethereum:block`,
+    const config: BaseFetcherOptions<EthereumBlockHistoryPaginationCursor> = {
+      id: `ethereum:block-history`,
     }
 
     if (forward) {
@@ -53,7 +53,7 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCur
   }
 
   protected async runForward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumBlockPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
     // @note: not "before" (autodetected by the node (last block height))
     const until = this.fetcherState.cursors?.forward?.height
@@ -71,7 +71,7 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCur
   }
 
   protected async runBackward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumBlockPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
     // @note: until is autodetected by the node (height 0 / first block)
     const before = this.fetcherState.cursors?.backward?.height
@@ -97,10 +97,10 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCur
     goingForward: boolean,
   ): Promise<{
     error?: Error
-    lastCursors: EthereumBlockPaginationCursors
+    lastCursors: EthereumBlockHistoryPaginationCursors
   }> {
     let error: undefined | Error
-    let lastCursors: EthereumBlockPaginationCursors = {}
+    let lastCursors: EthereumBlockHistoryPaginationCursors = {}
 
     console.log(`fetchBlocks [${goingForward ? 'forward' : 'backward'}]`)
 
@@ -125,7 +125,7 @@ export class EthereumBlockFetcher extends BaseFetcher<EthereumBlockPaginationCur
   }
 
   protected async checkCompleteBackward(ctx: {
-    fetcherState: BaseFetcherState<EthereumBlockPaginationCursor>
+    fetcherState: BaseFetcherState<EthereumBlockHistoryPaginationCursor>
     jobState: BaseFetcherJobState
     newItems: boolean
     error?: Error

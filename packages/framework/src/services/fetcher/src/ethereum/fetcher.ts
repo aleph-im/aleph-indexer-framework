@@ -1,59 +1,50 @@
 import { ServiceBroker } from 'moleculer'
-import { EthereumClient, FetcherStateLevelStorage } from '@aleph-indexer/core'
-import { FetcherMsClient } from '../../client.js'
-import { BlockchainFetcherI } from '../blockchainFetcher.js'
-import { BlockFetcher } from './blockFetcher.js'
+import { Blockchain } from '@aleph-indexer/core'
 import {
-  AddAccountFetcherRequestArgs,
-  GetAccountFetcherStateRequestArgs,
-  SolanaSignatureFetcherState,
-  DelAccountFetcherRequestArgs,
-} from '../types.js'
-import { EthereumBlockStorage } from './dal/block.js'
+  BlockchainFetcherI,
+  GetAccountTransactionStateRequestArgs,
+} from '../base/types.js'
 
-/**
- * The main class of the fetcher service.
- */
-export class EthereumFetcher implements BlockchainFetcherI {
-  protected fetcherMsClient: FetcherMsClient
-  protected blockFetcher: BlockFetcher
+import { BaseFetcher } from '../base/fetcher.js'
+import { EthereumBlockFetcher } from './blockFetcher.js'
+import { EthereumTransactionHistoryFetcher } from './transactionHistoryFetcher.js'
+import { EthereumTransactionFetcher } from './transactionFetcher.js'
+import { EthereumAccountTransactionHistoryState } from './types.js'
+import { EthereumAccountStateFetcher } from './accountStateFetcher.js'
 
+export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
     protected broker: ServiceBroker,
-    protected ethereumClient: EthereumClient,
-    protected blockDAL: EthereumBlockStorage,
-    protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected transactionHistoryFetcher: EthereumTransactionHistoryFetcher,
+    protected transactionFetcher: EthereumTransactionFetcher,
+    protected accountStateFetcher: EthereumAccountStateFetcher,
+    protected blockFetcher: EthereumBlockFetcher,
   ) {
-    this.fetcherMsClient = new FetcherMsClient(broker)
-    this.blockFetcher = new BlockFetcher(
-      ethereumClient,
-      blockDAL,
-      fetcherStateDAL,
+    super(
+      Blockchain.Ethereum,
+      broker,
+      transactionHistoryFetcher,
+      transactionFetcher,
+      accountStateFetcher,
     )
   }
 
   async start(): Promise<void> {
-    console.log('---------------------> START')
     await this.blockFetcher.init()
     this.blockFetcher.run().catch(() => 'ignore')
+
+    await super.start()
   }
 
   async stop(): Promise<void> {
-    console.log('---------------------> STOP')
     await this.blockFetcher.stop()
+
+    await super.stop()
   }
 
-  addAccountFetcher(args: AddAccountFetcherRequestArgs): Promise<void> {
-    throw new Error('Method not implemented.')
-  }
-
-  getAccountFetcherState(
-    args: GetAccountFetcherStateRequestArgs,
-  ): Promise<SolanaSignatureFetcherState | undefined> {
-    throw new Error('Method not implemented.')
-  }
-
-  delAccountFetcher(args: DelAccountFetcherRequestArgs): Promise<void> {
-    throw new Error('Method not implemented.')
+  getAccountTransactionFetcherState(
+    args: GetAccountTransactionStateRequestArgs,
+  ): Promise<EthereumAccountTransactionHistoryState | undefined> {
+    return super.getAccountTransactionFetcherState(args)
   }
 }

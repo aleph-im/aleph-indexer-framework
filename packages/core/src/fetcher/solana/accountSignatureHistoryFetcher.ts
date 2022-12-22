@@ -1,6 +1,6 @@
 import { Duration } from 'luxon'
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
-import { BaseFetcher } from '../base/baseFetcher.js'
+import { BaseHistoryFetcher } from '../base/baseFetcher.js'
 import {
   BaseFetcherOptions,
   BaseFetcherPaginationCursors,
@@ -8,16 +8,16 @@ import {
 } from '../base/types.js'
 import {
   SolanaSignatureFetcherOptions,
-  SolanaSignaturePaginationCursor,
+  SolanaAccountSignatureHistoryPaginationCursor,
 } from './types.js'
-import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
+import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { SolanaFetchSignaturesOptions, SolanaRPC } from '../../rpc/index.js'
 import { JobRunnerReturnCode } from '../../utils/index.js'
 
 /**
  * Handles the fetching and processing of signatures on an account.
  */
-export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginationCursor> {
+export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<SolanaAccountSignatureHistoryPaginationCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
@@ -31,16 +31,17 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginatio
    */
   constructor(
     protected opts: SolanaSignatureFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaSignaturePaginationCursor>,
+    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaAccountSignatureHistoryPaginationCursor>,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    const config: BaseFetcherOptions<SolanaSignaturePaginationCursor> = {
-      id: `solana:signature:${opts.address}`,
-    }
+    const config: BaseFetcherOptions<SolanaAccountSignatureHistoryPaginationCursor> =
+      {
+        id: `solana:account-signature-history:${opts.address}`,
+      }
 
     if (forward) {
       config.jobs = config.jobs || {}
@@ -81,7 +82,7 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginatio
     firstRun: boolean
     interval: number
   }): Promise<
-    FetcherJobRunnerHandleFetchResult<SolanaSignaturePaginationCursor>
+    FetcherJobRunnerHandleFetchResult<SolanaAccountSignatureHistoryPaginationCursor>
   > {
     const { address, errorFetching } = this.opts
     const forward =
@@ -131,7 +132,7 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginatio
     firstRun: boolean
     interval: number
   }): Promise<
-    FetcherJobRunnerHandleFetchResult<SolanaSignaturePaginationCursor>
+    FetcherJobRunnerHandleFetchResult<SolanaAccountSignatureHistoryPaginationCursor>
   > {
     const { address, errorFetching } = this.opts
     const backward =
@@ -175,13 +176,13 @@ export class SolanaSignatureFetcher extends BaseFetcher<SolanaSignaturePaginatio
   ): Promise<{
     error?: Error
     count: number
-    lastCursors: BaseFetcherPaginationCursors<SolanaSignaturePaginationCursor>
+    lastCursors: BaseFetcherPaginationCursors<SolanaAccountSignatureHistoryPaginationCursor>
   }> {
     const { address } = options
 
     let error: undefined | Error
     let count = 0
-    let lastCursors: BaseFetcherPaginationCursors<SolanaSignaturePaginationCursor> =
+    let lastCursors: BaseFetcherPaginationCursors<SolanaAccountSignatureHistoryPaginationCursor> =
       {}
 
     console.log(`

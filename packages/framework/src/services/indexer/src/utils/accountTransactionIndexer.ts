@@ -68,7 +68,9 @@ export class AccountTransactionIndexer {
     // @note: Subscribe to range request responses
     this.transactionFetcher.onResponse(this.txResponseHandler)
 
-    await this.fetcherMsClient.addAccountFetcher({ blockchainId, account })
+    await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .addAccountTransactionFetcher({ account })
 
     this.fetchAllJob.start().catch(() => 'ignore')
     this.compactionJob.start().catch(() => 'ignore')
@@ -81,7 +83,9 @@ export class AccountTransactionIndexer {
     // @note: Unsubscribe from range request responses
     this.transactionFetcher.offResponse(this.txResponseHandler)
 
-    await this.fetcherMsClient.delAccountFetcher({ blockchainId, account })
+    await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .delAccountTransactionFetcher({ account })
 
     this.fetchAllJob.stop().catch(() => 'ignore')
     this.compactionJob.stop().catch(() => 'ignore')
@@ -91,10 +95,9 @@ export class AccountTransactionIndexer {
   async getIndexingState(): Promise<AccountIndexerState | undefined> {
     const { blockchainId, account } = this.config
 
-    const state = await this.fetcherMsClient.getAccountFetcherState({
-      blockchainId,
-      account,
-    })
+    const state = await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .getAccountTransactionFetcherState({ account })
 
     if (
       !state ||
@@ -152,10 +155,9 @@ export class AccountTransactionIndexer {
   protected async getPendingRanges(): Promise<DateRange[]> {
     const { blockchainId, account } = this.config
 
-    const state = await this.fetcherMsClient.getAccountFetcherState({
-      blockchainId,
-      account,
-    })
+    const state = await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .getAccountTransactionFetcherState({ account })
 
     if (
       !state ||
@@ -236,7 +238,7 @@ export class AccountTransactionIndexer {
   }: {
     interval: number
   }): Promise<number | void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
 
     const ranges = await this.getPendingRanges()
     if (!ranges.length) return interval + 1000 // @note: delay 1sec
@@ -249,7 +251,7 @@ export class AccountTransactionIndexer {
       endDate - this.config.chunkTimeframe,
     )
 
-    const requests = [{ account, startDate, endDate }]
+    const requests = [{ blockchainId, account, startDate, endDate }]
 
     // @note: if we finished with the latest range, take also the next one and do a request
     // This prevents from getting stuck on new ranges comming on real time
@@ -262,7 +264,7 @@ export class AccountTransactionIndexer {
         endDate - this.config.chunkTimeframe,
       )
 
-      requests.push({ account, startDate, endDate })
+      requests.push({ blockchainId, account, startDate, endDate })
     }
 
     await Promise.all(requests.map(this.fetchRangeByDate.bind(this)))

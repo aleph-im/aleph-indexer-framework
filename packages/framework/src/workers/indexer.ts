@@ -12,6 +12,7 @@ import { createTransactionRequestIncomingTransactionDAL } from '../services/inde
 import { createTransactionRequestPendingSignatureDAL } from '../services/indexer/src/dal/transactionRequestPendingSignature.js'
 import { createTransactionRequestResponseDAL } from '../services/indexer/src/dal/transactionRequestResponse.js'
 import { IndexerDomainContext } from '../services/indexer/src/types.js'
+import { TransactionFetcher } from '../services/indexer/src/utils/transactionFetcher.js'
 import { ParserMsClient } from '../services/parser/client.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
@@ -44,20 +45,39 @@ async function main() {
         })
       : localBroker
 
-  const fetcherMsClient = new FetcherMsClient(broker)
+  const blockchainFetcherClients = await Promise.all(
+    supportedBlockchains.map(async (blockchainId) => {
+      const module = await import(
+        `../services/fetcher/src/${blockchainId}/client.js`
+      )
+      const clazz = module.default
+      return [blockchainId, new clazz(blockchainId, broker)]
+    }),
+  )
+
+  const fetcherMsClient = new FetcherMsClient(
+    broker,
+    Object.fromEntries(blockchainFetcherClients),
+  )
+
   const parserMsClient = new ParserMsClient(broker, true, {
     group: name,
   })
+
+  const transactionFetcher = new TransactionFetcher(
+    fetcherMsClient,
+    createTransactionRequestDAL(dataPath),
+    createTransactionRequestIncomingTransactionDAL(dataPath),
+    createTransactionRequestPendingSignatureDAL(dataPath),
+    createTransactionRequestResponseDAL(dataPath),
+  )
 
   const indexerMain = new IndexerMsMain(
     localBroker,
     fetcherMsClient,
     parserMsClient,
-    createTransactionRequestDAL(dataPath),
-    createTransactionRequestIncomingTransactionDAL(dataPath),
-    createTransactionRequestPendingSignatureDAL(dataPath),
-    createTransactionRequestResponseDAL(dataPath),
     createTransactionIndexerStateDAL(dataPath),
+    transactionFetcher,
   )
 
   const DomainClass = (await import(domainPath)).default

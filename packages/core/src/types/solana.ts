@@ -14,6 +14,7 @@ import {
   ParsedAddressTableLookup,
 } from '@solana/web3.js'
 import { ProgramErrorType, TransactionErrorType } from '../utils/error.js'
+import { RawTransaction } from './common.js'
 
 export { ProgramErrorType, TransactionErrorType } from '../utils/error.js'
 
@@ -151,13 +152,13 @@ export type RawParsedTransactionWithMeta = Omit<
  * Expected JSON RPC response for the "getTransaction" message and a confirmed
  * signature with its status
  */
-export type RawTransaction = ConfirmedSignatureInfo &
+export type SolanaRawTransactionOld = ConfirmedSignatureInfo &
   RawParsedTransactionWithMeta
 
 /**
  * Expected JSON RPC response for the "getTransaction" message
  */
-export type RawTransactionV1 = RawParsedTransactionWithMeta
+export type SolanaRawTransaction = RawTransaction & RawParsedTransactionWithMeta
 
 export type RawAccountInfo = AccountInfo<Buffer>
 
@@ -209,13 +210,13 @@ export type AlephParsedInnerTransaction = Omit<
   error?: AlephParsedError
 }
 
-export type AlephParsedTransaction = Omit<RawTransaction, 'parsed'> & {
+export type AlephParsedTransaction = Omit<SolanaRawTransactionOld, 'parsed'> & {
   parsed: AlephParsedInnerTransaction
   index: number
 }
 
 export type SolanaParsedTransactionV1 = Omit<
-  RawTransactionV1,
+  SolanaRawTransaction,
   'parsed' | 'transaction'
 > & {
   parsed: AlephParsedInnerTransaction

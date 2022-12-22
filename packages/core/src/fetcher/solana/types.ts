@@ -1,19 +1,20 @@
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { SolanaErrorFetching } from '../../rpc/index.js'
 import {
+  AccountStateStorage,
   BaseFetcherJobRunnerOptions,
   BaseFetcherPaginationResponse,
 } from '../base/index.js'
 
-export type SolanaSignaturePaginationCursor = {
+export type SolanaAccountSignatureHistoryPaginationCursor = {
   signature?: string
   slot?: number
   timestamp?: number
 }
 
-export type SolanaSignature = ConfirmedSignatureInfo
+export type SolanaSignatureInfo = ConfirmedSignatureInfo
 
-export type Signature = Omit<
+export type SolanaSignature = Omit<
   ConfirmedSignatureInfo,
   'memo' | 'confirmationStatus'
 > & {
@@ -23,7 +24,7 @@ export type Signature = Omit<
 // --------------------------
 
 export type SolanaSignatureFetcherJobRunnerOptions = Omit<
-  BaseFetcherJobRunnerOptions<SolanaSignaturePaginationCursor>,
+  BaseFetcherJobRunnerOptions<SolanaAccountSignatureHistoryPaginationCursor>,
   'handleFetch' | 'updateCursor' | 'interval'
 > & {
   interval?: number
@@ -46,20 +47,26 @@ export type SolanaSignatureFetcherOptions = {
   forward?: boolean | SolanaSignatureFetcherForwardJobRunnerOptions
   backward?: boolean | SolanaSignatureFetcherBackwardJobRunnerOptions
   errorFetching?: SolanaErrorFetching
-  indexSignatures(signatures: Signature[], goingForward: boolean): Promise<void>
+  indexSignatures(
+    signatures: SolanaSignature[],
+    goingForward: boolean,
+  ): Promise<void>
 }
 
-/**
- * Options where the account address is stored and if it needs to be updated
- * by fetching new transactions.
- */
-export type AccountInfoFetcherOptions = {
-  address: string
+export type SolanaSignaturePaginationResponse = BaseFetcherPaginationResponse<
+  SolanaSignatureInfo,
+  SolanaAccountSignatureHistoryPaginationCursor
+>
+
+// Account State
+
+export type SolanaAccountStateFetcherOptions = {
+  account: string
   subscribeChanges?: boolean
 }
 
-export type AccountInfo = {
-  address: string
+export type SolanaAccountState = {
+  account: string
   executable: boolean
   owner: string
   lamports: number
@@ -67,7 +74,4 @@ export type AccountInfo = {
   rentEpoch?: number
 }
 
-export type SolanaSignaturePaginationResponse = BaseFetcherPaginationResponse<
-  SolanaSignature,
-  SolanaSignaturePaginationCursor
->
+export type SolanaAccountStateStorage = AccountStateStorage<SolanaAccountState>

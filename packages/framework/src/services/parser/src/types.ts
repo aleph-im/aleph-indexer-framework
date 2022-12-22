@@ -1,4 +1,4 @@
-import { SolanaParsedTransactionV1, RawTransaction } from '@aleph-indexer/core'
+import { RawTransaction } from '@aleph-indexer/core'
 
 /**
  * Contains the original and parsed data, as well as the context of the parsing.
@@ -31,14 +31,16 @@ export type AccountData = ParseElement & {
 
 export type ParseResult = Transaction | Instruction | AccountData
 
-export type RawTransactionWithPeers = {
+export type RawTransactionWithPeers<T extends RawTransaction> = {
   peers: string[]
-  tx: RawTransaction
+  tx: T
 }
 
-export type RawTransactionMsg = RawTransaction | RawTransactionWithPeers
+export type RawTransactionMsg<T extends RawTransaction> =
+  | T
+  | RawTransactionWithPeers<T>
 
-export type ParsedTransactionMsg = {
+export type ParsedTransactionMsg<T> = {
   peers?: string[]
-  tx: SolanaParsedTransactionV1
+  tx: T
 }

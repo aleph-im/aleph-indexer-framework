@@ -43,7 +43,7 @@ export class FetcherAPISchema extends GraphQLSchema {
               },
             },
             resolve: (_, ctx) =>
-              this.domain.getAccountFetcherState(ctx.account),
+              this.domain.getAccountTransactionFetcherState(ctx.account),
           },
 
           transactionState: {

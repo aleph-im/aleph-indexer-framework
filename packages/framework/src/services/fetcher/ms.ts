@@ -1,22 +1,22 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
+import { Blockchain } from '@aleph-indexer/core'
 import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import { FetcherMsMain } from './main.js'
 import {
-  FetcherAccountPartitionRequestArgs,
-  AddAccountInfoFetcherRequestArgs,
-  CheckTransactionsRequestArgs,
+  AddAccountStateRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
-  FetchAccountTransactionsBySlotRequestArgs,
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
-  SolanaSignatureFetcherState,
-  TransactionState,
-  DelTransactionsRequestArgs,
-  AddAccountFetcherRequestArgs,
-  GetAccountFetcherStateRequestArgs,
-  DelAccountFetcherRequestArgs,
-} from './src/types.js'
+  AddAccountTransactionRequestArgs,
+  GetAccountTransactionStateRequestArgs,
+  DelAccountTransactionRequestArgs,
+  GetAccountStateStateRequestArgs,
+  AccountTransactionHistoryState,
+  AccountStateState,
+  DelAccountStateRequestArgs,
+  InvokeBlockchainMethodRequestArgs,
+} from './src/base/types.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main fetcher service through the broker.
@@ -34,33 +34,33 @@ export class FetcherMs extends Service {
     this.parseServiceSchema({
       name: MsIds.Fetcher,
       actions: {
-        addAccountFetcher: {
+        addAccountTransactionFetcher: {
           ...shardBalancingStrategy,
-          handler: this.addAccountFetcher,
+          handler: this.addAccountTransactionFetcher,
         },
-        delAccountFetcher: {
+        delAccountTransactionFetcher: {
           ...shardBalancingStrategy,
-          handler: this.delAccountFetcher,
+          handler: this.delAccountTransactionFetcher,
         },
-        getAccountFetcherState: {
+        getAccountTransactionFetcherState: {
           ...shardBalancingStrategy,
-          handler: this.getAccountFetcherState,
+          handler: this.getAccountTransactionFetcherState,
         },
-        addAccountInfoFetcher: {
+        addAccountStateFetcher: {
           ...shardBalancingStrategy,
-          handler: this.addAccountInfoFetcher,
+          handler: this.addAccountStateFetcher,
         },
-        delAccountInfoFetcher: {
+        delAccountStateFetcher: {
           ...shardBalancingStrategy,
-          handler: this.delAccountInfoFetcher,
+          handler: this.delAccountStateFetcher,
+        },
+        getAccountStateFetcherState: {
+          ...shardBalancingStrategy,
+          handler: this.getAccountStateFetcherState,
         },
         fetchAccountTransactionsByDate: {
           ...shardBalancingStrategy,
           handler: this.fetchAccountTransactionsByDate,
-        },
-        fetchAccountTransactionsBySlot: {
-          ...shardBalancingStrategy,
-          handler: this.fetchAccountTransactionsBySlot,
         },
         fetchTransactionsBySignature: {
           ...shardBalancingStrategy,
@@ -70,13 +70,9 @@ export class FetcherMs extends Service {
           ...shardBalancingStrategy,
           handler: this.getFetcherState,
         },
-        getTransactionState: {
+        invokeBlockchainMethod: {
           ...shardBalancingStrategy,
-          handler: this.getTransactionState,
-        },
-        delTransactionCache: {
-          ...shardBalancingStrategy,
-          handler: this.delTransactionCache,
+          handler: this.invokeBlockchainMethod,
         },
       },
       started: this.start,
@@ -92,42 +88,46 @@ export class FetcherMs extends Service {
     return this.main.stop()
   }
 
-  addAccountFetcher(ctx: Context<AddAccountFetcherRequestArgs>): Promise<void> {
-    return this.main.addAccountFetcher(ctx.params)
-  }
-
-  getAccountFetcherState(
-    ctx: Context<GetAccountFetcherStateRequestArgs>,
-  ): Promise<SolanaSignatureFetcherState | undefined> {
-    return this.main.getAccountFetcherState(ctx.params)
-  }
-
-  delAccountFetcher(ctx: Context<DelAccountFetcherRequestArgs>): Promise<void> {
-    return this.main.delAccountFetcher(ctx.params)
-  }
-
-  addAccountInfoFetcher(
-    ctx: Context<AddAccountInfoFetcherRequestArgs>,
+  addAccountTransactionFetcher(
+    ctx: Context<AddAccountTransactionRequestArgs>,
   ): Promise<void> {
-    return this.main.addAccountInfoFetcher(ctx.params)
+    return this.main.addAccountTransactionFetcher(ctx.params)
   }
 
-  delAccountInfoFetcher(
-    ctx: Context<FetcherAccountPartitionRequestArgs>,
+  delAccountTransactionFetcher(
+    ctx: Context<DelAccountTransactionRequestArgs>,
   ): Promise<void> {
-    return this.main.delAccountInfoFetcher(ctx.params)
+    return this.main.delAccountTransactionFetcher(ctx.params)
+  }
+
+  getAccountTransactionFetcherState(
+    ctx: Context<GetAccountTransactionStateRequestArgs>,
+  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
+    return this.main.getAccountTransactionFetcherState(ctx.params)
+  }
+
+  addAccountStateFetcher(
+    ctx: Context<AddAccountStateRequestArgs>,
+  ): Promise<void> {
+    return this.main.addAccountStateFetcher(ctx.params)
+  }
+
+  delAccountStateFetcher(
+    ctx: Context<DelAccountStateRequestArgs>,
+  ): Promise<void> {
+    return this.main.delAccountStateFetcher(ctx.params)
+  }
+
+  getAccountStateFetcherState(
+    ctx: Context<GetAccountStateStateRequestArgs>,
+  ): Promise<AccountStateState<unknown> | undefined> {
+    return this.main.getAccountStateFetcherState(ctx.params)
   }
 
   fetchAccountTransactionsByDate(
     ctx: Context<FetchAccountTransactionsByDateRequestArgs>,
   ): Promise<void | AsyncIterable<string[]>> {
     return this.main.fetchAccountTransactionsByDate(ctx.params)
-  }
-
-  fetchAccountTransactionsBySlot(
-    ctx: Context<FetchAccountTransactionsBySlotRequestArgs>,
-  ): Promise<void | AsyncIterable<string[]>> {
-    return this.main.fetchAccountTransactionsBySlot(ctx.params)
   }
 
   fetchTransactionsBySignature(
@@ -138,17 +138,13 @@ export class FetcherMs extends Service {
 
   getFetcherState(
     ctx: Context<FetcherStateRequestArgs>,
-  ): Promise<FetcherState | undefined> {
+  ): Promise<Record<Blockchain, FetcherState> | undefined> {
     return this.main.getFetcherState(ctx.params)
   }
 
-  getTransactionState(
-    ctx: Context<CheckTransactionsRequestArgs>,
-  ): Promise<TransactionState[]> {
-    return this.main.getTransactionState(ctx.params)
-  }
-
-  delTransactionCache(ctx: Context<DelTransactionsRequestArgs>): Promise<void> {
-    return this.main.delTransactionCache(ctx.params)
+  invokeBlockchainMethod(
+    ctx: Context<InvokeBlockchainMethodRequestArgs<unknown>>,
+  ): Promise<unknown> {
+    return this.main.invokeBlockchainMethod(ctx.params)
   }
 }

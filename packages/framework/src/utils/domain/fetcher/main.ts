@@ -1,10 +1,10 @@
 import { Blockchain, Utils } from '@aleph-indexer/core'
 import {
   FetcherMainDomainContext,
+  AccountTransactionHistoryState,
   FetcherState,
-  SolanaSignatureFetcherState,
   TransactionState,
-} from '../../../services/fetcher/src/types.js'
+} from '../../../services/fetcher/src/base/types.js'
 
 /**
  * The main fetcher domain class.
@@ -21,36 +21,38 @@ export class FetcherMainDomain {
    * Returns the fetcher state for the given account-bound fetchers.
    * @param accounts The accounts of which to get the fetchers.
    */
-  async getAccountFetcherState(
+  async getAccountTransactionFetcherState<T>(
     blockchainId: Blockchain,
     accounts: string[] = [],
-  ): Promise<SolanaSignatureFetcherState[]> {
-    return (
+  ): Promise<AccountTransactionHistoryState<T>[]> {
+    const a = (
       await Promise.all(
         accounts.map((account) =>
-          this.context.apiClient.getAccountFetcherState({
-            blockchainId,
-            account,
-          }),
+          this.context.apiClient
+            .useBlockchain(blockchainId)
+            .getAccountTransactionFetcherState({ account }),
         ),
       )
-    ).filter((info): info is SolanaSignatureFetcherState => !!info)
+    ).filter((info): info is AccountTransactionHistoryState<T> => !!info)
+
+    return a
   }
 
   /**
    * Returns the fetcher state for the given non-account related fetchers.
    * @param fetchers The fetchers to get the fetcher state for.
    */
-  async getFetcherState(fetchers: string[] = []): Promise<FetcherState[]> {
+  async getFetcherState(
+    fetchers: string[] = [],
+    blockchainId?: Blockchain,
+  ): Promise<Record<Blockchain, FetcherState>[]> {
     fetchers = fetchers.length
       ? fetchers
       : this.context.apiClient.getAllFetchers()
 
     return Promise.all(
       fetchers.map((fetcher) =>
-        this.context.apiClient.getFetcherState({
-          fetcher,
-        }),
+        this.context.apiClient.getFetcherState({ fetcher, blockchainId }),
       ),
     )
   }
@@ -60,21 +62,25 @@ export class FetcherMainDomain {
    * @param signatures The signatures of the transactions to get the state for.
    */
   async getTransactionState(
+    blockchainId: Blockchain,
     signatures: string[] = [],
   ): Promise<TransactionState[]> {
-    return this.context.apiClient.getTransactionState({
-      signatures,
-    })
+    return this.context.apiClient
+      .useBlockchain(blockchainId)
+      .getTransactionState({ signatures })
   }
 
   /**
    * Force to delete the cached transaction (Useful when rpc nodes return flaw txs).
    * @param signatures The txn signatures to delete the cache for.
    */
-  async delTransactionCache(signatures: string[] = []): Promise<boolean> {
-    await this.context.apiClient.delTransactionCache({
-      signatures,
-    })
+  async delTransactionCache(
+    blockchainId: Blockchain,
+    signatures: string[] = [],
+  ): Promise<boolean> {
+    await this.context.apiClient
+      .useBlockchain(blockchainId)
+      .delTransactionCache({ signatures })
 
     return true
   }

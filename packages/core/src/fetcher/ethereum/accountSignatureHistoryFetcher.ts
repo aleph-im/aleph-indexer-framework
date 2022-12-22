@@ -1,4 +1,4 @@
-import { BaseFetcher } from '../base/baseFetcher.js'
+import { BaseHistoryFetcher } from '../base/baseFetcher.js'
 import {
   BaseFetcherJobState,
   BaseFetcherOptions,
@@ -9,16 +9,16 @@ import {
 import {
   EthereumFetchSignaturesOptions,
   EthereumSignatureFetcherOptions,
-  EthereumSignaturePaginationCursor,
+  EthereumAccountSignatureHistoryPaginationCursor,
 } from './types.js'
-import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
+import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { EthereumClient } from '../../rpc/index.js'
-import { EthereumBlockFetcher } from './blockFetcher.js'
+import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
 
 /**
  * Handles the fetching and processing of signatures on an account.
  */
-export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePaginationCursor> {
+export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<EthereumAccountSignatureHistoryPaginationCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
@@ -28,20 +28,21 @@ export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePagin
    * @param opts Fetcher options.
    * @param fetcherStateDAL Fetcher state storage.
    * @param ethereumClient The ethereum client to use.
-   * @param ethereumMainPublicRpc The ethereum mainnet public RPC client to use.
+   * @param ethereumBlockFetcher The ethereum client
    */
   constructor(
     protected opts: EthereumSignatureFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumSignaturePaginationCursor>,
+    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountSignatureHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
-    protected ethereumBlockFetcher: EthereumBlockFetcher,
+    protected ethereumBlockFetcher: EthereumBlockHistoryFetcher,
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    const config: BaseFetcherOptions<EthereumSignaturePaginationCursor> = {
-      id: `ethereum:signature:${opts.account}`,
-    }
+    const config: BaseFetcherOptions<EthereumAccountSignatureHistoryPaginationCursor> =
+      {
+        id: `ethereum:account-signature-history:${opts.account}`,
+      }
 
     if (forward) {
       config.jobs = config.jobs || {}
@@ -68,7 +69,7 @@ export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePagin
   }
 
   protected async fetchForward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumSignaturePaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumAccountSignatureHistoryPaginationCursor>
   > {
     const { account } = this.opts
 
@@ -88,7 +89,7 @@ export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePagin
   }
 
   protected async fetchBackward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumSignaturePaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumAccountSignatureHistoryPaginationCursor>
   > {
     const { account } = this.opts
 
@@ -113,13 +114,13 @@ export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePagin
   ): Promise<{
     error?: Error
     count: number
-    lastCursors: BaseFetcherPaginationCursors<EthereumSignaturePaginationCursor>
+    lastCursors: BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor>
   }> {
     const { account } = options
 
     let error: undefined | Error
     let count = 0
-    let lastCursors: BaseFetcherPaginationCursors<EthereumSignaturePaginationCursor> =
+    let lastCursors: BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor> =
       {}
 
     console.log(`
@@ -151,7 +152,7 @@ export class EthereumSignatureFetcher extends BaseFetcher<EthereumSignaturePagin
   }
 
   protected async checkCompleteBackward(ctx: {
-    fetcherState: BaseFetcherState<EthereumSignaturePaginationCursor>
+    fetcherState: BaseFetcherState<EthereumAccountSignatureHistoryPaginationCursor>
     jobState: BaseFetcherJobState
     newItems: boolean
     error?: Error

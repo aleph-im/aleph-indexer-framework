@@ -6,10 +6,9 @@ import {
   Mutex,
 } from '../index.js'
 import { StorageEntry } from '../../storage/index.js'
-import {
-  PendingWorkDAL,
-  PendingWorkDALIndex,
-} from '../../storage/pendingWork.js'
+import { PendingWorkDAL, PendingWorkDALIndex } from './dal/pendingWork.js'
+
+export * from './dal/pendingWork.js'
 
 export type PendingWork<T> = {
   id: string
@@ -53,19 +52,19 @@ export class PendingWorkPool<T> {
     }
   }
 
-  async start(): Promise<unknown> {
+  async start(): Promise<void> {
+    this.coordinatorJob && this.coordinatorJob.run().catch(() => 'ignore')
+    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
+  }
+
+  async hasFinished(): Promise<void> {
     const promises: Promise<void>[] = []
 
     if (this.coordinatorJob) {
       promises.push(this.coordinatorJob.hasFinished())
-      this.coordinatorJob.run()
     }
 
-    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
-
     await Promise.all(promises)
-
-    return
   }
 
   async stop(): Promise<void> {

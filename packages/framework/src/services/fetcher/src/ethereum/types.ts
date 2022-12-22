@@ -1,20 +1,10 @@
-export type EthereumBlockFetcherState = {
-  fetcher: string
-  firstTimestamp?: number
-  lastTimestamp?: number
-  firstHeight?: number
-  lastHeight?: number
-  completeHistory: boolean
-}
+import { EthereumAccountSignatureHistoryPaginationCursor } from '@aleph-indexer/core'
+import { AccountTransactionHistoryState } from '../base/types.js'
 
-export type EthereumSignatureFetcherState = {
-  fetcher: string
-  account: string
-  firstHeight?: number
-  lastHeight?: number
-  firstTimestamp?: number
-  lastTimestamp?: number
-  firstSignature?: string
-  lastSignature?: string
-  completeHistory: boolean
-}
+export type EthereumAccountTransactionHistoryState =
+  AccountTransactionHistoryState<EthereumAccountSignatureHistoryPaginationCursor> & {
+    firstHeight?: number
+    lastHeight?: number
+    firstSignature?: string
+    lastSignature?: string
+  }

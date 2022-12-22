@@ -1,5 +1,5 @@
 import { Utils } from '../../index.js'
-import { FetcherStateLevelStorage } from '../../storage/fetcherState.js'
+import { FetcherStateLevelStorage } from './dal/fetcherState.js'
 import { JobRunnerReturnCode } from '../../utils/concurrence/index.js'
 import {
   BaseFetcherJobRunnerOptions,
@@ -14,7 +14,7 @@ import {
  * Fetcher abstract class that provides methods to init and stop the fetching
  * process, also to save and load the work in progress.
  */
-export class BaseFetcher<C> {
+export class BaseHistoryFetcher<C> {
   protected fetcherState!: BaseFetcherState<C>
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
@@ -93,6 +93,11 @@ export class BaseFetcher<C> {
   async stop(): Promise<void> {
     await this.forwardJob?.stop()
     await this.backwardJob?.stop()
+  }
+
+  async getState(): Promise<BaseFetcherState<C>> {
+    await this.loadFetcherState()
+    return this.fetcherState
   }
 
   async complete(fetcherType: 'forward' | 'backward'): Promise<void> {

@@ -1,16 +1,18 @@
 import {
+  SolanaAccountSignatureHistoryFetcher as BaseFetcher,
   SolanaRPC,
-  SolanaSignatureFetcher as BaseFetcher,
   FetcherStateLevelStorage,
-  Signature,
+  SolanaSignature,
 } from '@aleph-indexer/core'
-import { SignatureDALIndex, SignatureStorage } from './dal/signature.js'
-import { SolanaSignatureFetcherState } from '../types.js'
+import {
+  SolanaAccountSignatureDALIndex,
+  SolanaAccountSignatureStorage,
+} from './dal/accountSignature.js'
 
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
  */
-export class SignatureFetcher extends BaseFetcher {
+export class SolanaAccountSignatureHistoryFetcher extends BaseFetcher {
   /**
    * Initializes the signature fetcher.
    * @param address The account address to fetch related signatures for.
@@ -21,7 +23,7 @@ export class SignatureFetcher extends BaseFetcher {
    */
   constructor(
     protected address: string,
-    protected dal: SignatureStorage,
+    protected dal: SolanaAccountSignatureStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
@@ -58,7 +60,7 @@ export class SignatureFetcher extends BaseFetcher {
     // @note: Reset the fetcher state accordingly with the restored signatures
     if (isRestored) {
       const firstItem = await this.dal
-        .useIndex(SignatureDALIndex.AccountTimestampIndex)
+        .useIndex(SolanaAccountSignatureDALIndex.AccountTimestampIndex)
         .getFirstValueFromTo([this.address], [this.address])
 
       if (firstItem) {
@@ -80,7 +82,7 @@ export class SignatureFetcher extends BaseFetcher {
       }
 
       const lastItem = await this.dal
-        .useIndex(SignatureDALIndex.AccountTimestampIndex)
+        .useIndex(SolanaAccountSignatureDALIndex.AccountTimestampIndex)
         .getLastValueFromTo([this.address], [this.address])
 
       if (lastItem) {
@@ -105,34 +107,8 @@ export class SignatureFetcher extends BaseFetcher {
     return super.run()
   }
 
-  public async getState(): Promise<SolanaSignatureFetcherState> {
-    const state: SolanaSignatureFetcherState = {
-      fetcher: 'unknown',
-      account: this.address,
-      completeHistory: this.isComplete('backward'),
-    }
-
-    const forward = this.fetcherState.cursors?.forward
-
-    if (forward) {
-      state.lastSlot = forward.slot
-      state.lastTimestamp = forward.timestamp
-      state.lastSignature = forward.signature
-    }
-
-    const backward = this.fetcherState.cursors?.backward
-
-    if (backward) {
-      state.firstSlot = backward.slot
-      state.firstTimestamp = backward.timestamp
-      state.firstSignature = backward.signature
-    }
-
-    return state
-  }
-
   protected async indexSignatures(
-    signatures: Signature[],
+    signatures: SolanaSignature[],
     goingForward: boolean,
   ): Promise<void> {
     await this.dal.save(signatures)

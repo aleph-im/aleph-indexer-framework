@@ -28,7 +28,7 @@ import { config } from '../../config.js'
 import { SolanaSignaturePaginationResponse } from '../../fetcher/index.js'
 import {
   AlephParsedTransaction,
-  RawTransactionV1,
+  SolanaRawTransaction,
   VoteAccountInfo,
 } from '../../types/index.js'
 
@@ -185,7 +185,7 @@ export class SolanaRPC {
 
   async getConfirmedTransaction(
     signature: string,
-  ): Promise<RawTransactionV1 | null> {
+  ): Promise<SolanaRawTransaction | null> {
     const unsafeRes = await this.connection._rpcRequest('getTransaction', [
       signature,
       {
@@ -211,7 +211,7 @@ export class SolanaRPC {
   async getConfirmedTransactions(
     signatures: string[],
     options?: { shallowErrors?: boolean },
-  ): Promise<(RawTransactionV1 | null)[]> {
+  ): Promise<(SolanaRawTransaction | null)[]> {
     let batch: any[] = signatures.map((signature) => {
       return {
         methodName: 'getTransaction',

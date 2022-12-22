@@ -1,5 +1,6 @@
 import { EthereumBlock, EthereumSignature } from '../../types/ethereum.js'
 import {
+  AccountStateStorage,
   BaseFetcherJobRunnerOptions,
   BaseFetcherPaginationCursors,
   BaseFetcherPaginationResponse,
@@ -16,22 +17,22 @@ export type EthereumFetcherJobRunnerOptions<C> = Omit<
 
 // Blocks
 
-export type EthereumBlockPaginationCursor = {
+export type EthereumBlockHistoryPaginationCursor = {
   height: number
   timestamp: number
   signature: string
 }
 
-export type EthereumBlockPaginationCursors =
-  BaseFetcherPaginationCursors<EthereumBlockPaginationCursor>
+export type EthereumBlockHistoryPaginationCursors =
+  BaseFetcherPaginationCursors<EthereumBlockHistoryPaginationCursor>
 
 export type EthereumBlockPaginationResponse = BaseFetcherPaginationResponse<
   EthereumBlock,
-  EthereumBlockPaginationCursor
+  EthereumBlockHistoryPaginationCursor
 >
 
 export type EthereumBlockFetcherJobRunnerOptions =
-  EthereumFetcherJobRunnerOptions<EthereumBlockPaginationCursors>
+  EthereumFetcherJobRunnerOptions<EthereumBlockHistoryPaginationCursors>
 
 export type EthereumBlockFetcherOptions = {
   forward?: boolean | EthereumBlockFetcherJobRunnerOptions
@@ -53,18 +54,18 @@ export type EthereumBlockFetcherClientI = {
 
 // Signatures
 
-export type EthereumSignaturePaginationCursor = {
+export type EthereumAccountSignatureHistoryPaginationCursor = {
   height: number
   timestamp: number
   signature: string
 }
 
 export type EthereumSignaturePaginationCursors =
-  BaseFetcherPaginationCursors<EthereumSignaturePaginationCursor>
+  BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor>
 
 export type EthereumSignaturePaginationResponse = BaseFetcherPaginationResponse<
   EthereumSignature,
-  EthereumSignaturePaginationCursor
+  EthereumAccountSignatureHistoryPaginationCursor
 >
 
 export type EthereumSignatureFetcherJobRunnerOptions =
@@ -90,3 +91,18 @@ export type EthereumFetchSignaturesOptions = {
 export type EthereumSignatureFetcherClientI = {
   fetchSignatures(args: EthereumFetchSignaturesOptions): Promise<AsyncGenerator>
 }
+
+// Account State
+
+export type EthereumAccountStateFetcherOptions = {
+  account: string
+  subscribeChanges?: boolean
+}
+
+export type EthereumAccountState = {
+  account: string
+  balance: string
+}
+
+export type EthereumAccountStateStorage =
+  AccountStateStorage<EthereumAccountState>

@@ -1,11 +1,13 @@
 import { ServiceBroker } from 'moleculer'
 import {
-  SolanaParsedTransactionV1,
   SolanaParsedInstructionV1,
   ParsedAccountInfoV1,
-  RawTransaction,
+  SolanaRawTransaction,
   RawInstruction,
   RawAccountInfo,
+  RawTransaction,
+  ParsedTransaction,
+  AlephParsedInnerTransaction,
 } from '@aleph-indexer/core'
 import { ParserMsI } from './interface.js'
 import { TransactionParser } from './src/transactionParser.js'
@@ -14,7 +16,16 @@ import { InstructionParserLibrary } from './src/instructionParserLibrary.js'
 import { MsIds, MsMainWithEvents } from '../common.js'
 import { ParsedTransactionMsg, RawTransactionMsg } from './src/types.js'
 
-export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
+//@todo: Implement multi parser instances depending on blockchain (like fetcher ms main)
+
+export class ParserMsMain<
+    T extends RawTransaction = SolanaRawTransaction,
+    P = AlephParsedInnerTransaction,
+    PT extends ParsedTransaction<P> = ParsedTransaction<P>,
+  >
+  extends MsMainWithEvents
+  implements ParserMsI<T, PT>
+{
   constructor(
     protected broker: ServiceBroker,
     protected layoutPath?: string,
@@ -29,10 +40,10 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     super(broker, MsIds.Parser)
   }
 
-  async onTxs(chunk: RawTransactionMsg[]): Promise<void> {
+  async onTxs(chunk: RawTransactionMsg<T>[]): Promise<void> {
     // console.log(`📩 ${chunk.length} txs received by the parser...`)
 
-    const parsedMsgs: ParsedTransactionMsg[] = []
+    const parsedMsgs: ParsedTransactionMsg<PT>[] = []
 
     for (const msg of chunk) {
       try {
@@ -52,10 +63,9 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
     await this.emitTransactions(parsedMsgs)
   }
 
-  async parseTransaction(
-    payload: RawTransaction,
-  ): Promise<SolanaParsedTransactionV1> {
-    return this.transactionParser.parse(payload)
+  async parseTransaction(payload: T): Promise<PT> {
+    const parsedTx = await this.transactionParser.parse(payload as any)
+    return parsedTx as unknown as PT
   }
 
   async parseInstruction(
@@ -72,7 +82,7 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
   }
 
   protected async emitTransactions(
-    msgs: ParsedTransactionMsg[],
+    msgs: ParsedTransactionMsg<PT>[],
   ): Promise<void> {
     if (!msgs.length) return
 
@@ -98,12 +108,9 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
   }
 
   protected groupTransactions(
-    msgs: ParsedTransactionMsg[],
-  ): [
-    Record<string, SolanaParsedTransactionV1[]>,
-    SolanaParsedTransactionV1[],
-  ] {
-    const broadcastGroup: SolanaParsedTransactionV1[] = []
+    msgs: ParsedTransactionMsg<PT>[],
+  ): [Record<string, PT[]>, PT[]] {
+    const broadcastGroup: PT[] = []
 
     const groups = msgs.reduce((acc, { tx, peers }) => {
       if (!peers || peers.length === 0) {
@@ -117,7 +124,7 @@ export class ParserMsMain extends MsMainWithEvents implements ParserMsI {
       })
 
       return acc
-    }, {} as Record<string, SolanaParsedTransactionV1[]>)
+    }, {} as Record<string, PT[]>)
 
     return [groups, broadcastGroup]
   }
