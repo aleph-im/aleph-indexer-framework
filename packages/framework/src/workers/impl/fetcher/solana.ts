@@ -13,7 +13,7 @@ import {
   createPendingTransactionFetchDAL,
 } from '../../../services/fetcher/src/base/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/rawTransaction.js'
-import { createSolanaAccountSignatureDAL } from '../../../services/fetcher/src/solana/dal/accountSignature.js'
+import { createSolanaAccountTransactionHistoryDAL } from '../../../services/fetcher/src/solana/dal/accountSignature.js'
 import { createPendingAccountDAL } from '../../../services/fetcher/src/base/dal/account.js'
 import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
 import { SolanaTransactionFetcher } from '../../../services/fetcher/src/solana/transactionFetcher.js'
@@ -28,11 +28,11 @@ export default (
   basePath: string,
 ): BlockchainFetcherI => {
   // DALs
-  const accountSignatureDAL = createSolanaAccountSignatureDAL(basePath)
+  const accountSignatureDAL = createSolanaAccountTransactionHistoryDAL(basePath)
   const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath)
   const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
-  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_transaction_history_pending_account')
-  const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_account_state_pending_account')
+  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
+  const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
 
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     solanaPrivateRPC,

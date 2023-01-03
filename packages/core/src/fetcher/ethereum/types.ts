@@ -54,27 +54,28 @@ export type EthereumBlockFetcherClientI = {
 
 // Signatures
 
-export type EthereumAccountSignatureHistoryPaginationCursor = {
+export type EthereumAccountTransactionHistoryPaginationCursor = {
   height: number
   timestamp: number
   signature: string
 }
 
-export type EthereumSignaturePaginationCursors =
-  BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor>
+export type EthereumTransactionHistoryPaginationCursors =
+  BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
 
-export type EthereumSignaturePaginationResponse = BaseFetcherPaginationResponse<
-  EthereumSignature,
-  EthereumAccountSignatureHistoryPaginationCursor
->
+export type EthereumTransactionHistoryPaginationResponse =
+  BaseFetcherPaginationResponse<
+    EthereumSignature,
+    EthereumAccountTransactionHistoryPaginationCursor
+  >
 
-export type EthereumSignatureFetcherJobRunnerOptions =
-  EthereumFetcherJobRunnerOptions<EthereumSignaturePaginationCursors>
+export type EthereumTransactionHistoryFetcherJobRunnerOptions =
+  EthereumFetcherJobRunnerOptions<EthereumTransactionHistoryPaginationCursors>
 
-export type EthereumSignatureFetcherOptions = {
+export type EthereumTransactionHistoryFetcherOptions = {
   account: string
-  forward?: boolean | EthereumSignatureFetcherJobRunnerOptions
-  backward?: boolean | EthereumSignatureFetcherJobRunnerOptions
+  forward?: boolean | EthereumTransactionHistoryFetcherJobRunnerOptions
+  backward?: boolean | EthereumTransactionHistoryFetcherJobRunnerOptions
   indexSignatures(
     blocks: EthereumSignature[],
     goingForward: boolean,
@@ -88,7 +89,7 @@ export type EthereumFetchSignaturesOptions = {
   maxLimit?: number
 }
 
-export type EthereumSignatureFetcherClientI = {
+export type EthereumTransactionHistoryFetcherClientI = {
   fetchSignatures(args: EthereumFetchSignaturesOptions): Promise<AsyncGenerator>
 }
 

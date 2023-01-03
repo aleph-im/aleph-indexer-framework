@@ -5,10 +5,11 @@ import {
   createEthereumClient,
   config,
   EthereumAccountState,
+  EthereumRawTransaction,
 } from '@aleph-indexer/core'
 import { EthereumFetcher } from '../../../services/fetcher/src/ethereum/fetcher.js'
-import { createEthereumBlockDAL } from '../../../services/fetcher/src/ethereum/dal/block.js'
-import { createEthereumAccountSignatureDAL } from '../../../services/fetcher/src/ethereum/dal/accountSignature.js'
+import { createEthereumBlockDAL as createEthereumRawBlockDAL } from '../../../services/fetcher/src/ethereum/dal/block.js'
+import { createEthereumAccountTransactionHistoryDAL } from '../../../services/fetcher/src/ethereum/dal/accountTransactionHistory.js'
 import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
 import { EthereumTransactionHistoryFetcher } from '../../../services/fetcher/src/ethereum/transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from '../../../services/fetcher/src/ethereum/transactionFetcher.js'
@@ -34,13 +35,17 @@ export default (
   if (!url) throw new Error('ETHEREUM_RPC not configured')
 
   // DALs
-  const blockDAL = createEthereumBlockDAL(basePath)
-  const accountSignatureDAL = createEthereumAccountSignatureDAL(basePath)
+  const rawBlockDAL = createEthereumRawBlockDAL(basePath)
+  const accountSignatureDAL = createEthereumAccountTransactionHistoryDAL(basePath)
   const accountStateDAL = createAccountStateDAL<EthereumAccountState>(basePath)
-  const blockFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_block')
-  const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
-  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_transaction_history_pending_account')
-  const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_account_state_pending_account')
+  const blockFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_block')
+  const transactionHistoryFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
+  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
+  const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
+  const pendingTransactionDAL =  createPendingTransactionDAL(basePath)
+  const pendingTransactionCacheDAL =  createPendingTransactionCacheDAL(basePath)
+  const pendingTransactionFetchDAL =  createPendingTransactionFetchDAL(basePath)
+  const rawTransactionDAL =  createRawTransactionDAL<EthereumRawTransaction>(basePath)
 
   const ethereumClient = createEthereumClient(
     url,
@@ -50,13 +55,13 @@ export default (
 
   const blockFetcher = new EthereumBlockFetcher(
     ethereumClient,
-    blockDAL,
-    blockFetcherStateDAL,
+    rawBlockDAL,
+    blockFetcherHistoryStateDAL,
   )
 
   const transactionHistoryFetcher = new EthereumTransactionHistoryFetcher(
     ethereumClient,
-    transactionHistoryFetcherStateDAL,
+    transactionHistoryFetcherHistoryStateDAL,
     blockFetcher,
     fetcherClient,
     accountSignatureDAL,
@@ -66,10 +71,10 @@ export default (
   const transactionFetcher = new EthereumTransactionFetcher(
     ethereumClient,
     broker,
-    createPendingTransactionDAL(basePath),
-    createPendingTransactionCacheDAL(basePath),
-    createPendingTransactionFetchDAL(basePath),
-    createRawTransactionDAL(basePath),
+    pendingTransactionDAL,
+    pendingTransactionCacheDAL,
+    pendingTransactionFetchDAL,
+    rawTransactionDAL,
   )
 
   const accountStateFetcher = new EthereumAccountStateFetcher(

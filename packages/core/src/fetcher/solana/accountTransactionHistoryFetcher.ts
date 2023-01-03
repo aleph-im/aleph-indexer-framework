@@ -7,8 +7,8 @@ import {
   FetcherJobRunnerHandleFetchResult,
 } from '../base/types.js'
 import {
-  SolanaSignatureFetcherOptions,
-  SolanaAccountSignatureHistoryPaginationCursor,
+  SolanaTransactionHistoryFetcherOptions,
+  SolanaAccountTransactionHistoryPaginationCursor,
 } from './types.js'
 import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { SolanaFetchSignaturesOptions, SolanaRPC } from '../../rpc/index.js'
@@ -17,7 +17,7 @@ import { JobRunnerReturnCode } from '../../utils/index.js'
 /**
  * Handles the fetching and processing of signatures on an account.
  */
-export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<SolanaAccountSignatureHistoryPaginationCursor> {
+export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<SolanaAccountTransactionHistoryPaginationCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
@@ -30,15 +30,15 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<Sol
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    */
   constructor(
-    protected opts: SolanaSignatureFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaAccountSignatureHistoryPaginationCursor>,
+    protected opts: SolanaTransactionHistoryFetcherOptions,
+    protected fetcherStateDAL: FetcherStateLevelStorage<SolanaAccountTransactionHistoryPaginationCursor>,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    const config: BaseFetcherOptions<SolanaAccountSignatureHistoryPaginationCursor> =
+    const config: BaseFetcherOptions<SolanaAccountTransactionHistoryPaginationCursor> =
       {
         id: `solana:account-signature-history:${opts.address}`,
       }
@@ -82,7 +82,7 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<Sol
     firstRun: boolean
     interval: number
   }): Promise<
-    FetcherJobRunnerHandleFetchResult<SolanaAccountSignatureHistoryPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<SolanaAccountTransactionHistoryPaginationCursor>
   > {
     const { address, errorFetching } = this.opts
     const forward =
@@ -132,7 +132,7 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<Sol
     firstRun: boolean
     interval: number
   }): Promise<
-    FetcherJobRunnerHandleFetchResult<SolanaAccountSignatureHistoryPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<SolanaAccountTransactionHistoryPaginationCursor>
   > {
     const { address, errorFetching } = this.opts
     const backward =
@@ -176,13 +176,13 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<Sol
   ): Promise<{
     error?: Error
     count: number
-    lastCursors: BaseFetcherPaginationCursors<SolanaAccountSignatureHistoryPaginationCursor>
+    lastCursors: BaseFetcherPaginationCursors<SolanaAccountTransactionHistoryPaginationCursor>
   }> {
     const { address } = options
 
     let error: undefined | Error
     let count = 0
-    let lastCursors: BaseFetcherPaginationCursors<SolanaAccountSignatureHistoryPaginationCursor> =
+    let lastCursors: BaseFetcherPaginationCursors<SolanaAccountTransactionHistoryPaginationCursor> =
       {}
 
     console.log(`
@@ -273,6 +273,8 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseHistoryFetcher<Sol
 
       sig.accountSlotIndex = sig.accountSlotIndex || {}
       sig.accountSlotIndex[this.opts.address] = offset
+
+      sig.accounts = Object.keys(sig.accountSlotIndex)
 
       return sig
     })

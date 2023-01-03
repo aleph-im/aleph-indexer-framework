@@ -49,17 +49,6 @@ async function main() {
         })
       : localBroker
 
-  const blockchainFetcherMains = await Promise.all(
-    supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(`./impl/fetcher/${blockchainId}.js`)
-      const factory = module.default
-      const fetcherBasePath = path.join(basePath, blockchainId)
-
-      const fetcher = factory(broker, fetcherBasePath)
-      return [blockchainId, fetcher]
-    }),
-  )
-
   const blockchainFetcherClients = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {
       const module = await import(
@@ -73,6 +62,17 @@ async function main() {
   const fetcherMsClient = new FetcherMsClient(
     broker,
     Object.fromEntries(blockchainFetcherClients),
+  )
+
+  const blockchainFetcherMains = await Promise.all(
+    supportedBlockchains.map(async (blockchainId) => {
+      const module = await import(`./impl/fetcher/${blockchainId}.js`)
+      const factory = module.default
+      const fetcherBasePath = path.join(basePath, blockchainId)
+
+      const fetcher = factory(broker, fetcherMsClient, fetcherBasePath)
+      return [blockchainId, fetcher]
+    }),
   )
 
   const fetcherServiceMain = new FetcherMsMain(

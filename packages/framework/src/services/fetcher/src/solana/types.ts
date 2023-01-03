@@ -1,4 +1,4 @@
-import { SolanaAccountSignatureHistoryPaginationCursor } from '@aleph-indexer/core'
+import { SolanaAccountTransactionHistoryPaginationCursor } from '@aleph-indexer/core'
 import {
   AccountTransactionHistoryState,
   FetcherAccountPartitionRequestArgs,
@@ -6,7 +6,7 @@ import {
 } from '../base/types'
 
 export type SolanaAccountTransactionHistoryState =
-  AccountTransactionHistoryState<SolanaAccountSignatureHistoryPaginationCursor> & {
+  AccountTransactionHistoryState<SolanaAccountTransactionHistoryPaginationCursor> & {
     firstSlot?: number
     lastSlot?: number
   }

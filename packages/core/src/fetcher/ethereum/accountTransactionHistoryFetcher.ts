@@ -8,8 +8,8 @@ import {
 } from '../base/types.js'
 import {
   EthereumFetchSignaturesOptions,
-  EthereumSignatureFetcherOptions,
-  EthereumAccountSignatureHistoryPaginationCursor,
+  EthereumTransactionHistoryFetcherOptions,
+  EthereumAccountTransactionHistoryPaginationCursor,
 } from './types.js'
 import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { EthereumClient } from '../../rpc/index.js'
@@ -18,7 +18,7 @@ import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
 /**
  * Handles the fetching and processing of signatures on an account.
  */
-export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<EthereumAccountSignatureHistoryPaginationCursor> {
+export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher<EthereumAccountTransactionHistoryPaginationCursor> {
   protected forwardAutoInterval = false
   protected forwardRatio = 0
   protected forwardRatioThreshold = 0
@@ -31,15 +31,15 @@ export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<E
    * @param ethereumBlockFetcher The ethereum client
    */
   constructor(
-    protected opts: EthereumSignatureFetcherOptions,
-    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountSignatureHistoryPaginationCursor>,
+    protected opts: EthereumTransactionHistoryFetcherOptions,
+    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountTransactionHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected ethereumBlockFetcher: EthereumBlockHistoryFetcher,
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
-    const config: BaseFetcherOptions<EthereumAccountSignatureHistoryPaginationCursor> =
+    const config: BaseFetcherOptions<EthereumAccountTransactionHistoryPaginationCursor> =
       {
         id: `ethereum:account-signature-history:${opts.account}`,
       }
@@ -69,7 +69,7 @@ export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<E
   }
 
   protected async fetchForward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumAccountSignatureHistoryPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumAccountTransactionHistoryPaginationCursor>
   > {
     const { account } = this.opts
 
@@ -89,7 +89,7 @@ export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<E
   }
 
   protected async fetchBackward(): Promise<
-    FetcherJobRunnerHandleFetchResult<EthereumAccountSignatureHistoryPaginationCursor>
+    FetcherJobRunnerHandleFetchResult<EthereumAccountTransactionHistoryPaginationCursor>
   > {
     const { account } = this.opts
 
@@ -114,13 +114,13 @@ export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<E
   ): Promise<{
     error?: Error
     count: number
-    lastCursors: BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor>
+    lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
   }> {
     const { account } = options
 
     let error: undefined | Error
     let count = 0
-    let lastCursors: BaseFetcherPaginationCursors<EthereumAccountSignatureHistoryPaginationCursor> =
+    let lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor> =
       {}
 
     console.log(`
@@ -152,7 +152,7 @@ export class EthereumAccountSignatureHistoryFetcher extends BaseHistoryFetcher<E
   }
 
   protected async checkCompleteBackward(ctx: {
-    fetcherState: BaseFetcherState<EthereumAccountSignatureHistoryPaginationCursor>
+    fetcherState: BaseFetcherState<EthereumAccountTransactionHistoryPaginationCursor>
     jobState: BaseFetcherJobState
     newItems: boolean
     error?: Error

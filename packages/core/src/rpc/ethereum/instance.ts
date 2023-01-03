@@ -1,10 +1,10 @@
 import { EthereumClient } from './client.js'
-import { EthereumAccountSignatureStorage } from './dal.js'
+import { EthereumAccountTransactionHistoryStorage } from './dal.js'
 
 export function createEthereumClient(
   url: string,
   dbPath: string,
-  accountSignatureDAL: EthereumAccountSignatureStorage,
+  accountSignatureDAL: EthereumAccountTransactionHistoryStorage,
 ): EthereumClient {
   return new EthereumClient({ url, dbPath }, accountSignatureDAL)
 }

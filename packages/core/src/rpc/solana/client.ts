@@ -25,7 +25,7 @@ import {
 import { Connection } from './connection.js'
 import { config } from '../../config.js'
 
-import { SolanaSignaturePaginationResponse } from '../../fetcher/index.js'
+import { SolanaTransactionHistoryPaginationResponse } from '../../fetcher/index.js'
 import {
   AlephParsedTransaction,
   SolanaRawTransaction,
@@ -262,7 +262,7 @@ export class SolanaRPC {
     maxLimit = 1000,
     errorFetching = SolanaErrorFetching.SkipErrors,
     signatureBlacklist,
-  }: SolanaFetchSignaturesOptions): AsyncGenerator<SolanaSignaturePaginationResponse> {
+  }: SolanaFetchSignaturesOptions): AsyncGenerator<SolanaTransactionHistoryPaginationResponse> {
     const addressPubkey = new PublicKey(address)
     let firstKey
     let lastKey

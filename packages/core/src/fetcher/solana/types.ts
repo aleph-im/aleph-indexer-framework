@@ -6,7 +6,7 @@ import {
   BaseFetcherPaginationResponse,
 } from '../base/index.js'
 
-export type SolanaAccountSignatureHistoryPaginationCursor = {
+export type SolanaAccountTransactionHistoryPaginationCursor = {
   signature?: string
   slot?: number
   timestamp?: number
@@ -19,33 +19,34 @@ export type SolanaSignature = Omit<
   'memo' | 'confirmationStatus'
 > & {
   accountSlotIndex: Record<string, number>
+  accounts: string[]
 }
 
 // --------------------------
 
-export type SolanaSignatureFetcherJobRunnerOptions = Omit<
-  BaseFetcherJobRunnerOptions<SolanaAccountSignatureHistoryPaginationCursor>,
+export type SolanaTransactionHistoryFetcherJobRunnerOptions = Omit<
+  BaseFetcherJobRunnerOptions<SolanaAccountTransactionHistoryPaginationCursor>,
   'handleFetch' | 'updateCursor' | 'interval'
 > & {
   interval?: number
   iterationFetchLimit?: number
 }
 
-export type SolanaSignatureFetcherForwardJobRunnerOptions =
-  SolanaSignatureFetcherJobRunnerOptions & {
+export type SolanaTransactionHistoryFetcherForwardJobRunnerOptions =
+  SolanaTransactionHistoryFetcherJobRunnerOptions & {
     ratio?: number
     ratioThreshold?: number
   }
 
-export type SolanaSignatureFetcherBackwardJobRunnerOptions =
-  SolanaSignatureFetcherJobRunnerOptions & {
+export type SolanaTransactionHistoryFetcherBackwardJobRunnerOptions =
+  SolanaTransactionHistoryFetcherJobRunnerOptions & {
     fetchUntil?: string
   }
 
-export type SolanaSignatureFetcherOptions = {
+export type SolanaTransactionHistoryFetcherOptions = {
   address: string
-  forward?: boolean | SolanaSignatureFetcherForwardJobRunnerOptions
-  backward?: boolean | SolanaSignatureFetcherBackwardJobRunnerOptions
+  forward?: boolean | SolanaTransactionHistoryFetcherForwardJobRunnerOptions
+  backward?: boolean | SolanaTransactionHistoryFetcherBackwardJobRunnerOptions
   errorFetching?: SolanaErrorFetching
   indexSignatures(
     signatures: SolanaSignature[],
@@ -53,10 +54,11 @@ export type SolanaSignatureFetcherOptions = {
   ): Promise<void>
 }
 
-export type SolanaSignaturePaginationResponse = BaseFetcherPaginationResponse<
-  SolanaSignatureInfo,
-  SolanaAccountSignatureHistoryPaginationCursor
->
+export type SolanaTransactionHistoryPaginationResponse =
+  BaseFetcherPaginationResponse<
+    SolanaSignatureInfo,
+    SolanaAccountTransactionHistoryPaginationCursor
+  >
 
 // Account State
 

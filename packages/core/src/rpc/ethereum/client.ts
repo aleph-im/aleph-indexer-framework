@@ -3,7 +3,7 @@ import {
   EthereumBlockPaginationResponse,
   EthereumFetchBlocksOptions,
   EthereumFetchSignaturesOptions,
-  EthereumSignaturePaginationResponse,
+  EthereumTransactionHistoryPaginationResponse,
 } from '../../fetcher/ethereum/index.js'
 import {
   EthereumBlock,
@@ -11,8 +11,8 @@ import {
   EthereumSignature,
 } from '../../types/ethereum.js'
 import {
-  EthereumAccountSignatureDALIndex,
-  EthereumAccountSignatureStorage,
+  EthereumAccountTransactionHistoryDALIndex,
+  EthereumAccountTransactionHistoryStorage,
 } from './dal.js'
 
 // Common
@@ -61,7 +61,7 @@ export class EthereumClient {
 
   constructor(
     protected options: EthereumClientOptions,
-    protected accountSignatureDAL: EthereumAccountSignatureStorage,
+    protected accountSignatureDAL: EthereumAccountTransactionHistoryStorage,
   ) {
     this.sdk = new Web3(options.url)
   }
@@ -159,7 +159,7 @@ export class EthereumClient {
 
   async *fetchSignatures(
     args: EthereumFetchSignaturesOptions,
-  ): AsyncGenerator<EthereumSignaturePaginationResponse> {
+  ): AsyncGenerator<EthereumTransactionHistoryPaginationResponse> {
     let firstKey
     let lastKey
 
@@ -296,7 +296,7 @@ export class EthereumClient {
     const chunk = []
 
     const signatures = await this.accountSignatureDAL
-      .useIndex(EthereumAccountSignatureDALIndex.AccountHeightIndex)
+      .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
       .getAllValuesFromTo([account, before], [account, until], {
         atomic: true,
         limit,

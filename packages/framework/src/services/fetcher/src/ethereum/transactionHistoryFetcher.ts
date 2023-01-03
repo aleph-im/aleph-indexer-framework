@@ -1,6 +1,7 @@
 import {
   FetcherStateLevelStorage,
-  EthereumAccountSignatureHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryStorage,
   Blockchain,
   EthereumClient,
   EthereumSignature,
@@ -9,14 +10,13 @@ import {
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
 import { GetAccountTransactionStateRequestArgs } from '../base/types.js'
 import { EthereumAccountTransactionHistoryState } from './types.js'
-import { EthereumAccountSignatureHistoryFetcher } from './accountSignatureHistoryFetcher.js'
+import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { PendingAccountStorage } from '../base/dal/account.js'
 import { FetcherMsClient } from '../../client.js'
-import { EthereumAccountSignatureStorage } from '../ethereum/dal/accountSignature.js'
 import { EthereumBlockFetcher } from './blockFetcher.js'
 
 export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFetcher<
-  EthereumAccountSignatureHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryPaginationCursor,
   EthereumSignature
 > {
   /**
@@ -30,7 +30,7 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
     protected blockFetcher: EthereumBlockFetcher,
     ...args: [
       FetcherMsClient,
-      EthereumAccountSignatureStorage,
+      EthereumAccountTransactionHistoryStorage,
       PendingAccountStorage,
     ]
   ) {
@@ -68,8 +68,8 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
 
   protected getAccountFetcher(
     account: string,
-  ): EthereumAccountSignatureHistoryFetcher {
-    return new EthereumAccountSignatureHistoryFetcher(
+  ): EthereumAccountTransactionHistoryFetcher {
+    return new EthereumAccountTransactionHistoryFetcher(
       account,
       this.fetcherStateDAL,
       this.ethereumClient,

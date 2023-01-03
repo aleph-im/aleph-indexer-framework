@@ -1,18 +1,18 @@
 import {
-  SolanaAccountSignatureHistoryFetcher as BaseFetcher,
+  SolanaAccountTransactionHistoryFetcher as BaseFetcher,
   SolanaRPC,
   FetcherStateLevelStorage,
   SolanaSignature,
 } from '@aleph-indexer/core'
 import {
-  SolanaAccountSignatureDALIndex,
-  SolanaAccountSignatureStorage,
+  SolanaAccountTransactionHistoryDALIndex,
+  SolanaAccountTransactionHistoryStorage,
 } from './dal/accountSignature.js'
 
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
  */
-export class SolanaAccountSignatureHistoryFetcher extends BaseFetcher {
+export class SolanaAccountTransactionHistoryFetcher extends BaseFetcher {
   /**
    * Initializes the signature fetcher.
    * @param address The account address to fetch related signatures for.
@@ -23,7 +23,7 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseFetcher {
    */
   constructor(
     protected address: string,
-    protected dal: SolanaAccountSignatureStorage,
+    protected dal: SolanaAccountTransactionHistoryStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
@@ -60,7 +60,7 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseFetcher {
     // @note: Reset the fetcher state accordingly with the restored signatures
     if (isRestored) {
       const firstItem = await this.dal
-        .useIndex(SolanaAccountSignatureDALIndex.AccountTimestampIndex)
+        .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountTimestampIndex)
         .getFirstValueFromTo([this.address], [this.address])
 
       if (firstItem) {
@@ -82,7 +82,7 @@ export class SolanaAccountSignatureHistoryFetcher extends BaseFetcher {
       }
 
       const lastItem = await this.dal
-        .useIndex(SolanaAccountSignatureDALIndex.AccountTimestampIndex)
+        .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountTimestampIndex)
         .getLastValueFromTo([this.address], [this.address])
 
       if (lastItem) {

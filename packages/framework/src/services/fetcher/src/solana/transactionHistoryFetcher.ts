@@ -3,7 +3,7 @@ import {
   FetcherStateLevelStorage,
   SolanaSignatureInfo,
   SolanaRPC,
-  SolanaAccountSignatureHistoryPaginationCursor,
+  SolanaAccountTransactionHistoryPaginationCursor,
   StorageEntry,
   Utils,
   Blockchain,
@@ -11,8 +11,8 @@ import {
 } from '@aleph-indexer/core'
 
 import {
-  SolanaAccountSignatureDALIndex,
-  SolanaAccountSignatureStorage,
+  SolanaAccountTransactionHistoryDALIndex,
+  SolanaAccountTransactionHistoryStorage,
 } from './dal/accountSignature.js'
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
 import { GetAccountTransactionStateRequestArgs } from '../base/types.js'
@@ -20,14 +20,14 @@ import {
   FetchAccountTransactionsBySlotRequestArgs,
   SolanaAccountTransactionHistoryState,
 } from './types.js'
-import { SolanaAccountSignatureHistoryFetcher } from './accountSignatureHistoryFetcher.js'
+import { SolanaAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { PendingAccountStorage } from '../base/dal/account.js'
 import { FetcherMsClient } from '../../client.js'
 
 const { StreamBuffer, StreamMap } = Utils
 
 export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetcher<
-  SolanaAccountSignatureHistoryPaginationCursor,
+  SolanaAccountTransactionHistoryPaginationCursor,
   SolanaSignature
 > {
   /**
@@ -42,7 +42,7 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
     protected fetcherStateDAL: FetcherStateLevelStorage,
     ...args: [
       FetcherMsClient,
-      SolanaAccountSignatureStorage,
+      SolanaAccountTransactionHistoryStorage,
       PendingAccountStorage,
     ]
   ) {
@@ -76,7 +76,7 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
     if (!inRange) return
 
     const signaturesQuery = await this.accountSignatureDAL
-      .useIndex(SolanaAccountSignatureDALIndex.AccountSlotIndex)
+      .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountSlotIndex)
       .getAllFromTo([account, startSlot], [account, endSlot], {
         reverse: false,
       })
@@ -130,8 +130,8 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
 
   protected getAccountFetcher(
     account: string,
-  ): SolanaAccountSignatureHistoryFetcher {
-    return new SolanaAccountSignatureHistoryFetcher(
+  ): SolanaAccountTransactionHistoryFetcher {
+    return new SolanaAccountTransactionHistoryFetcher(
       account,
       this.accountSignatureDAL,
       this.solanaRpc,

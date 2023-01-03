@@ -1,5 +1,5 @@
 import { EthereumRawTransaction } from '../../types'
-import { ParsedTransactionContextV1 } from '../base'
+import { ParsedTransactionContextV1 } from '../base/index.js'
 
 export type EthereumParsedTransactionV1 = EthereumRawTransaction
 

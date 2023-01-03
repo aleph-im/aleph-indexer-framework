@@ -1,5 +1,5 @@
 import {
-  EthereumAccountSignatureHistoryFetcher as BaseFetcher,
+  EthereumAccountTransactionHistoryFetcher as BaseFetcher,
   FetcherStateLevelStorage,
   EthereumSignature,
   EthereumBlockHistoryFetcher,
@@ -9,7 +9,7 @@ import {
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
  */
-export class EthereumAccountSignatureHistoryFetcher extends BaseFetcher {
+export class EthereumAccountTransactionHistoryFetcher extends BaseFetcher {
   /**
    * Initializes the signature fetcher.
    * @param account The account account to fetch related signatures for.

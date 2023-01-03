@@ -1,5 +1,5 @@
 import { BlockTransactionObject, Transaction } from 'web3-eth'
-import { RawTransaction } from './common'
+import { RawTransaction } from './common.js'
 
 export type EthereumBlock = BlockTransactionObject
 

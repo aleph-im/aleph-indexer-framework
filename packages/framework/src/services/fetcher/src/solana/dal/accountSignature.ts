@@ -4,14 +4,14 @@ import {
   SolanaSignature,
 } from '@aleph-indexer/core'
 import {
-  AccountSignatureDALIndex,
-  AccountSignatureStorage,
-} from '../../base/dal/accountSignature'
+  AccountTransactionHistoryDALIndex,
+  AccountTransactionHistoryStorage,
+} from '../../base/dal/accountTransactionHistory'
 
-export type SolanaAccountSignatureStorage =
-  AccountSignatureStorage<SolanaSignature>
+export type SolanaAccountTransactionHistoryStorage =
+  AccountTransactionHistoryStorage<SolanaSignature>
 
-export enum SolanaAccountSignatureDALIndex {
+export enum SolanaAccountTransactionHistoryDALIndex {
   AccountTimestampIndex = 'account_timestamp_index',
   AccountSlotIndex = 'account_slot_index',
 }
@@ -22,7 +22,7 @@ const signatureKey = {
 }
 
 const accountKey = {
-  get: (e: SolanaSignature) => Object.keys(e.accountSlotIndex),
+  get: (e: SolanaSignature) => e.accounts,
   length: EntityStorage.AddressLength,
 }
 
@@ -48,20 +48,20 @@ const indexKey = {
  * Creates a new signature storage for the fetcher.
  * @param path Path to the database.
  */
-export function createSolanaAccountSignatureDAL(
+export function createSolanaAccountTransactionHistoryDAL(
   path: string,
-): SolanaAccountSignatureStorage {
+): SolanaAccountTransactionHistoryStorage {
   return new EntityStorage<SolanaSignature>({
-    name: 'fetcher_account_signature',
+    name: 'fetcher_account_transaction_history',
     path,
     key: [signatureKey],
     indexes: [
       {
-        name: AccountSignatureDALIndex.AccountTimestampIndex,
+        name: AccountTransactionHistoryDALIndex.AccountTimestampIndex,
         key: [accountKey, timestampKey, indexKey],
       },
       {
-        name: SolanaAccountSignatureDALIndex.AccountSlotIndex,
+        name: SolanaAccountTransactionHistoryDALIndex.AccountSlotIndex,
         key: [accountKey, slotKey, indexKey],
       },
     ],
@@ -74,6 +74,8 @@ export function createSolanaAccountSignatureDAL(
           ...oldEntity.accountSlotIndex,
           ...newEntity.accountSlotIndex,
         }
+
+        newEntity.accounts = Object.keys(newEntity.accountSlotIndex)
       }
 
       return EntityUpdateOp.Update

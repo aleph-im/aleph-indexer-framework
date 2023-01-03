@@ -19,10 +19,10 @@ import {
 import { FetcherMsClient } from '../../client.js'
 import { PendingAccountStorage } from './dal/account.js'
 import {
-  AccountSignatureDALIndex,
-  AccountSignatureStorage,
-  AccountSignatureStorageEntity,
-} from './dal/accountSignature.js'
+  AccountTransactionHistoryDALIndex,
+  AccountTransactionHistoryStorage,
+  AccountTransactionHistoryStorageEntity,
+} from './dal/accountTransactionHistory.js'
 
 const { StreamBuffer, StreamMap } = Utils
 
@@ -31,7 +31,7 @@ const { StreamBuffer, StreamMap } = Utils
  */
 export abstract class BaseTransactionHistoryFetcher<
   C,
-  S extends AccountSignatureStorageEntity,
+  S extends AccountTransactionHistoryStorageEntity,
 > {
   protected pendingAccounts: PendingWorkPool<string[]>
 
@@ -45,7 +45,7 @@ export abstract class BaseTransactionHistoryFetcher<
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherClient: FetcherMsClient,
-    protected accountSignatureDAL: AccountSignatureStorage<S>,
+    protected accountSignatureDAL: AccountTransactionHistoryStorage<S>,
     protected accountDAL: PendingAccountStorage,
   ) {
     this.pendingAccounts = new PendingWorkPool({
@@ -139,7 +139,7 @@ export abstract class BaseTransactionHistoryFetcher<
     if (!inRange) return
 
     const signaturesQuery = await this.accountSignatureDAL
-      .useIndex(AccountSignatureDALIndex.AccountTimestampIndex)
+      .useIndex(AccountTransactionHistoryDALIndex.AccountTimestampIndex)
       .getAllFromTo([account, startDate], [account, endDate], {
         reverse: false,
       })

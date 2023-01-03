@@ -131,7 +131,23 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     error?: Error
   }): Promise<boolean> {
     const { fetcherState, error } = ctx
-    const lastHeight = fetcherState?.cursors?.backward?.height
+    const lastHeight = Number(fetcherState?.cursors?.backward?.height)
+    const firstHeight = Number(fetcherState?.cursors?.forward?.height)
+
+    const progress = Number(
+      firstHeight > 0 ? (firstHeight - lastHeight) / firstHeight : 0,
+    ).toFixed(4)
+
+    // @note: average of 20sec per chunk of 1000 items
+    // Duration.fromMillis((firstHeight / 1000) * 20 * 1000).toISOTime() || '+24h'
+    const eTime = Number((firstHeight / 1000) * (20 / 3600)).toFixed(2)
+
+    console.log(`${this.options.id} progress {
+      lastHeight: ${lastHeight}
+      firstHeight: ${firstHeight}
+      progress: ${progress}%
+      estimated time: ${eTime}h
+    }`)
 
     return !error && lastHeight === 0
   }

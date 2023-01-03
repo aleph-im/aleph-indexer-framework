@@ -3,7 +3,7 @@ import {
   SolanaParsedInstructionV1,
   SolanaParsedTransactionV1,
 } from '../../types'
-import { ParsedTransactionContextV1 } from '../base'
+import { ParsedTransactionContextV1 } from '../base/index.js'
 
 export type SolanaParsedTransactionContextV1 =
   ParsedTransactionContextV1<SolanaParsedTransactionV1>
