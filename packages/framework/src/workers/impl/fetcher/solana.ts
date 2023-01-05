@@ -13,7 +13,7 @@ import {
   createPendingTransactionFetchDAL,
 } from '../../../services/fetcher/src/base/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/rawTransaction.js'
-import { createSolanaAccountTransactionHistoryDAL } from '../../../services/fetcher/src/solana/dal/accountSignature.js'
+import { createSolanaAccountTransactionHistoryDAL } from '../../../services/fetcher/src/solana/dal/accountTransactionHistory.js'
 import { createPendingAccountDAL } from '../../../services/fetcher/src/base/dal/account.js'
 import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
 import { SolanaTransactionFetcher } from '../../../services/fetcher/src/solana/transactionFetcher.js'

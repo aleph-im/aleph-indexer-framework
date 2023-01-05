@@ -6,7 +6,7 @@ import {
 import {
   AccountTransactionHistoryDALIndex,
   AccountTransactionHistoryStorage,
-} from '../../base/dal/accountTransactionHistory'
+} from '../../base/dal/accountTransactionHistory.js'
 
 export type SolanaAccountTransactionHistoryStorage =
   AccountTransactionHistoryStorage<SolanaSignature>

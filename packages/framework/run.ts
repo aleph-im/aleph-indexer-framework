@@ -2,8 +2,8 @@ import SDK, { TransportType } from './index.js'
 
 async function main() {
   const services = (
-    process.env['INDEXER_FRAMEWORK_SERVICES'] || 'fetcher parser'
-  ).split(' ')
+    process.env['INDEXER_FRAMEWORK_SERVICES'] || 'fetcher,parser'
+  ).split(',')
   const instances = Number(process.env['INDEXER_FRAMEWORK_INSTANCES'] || 1)
   const apiPort = Number(process.env['INDEXER_FRAMEWORK_API_PORT'] || 8080)
   const tcpUrls = process.env['INDEXER_FRAMEWORK_TCP_URLS'] || undefined

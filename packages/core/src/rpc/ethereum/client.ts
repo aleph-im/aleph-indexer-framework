@@ -242,7 +242,7 @@ export class EthereumClient {
     before,
     until,
     limit,
-    retries = 1,
+    retries = 2,
   }: EthereumBlocksChunkOptions): Promise<EthereumBlocksChunkResponse> {
     const size = Math.min(limit, Math.max(before - (until + 1), 0))
     const cursor = before - 1

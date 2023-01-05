@@ -13,7 +13,7 @@ import {
 import {
   SolanaAccountTransactionHistoryDALIndex,
   SolanaAccountTransactionHistoryStorage,
-} from './dal/accountSignature.js'
+} from './dal/accountTransactionHistory.js'
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
 import { GetAccountTransactionStateRequestArgs } from '../base/types.js'
 import {

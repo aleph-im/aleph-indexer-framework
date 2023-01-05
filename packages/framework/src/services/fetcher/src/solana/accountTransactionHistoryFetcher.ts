@@ -7,7 +7,7 @@ import {
 import {
   SolanaAccountTransactionHistoryDALIndex,
   SolanaAccountTransactionHistoryStorage,
-} from './dal/accountSignature.js'
+} from './dal/accountTransactionHistory.js'
 
 /**
  * Fetches signatures for a given account. Needs to be initialized and started with init() and run() respectively.
