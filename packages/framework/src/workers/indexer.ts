@@ -4,19 +4,17 @@
 import path from 'path'
 import { workerData } from 'worker_threads'
 import { MsIds } from '../services/common.js'
-import { FetcherMsClient } from '../services/fetcher/index.js'
-import { IndexerMs, IndexerMsMain } from '../services/indexer/index.js'
-import { createTransactionIndexerStateDAL } from '../services/indexer/src/dal/transactionIndexerState.js'
-import { createTransactionRequestDAL } from '../services/indexer/src/dal/transactionRequest.js'
-import { createTransactionRequestIncomingTransactionDAL } from '../services/indexer/src/dal/transactionRequestIncomingTransaction.js'
-import { createTransactionRequestPendingSignatureDAL } from '../services/indexer/src/dal/transactionRequestPendingSignature.js'
-import { createTransactionRequestResponseDAL } from '../services/indexer/src/dal/transactionRequestResponse.js'
-import { IndexerDomainContext } from '../services/indexer/src/types.js'
-import { TransactionFetcher } from '../services/indexer/src/utils/transactionFetcher.js'
+import { IndexerMs } from '../services/indexer/index.js'
+import { IndexerDomainContext } from '../services/indexer/src/base/types.js'
 import { ParserMsClient } from '../services/parser/client.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
+import {
+  createFetcherMsClient,
+  createIndexerMsClient,
+  createIndexerMsMain,
+} from './common.js'
 
 initThreadContext()
 
@@ -31,7 +29,7 @@ async function main() {
     supportedBlockchains,
   } = workerData as Required<WorkerInfo>
 
-  const dataPath = path.join(workerData.dataPath, name)
+  const basePath = path.join(workerData.dataPath, name)
 
   const localBroker = getMoleculerBroker(name, TransportType.Thread, {
     channels,
@@ -45,53 +43,41 @@ async function main() {
         })
       : localBroker
 
-  const blockchainFetcherClients = await Promise.all(
-    supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(
-        `../services/fetcher/src/${blockchainId}/client.js`
-      )
-      const clazz = module.default
-      return [blockchainId, new clazz(blockchainId, broker)]
-    }),
-  )
-
-  const fetcherMsClient = new FetcherMsClient(
-    broker,
-    Object.fromEntries(blockchainFetcherClients),
-  )
-
   const parserMsClient = new ParserMsClient(broker, true, {
     group: name,
   })
 
-  const transactionFetcher = new TransactionFetcher(
-    fetcherMsClient,
-    createTransactionRequestDAL(dataPath),
-    createTransactionRequestIncomingTransactionDAL(dataPath),
-    createTransactionRequestPendingSignatureDAL(dataPath),
-    createTransactionRequestResponseDAL(dataPath),
+  const fetcherMsClient = await createFetcherMsClient(
+    supportedBlockchains,
+    broker,
   )
 
-  const indexerMain = new IndexerMsMain(
+  const indexerMsClient = await createIndexerMsClient(
+    supportedBlockchains,
     localBroker,
-    fetcherMsClient,
-    parserMsClient,
-    createTransactionIndexerStateDAL(dataPath),
-    transactionFetcher,
   )
 
   const DomainClass = (await import(domainPath)).default
   const domain = new DomainClass({
     instanceName: name,
-    apiClient: indexerMain,
-    dataPath,
+    apiClient: indexerMsClient,
+    dataPath: basePath,
     projectId,
     supportedBlockchains,
     transport,
   } as IndexerDomainContext)
-  ;(indexerMain as any).domain = domain
 
-  IndexerMs.mainFactory = () => indexerMain
+  const indexerMsMain = await createIndexerMsMain(
+    supportedBlockchains,
+    basePath,
+    domain,
+    indexerMsClient,
+    fetcherMsClient,
+    parserMsClient,
+  )
+
+  IndexerMs.mainFactory = () => indexerMsMain
+
   localBroker.createService(IndexerMs)
 
   await broker.start()

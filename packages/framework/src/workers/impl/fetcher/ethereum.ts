@@ -26,9 +26,9 @@ import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
 
 export default (
+  basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
-  basePath: string,
 ): BlockchainFetcherI => {
   const url = config.ETHEREUM_RPC
 
@@ -84,7 +84,7 @@ export default (
   )
 
   return new EthereumFetcher(
-    broker,
+    fetcherClient,
     transactionHistoryFetcher,
     transactionFetcher,
     accountStateFetcher,

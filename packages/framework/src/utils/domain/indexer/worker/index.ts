@@ -4,7 +4,7 @@ import {
   IndexerDomainContext,
   IndexerWorkerDomainI,
   TransactionDateRangeResponse,
-} from '../../../../services/indexer/src/types.js'
+} from '../../../../services/indexer/src/base/types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,

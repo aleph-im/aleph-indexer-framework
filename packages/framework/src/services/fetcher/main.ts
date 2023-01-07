@@ -13,13 +13,13 @@ import {
   DelAccountStateRequestArgs,
   GetAccountStateStateRequestArgs,
   AccountStateState,
-  InvokeBlockchainMethodRequestArgs,
   CheckTransactionsRequestArgs,
   TransactionState,
   DelTransactionsRequestArgs,
   FetcherStateRequestArgs,
 } from './src/base/types.js'
 import { FetcherMsClient } from './client.js'
+import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 
 /**
  * The main class of the fetcher service.
@@ -60,7 +60,6 @@ export class FetcherMsMain implements FetcherMsI {
     )
   }
 
-  // @todo: Make the Main class moleculer-agnostic by DI
   getAllFetchers(): string[] {
     return this.fetcherClient.getAllFetchers()
   }
@@ -187,7 +186,6 @@ export class FetcherMsMain implements FetcherMsI {
     return fetcher
   }
 
-  // @todo: Make the Main class moleculer-agnostic by DI
   protected getFetcherId(): string {
     return this.fetcherClient.getNodeId()
   }

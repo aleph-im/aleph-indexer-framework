@@ -6,13 +6,13 @@ import {
   TransactionIndexerStateDALIndex,
   TransactionIndexerStateCode,
   TransactionIndexerStateStorage,
-} from '../dal/transactionIndexerState.js'
+} from './dal/transactionIndexerState.js'
 import {
   AccountIndexerState,
-  AccountTransactionsIndexerArgs,
+  AccountIndexerTransactionRequestArgs,
   AccountDateRange,
   TransactionIndexerHandler,
-} from '../types.js'
+} from './types.js'
 import {
   clipDateRangesFromIterable,
   DateRange,
@@ -29,7 +29,7 @@ export class AccountTransactionIndexer {
   protected txResponseHandler: (requestNonce: number) => Promise<void>
 
   constructor(
-    protected config: AccountTransactionsIndexerArgs,
+    protected config: AccountIndexerTransactionRequestArgs,
     protected handler: TransactionIndexerHandler,
     protected fetcherMsClient: FetcherMsClient,
     protected transactionFetcher: TransactionFetcher,

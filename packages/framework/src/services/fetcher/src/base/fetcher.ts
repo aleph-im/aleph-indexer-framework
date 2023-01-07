@@ -1,4 +1,3 @@
-import { ServiceBroker } from 'moleculer'
 import { Blockchain } from '@aleph-indexer/core'
 import {
   AddAccountStateRequestArgs,
@@ -20,6 +19,7 @@ import {
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
 import { BaseTransactionFetcher } from '../base/transactionFetcher.js'
 import { BaseStateFetcher } from './stateFetcher.js'
+import { FetcherMsClient } from '../../client.js'
 
 /**
  * The main class of the fetcher service.
@@ -28,14 +28,14 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   /**
    * Initialize the fetcher service.
    * @param blockchainId The blockchain identifier.
-   * @param broker The moleculer broker to assign to the service.
+   * @param fetcherClient Allows communication with the sibling fetcher instances.
    * @param transactionHistoryFetcher It handles the account transactions tracking
    * @param transactionFetcher It handles transaction fetching by signatures
    * @param accountStateFetcher It handles the account state tracking
    */
   constructor(
     protected blockchainId: Blockchain,
-    protected broker: ServiceBroker,
+    protected fetcherClient: FetcherMsClient,
     protected transactionHistoryFetcher: BaseTransactionHistoryFetcher<
       any,
       any
@@ -86,7 +86,7 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   }
 
   async getFetcherState({
-    fetcher = this.broker.nodeID,
+    fetcher = this.fetcherClient.getNodeId(),
   }: FetcherStateRequestArgs): Promise<FetcherState> {
     const transactionFetcherState = await this.transactionFetcher.getState()
     const accountFetchers = await this.transactionHistoryFetcher.getState()

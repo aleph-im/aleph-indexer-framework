@@ -1,5 +1,5 @@
 import { Interval } from 'luxon'
-import { StorageValueStream } from '@aleph-indexer/core'
+import { Blockchain, StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
@@ -50,6 +50,7 @@ export type TimeSeriesStatsConfig<I, O> = {
 }
 
 export type AccountTimeSeriesStatsConfig<V> = {
+  blockchainId: Blockchain
   account: string
   series: TimeSeriesStats<any, any>[]
   aggregate?: (args: AccountAggregatorFnArgs) => Promise<V>

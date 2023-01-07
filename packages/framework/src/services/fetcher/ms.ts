@@ -15,8 +15,8 @@ import {
   AccountTransactionHistoryState,
   AccountStateState,
   DelAccountStateRequestArgs,
-  InvokeBlockchainMethodRequestArgs,
 } from './src/base/types.js'
+import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main fetcher service through the broker.

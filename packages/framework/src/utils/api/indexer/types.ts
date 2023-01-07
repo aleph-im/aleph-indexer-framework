@@ -16,7 +16,7 @@ import {
 import { GraphQLJSONObject } from '@aleph-indexer/core'
 import { TimeFrame as TF } from '../../time.js'
 import { TimeInfo } from '../types.js'
-import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
+import { TransactionRequestType as TRT } from '../../../services/indexer/src/base/dal/transactionRequest.js'
 
 // State
 

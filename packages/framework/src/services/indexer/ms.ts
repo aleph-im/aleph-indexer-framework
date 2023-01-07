@@ -6,9 +6,9 @@ import {
   GetAccountIndexingStateRequestArgs,
   InvokeMethodRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
-} from './src/types.js'
+} from './src/base/types.js'
 import { IndexerMsMain } from './main.js'
-import { TransactionRequest } from './src/dal/transactionRequest.js'
+import { TransactionRequest } from './src/base/dal/transactionRequest.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main indexer service through the broker.

@@ -8,7 +8,7 @@ import {
 import {
   IndexerDomainContext,
   TransactionDateRangeResponse,
-} from '../../../../../services/indexer/src/types.js'
+} from '../../../../../services/indexer/src/base/types.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 

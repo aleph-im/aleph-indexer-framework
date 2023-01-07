@@ -15,11 +15,13 @@ import {
 } from '../common.js'
 import { ParserMsI } from './interface.js'
 
+type Event = 'txs' | string // | txs.blockchainId | txs.*
+
 /**
  * Client to access the main indexer service through the broker.
  */
 export class ParserMsClient
-  extends MsClientWithEvents<'txs'>
+  extends MsClientWithEvents<Event>
   implements ParserMsI
 {
   /**

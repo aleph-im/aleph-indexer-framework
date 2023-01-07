@@ -1,4 +1,4 @@
-import { pipeline } from 'node:stream'
+import { compose } from 'node:stream'
 import {
   FetcherStateLevelStorage,
   SolanaSignatureInfo,
@@ -81,7 +81,7 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
         reverse: false,
       })
 
-    return pipeline(
+    return compose(
       signaturesQuery,
       new StreamMap(
         ({ value }: StorageEntry<string, SolanaSignatureInfo>) =>

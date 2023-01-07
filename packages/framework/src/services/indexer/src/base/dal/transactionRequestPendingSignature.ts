@@ -1,7 +1,6 @@
-import { Blockchain, EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
+import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 
 export type TransactionRequestPendingSignature = {
-  blockchainId: Blockchain
   signature: string
   nonces: number[]
 }
@@ -10,12 +9,7 @@ export type TransactionRequestPendingSignatureStorage =
   EntityStorage<TransactionRequestPendingSignature>
 
 export enum TransactionRequestPendingSignatureDALIndex {
-  BlockchainNonceSignature = 'blockchain_nonce_signature',
-}
-
-const blockchainKey = {
-  get: (e: TransactionRequestPendingSignature) => e.blockchainId,
-  length: EntityStorage.VariableLength,
+  NonceSignature = 'nonce_signature',
 }
 
 const signatureKey = {
@@ -34,11 +28,11 @@ export function createTransactionRequestPendingSignatureDAL(
   return new EntityStorage<TransactionRequestPendingSignature>({
     name: 'transaction_request_pending_signatures',
     path,
-    key: [blockchainKey, signatureKey],
+    key: [signatureKey],
     indexes: [
       {
-        name: TransactionRequestPendingSignatureDALIndex.BlockchainNonceSignature,
-        key: [blockchainKey, nonceKey, signatureKey],
+        name: TransactionRequestPendingSignatureDALIndex.NonceSignature,
+        key: [nonceKey, signatureKey],
       },
     ],
     async updateCheckFn(

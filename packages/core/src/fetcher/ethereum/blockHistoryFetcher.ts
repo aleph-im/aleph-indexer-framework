@@ -16,6 +16,9 @@ import {
 } from './types.js'
 
 export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBlockHistoryPaginationCursor> {
+  protected lastCheckCompleteBackward = Date.now()
+  protected backwardChunkSize = 50
+
   constructor(
     protected opts: EthereumBlockFetcherOptions,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockHistoryPaginationCursor>,
@@ -23,6 +26,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   ) {
     const forward = typeof opts.forward === 'boolean' ? {} : opts.forward
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
+    const blockTime = 10 + 2
 
     const config: BaseFetcherOptions<EthereumBlockHistoryPaginationCursor> = {
       id: `ethereum:block-history`,
@@ -32,8 +36,8 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
       config.jobs = config.jobs || {}
       config.jobs.forward = {
         ...forward,
-        interval: forward.interval || 1000 * 10,
-        intervalMax: forward.intervalMax || 1000 * 10,
+        interval: forward.interval || 1000 * blockTime,
+        intervalMax: forward.intervalMax || 1000 * blockTime,
         handleFetch: () => this.runForward(),
         checkComplete: async () => false,
       }
@@ -57,7 +61,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   > {
     // @note: not "before" (autodetected by the node (last block height))
     const until = this.fetcherState.cursors?.forward?.height
-    const maxLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
+    const maxLimit = !until ? this.backwardChunkSize : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchBlocksOptions = {
       before: undefined,
@@ -75,7 +79,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   > {
     // @note: until is autodetected by the node (height 0 / first block)
     const before = this.fetcherState.cursors?.backward?.height
-    const maxLimit = 1000
+    const maxLimit = this.backwardChunkSize
 
     const options: EthereumFetchBlocksOptions = {
       until: undefined,
@@ -131,24 +135,31 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     error?: Error
   }): Promise<boolean> {
     const { fetcherState, error } = ctx
-    const lastHeight = Number(fetcherState?.cursors?.backward?.height)
-    const firstHeight = Number(fetcherState?.cursors?.forward?.height)
+    if (error) return false
+
+    const firstHeight = Number(fetcherState?.cursors?.backward?.height)
+    const lastHeight = Number(fetcherState?.cursors?.forward?.height)
 
     const progress = Number(
-      firstHeight > 0 ? (firstHeight - lastHeight) / firstHeight : 0,
+      lastHeight > 0 ? (lastHeight - firstHeight) / lastHeight : 0,
     ).toFixed(4)
 
-    // @note: average of 20sec per chunk of 1000 items
+    const now = Date.now()
+    const elapsedHours = (now - this.lastCheckCompleteBackward) / 1000 / 3600
+    this.lastCheckCompleteBackward = now
+
     // Duration.fromMillis((firstHeight / 1000) * 20 * 1000).toISOTime() || '+24h'
-    const eTime = Number((firstHeight / 1000) * (20 / 3600)).toFixed(2)
+    const estimatedTime = Number(
+      (firstHeight / this.backwardChunkSize) * elapsedHours,
+    ).toFixed(2)
 
     console.log(`${this.options.id} progress {
-      lastHeight: ${lastHeight}
       firstHeight: ${firstHeight}
+      lastHeight: ${lastHeight}
       progress: ${progress}%
-      estimated time: ${eTime}h
+      estimated time: ${estimatedTime}h
     }`)
 
-    return !error && lastHeight === 0
+    return !error && firstHeight === 0
   }
 }

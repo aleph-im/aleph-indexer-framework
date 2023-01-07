@@ -15,25 +15,25 @@ import {
   TransactionRequestParams,
   TransactionRequestStorage,
   TransactionRequestType,
-} from '../dal/transactionRequest.js'
+} from './dal/transactionRequest.js'
 import {
   TransactionRequestPendingSignature,
   TransactionRequestPendingSignatureStorage,
   TransactionRequestPendingSignatureDALIndex,
-} from '../dal/transactionRequestPendingSignature.js'
+} from './dal/transactionRequestPendingSignature.js'
 import {
   TransactionRequestResponse,
   TransactionRequestResponseStorage,
   TransactionRequestResponseDALIndex,
   TransactionParsedResponse,
-} from '../dal/transactionRequestResponse.js'
+} from './dal/transactionRequestResponse.js'
+import { TransactionRequestIncomingTransactionStorage } from './dal/transactionRequestIncomingTransaction.js'
 import {
   AccountDateRange,
   AccountSlotRange,
   GetTransactionPendingRequestsRequestArgs,
   SignatureRange,
-} from '../types.js'
-import { TransactionRequestIncomingTransactionStorage } from '../dal/transactionRequestIncomingTransaction.js'
+} from './types.js'
 
 const {
   Future,
@@ -57,46 +57,11 @@ export class TransactionFetcher {
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
   protected incomingTransactions: PendingWorkPool<SolanaParsedTransactionV1>
-
-  protected toRemoveBuffer = new BufferExec<TransactionRequestPendingSignature>(
-    async (pendings: TransactionRequestPendingSignature[]) => {
-      console.log(`Removing ${pendings.length} pending signatures`)
-      return this.transactionRequestPendingSignatureDAL.remove(pendings)
-    },
-    1000,
-  )
-
-  protected toRetryBuffer = new BufferExec<TransactionRequestPendingSignature>(
-    async (pendings: TransactionRequestPendingSignature[]) => {
-      const groups = pendings.reduce((acc, curr) => {
-        const sigs = (acc[curr.blockchainId] = acc[curr.blockchainId] || [])
-        sigs.push(curr.signature)
-        return acc
-      }, {} as Record<Blockchain, string[]>)
-
-      await Promise.all(
-        Object.entries(groups).map(([blockchainId, signatures]) => {
-          console.log(
-            `Retrying ${signatures.length} ${blockchainId} signatures`,
-            pendings,
-          )
-
-          return this.fetcherMsClient
-            .useBlockchain(blockchainId as Blockchain)
-            .fetchTransactionsBySignature({ signatures })
-        }),
-      )
-    },
-    1000,
-  )
-
-  // protected onTxsBuffer = new BufferExec<ParsedTransactionV1>(
-  //   this.storeIncomingTxs.bind(this),
-  //   1000,
-  //   1000,
-  // )
+  protected toRetryBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
+  protected toRemoveBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
 
   constructor(
+    protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
     protected transactionRequestDAL: TransactionRequestStorage,
     protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
@@ -122,6 +87,16 @@ export class TransactionFetcher {
 
     this.checkCompletionJob = new DebouncedJob<void>(
       this.checkAllRequestCompletion.bind(this),
+    )
+
+    this.toRetryBuffer = new BufferExec<TransactionRequestPendingSignature>(
+      this.handleRetryPendingTransactions.bind(this),
+      1000,
+    )
+
+    this.toRemoveBuffer = new BufferExec<TransactionRequestPendingSignature>(
+      this.handleRemovePendingTransactions.bind(this),
+      1000,
     )
   }
 
@@ -217,7 +192,6 @@ export class TransactionFetcher {
   }
 
   async onTxs(chunk: SolanaParsedTransactionV1[]): Promise<void> {
-    // await this.onTxsBuffer.add(chunk)
     return this.storeIncomingTxs(chunk)
   }
 
@@ -431,13 +405,13 @@ export class TransactionFetcher {
         switch (type) {
           case TransactionRequestType.BySignatures: {
             await this.fetcherMsClient
-              .useBlockchain(params.blockchainId)
+              .useBlockchain(this.blockchainId)
               .fetchTransactionsBySignature(params)
             return [params.signatures]
           }
           case TransactionRequestType.ByDateRange: {
             return this.fetcherMsClient
-              .useBlockchain(params.blockchainId)
+              .useBlockchain(this.blockchainId)
               .fetchAccountTransactionsByDate(params)
           }
           case TransactionRequestType.BySlotRange: {
@@ -457,7 +431,7 @@ export class TransactionFetcher {
           }`,
         )
 
-      const { blockchainId } = requestParams.params
+      const blockchainId = this.blockchainId
 
       for await (const signatures of signaturesStream) {
         const pendingSignatures = signatures.map((signature) => {
@@ -516,16 +490,16 @@ export class TransactionFetcher {
   protected async checkRequestCompletion(
     request: TransactionRequest,
   ): Promise<void> {
-    const { blockchainId, nonce, complete } = request
+    const { nonce, complete } = request
     if (complete) return
 
     const pending = await this.transactionRequestPendingSignatureDAL
-      .useIndex(
-        TransactionRequestPendingSignatureDALIndex.BlockchainNonceSignature,
+      .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+      .getFirstKeyFromTo(
+        [this.blockchainId, nonce],
+        [this.blockchainId, nonce],
+        { atomic: true },
       )
-      .getFirstKeyFromTo([blockchainId, nonce], [blockchainId, nonce], {
-        atomic: true,
-      })
 
     if (pending) {
       console.log(`🔴 Request ${nonce} pending`)
@@ -552,15 +526,15 @@ export class TransactionFetcher {
     request: TransactionRequest,
     drain = true,
   ): Promise<void> {
-    const { blockchainId, nonce } = request
+    const { nonce } = request
 
     const pendings = await this.transactionRequestPendingSignatureDAL
-      .useIndex(
-        TransactionRequestPendingSignatureDALIndex.BlockchainNonceSignature,
+      .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+      .getAllValuesFromTo(
+        [this.blockchainId, nonce],
+        [this.blockchainId, nonce],
+        { atomic: true },
       )
-      .getAllValuesFromTo([blockchainId, nonce], [blockchainId, nonce], {
-        atomic: true,
-      })
 
     for await (const pending of pendings) {
       const { signature } = pending
@@ -615,5 +589,27 @@ export class TransactionFetcher {
       this.events.emit('response', nonce)
       delete this.requestFutures[nonce]
     })
+  }
+
+  protected async handleRetryPendingTransactions(
+    pendings: TransactionRequestPendingSignature[],
+  ): Promise<void> {
+    const signatures = pendings.map(({ signature }) => signature)
+
+    console.log(
+      `Retrying ${signatures.length} ${this.blockchainId} signatures`,
+      pendings,
+    )
+
+    return this.fetcherMsClient
+      .useBlockchain(this.blockchainId as Blockchain)
+      .fetchTransactionsBySignature({ signatures })
+  }
+
+  protected async handleRemovePendingTransactions(
+    pendings: TransactionRequestPendingSignature[],
+  ): Promise<void> {
+    console.log(`Removing ${pendings.length} pending signatures`)
+    return this.transactionRequestPendingSignatureDAL.remove(pendings)
   }
 }

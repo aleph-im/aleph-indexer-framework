@@ -3,6 +3,7 @@ import {
   Blockchain,
   RawTransaction,
 } from '@aleph-indexer/core'
+import { BlockchainRequestArgs } from '../../../types.js'
 import { FetcherMsClient } from '../../client.js'
 
 export type AccountTransactionHistoryState<C> = {
@@ -17,7 +18,7 @@ export type AccountTransactionHistoryState<C> = {
 // @todo
 export type AccountStateState<T> = any
 
-export type FetcherPartitionRequestArgs = FetcherCommonRequestArgs & {
+export type FetcherPartitionRequestArgs = BlockchainRequestArgs & {
   fetcher: string
 }
 
@@ -44,10 +45,6 @@ export type TransactionState = {
   data?: RawTransaction
 }
 
-export type FetcherCommonRequestArgs = {
-  blockchainId: Blockchain
-}
-
 export type FetcherAccountPartitionRequestArgs = {
   account: string
   /**
@@ -58,18 +55,18 @@ export type FetcherAccountPartitionRequestArgs = {
 
 // Account transaction ------------------------------
 
-export type AddAccountTransactionRequestArgs = FetcherCommonRequestArgs &
+export type AddAccountTransactionRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
-export type DelAccountTransactionRequestArgs = FetcherCommonRequestArgs &
+export type DelAccountTransactionRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
-export type GetAccountTransactionStateRequestArgs = FetcherCommonRequestArgs &
+export type GetAccountTransactionStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
 // Account state ------------------------------
 
-export type AddAccountStateRequestArgs = FetcherCommonRequestArgs &
+export type AddAccountStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs & {
     /**
      * Whether to subscribe to future account updates.
@@ -77,51 +74,43 @@ export type AddAccountStateRequestArgs = FetcherCommonRequestArgs &
     subscribeChanges: boolean
   }
 
-export type DelAccountStateRequestArgs = FetcherCommonRequestArgs &
+export type DelAccountStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
-export type GetAccountStateStateRequestArgs = FetcherCommonRequestArgs &
+export type GetAccountStateStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
 // Transactions ------------------------------
 
-export type FetchTransactionsBySignatureRequestArgs =
-  FetcherCommonRequestArgs & {
-    /**
-     * Whether to refresh the transaction cache.
-     */
-    refreshCache?: boolean
-    /**
-     * Signatures to fetch.
-     */
-    signatures: string[]
+export type FetchTransactionsBySignatureRequestArgs = BlockchainRequestArgs & {
+  /**
+   * Whether to refresh the transaction cache.
+   */
+  refreshCache?: boolean
+  /**
+   * Signatures to fetch.
+   */
+  signatures: string[]
+  /**
+   * Indexer instance id, the result will be delivered here
+   */
+  indexerId?: string
+}
+
+/**
+ * Accounts and timestamp range to get the signatures for.
+ */
+export type FetchAccountTransactionsByDateRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs & {
+    startDate: number
+    endDate: number
     /**
      * Indexer instance id, the result will be delivered here
      */
     indexerId?: string
   }
 
-/**
- * Accounts and timestamp range to get the signatures for.
- */
-export type FetchAccountTransactionsByDateRequestArgs =
-  FetcherCommonRequestArgs &
-    FetcherAccountPartitionRequestArgs & {
-      startDate: number
-      endDate: number
-      /**
-       * Indexer instance id, the result will be delivered here
-       */
-      indexerId?: string
-    }
-
 // ------------------ Other ----------------------
-
-export type InvokeBlockchainMethodRequestArgs<A> = FetcherCommonRequestArgs & {
-  partitionKey: string
-  method: string
-  args: A
-}
 
 export type FetcherStateRequestArgs = Omit<
   FetcherPartitionRequestArgs,
@@ -130,11 +119,11 @@ export type FetcherStateRequestArgs = Omit<
   blockchainId?: Blockchain
 }
 
-export type CheckTransactionsRequestArgs = FetcherCommonRequestArgs & {
+export type CheckTransactionsRequestArgs = BlockchainRequestArgs & {
   signatures: string[]
 }
 
-export type DelTransactionsRequestArgs = FetcherCommonRequestArgs & {
+export type DelTransactionsRequestArgs = BlockchainRequestArgs & {
   signatures: string[]
 }
 

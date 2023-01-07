@@ -1,4 +1,6 @@
+import { promisify } from 'node:util'
 import Web3 from 'web3'
+import { errors } from 'web3-core-helpers'
 import {
   EthereumBlockPaginationResponse,
   EthereumFetchBlocksOptions,
@@ -30,7 +32,7 @@ export type EthereumBlocksChunkOptions = {
   limit: number
   before: number
   until: number
-  retries?: number
+  // retries?: number
 }
 
 export type EthereumBlocksChunkResponse = {
@@ -242,14 +244,71 @@ export class EthereumClient {
     before,
     until,
     limit,
-    retries = 2,
   }: EthereumBlocksChunkOptions): Promise<EthereumBlocksChunkResponse> {
-    const size = Math.min(limit, Math.max(before - (until + 1), 0))
-    const cursor = before - 1
+    const length = Math.min(limit, Math.max(before - (until + 1), 0))
+    if (length === 0) throw new Error('Invalid block chunk range')
 
+    const cursor = before - 1
+    const now = Date.now() / 1000
+
+    const heights = Array.from({ length }).map((_, i) => cursor - i)
+    const chunk = await this.getBlocks(heights, true)
+
+    const count = chunk.length
+    const lastItem = chunk[0]
+    const firstItem = chunk[chunk.length - 1]
+
+    if (chunk.length > 0)
+      console.log(
+        'block chunk => ',
+        chunk.length,
+        chunk[chunk.length - 1].number,
+        chunk[0].number,
+        `${Number(Date.now() / 1000 - now).toFixed(4)} secs`,
+      )
+
+    if (this.options.indexBlockSignatures) {
+      await this.indexBlockSignatures(chunk)
+    }
+
+    return {
+      chunk,
+      count,
+      firstItem,
+      lastItem,
+    }
+  }
+
+  // @note: Take a look at:
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
+  protected async getBlocks(
+    blockHashOrBlockNumber: (number | string)[],
+    returnTransactionObjects = true,
+  ): Promise<EthereumBlock[]> {
+    const method = (this.sdk.eth.getBlock as any).method
+
+    const payload = blockHashOrBlockNumber.map((blockNumber) =>
+      method.toPayload([blockNumber, returnTransactionObjects]),
+    )
+
+    const sendBatch = promisify(
+      method.requestManager.sendBatch.bind(method.requestManager),
+    )
+
+    const results = await sendBatch(payload)
+    const items = this.processJsonRpcResult(results)
+    const output = method.formatOutput(items)
+
+    return output
+  }
+
+  protected async getBlocksInParallel(
+    blockHashOrBlockNumber: (number | string)[],
+    retries = 2,
+  ): Promise<EthereumBlock[]> {
     const chunk = await Promise.all(
-      Array.from({ length: size }).map(async (_, i) => {
-        const height = cursor - i
+      blockHashOrBlockNumber.map(async (height) => {
         let block
         let ret = retries
 
@@ -263,28 +322,37 @@ export class EthereumClient {
       }),
     )
 
-    const count = chunk.length
-    const lastItem = chunk[0]
-    const firstItem = chunk[chunk.length - 1]
+    return chunk
+  }
 
-    if (chunk.length > 0)
-      console.log(
-        'block chunk => ',
-        chunk.length,
-        chunk[chunk.length - 1].number,
-        chunk[0].number,
-      )
+  protected processJsonRpcResult<
+    T extends { error?: Error; jsonrpc: string; id: string; result: any },
+  >(result: T | T[]): T | T[] {
+    const isArray = Array.isArray(result)
+    const messages = isArray ? result : [result]
+    const output = []
 
-    if (this.options.indexBlockSignatures) {
-      await this.indexBlockSignatures(chunk)
+    for (const message of messages) {
+      if (message && message.error) {
+        throw errors.ErrorResponse(message as unknown as Error)
+      }
+
+      if (
+        !(
+          !!message &&
+          !message.error &&
+          message.jsonrpc === '2.0' &&
+          (typeof message.id === 'number' || typeof message.id === 'string') &&
+          message.result !== undefined
+        ) // only undefined is not valid json object))
+      ) {
+        throw errors.InvalidResponse(result as unknown as Error)
+      }
+
+      output.push(message.result)
     }
 
-    return {
-      chunk,
-      count,
-      firstItem,
-      lastItem,
-    }
+    return isArray ? output : output[0]
   }
 
   protected async getSignaturesChunk({

@@ -1,5 +1,9 @@
 import { Blockchain } from '@aleph-indexer/core'
 import {
+  BlockchainRequestArgs,
+  InvokeBlockchainMethodRequestArgs,
+} from '../types'
+import {
   AddAccountStateRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
@@ -10,8 +14,6 @@ import {
   DelAccountStateRequestArgs,
   GetAccountStateStateRequestArgs,
   AccountStateState,
-  InvokeBlockchainMethodRequestArgs,
-  FetcherCommonRequestArgs,
   FetcherStateRequestArgs,
   FetcherState,
   CheckTransactionsRequestArgs,
@@ -106,80 +108,46 @@ export interface FetcherMsI {
   delTransactionCache(args: DelTransactionsRequestArgs): Promise<void>
 }
 
-export type FetcherClientI = {
+export interface FetcherClientI {
   addAccountTransactionFetcher(
-    args: Omit<
-      AddAccountTransactionRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
+    args: Omit<AddAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   delAccountTransactionFetcher(
-    args: Omit<
-      DelAccountTransactionRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
+    args: Omit<DelAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   getAccountTransactionFetcherState(
     args: Omit<
       GetAccountTransactionStateRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<AccountTransactionHistoryState<unknown> | undefined>
   addAccountStateFetcher(
-    args: Omit<AddAccountStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<AddAccountStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   delAccountStateFetcher(
-    args: Omit<DelAccountStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<DelAccountStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   getAccountStateFetcherState(
-    args: Omit<GetAccountStateStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<GetAccountStateStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<AccountStateState<unknown> | undefined>
   fetchAccountTransactionsByDate(
     args: Omit<
       FetchAccountTransactionsByDateRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>>
   fetchTransactionsBySignature(
     args: Omit<
       FetchTransactionsBySignatureRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<void>
 
   getTransactionState(
-    args: Omit<CheckTransactionsRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<CheckTransactionsRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<TransactionState[]>
 
   delTransactionCache(
-    args: Omit<DelTransactionsRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<DelTransactionsRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
 }
-
-// /**
-//  * Provides inward facing methods from the fetcher service.
-//  */
-// export interface PrivateFetcherMsI {
-//   /**
-//    * Gets all fetcher services from the registry.
-//    */
-//   getAllFetchers(): string[]
-//   /**
-//    * Returns global fetcher state and statistics.
-//    * @param args The broker nodeID of the fetcher to get the state from.
-//    */
-//   getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState>
-//   /**
-//    * Returns the state of transactions in the pending indexing transactions pool.
-//    * @param args The txn signatures to get the state for.
-//    */
-//   getTransactionState(
-//     args: CheckTransactionsRequestArgs,
-//   ): Promise<TransactionState[]>
-
-//   /**
-//    * Force to delete the cached transaction (Useful when rpc nodes return flaw txs).
-//    * @param args TThe txn signatures to delete the cache for.
-//    */
-//   delTransactionCache(args: DelTransactionsRequestArgs): Promise<void>
-// }

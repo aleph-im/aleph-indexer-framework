@@ -1,8 +1,8 @@
 import { SolanaAccountTransactionHistoryPaginationCursor } from '@aleph-indexer/core'
+import { BlockchainRequestArgs } from '../../../types'
 import {
   AccountTransactionHistoryState,
   FetcherAccountPartitionRequestArgs,
-  FetcherCommonRequestArgs,
 } from '../base/types'
 
 export type SolanaAccountTransactionHistoryState =
@@ -11,7 +11,7 @@ export type SolanaAccountTransactionHistoryState =
     lastSlot?: number
   }
 
-export type AddAccountStateRequestArgs = FetcherCommonRequestArgs &
+export type AddAccountStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs & {
     /**
      * Whether to subscribe to future account updates.
@@ -22,13 +22,12 @@ export type AddAccountStateRequestArgs = FetcherCommonRequestArgs &
 /**
  * Account and slot range to get the signatures for.
  */
-export type FetchAccountTransactionsBySlotRequestArgs =
-  FetcherCommonRequestArgs &
-    FetcherAccountPartitionRequestArgs & {
-      startSlot: number
-      endSlot: number
-      /**
-       * Indexer instance id, the result will be delivered here
-       */
-      indexerId?: string
-    }
+export type FetchAccountTransactionsBySlotRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs & {
+    startSlot: number
+    endSlot: number
+    /**
+     * Indexer instance id, the result will be delivered here
+     */
+    indexerId?: string
+  }

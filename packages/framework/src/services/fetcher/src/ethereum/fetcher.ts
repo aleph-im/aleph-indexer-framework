@@ -1,4 +1,3 @@
-import { ServiceBroker } from 'moleculer'
 import { Blockchain } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
@@ -11,10 +10,11 @@ import { EthereumTransactionHistoryFetcher } from './transactionHistoryFetcher.j
 import { EthereumTransactionFetcher } from './transactionFetcher.js'
 import { EthereumAccountTransactionHistoryState } from './types.js'
 import { EthereumAccountStateFetcher } from './accountStateFetcher.js'
+import { FetcherMsClient } from '../../client.js'
 
 export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
-    protected broker: ServiceBroker,
+    protected fetcherClient: FetcherMsClient,
     protected transactionHistoryFetcher: EthereumTransactionHistoryFetcher,
     protected transactionFetcher: EthereumTransactionFetcher,
     protected accountStateFetcher: EthereumAccountStateFetcher,
@@ -22,7 +22,7 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   ) {
     super(
       Blockchain.Ethereum,
-      broker,
+      fetcherClient,
       transactionHistoryFetcher,
       transactionFetcher,
       accountStateFetcher,

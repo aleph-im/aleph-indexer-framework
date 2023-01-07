@@ -5,6 +5,7 @@ import {
   solanaMainPublicRPC,
   createFetcherStateDAL,
   SolanaAccountState,
+  SolanaRawTransaction,
 } from '@aleph-indexer/core'
 import { SolanaFetcher } from '../../../services/fetcher/src/solana/fetcher.js'
 import {
@@ -23,9 +24,9 @@ import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
 
 export default (
+  basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
-  basePath: string,
 ): BlockchainFetcherI => {
   // DALs
   const accountSignatureDAL = createSolanaAccountTransactionHistoryDAL(basePath)
@@ -33,6 +34,10 @@ export default (
   const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
   const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
   const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
+  const pendingTransactionDAL = createPendingTransactionDAL(basePath)
+  const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
+  const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
+  const rawTransactionDAL = createRawTransactionDAL<SolanaRawTransaction>(basePath)
 
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     solanaPrivateRPC,
@@ -47,10 +52,10 @@ export default (
     solanaPrivateRPC,
     solanaMainPublicRPC,
     broker,
-    createPendingTransactionDAL(basePath),
-    createPendingTransactionCacheDAL(basePath),
-    createPendingTransactionFetchDAL(basePath),
-    createRawTransactionDAL(basePath),
+    pendingTransactionDAL,
+    pendingTransactionCacheDAL,
+    pendingTransactionFetchDAL,
+    rawTransactionDAL,
   )
 
   const accountStateFetcher = new SolanaAccountStateFetcher(
@@ -61,7 +66,7 @@ export default (
   )
 
   return new SolanaFetcher(
-    broker,
+    fetcherClient,
     transactionHistoryFetcher,
     transactionFetcher,
     accountStateFetcher,

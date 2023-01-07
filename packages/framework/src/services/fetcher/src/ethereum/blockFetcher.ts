@@ -3,6 +3,7 @@ import {
   EthereumBlock,
   EthereumBlockHistoryFetcher as BaseFetcher,
   FetcherStateLevelStorage,
+  config,
 } from '@aleph-indexer/core'
 
 import { EthereumBlockStorage } from './dal/block.js'
@@ -36,9 +37,11 @@ export class EthereumBlockFetcher extends BaseFetcher {
     blocks: EthereumBlock[],
     goingForward: boolean,
   ): Promise<void> {
-    await Promise.all([
-      this.blockDAL.save(blocks),
-      this.ethereumClient.indexBlockSignatures(blocks),
-    ])
+    // @todo: Refactor config vars
+    if (config.ETHEREUM_INDEX_BLOCKS === 'true') {
+      await this.blockDAL.save(blocks)
+    }
+
+    await this.ethereumClient.indexBlockSignatures(blocks)
   }
 }

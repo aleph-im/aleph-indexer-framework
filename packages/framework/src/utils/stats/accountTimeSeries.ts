@@ -85,11 +85,14 @@ export class AccountTimeSeriesStatsManager<V> {
   }
 
   protected async aggregateTimeSeries(now: number): Promise<void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
 
-    const state = await this.indexerApi.getAccountState({ account })
+    const state = await this.indexerApi.getAccountState({
+      blockchainId,
+      account,
+    })
+
     if (!state) return
-
     if (!state.processed.length) return
 
     const pendingRanges: DateRange[] = state.processed.map(

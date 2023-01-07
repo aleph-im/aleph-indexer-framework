@@ -8,16 +8,20 @@ import {
 } from './utils/workers.js'
 import { initThreadContext } from './utils/threads.js'
 import { getMoleculerBroker, TransportType } from './utils/moleculer/config.js'
-import { IndexerMsClient } from './services/indexer/client.js'
-import { IndexerMainDomainContext } from './services/indexer/src/types.js'
-import { FetcherMsClient } from './services/fetcher/client.js'
+import { IndexerMainDomainContext } from './services/indexer/src/base/types.js'
 import { FetcherMainDomain } from './utils/index.js'
 import { FetcherMainDomainContext } from './services/fetcher/src/base/types.js'
 import { FetcherAPISchema } from './utils/api/fetcher/schema.js'
+import {
+  createFetcherMsClient,
+  createIndexerMsClient,
+} from './workers/common.js'
+
+export * from './services/types.js'
 
 export * from './services/fetcher/src/base/types.js'
 export * from './services/parser/src/types.js'
-export * from './services/indexer/src/types.js'
+export * from './services/indexer/src/base/types.js'
 
 export * from './services/fetcher/interface.js'
 export * from './services/parser/interface.js'
@@ -290,7 +294,10 @@ export class SDK {
       channels: channels[mainName],
     })
 
-    const indexerMsClient = new IndexerMsClient(localBroker)
+    const indexerMsClient = await createIndexerMsClient(
+      supportedBlockchains,
+      localBroker,
+    )
 
     await localBroker.start()
 
@@ -339,19 +346,9 @@ export class SDK {
       channels: channels[mainName],
     })
 
-    const blockchainFetcherClients = await Promise.all(
-      config.supportedBlockchains.map(async (blockchainId) => {
-        const module = await import(
-          `./services/fetcher/src/${blockchainId}/client.js`
-        )
-        const clazz = module.default
-        return [blockchainId, new clazz(blockchainId, localBroker)]
-      }),
-    )
-
-    const fetcherMsClient = new FetcherMsClient(
+    const fetcherMsClient = await createFetcherMsClient(
+      config.supportedBlockchains,
       localBroker,
-      Object.fromEntries(blockchainFetcherClients),
     )
 
     //@todo: two times? (see initMainIndexer)

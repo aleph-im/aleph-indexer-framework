@@ -1,6 +1,10 @@
-import { Blockchain } from '@aleph-indexer/core'
 import { ServiceBroker } from 'moleculer'
+import { Blockchain } from '@aleph-indexer/core'
 import { MsIds } from '../../../common.js'
+import {
+  BlockchainRequestArgs,
+  InvokeBlockchainMethodRequestArgs,
+} from '../../../types.js'
 import { FetcherClientI } from '../../interface.js'
 import {
   FetcherAccountPartitionRequestArgs,
@@ -16,17 +20,15 @@ import {
   GetAccountTransactionStateRequestArgs,
   DelAccountTransactionRequestArgs,
   AccountTransactionHistoryState,
-  InvokeBlockchainMethodRequestArgs,
   GetAccountStateStateRequestArgs,
-  FetcherCommonRequestArgs,
 } from '../../src/base/types.js'
-import { FetchAccountTransactionsBySlotRequestArgs } from '../../src/solana/types.js'
 
 /**
  * Client to access the main fetcher service through the broker.
  */
 export abstract class BaseFetcherClient implements FetcherClientI {
   /**
+   * @param blockchainId The id of the blockchain the client handles
    * @param broker The broker instance to retrieve the actual service from.
    * @param msId The moleculer service id of the fetcher service.
    */
@@ -37,10 +39,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   ) {}
 
   addAccountTransactionFetcher(
-    args: Omit<
-      AddAccountTransactionRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
+    args: Omit<AddAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountTransactionFetcher`, {
       partitionKey: args.account,
@@ -51,10 +50,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   delAccountTransactionFetcher(
-    args: Omit<
-      DelAccountTransactionRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
+    args: Omit<DelAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountTransactionFetcher`, {
       partitionKey: args.account,
@@ -67,7 +63,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   getAccountTransactionFetcherState(
     args: Omit<
       GetAccountTransactionStateRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
     return this.broker.call(`${this.msId}.getAccountTransactionFetcherState`, {
@@ -79,7 +75,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   addAccountStateFetcher(
-    args: Omit<AddAccountStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<AddAccountStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountStateFetcher`, {
       partitionKey: args.account,
@@ -89,10 +85,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   delAccountStateFetcher(
-    args: Omit<
-      FetcherAccountPartitionRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
+    args: Omit<FetcherAccountPartitionRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountStateFetcher`, {
       partitionKey: args.account,
@@ -103,7 +96,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   getAccountStateFetcherState(
-    args: Omit<GetAccountStateStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<GetAccountStateStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<any> {
     return this.broker.call(`${this.msId}.getAccountStateFetcherState`, {
       partitionKey: args.account,
@@ -116,7 +109,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   fetchAccountTransactionsByDate(
     args: Omit<
       FetchAccountTransactionsByDateRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>> {
     return this.broker.call(`${this.msId}.fetchAccountTransactionsByDate`, {
@@ -127,24 +120,10 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  fetchAccountTransactionsBySlot(
-    args: Omit<
-      FetchAccountTransactionsBySlotRequestArgs,
-      keyof FetcherCommonRequestArgs
-    >,
-  ): Promise<void | AsyncIterable<string[]>> {
-    return this.broker.call(`${this.msId}.fetchAccountTransactionsBySlot`, {
-      partitionKey: args.account,
-      indexerId: this.broker.nodeID,
-      blockchainId: this.blockchainId,
-      ...args,
-    })
-  }
-
   async fetchTransactionsBySignature(
     args: Omit<
       FetchTransactionsBySignatureRequestArgs,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<void> {
     const groups = this.getTransactionPartitionGroups(args)
@@ -163,7 +142,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   getFetcherState(
-    args: Omit<FetcherStateRequestArgs, keyof FetcherCommonRequestArgs>,
+    args: Omit<FetcherStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<FetcherState> {
     return this.broker.call(`${this.msId}.getFetcherState`, args, {
       nodeID: args.fetcher,
@@ -205,7 +184,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   protected invokeBlockchainMethod<R, A>(
     args: Omit<
       InvokeBlockchainMethodRequestArgs<A>,
-      keyof FetcherCommonRequestArgs
+      keyof BlockchainRequestArgs
     >,
   ): Promise<R> {
     return this.broker.call(`${this.msId}.invokeBlockchainMethod`, {

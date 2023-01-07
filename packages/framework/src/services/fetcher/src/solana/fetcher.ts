@@ -1,4 +1,3 @@
-import { ServiceBroker } from 'moleculer'
 import { Blockchain } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
@@ -12,17 +11,18 @@ import {
 } from './types.js'
 import { SolanaAccountStateFetcher } from './accountStateFetcher.js'
 import { BaseFetcher } from '../base/fetcher.js'
+import { FetcherMsClient } from '../../client.js'
 
 export class SolanaFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
-    protected broker: ServiceBroker,
+    protected fetcherClient: FetcherMsClient,
     protected transactionHistoryFetcher: SolanaTransactionHistoryFetcher,
     protected transactionFetcher: SolanaTransactionFetcher,
     protected accountStateFetcher: SolanaAccountStateFetcher,
   ) {
     super(
       Blockchain.Solana,
-      broker,
+      fetcherClient,
       transactionHistoryFetcher,
       transactionFetcher,
       accountStateFetcher,

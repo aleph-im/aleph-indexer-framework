@@ -1,4 +1,4 @@
-import { pipeline } from 'node:stream'
+import { compose } from 'node:stream'
 import {
   BaseHistoryFetcher,
   Blockchain,
@@ -144,7 +144,7 @@ export abstract class BaseTransactionHistoryFetcher<
         reverse: false,
       })
 
-    return pipeline(
+    return compose(
       signaturesQuery,
       new StreamMap(
         ({ value }: StorageEntry<string, SolanaSignatureInfo>) =>

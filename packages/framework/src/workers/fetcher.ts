@@ -7,15 +7,12 @@ import {
   solanaPrivateRPCRoundRobin,
   solanaMainPublicRPCRoundRobin,
 } from '@aleph-indexer/core'
-import {
-  FetcherMs,
-  FetcherMsClient,
-  FetcherMsMain,
-} from '../services/fetcher/index.js'
+import { FetcherMs } from '../services/fetcher/index.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
 import { MsIds } from '../services/common.js'
+import { createFetcherMsClient, createFetcherMsMain } from './common.js'
 
 initThreadContext()
 
@@ -49,38 +46,19 @@ async function main() {
         })
       : localBroker
 
-  const blockchainFetcherClients = await Promise.all(
-    supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(
-        `../services/fetcher/src/${blockchainId}/client.js`
-      )
-      const clazz = module.default
-      return [blockchainId, new clazz(blockchainId, broker)]
-    }),
-  )
-
-  const fetcherMsClient = new FetcherMsClient(
+  const fetcherMsClient = await createFetcherMsClient(
+    supportedBlockchains,
     broker,
-    Object.fromEntries(blockchainFetcherClients),
   )
 
-  const blockchainFetcherMains = await Promise.all(
-    supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(`./impl/fetcher/${blockchainId}.js`)
-      const factory = module.default
-      const fetcherBasePath = path.join(basePath, blockchainId)
-
-      const fetcher = factory(broker, fetcherMsClient, fetcherBasePath)
-      return [blockchainId, fetcher]
-    }),
-  )
-
-  const fetcherServiceMain = new FetcherMsMain(
+  const fetcherMsMain = await createFetcherMsMain(
+    supportedBlockchains,
+    basePath,
+    broker,
     fetcherMsClient,
-    Object.fromEntries(blockchainFetcherMains),
   )
 
-  FetcherMs.mainFactory = () => fetcherServiceMain
+  FetcherMs.mainFactory = () => fetcherMsMain
 
   broker.createService(FetcherMs)
   await broker.start()

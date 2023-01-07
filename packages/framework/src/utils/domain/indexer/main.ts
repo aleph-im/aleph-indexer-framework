@@ -1,11 +1,11 @@
-import { Utils } from '@aleph-indexer/core'
-import { TransactionRequest } from '../../../services/indexer/src/dal/transactionRequest.js'
+import { Blockchain, Utils } from '@aleph-indexer/core'
+import { TransactionRequest } from '../../../services/indexer/src/base/dal/transactionRequest.js'
 import {
   AccountIndexerRequestArgs,
   AccountIndexerState,
   GetTransactionPendingRequestsRequestArgs,
   IndexerMainDomainContext,
-} from '../../../services/indexer/src/types.js'
+} from '../../../services/indexer/src/base/types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -68,7 +68,7 @@ export type IndexerMainDomainConfig = {
 export class IndexerMainDomain {
   protected discoverJob: Utils.JobRunner | undefined
   protected statsJob: Utils.JobRunner | undefined
-  protected accounts: Set<string> = new Set()
+  protected accounts: Record<Blockchain, Set<string>>
 
   constructor(
     protected context: IndexerMainDomainContext,
@@ -89,6 +89,11 @@ export class IndexerMainDomain {
         intervalFn: this._updateStats.bind(this),
       })
     }
+
+    this.accounts = this.context.supportedBlockchains.reduce((acc, curr) => {
+      acc[curr] = new Set<string>()
+      return acc
+    }, {} as Record<Blockchain, Set<string>>)
   }
 
   /**
@@ -140,14 +145,17 @@ export class IndexerMainDomain {
    */
   async getAccountState(
     accounts: string[] = [],
+    blockchainId: Blockchain = this.context.supportedBlockchains[0],
   ): Promise<AccountIndexerState[]> {
     accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
+      accounts.length !== 0
+        ? accounts
+        : Array.from(this.accounts[blockchainId].values())
 
     return (
       await Promise.all(
         accounts.map(async (account) =>
-          this.context.apiClient.getAccountState({
+          this.context.apiClient.useBlockchain(blockchainId).getAccountState({
             account,
           }),
         ),
@@ -163,21 +171,26 @@ export class IndexerMainDomain {
    */
   async getAccountTimeSeriesStats<V>(
     accounts: string[] = [],
+    blockchainId: Blockchain = this.context.supportedBlockchains[0],
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats<V>[]> {
     this.checkStats()
 
     accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
+      accounts.length !== 0
+        ? accounts
+        : Array.from(this.accounts[blockchainId].values())
 
     return Promise.all(
       accounts.map(async (account) => {
-        const stats = (await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'getTimeSeriesStats',
-          args: [type, filters],
-        })) as AccountTimeSeriesStats<V>
+        const stats = (await this.context.apiClient
+          .useBlockchain(blockchainId)
+          .invokeDomainMethod({
+            account,
+            method: 'getTimeSeriesStats',
+            args: [type, filters],
+          })) as AccountTimeSeriesStats<V>
 
         return stats
       }),
@@ -190,18 +203,24 @@ export class IndexerMainDomain {
    */
   async getAccountStats<V>(
     accounts: string[] = [],
+    blockchainId: Blockchain = this.context.supportedBlockchains[0],
   ): Promise<AccountStats<V>[]> {
     this.checkStats()
 
     accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
+      accounts.length !== 0
+        ? accounts
+        : Array.from(this.accounts[blockchainId].values())
+
     return Promise.all(
       accounts.map(async (account) => {
-        const stats = (await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'getStats',
-          args: [],
-        })) as AccountStats<V>
+        const stats = (await this.context.apiClient
+          .useBlockchain(blockchainId)
+          .invokeDomainMethod({
+            account,
+            method: 'getStats',
+            args: [],
+          })) as AccountStats<V>
 
         return stats
       }),
@@ -214,7 +233,7 @@ export class IndexerMainDomain {
     const options = await this.discoverAccounts()
 
     const newOptions = options.filter(
-      ({ account }) => !this.accounts.has(account),
+      ({ blockchainId, account }) => !this.accounts[blockchainId].has(account),
     )
 
     await this.onDiscover(newOptions)
@@ -230,8 +249,10 @@ export class IndexerMainDomain {
   ): Promise<void> {
     await Promise.all(
       options.map(async (option) => {
-        await this.context.apiClient.indexAccount(option)
-        this.accounts.add(option.account)
+        await this.context.apiClient
+          .useBlockchain(option.blockchainId)
+          .indexAccount(option)
+        this.accounts[option.blockchainId].add(option.account)
       }),
     )
   }
@@ -240,15 +261,23 @@ export class IndexerMainDomain {
     if (!this.checkStats()) return
 
     const now = Date.now()
-    const accounts = Array.from(this.accounts.values())
+    const blockchains = Object.keys(this.accounts) as Blockchain[]
 
     await Promise.all(
-      accounts.map(async (account) => {
-        await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'updateStats',
-          args: [now],
-        })
+      blockchains.map(async (blockchainId) => {
+        const accounts = Array.from(this.accounts[blockchainId].values())
+
+        await Promise.all(
+          accounts.map(async (account) => {
+            await this.context.apiClient
+              .useBlockchain(blockchainId)
+              .invokeDomainMethod({
+                account,
+                method: 'updateStats',
+                args: [now],
+              })
+          }),
+        )
       }),
     )
 
@@ -295,7 +324,9 @@ export class IndexerMainDomain {
     return (
       await Promise.all(
         indexers.map((indexer) =>
-          this.context.apiClient.getTransactionRequests({ ...args, indexer }),
+          this.context.apiClient
+            .useBlockchain(args.blockchainId)
+            .getTransactionRequests({ ...args, indexer }),
         ),
       )
     ).flatMap((requests) => requests)
