@@ -141,7 +141,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     const lastHeight = Number(fetcherState?.cursors?.forward?.height)
 
     const progress = Number(
-      lastHeight > 0 ? (lastHeight - firstHeight) / lastHeight : 0,
+      (lastHeight > 0 ? (lastHeight - firstHeight) / lastHeight : 0) * 100,
     ).toFixed(4)
 
     const now = Date.now()
