@@ -137,6 +137,10 @@ export type InvokeMethodRequestArgs = BlockchainRequestArgs &
      * Arguments to pass to the method.
      */
     args?: unknown[]
+    /**
+     * Indexer to execute.
+     */
+    indexer?: string
   }
 
 export type GetTransactionPendingRequestsRequestArgs = BlockchainRequestArgs &
