@@ -109,7 +109,7 @@ export abstract class BaseIndexerClient implements IndexerClientI {
         blockchainId: this.blockchainId,
         ...args,
       },
-      { meta: { $streamObjectMode: true } },
+      { meta: { $streamObjectMode: true }, nodeID: args.indexer },
     )
   }
 

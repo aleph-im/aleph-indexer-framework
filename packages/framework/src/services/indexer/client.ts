@@ -13,6 +13,7 @@ import { IndexerClientI } from './interface.js'
 export class IndexerMsClient {
   /**
    * @param broker The broker instance to retrieve the actual service from.
+   * @param blockchainIndexerClients Dictionary with blockchain indexer clients.
    * @param msId The moleculer service id of the indexer service.
    */
   constructor(
