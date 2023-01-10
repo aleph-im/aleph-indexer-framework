@@ -21,7 +21,7 @@ import { TransactionFetcher } from './transactionFetcher.js'
 /**
  * Main class of the indexer service. Creates and manages all indexers.
  */
-export class BaseIndexer implements BlockchainIndexerI {
+export abstract class BaseIndexer implements BlockchainIndexerI {
   protected accountTransactionsIndexers: Record<
     string,
     AccountTransactionIndexer

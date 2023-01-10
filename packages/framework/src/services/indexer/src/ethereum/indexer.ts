@@ -7,7 +7,7 @@ import { BlockchainIndexerI, IndexerWorkerDomainI } from '../base/types.js'
 import { BaseIndexer } from '../base/indexer.js'
 import { IndexerMsClient } from '../../client.js'
 
-export class SolanaIndexer extends BaseIndexer implements BlockchainIndexerI {
+export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
   constructor(
     protected domain: IndexerWorkerDomainI,
     protected indexerClient: IndexerMsClient,
@@ -17,7 +17,7 @@ export class SolanaIndexer extends BaseIndexer implements BlockchainIndexerI {
     protected transactionFetcher: TransactionFetcher,
   ) {
     super(
-      Blockchain.Solana,
+      Blockchain.Ethereum,
       domain,
       indexerClient,
       fetcherClient,

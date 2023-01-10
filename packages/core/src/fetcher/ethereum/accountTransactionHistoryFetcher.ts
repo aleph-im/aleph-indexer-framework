@@ -5,6 +5,7 @@ import {
   BaseFetcherPaginationCursors,
   BaseFetcherState,
   FetcherJobRunnerHandleFetchResult,
+  FetcherJobRunnerUpdateCursorResult,
 } from '../base/types.js'
 import {
   EthereumFetchSignaturesOptions,
@@ -60,7 +61,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       config.jobs.backward = {
         ...backward,
         interval: backward.interval || 0,
-        handleFetch: () => this.fetchBackward(),
+        handleFetch: (...args) => this.fetchBackward(...args),
         checkComplete: (ctx) => this.checkCompleteBackward(ctx),
       }
     }
@@ -75,37 +76,54 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
 
     // @note: not "before" (autodetected by the client (last block height))
     const until = this.fetcherState.cursors?.forward?.height
-    const maxLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
+    const iterationLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchSignaturesOptions = {
       before: undefined,
       account,
       until,
-      maxLimit,
+      iterationLimit,
     }
 
     const { lastCursors, error } = await this.fetchSignatures(options, true)
     return { lastCursors, error }
   }
 
-  protected async fetchBackward(): Promise<
+  protected async fetchBackward({
+    interval,
+  }: {
+    firstRun: boolean
+    interval: number
+  }): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountTransactionHistoryPaginationCursor>
   > {
     const { account } = this.opts
 
     // @note: until is autodetected by the client (height 0 / first block)
-    const before = this.fetcherState.cursors?.backward?.height
-    const maxLimit = Number.MAX_SAFE_INTEGER
+    let before = this.fetcherState.cursors?.backward?.height
+
+    if (!before) {
+      const blockState = await this.ethereumBlockFetcher.getState()
+      before = blockState.cursors?.forward?.height
+    }
+
+    const iterationLimit = Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchSignaturesOptions = {
       until: undefined,
       before,
       account,
-      maxLimit,
+      iterationLimit,
     }
 
-    const { lastCursors, error } = await this.fetchSignatures(options, false)
-    return { lastCursors, error }
+    const { lastCursors, error, count } = await this.fetchSignatures(
+      options,
+      false,
+    )
+
+    const newInterval = interval + 1000
+
+    return { lastCursors, error, newInterval }
   }
 
   protected async fetchSignatures(
@@ -157,9 +175,49 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     newItems: boolean
     error?: Error
   }): Promise<boolean> {
-    const { newItems, error } = ctx
+    const { newItems, error, fetcherState } = ctx
     const isBlockComplete = this.ethereumBlockFetcher.isComplete('backward')
+    const fetcherBackward = fetcherState.cursors?.backward?.height
 
-    return isBlockComplete && !newItems && !error
+    return (
+      isBlockComplete &&
+      !newItems &&
+      !error &&
+      fetcherBackward !== undefined &&
+      fetcherBackward <= 0
+    )
+  }
+
+  protected async _updateCursors(
+    type: 'forward' | 'backward',
+    ctx: {
+      prevCursors?: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
+      lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
+    },
+  ): Promise<
+    FetcherJobRunnerUpdateCursorResult<EthereumAccountTransactionHistoryPaginationCursor>
+  > {
+    const cursors = await super._updateCursors(type, ctx)
+    if (cursors.newItems) return cursors
+
+    const blockState = await this.ethereumBlockFetcher.getState()
+    const { newCursors } = cursors
+    const { prevCursors } = ctx
+
+    const blockCursor = blockState.cursors?.[type]
+    const fetcherCursor = newCursors?.[type]
+    const blockHeight = blockCursor?.height
+    const fetcherHeight = fetcherCursor?.height
+
+    if (!blockHeight || (fetcherHeight && blockHeight >= fetcherHeight))
+      return cursors
+
+    return super._updateCursors(type, {
+      prevCursors,
+      lastCursors: {
+        ...newCursors,
+        [type]: blockCursor,
+      },
+    })
   }
 }

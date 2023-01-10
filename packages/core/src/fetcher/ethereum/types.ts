@@ -43,7 +43,8 @@ export type EthereumBlockFetcherOptions = {
 export type EthereumFetchBlocksOptions = {
   before?: number
   until?: number
-  maxLimit?: number
+  iterationLimit?: number
+  pageLimit?: number
 }
 
 export type EthereumBlockFetcherClientI = {
@@ -86,7 +87,8 @@ export type EthereumFetchSignaturesOptions = {
   account: string
   before?: number
   until?: number
-  maxLimit?: number
+  iterationLimit?: number
+  pageLimit?: number
 }
 
 export type EthereumTransactionHistoryFetcherClientI = {

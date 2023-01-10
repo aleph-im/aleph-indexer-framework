@@ -15,7 +15,7 @@ import { BlockchainRequestArgs } from '../../../types.js'
 /**
  * Client to access the main indexer service through the broker.
  */
-export class BaseIndexerClient implements IndexerClientI {
+export abstract class BaseIndexerClient implements IndexerClientI {
   /**
    * @param blockchainId The id of the blockchain the client handles
    * @param broker The broker instance to retrieve the actual service from.

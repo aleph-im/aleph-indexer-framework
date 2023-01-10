@@ -17,7 +17,8 @@ import {
 
 export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBlockHistoryPaginationCursor> {
   protected lastCheckCompleteBackward = Date.now()
-  protected backwardChunkSize = 50
+  protected iterationLimit = 1000
+  protected pageLimit = 50
 
   constructor(
     protected opts: EthereumBlockFetcherOptions,
@@ -61,12 +62,16 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   > {
     // @note: not "before" (autodetected by the node (last block height))
     const until = this.fetcherState.cursors?.forward?.height
-    const maxLimit = !until ? this.backwardChunkSize : Number.MAX_SAFE_INTEGER
+    const { pageLimit } = this
+    const iterationLimit = !until
+      ? this.iterationLimit
+      : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchBlocksOptions = {
       before: undefined,
       until,
-      maxLimit,
+      iterationLimit,
+      pageLimit,
     }
 
     const { lastCursors, error } = await this.fetchBlocks(options, true)
@@ -79,12 +84,13 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   > {
     // @note: until is autodetected by the node (height 0 / first block)
     const before = this.fetcherState.cursors?.backward?.height
-    const maxLimit = this.backwardChunkSize
+    const { iterationLimit, pageLimit } = this
 
     const options: EthereumFetchBlocksOptions = {
       until: undefined,
       before,
-      maxLimit,
+      iterationLimit,
+      pageLimit,
     }
 
     const { lastCursors, error } = await this.fetchBlocks(options, false)
@@ -150,7 +156,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
 
     // Duration.fromMillis((firstHeight / 1000) * 20 * 1000).toISOTime() || '+24h'
     const estimatedTime = Number(
-      (firstHeight / this.backwardChunkSize) * elapsedHours,
+      (firstHeight / this.iterationLimit) * elapsedHours,
     ).toFixed(2)
 
     console.log(`${this.options.id} progress {

@@ -112,18 +112,19 @@ export class EthereumClient {
 
     let {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
-      maxLimit = 1000,
+      iterationLimit = 1000,
+      pageLimit = 1000,
     } = args
 
-    while (maxLimit > 0) {
-      const limit = Math.min(maxLimit, 1000)
-      maxLimit = maxLimit - limit
+    while (iterationLimit > 0) {
+      const limit = Math.min(iterationLimit, pageLimit)
+      iterationLimit = iterationLimit - limit
 
       console.log(`
         fetch blocks { 
           before: ${before}
           until: ${until}
-          maxLimit: ${maxLimit}
+          iterationLimit: ${iterationLimit}
         }
       `)
 
@@ -169,19 +170,20 @@ export class EthereumClient {
 
     let {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
-      maxLimit = 1000,
+      iterationLimit = 1000,
+      pageLimit = 1000,
     } = args
 
-    while (maxLimit > 0) {
-      const limit = Math.min(maxLimit, 1000)
-      maxLimit = maxLimit - limit
+    while (iterationLimit > 0) {
+      const limit = Math.min(iterationLimit, pageLimit)
+      iterationLimit = iterationLimit - limit
 
       console.log(`
         fetch signatures { 
           account: ${account}
           before: ${before}
           until: ${until}
-          maxLimit: ${maxLimit}
+          iterationLimit: ${iterationLimit}
         }
       `)
 
@@ -338,13 +340,12 @@ export class EthereumClient {
       }
 
       if (
-        !(
-          !!message &&
-          !message.error &&
-          message.jsonrpc === '2.0' &&
-          (typeof message.id === 'number' || typeof message.id === 'string') &&
-          message.result !== undefined
-        ) // only undefined is not valid json object))
+        !message ||
+        message.error ||
+        message.jsonrpc !== '2.0' ||
+        (typeof message.id !== 'number' && typeof message.id !== 'string') ||
+        message.result === undefined ||
+        message.result === null
       ) {
         throw errors.InvalidResponse(result as unknown as Error)
       }
@@ -362,10 +363,11 @@ export class EthereumClient {
     limit,
   }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
     const chunk = []
+    until = Math.max(until, 0)
 
     const signatures = await this.accountSignatureDAL
       .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
-      .getAllValuesFromTo([account, before], [account, until], {
+      .getAllValuesFromTo([account, until], [account, before], {
         atomic: true,
         limit,
       })

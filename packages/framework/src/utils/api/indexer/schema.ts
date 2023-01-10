@@ -45,9 +45,11 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       accountState: {
         type: Types.AccountStateList,
         args: {
+          blockchain: { type: new GraphQLList(GraphQLString) },
           account: { type: new GraphQLList(GraphQLString) },
         },
-        resolve: (_, ctx) => this.domain.getAccountState(ctx.account),
+        resolve: (_, ctx) =>
+          this.domain.getAccountState(ctx.blockchain, ctx.account),
       },
 
       transactionRequest: {
@@ -76,6 +78,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       queryConf.fields.accountTimeSeriesStats = {
         type: AccountTimeSeriesStatsList,
         args: {
+          blockchain: { type: new GraphQLList(GraphQLString) },
           account: { type: new GraphQLList(GraphQLString) },
           type: { type: new GraphQLNonNull(GraphQLString) },
           timeFrame: { type: new GraphQLNonNull(Types.TimeFrame) },
@@ -85,21 +88,28 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
           reverse: { type: GraphQLBoolean },
         },
         resolve: (_, ctx) =>
-          domain.getAccountTimeSeriesStats(ctx.account, ctx.type, {
-            timeFrame: ctx.timeFrame,
-            startDate: ctx.startDate,
-            endDate: ctx.endDate,
-            limit: ctx.limit,
-            reverse: ctx.reverse,
-          }),
+          domain.getAccountTimeSeriesStats(
+            ctx.blockchain,
+            ctx.account,
+            ctx.type,
+            {
+              timeFrame: ctx.timeFrame,
+              startDate: ctx.startDate,
+              endDate: ctx.endDate,
+              limit: ctx.limit,
+              reverse: ctx.reverse,
+            },
+          ),
       }
 
       queryConf.fields.accountStats = {
         type: AccountStatsList,
         args: {
+          blockchain: { type: new GraphQLList(GraphQLString) },
           account: { type: new GraphQLList(GraphQLString) },
         },
-        resolve: (_, ctx) => domain.getAccountStats(ctx.account),
+        resolve: (_, ctx) =>
+          domain.getAccountStats(ctx.blockchain, ctx.account),
       }
     }
 
