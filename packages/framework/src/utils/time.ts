@@ -1,34 +1,31 @@
-import {Utils} from '@aleph-indexer/core'
-import {DateTime, DateTimeUnit, Duration, Interval} from 'luxon'
-import {IntervalEntity} from "./stats";
+import { Utils } from '@aleph-indexer/core'
+import { DateTime, DateTimeUnit, Duration, Interval } from 'luxon'
+import { IntervalEntity } from './stats'
 
-const { splitDurationIntoIntervals, getMostSignificantDurationUnitAndAmount } = Utils
+const { splitDurationIntoIntervals, getMostSignificantDurationUnitAndAmount } =
+  Utils
 
-export const MAX_TIMEFRAME = Duration.fromDurationLike({year: 315});
+export const MAX_TIMEFRAME = Duration.fromDurationLike({ year: 315 })
 // @todo: move time utils from framework to core
 /**
  * Returns custom date ranges for a given interval.
  * @param interval If string, it should be in ISO 8601 format.
  */
-export function toInterval(
-  interval: Interval | string,
-): Interval {
+export function toInterval(interval: Interval | string): Interval {
   return typeof interval === 'string' ? Interval.fromISO(interval) : interval
 }
 
-export function candleIntervalToDuration(
-  candleInterval: string,
-): Duration {
+export function candleIntervalToDuration(candleInterval: string): Duration {
   candleInterval = candleInterval.toLowerCase()
   const count = candleInterval.match(/\d+/)?.[0]
   if (!count) {
-    if(candleInterval !== 'all') {
+    if (candleInterval !== 'all') {
       throw new Error(`Invalid candle interval: ${candleInterval}`)
     }
     return MAX_TIMEFRAME
   }
   const unit = candleInterval.replace(count, '') as DateTimeUnit
-  return Duration.fromObject({[unit]: parseInt(count)})
+  return Duration.fromObject({ [unit]: parseInt(count) })
 }
 
 /**
@@ -36,20 +33,27 @@ export function candleIntervalToDuration(
  * @param startTime
  * @param endTime
  */
-export function getIntervalFromDateRange(startTime: number, endTime: number): Interval {
+export function getIntervalFromDateRange(
+  startTime: number,
+  endTime: number,
+): Interval {
   return Interval.fromDateTimes(
     DateTime.fromMillis(startTime).toUTC(),
     DateTime.fromMillis(endTime).toUTC(),
   )
 }
 
-export async function* getIntervalsFromStorageStream(stream: AsyncIterable<IntervalEntity>): AsyncGenerator<Interval> {
+export async function* getIntervalsFromStorageStream(
+  stream: AsyncIterable<IntervalEntity>,
+): AsyncGenerator<Interval> {
   for await (const entry of stream) {
     yield getIntervalFromDateRange(entry.startTimestamp, entry.endTimestamp)
   }
 }
 
-export async function generatorToArray<T>(generator: AsyncIterable<T> | Iterable<T>): Promise<T[]> {
+export async function generatorToArray<T>(
+  generator: AsyncIterable<T> | Iterable<T>,
+): Promise<T[]> {
   const arr: T[] = []
   for await (const item of generator) {
     arr.push(item)
@@ -70,7 +74,7 @@ export function clipIntervals(
   intervals: Interval[],
   clipRange: Interval | Interval[],
 ): Interval[] {
-  if(Array.isArray(clipRange)) {
+  if (Array.isArray(clipRange)) {
     for (const clip of clipRange) {
       intervals = clipIntervals(intervals, clip)
     }
@@ -85,10 +89,10 @@ export function clipIntervals(
       ) {
         const leftRange = Interval.fromDateTimes(
           currentRange.start,
-          clipRange.start.minus({millisecond: 1})
+          clipRange.start.minus({ millisecond: 1 }),
         )
         const rightRange = Interval.fromDateTimes(
-          clipRange.end.plus({millisecond: 1}),
+          clipRange.end.plus({ millisecond: 1 }),
           currentRange.end,
         )
 
@@ -101,7 +105,7 @@ export function clipIntervals(
         clipRange.end < currentRange.end
       ) {
         const rightRange = Interval.fromDateTimes(
-          clipRange.end.plus({millisecond: 1}),
+          clipRange.end.plus({ millisecond: 1 }),
           currentRange.end,
         )
 
@@ -115,7 +119,7 @@ export function clipIntervals(
       ) {
         const leftRange = Interval.fromDateTimes(
           currentRange.start,
-          clipRange.start.plus({millisecond: 1}),
+          clipRange.start.plus({ millisecond: 1 }),
         )
 
         intervals.splice(i, 1, leftRange)
@@ -134,7 +138,9 @@ export function clipIntervals(
 }
 
 export function sortIntervals(intervals: Interval[]): Interval[] {
-  return Object.values(intervals).sort((a, b) => a.start.toMillis() - b.start.toMillis())
+  return Object.values(intervals).sort(
+    (a, b) => a.start.toMillis() - b.start.toMillis(),
+  )
 }
 
 /**
@@ -146,9 +152,7 @@ export async function prepareIntervals(
   intervals: Interval[],
   clipRange: Interval,
 ): Promise<Interval[]> {
-  return sortIntervals(
-    clipIntervals(intervals, clipRange)
-  )
+  return sortIntervals(clipIntervals(intervals, clipRange))
 }
 
 /**
@@ -222,8 +226,13 @@ export async function mergeIntervals(
   }
 }
 
-export function isEqualIntervalEntity(a: IntervalEntity, b: IntervalEntity): boolean {
-  return a.startTimestamp === b.startTimestamp && a.endTimestamp === b.endTimestamp
+export function isEqualIntervalEntity(
+  a: IntervalEntity,
+  b: IntervalEntity,
+): boolean {
+  return (
+    a.startTimestamp === b.startTimestamp && a.endTimestamp === b.endTimestamp
+  )
 }
 
 /**
@@ -234,7 +243,9 @@ export function isEqualIntervalEntity(a: IntervalEntity, b: IntervalEntity): boo
  * @param interval The interval to transform.
  */
 export function intervalToTimeFrameDuration(interval: Interval): Duration {
-  const { unit, amount } = getMostSignificantDurationUnitAndAmount(interval.toDuration())
+  const { unit, amount } = getMostSignificantDurationUnitAndAmount(
+    interval.toDuration(),
+  )
   return Duration.fromObject({ [unit]: Math.round(amount) })
 }
 
@@ -251,7 +262,12 @@ export function getTimeFrameIntervals(
   }
 
   const { unit, amount } = getMostSignificantDurationUnitAndAmount(timeFrame)
-  const ranges = splitDurationIntoIntervals(interval.start, interval.end, unit, amount)
+  const ranges = splitDurationIntoIntervals(
+    interval.start,
+    interval.end,
+    unit,
+    amount,
+  )
   return reverse ? ranges.reverse() : ranges
 }
 

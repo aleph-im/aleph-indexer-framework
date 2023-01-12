@@ -1,4 +1,4 @@
-import {Duration, Interval} from 'luxon'
+import { Duration, Interval } from 'luxon'
 import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'

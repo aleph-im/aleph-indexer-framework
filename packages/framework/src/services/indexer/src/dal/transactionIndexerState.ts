@@ -1,5 +1,5 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import {IntervalEntity} from "../../../../utils";
+import { IntervalEntity } from '../../../../utils'
 
 export enum TransactionIndexerStateCode {
   Pending = 0,
@@ -10,17 +10,17 @@ export enum TransactionIndexerStateCode {
 export type TransactionIndexerState = IntervalEntity & {
   account: string
 } & (
-  | {
-      state: TransactionIndexerStateCode.Processed
-      requestNonce?: number
-    }
-  | {
-      state:
-        | TransactionIndexerStateCode.Pending
-        | TransactionIndexerStateCode.Ready
-      requestNonce: number
-    }
-)
+    | {
+        state: TransactionIndexerStateCode.Processed
+        requestNonce?: number
+      }
+    | {
+        state:
+          | TransactionIndexerStateCode.Pending
+          | TransactionIndexerStateCode.Ready
+        requestNonce: number
+      }
+  )
 
 export type TransactionIndexerStateStorage =
   EntityStorage<TransactionIndexerState>

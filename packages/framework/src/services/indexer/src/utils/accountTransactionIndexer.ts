@@ -15,9 +15,12 @@ import {
 } from '../types.js'
 import {
   getIntervalFromDateRange,
-  mergeIntervals, clipIntervals, getIntervalsFromStorageStream, generatorToArray,
+  mergeIntervals,
+  clipIntervals,
+  getIntervalsFromStorageStream,
+  generatorToArray,
 } from '../../../../utils/time.js'
-import {DateTime, Interval} from "luxon";
+import { DateTime, Interval } from 'luxon'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
@@ -100,7 +103,9 @@ export class AccountTransactionIndexer {
       return
 
     const toFetchRange = Interval.fromDateTimes(
-      DateTime.fromMillis(state.firstTimestamp + (state.completeHistory ? 0 : 1)),
+      DateTime.fromMillis(
+        state.firstTimestamp + (state.completeHistory ? 0 : 1),
+      ),
       DateTime.fromMillis(state.lastTimestamp),
     )
 
@@ -147,10 +152,15 @@ export class AccountTransactionIndexer {
     )
       return []
 
-    return this.calculateRangesToFetch(account, Interval.fromDateTimes(
-      DateTime.fromMillis(state.firstTimestamp + (state.completeHistory ? 0 : 1)),
-      DateTime.fromMillis(state.lastTimestamp),
-    ))
+    return this.calculateRangesToFetch(
+      account,
+      Interval.fromDateTimes(
+        DateTime.fromMillis(
+          state.firstTimestamp + (state.completeHistory ? 0 : 1),
+        ),
+        DateTime.fromMillis(state.lastTimestamp),
+      ),
+    )
   }
 
   // async fetchRange(dateRange: DateRange): Promise<void> {
@@ -234,7 +244,10 @@ export class AccountTransactionIndexer {
 
     // @note: if we finished with the latest range, take also the next one and do a request
     // This prevents from getting stuck on new ranges coming in real time
-    if (endTimestamp - startTimestamp < this.config.chunkTimeframe && ranges.length > 1) {
+    if (
+      endTimestamp - startTimestamp < this.config.chunkTimeframe &&
+      ranges.length > 1
+    ) {
       const targetRange = ranges[ranges.length - 2]
 
       const endTimestamp = targetRange.end.toMillis()
@@ -266,8 +279,9 @@ export class AccountTransactionIndexer {
         atomic: true,
       })
 
-    const { newRanges, oldRanges, mergedRanges } =
-      await mergeIntervals(getIntervalsFromStorageStream(fetchedRanges))
+    const { newRanges, oldRanges, mergedRanges } = await mergeIntervals(
+      getIntervalsFromStorageStream(fetchedRanges),
+    )
 
     if (!newRanges.length) return mergedRanges
 
@@ -278,7 +292,7 @@ export class AccountTransactionIndexer {
         timeFrame: range.toDuration().toMillis(),
         account,
         state: Processed,
-        requestNonce: undefined
+        requestNonce: undefined,
       } as TransactionIndexerState
     })
 
@@ -289,7 +303,7 @@ export class AccountTransactionIndexer {
         timeFrame: range.toDuration().toMillis(),
         state: Processed,
         account,
-        requestNonce: undefined
+        requestNonce: undefined,
       } as TransactionIndexerState
     })
 
@@ -297,12 +311,24 @@ export class AccountTransactionIndexer {
       `💿 compact fetching states *
         newStates: [
           ${newStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s.startTimestamp, s.endTimestamp).toISO()}`)
+            .map(
+              (s) =>
+                `[${s.state}]${getIntervalFromDateRange(
+                  s.startTimestamp,
+                  s.endTimestamp,
+                ).toISO()}`,
+            )
             .join('\n')}
         ],
         oldStates: [
           ${oldStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s.startTimestamp, s.endTimestamp).toISO()}`)
+            .map(
+              (s) =>
+                `[${s.state}]${getIntervalFromDateRange(
+                  s.startTimestamp,
+                  s.endTimestamp,
+                ).toISO()}`,
+            )
             .join('\n')}
         ]
       `,
@@ -401,12 +427,15 @@ export class AccountTransactionIndexer {
   ): Promise<Interval[]> {
     clipRanges =
       clipRanges ||
-      await this.transactionIndexerStateDAL.getAllValuesFromTo(
+      (await this.transactionIndexerStateDAL.getAllValuesFromTo(
         [account, undefined],
         [account, totalDateRange.end.toMillis()],
         { reverse: false, atomic: true },
-      )
+      ))
 
-    return clipIntervals([totalDateRange], await generatorToArray(getIntervalsFromStorageStream(clipRanges)))
+    return clipIntervals(
+      [totalDateRange],
+      await generatorToArray(getIntervalsFromStorageStream(clipRanges)),
+    )
   }
 }

@@ -1,11 +1,8 @@
 import { jest } from '@jest/globals'
 jest.useFakeTimers()
 
-import {
-  mergeIntervals,
-  clipIntervals,
-} from '../time.js'
-import {Interval} from "luxon";
+import { mergeIntervals, clipIntervals } from '../time.js'
+import { Interval } from 'luxon'
 
 describe('Framework time utils', () => {
   it('mergeDateRangesFromIterable should work', async () => {

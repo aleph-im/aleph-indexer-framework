@@ -1,4 +1,11 @@
-import {DateTime, DateTimeUnit, Duration, DurationUnit, Interval, Settings} from 'luxon'
+import {
+  DateTime,
+  DateTimeUnit,
+  Duration,
+  DurationUnit,
+  Interval,
+  Settings,
+} from 'luxon'
 
 Settings.defaultZone = 'utc'
 const zone = { zone: 'utc' }
@@ -42,11 +49,13 @@ export function splitDurationIntoIntervals(
     return []
   }
 
-  const length = startDate.equals(endDate) ? 1 : Math.ceil(
-    endDate
-      .diff(startDate, intervalUnit as DurationUnit)
-      .get(intervalUnit as DurationUnit) / intervalSize,
-  )
+  const length = startDate.equals(endDate)
+    ? 1
+    : Math.ceil(
+        endDate
+          .diff(startDate, intervalUnit as DurationUnit)
+          .get(intervalUnit as DurationUnit) / intervalSize,
+      )
 
   // Divide range (A, D) in chunks of intervalSize * intervalUnit time intervals
   // [(A, B), (B, C), (C, D)]
@@ -145,31 +154,43 @@ export function getJitter(i: number, amplitude: number): number {
   return Math.random() * amplitude * (i || 1)
 }
 
-export function getMostSignificantDurationUnitAndAmount(timeFrame: Duration): { unit: DateTimeUnit, amount: number } {
-  timeFrame = timeFrame.shiftTo('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds')
+export function getMostSignificantDurationUnitAndAmount(timeFrame: Duration): {
+  unit: DateTimeUnit
+  amount: number
+} {
+  timeFrame = timeFrame.shiftTo(
+    'years',
+    'months',
+    'weeks',
+    'days',
+    'hours',
+    'minutes',
+    'seconds',
+    'milliseconds',
+  )
   if (timeFrame.years >= 1) {
-    return {unit: "year", amount: timeFrame.years}
+    return { unit: 'year', amount: timeFrame.years }
   }
   if (timeFrame.months >= 1) {
-    return {unit: "month", amount: timeFrame.months}
+    return { unit: 'month', amount: timeFrame.months }
   }
   if (timeFrame.weeks >= 1) {
-    return {unit: "week", amount: timeFrame.weeks}
+    return { unit: 'week', amount: timeFrame.weeks }
   }
   if (timeFrame.days >= 1) {
-    return {unit: "day", amount: timeFrame.days}
+    return { unit: 'day', amount: timeFrame.days }
   }
   if (timeFrame.hours >= 1) {
-    return {unit: "hour", amount: timeFrame.hours}
+    return { unit: 'hour', amount: timeFrame.hours }
   }
   if (timeFrame.minutes >= 1) {
-    return {unit: "minute", amount: timeFrame.minutes}
+    return { unit: 'minute', amount: timeFrame.minutes }
   }
   if (timeFrame.seconds >= 1) {
-    return {unit: "second", amount: timeFrame.seconds}
+    return { unit: 'second', amount: timeFrame.seconds }
   }
   if (timeFrame.milliseconds >= 1) {
-    return {unit: "millisecond", amount: timeFrame.milliseconds}
+    return { unit: 'millisecond', amount: timeFrame.milliseconds }
   }
-  throw new Error("Invalid time frame")
+  throw new Error('Invalid time frame')
 }

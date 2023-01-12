@@ -3,7 +3,7 @@ import { IndexerMsI } from '../../services/indexer/index.js'
 import {
   getIntervalsFromStorageStream,
   mergeIntervals,
-  intervalToTimeFrameDuration
+  intervalToTimeFrameDuration,
 } from '../time.js'
 import {
   StatsStateStorage,
@@ -18,7 +18,7 @@ import {
   AccountTimeSeriesStatsConfig,
   AccountStats,
 } from './types.js'
-import {Duration, Interval} from "luxon";
+import { Duration, Interval } from 'luxon'
 
 const { JobRunner } = Utils
 
@@ -145,12 +145,16 @@ export class AccountTimeSeriesStatsManager<V> {
     for (const timeSeries of this.config.series) {
       const fetchedRanges = await this.stateDAL
         .useIndex(StatsStateDALIndex.AccountTypeState)
-        .getAllValuesFromTo([account, timeSeries.config.type, Processed], [account, timeSeries.config.type, Processed], {
-          reverse: false,
-        })
+        .getAllValuesFromTo(
+          [account, timeSeries.config.type, Processed],
+          [account, timeSeries.config.type, Processed],
+          {
+            reverse: false,
+          },
+        )
 
       const { newRanges, oldRanges } = await mergeIntervals(
-        getIntervalsFromStorageStream(fetchedRanges)
+        getIntervalsFromStorageStream(fetchedRanges),
       )
 
       const newStates = newRanges.map((range) => {

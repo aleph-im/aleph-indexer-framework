@@ -121,7 +121,7 @@ export class TimeSeriesStats<I extends object, O> {
       timeFrameIndex,
       pendingTimeFrame,
     ] of sortedTimeFrames.entries()) {
-      let { unit: timeFrameUnit, amount: timeFrameAmount } =
+      const { unit: timeFrameUnit, amount: timeFrameAmount } =
         getMostSignificantDurationUnitAndAmount(pendingTimeFrame)
 
       // @note: get the previous time frame, which is able to cleanly divide the current time frame.
@@ -241,7 +241,7 @@ export class TimeSeriesStats<I extends object, O> {
           )
         }
 
-        let aggregatedValues = 0
+        const aggregatedValues = 0
         for (const interval of intervals) {
           const startTimestamp = interval.start.toMillis()
           const endTimestamp = interval.end.toMillis() - 1

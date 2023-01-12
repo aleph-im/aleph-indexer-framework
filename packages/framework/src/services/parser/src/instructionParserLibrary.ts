@@ -3,7 +3,7 @@ import { LayoutFactory } from './layout/layoutFactory.js'
 import { DefinedParser } from './parser.js'
 import { SplInstructionParser } from './splInstructionParser.js'
 import { LayoutImplementation } from './layout/types.js'
-import { AnchorInstructionParser } from "./anchorInstructionParser.js";
+import { AnchorInstructionParser } from './anchorInstructionParser.js'
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
@@ -70,7 +70,7 @@ export class InstructionParserLibrary extends DefinedParser<
         implementation.name,
         implementation.getInstructionType,
         implementation.accountLayoutMap,
-        implementation.dataLayoutMap
+        implementation.dataLayoutMap,
       )
     } else {
       parser = new SplInstructionParser(

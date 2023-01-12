@@ -1,5 +1,5 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import {IntervalEntity} from "../types";
+import { IntervalEntity } from '../types'
 
 export enum StatsStateState {
   Processing = 0,

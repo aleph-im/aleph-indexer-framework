@@ -1,5 +1,5 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import {IntervalEntity} from "../types";
+import { IntervalEntity } from '../types'
 
 export type StatsTimeSeries<T> = IntervalEntity & {
   account: string

@@ -41,7 +41,10 @@ export class AnchorInstructionParser<
     const parsedIx: AlephParsedParsedInstruction = rawIx as any
     parsedIx.program = this.programName
 
-    const { instructionDiscriminator, ...data } = this.parseInstructionData(type, decoded)[0]
+    const { instructionDiscriminator, ...data } = this.parseInstructionData(
+      type,
+      decoded,
+    )[0]
     const accounts = this.parseInstructionAccounts(type, parsedIx)
 
     parsedIx.parsed = {
