@@ -1,15 +1,19 @@
 import { Price, UpdatePriceEvent } from '../types.js'
-import { PriceAccounts } from '../utils/pyth-sdk.js'
+import { AccountDomain } from '../domain/account.js'
 
 export class PriceParser {
   /**
    * Implements the Pyth price aggregation algorithm.
    * @param events - UpdPrice events occurring in a single slot.
    */
-  parse(events: UpdatePriceEvent[]): Price {
+  parse(
+    events: UpdatePriceEvent[],
+    accounts: Record<string, AccountDomain>,
+  ): Price {
     const first = events[0]
-    const accountData = PriceAccounts[first.accounts.price_accountAccount]
-    const id = `${first.accounts.price_accountAccount}:${first.timestamp}`
+    const accountData = accounts[first.accounts.priceAccount].info
+
+    const id = `${first.accounts.priceAccount}:${first.timestamp}`
     const timestamp = events[0].timestamp
 
     const pricesAsc = events
@@ -30,9 +34,9 @@ export class PriceParser {
     return {
       id,
       timestamp,
-      price: median * Math.pow(10, accountData.exponent),
-      confidence: conf * Math.pow(10, accountData.exponent),
-      priceAccount: first.accounts.price_accountAccount,
+      price: median * Math.pow(10, accountData.data.exponent),
+      confidence: conf * Math.pow(10, accountData.data.exponent),
+      priceAccount: first.accounts.priceAccount,
       status: first.status_,
     }
   }

@@ -82,7 +82,7 @@ export class CandleAggregator {
       closePrice: 0,
       closeConfidence: 0,
       closeTimestamp: 0,
-    };
+    }
   }
 }
 

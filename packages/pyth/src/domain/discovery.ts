@@ -1,5 +1,5 @@
-import { AccountsType } from '../layouts/accounts.js'
 import {
+  AccountsType,
   ParsedAccountsData,
   PriceComponentBN,
   PriceDataBN,

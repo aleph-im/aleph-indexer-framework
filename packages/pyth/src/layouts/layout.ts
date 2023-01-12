@@ -4,7 +4,7 @@ import {
   getPythEventType,
   IX_ACCOUNTS_LAYOUT,
 } from './instructions.js'
-import {PythEventType} from "../types.js";
+import { PythEventType } from '../types.js'
 
 export default {
   [PYTH_PROGRAM_ID]: {

@@ -69,9 +69,6 @@ export default class WorkerDomain
       this.priceDAL,
       accountTimeSeries,
     )
-    //const dataFeed = new AccountDomain(meta, this.priceDAL, accountTimeSeries)
-    //this.dataFeedsByAccount[account] = dataFeed
-    //this.dataFeedsBySymbol[dataFeed.info.product.symbol] = dataFeed
 
     console.log('Account indexing', this.context.instanceName, account)
   }
@@ -158,14 +155,14 @@ export default class WorkerDomain
 
     // group by slot
     let slotBatches = Object.entries(
-      listGroupBy(parsedIxs, (ix) => ix.pub_slot_.toNumber()),
+      listGroupBy(parsedIxs, (ix) => Number(ix.pub_slot_)),
     )
 
     // append previous last slot batch, if necessary
     if (
       this.previousSlotBatch.length > 0 &&
-      this.previousSlotBatch[0].pub_slot_.toNumber() ===
-        slotBatches[0][1][0].pub_slot_.toNumber()
+      Number(this.previousSlotBatch[0].pub_slot_) ===
+        Number(slotBatches[0][1][0].pub_slot_)
     ) {
       slotBatches[0].unshift(this.previousSlotBatch)
     }
@@ -174,15 +171,14 @@ export default class WorkerDomain
 
     // group by data feed
     const accountSlotBatches = Object.entries(
-      listGroupBy(
-        slotBatches,
-        (batch) => batch[1][0].accounts.price_accountAccount,
-      ),
+      listGroupBy(slotBatches, (batch) => batch[1][0].accounts.priceAccount),
     )
 
     // aggregate prices for each batch (data feed -> slot -> price)
     const parsedPrices = accountSlotBatches.flatMap((accountBatch) =>
-      accountBatch[1].map((slotBatch) => this.priceParser.parse(slotBatch[1])),
+      accountBatch[1].map((slotBatch) =>
+        this.priceParser.parse(slotBatch[1], this.accounts),
+      ),
     )
 
     await this.priceDAL.save(parsedPrices)

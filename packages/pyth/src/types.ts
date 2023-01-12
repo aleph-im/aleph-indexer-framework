@@ -1,20 +1,5 @@
 import { EventBase } from '@aleph-indexer/core'
 import {
-  AddMappingInstruction,
-  AddPriceInstruction,
-  AddProductInstruction,
-  AddPublisherInstruction,
-  AggPriceInstruction,
-  DelPublisherInstruction,
-  InitMappingInstruction,
-  InitPriceInstruction,
-  ResizeAccountInstruction,
-  SetMinPubInstruction,
-  UpdPriceInstruction,
-  UpdPriceNoFailOnErrorInstruction,
-  UpdProductInstruction,
-} from './layouts/ts/instructions.js'
-import {
   PriceStatus,
   PriceData,
   Ema,
@@ -23,8 +8,17 @@ import {
   Price as PythPrice,
 } from '@pythnetwork/client'
 import { PublicKey } from '@solana/web3.js'
-import { AccountsType } from './layouts/accounts.js'
 import BN from 'bn.js'
+import {
+  IdlField,
+  IdlType,
+  IdlAccountItem,
+} from '@coral-xyz/anchor/dist/cjs/idl'
+// ------------------- ACCOUNTS -------------------
+export enum AccountsType {
+  PriceAccount = 'PriceAccount',
+  ProductAccount = 'ProductAccount',
+}
 
 export type PythAccountInfo = {
   name: string
@@ -94,23 +88,6 @@ export type PriceDataBN = Omit<
 
 export type ParsedAccountsData = ProductDataWithoutHeader & PriceDataBN
 
-export {
-  ParsedPythInstruction,
-  InitMappingInstruction,
-  AddMappingInstruction,
-  AddProductInstruction,
-  UpdProductInstruction,
-  AddPriceInstruction,
-  AddPublisherInstruction,
-  DelPublisherInstruction,
-  UpdPriceInstruction,
-  AggPriceInstruction,
-  InitPriceInstruction,
-  SetMinPubInstruction,
-  UpdPriceNoFailOnErrorInstruction,
-  ResizeAccountInstruction,
-} from './layouts/ts/instructions.js'
-
 export type Price = {
   id: string
   timestamp: number
@@ -118,6 +95,127 @@ export type Price = {
   price: number
   confidence: number
   status: PriceStatus
+}
+
+// ------------------- INSTRUCTIONS -------------------
+export type InitMappingInstruction = {
+  accounts: {
+    fundingAccount: string
+    fresh_mappingAccount: string
+  }
+}
+
+export type AddMappingInstruction = {
+  accounts: {
+    fundingAccount: string
+    cur_mappingAccount: string
+    next_mappingAccount: string
+  }
+}
+
+export type AddProductInstruction = {
+  accounts: {
+    fundingAccount: string
+    tail_mappingAccount: string
+    new_productAccount: string
+  }
+}
+
+export type UpdProductInstruction = {
+  new_data: Buffer
+  accounts: {
+    fundingAccount: string
+    productAccount: string
+  }
+}
+
+export type AddPriceInstruction = {
+  expo_: number
+  ptype_: number
+  accounts: {
+    fundingAccount: string
+    productAccount: string
+    priceAccount: string
+  }
+}
+
+export type AddPublisherInstruction = {
+  pub_: PublicKey
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+  }
+}
+
+export type DelPublisherInstruction = {
+  pub_: PublicKey
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+  }
+}
+
+export type UpdPriceInstruction = {
+  status_: number
+  unused_: number
+  price_: BN
+  conf_: BN
+  pub_slot_: BN
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+    clockAccount: string
+  }
+}
+
+export type AggPriceInstruction = {
+  status_: number
+  unused_: number
+  price_: BN
+  conf_: BN
+  pub_slot_: BN
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+    clockAccount: string
+  }
+}
+
+export type InitPriceInstruction = {
+  expo_: number
+  ptype_: number
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+  }
+}
+
+export type SetMinPubInstruction = {
+  min_pub_: number
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+  }
+}
+
+export type UpdPriceNoFailOnErrorInstruction = {
+  status_: number
+  unused_: number
+  price_: BN
+  conf_: BN
+  pub_slot_: BN
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+    clockAccount: string
+  }
+}
+
+export type ResizeAccountInstruction = {
+  accounts: {
+    fundingAccount: string
+    priceAccount: string
+  }
 }
 
 // @note: https://github.com/pyth-network/pyth-client/blob/idl/program/idl.json
@@ -290,4 +388,471 @@ export type GlobalPythStats = {
 export type PythAccountData = {
   info: PythAccountInfo
   stats?: PythAccountStats
+}
+
+// ------------------- IDL -------------------
+export type PythIdlInstruction = {
+  name: string
+  docs?: string[]
+  accounts: IdlAccountItem[]
+  args: IdlField[]
+  returns?: IdlType
+  discriminant: IdlDiscriminant
+}
+
+export type IdlDiscriminant = {
+  value: number[]
+}
+
+export type PythOracle = {
+  version: '2.20.0'
+  name: 'pyth_oracle'
+  instructions: [
+    {
+      name: 'initMapping'
+      discriminant: { value: [2, 0, 0, 0, 0, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'freshMappingAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'addMapping'
+      discriminant: { value: [2, 0, 0, 0, 1, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'curMapping'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'nextMapping'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'addProduct'
+      discriminant: { value: [2, 0, 0, 0, 2, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'tailMappingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'productAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'updProduct'
+      discriminant: { value: [2, 0, 0, 0, 3, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'productAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'addPrice'
+      discriminant: { value: [2, 0, 0, 0, 4, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'productAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: [
+        {
+          name: 'expo'
+          type: 'i32'
+        },
+        {
+          name: 'pType'
+          type: 'u32'
+        },
+      ]
+    },
+    {
+      name: 'addPublisher'
+      discriminant: { value: [2, 0, 0, 0, 5, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: [
+        {
+          name: 'pub'
+          type: 'publicKey'
+        },
+      ]
+    },
+    {
+      name: 'delPublisher'
+      discriminant: { value: [2, 0, 0, 0, 6, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: [
+        {
+          name: 'pub'
+          type: 'publicKey'
+        },
+      ]
+    },
+    {
+      name: 'updPrice'
+      discriminant: { value: [2, 0, 0, 0, 7, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'clock'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: [
+        {
+          name: 'status'
+          type: 'u32'
+        },
+        {
+          name: 'unused'
+          type: 'u32'
+        },
+        {
+          name: 'price'
+          type: 'i64'
+        },
+        {
+          name: 'conf'
+          type: 'u64'
+        },
+        {
+          name: 'pubSlot'
+          type: 'u64'
+        },
+      ]
+    },
+    {
+      name: 'aggPrice'
+      discriminant: { value: [2, 0, 0, 0, 8, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'clock'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: [
+        {
+          name: 'status'
+          type: 'u32'
+        },
+        {
+          name: 'unused'
+          type: 'u32'
+        },
+        {
+          name: 'price'
+          type: 'i64'
+        },
+        {
+          name: 'conf'
+          type: 'u64'
+        },
+        {
+          name: 'pubSlot'
+          type: 'u64'
+        },
+      ]
+    },
+    {
+      name: 'initPrice'
+      discriminant: { value: [2, 0, 0, 0, 9, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: [
+        {
+          name: 'expo'
+          type: 'i32'
+        },
+        {
+          name: 'pType'
+          type: 'u32'
+        },
+      ]
+    },
+    {
+      name: 'setMinPub'
+      discriminant: { value: [2, 0, 0, 0, 12, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: [
+        {
+          name: 'minPub'
+          type: 'u8'
+        },
+        {
+          name: 'unused'
+          type: {
+            array: ['u8', 3]
+          }
+        },
+      ]
+    },
+    {
+      name: 'updPriceNoFailOnError'
+      discriminant: { value: [2, 0, 0, 0, 13, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'clock'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: [
+        {
+          name: 'status'
+          type: 'u32'
+        },
+        {
+          name: 'unused'
+          type: 'u32'
+        },
+        {
+          name: 'price'
+          type: 'i64'
+        },
+        {
+          name: 'conf'
+          type: 'u64'
+        },
+        {
+          name: 'pubSlot'
+          type: 'u64'
+        },
+      ]
+    },
+    {
+      name: 'resizeAccount'
+      discriminant: { value: [2, 0, 0, 0, 14, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'delPrice'
+      discriminant: { value: [2, 0, 0, 0, 15, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'productAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'priceAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'delProduct'
+      discriminant: { value: [2, 0, 0, 0, 16, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'fundingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'mappingAccount'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'productAccount'
+          isMut: true
+          isSigner: true
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'updPermissions'
+      discriminant: { value: [2, 0, 0, 0, 17, 0, 0, 0] }
+      accounts: [
+        {
+          name: 'upgradeAuthority'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'programDataAccount'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: true
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
+        },
+        {
+          name: 'systemProgram'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: [
+        {
+          name: 'masterAuthority'
+          type: 'publicKey'
+        },
+        {
+          name: 'dataCurationAuthority'
+          type: 'publicKey'
+        },
+        {
+          name: 'securityAuthority'
+          type: 'publicKey'
+        },
+      ]
+    },
+  ]
 }
