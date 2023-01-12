@@ -30,15 +30,19 @@ export default class EthereumIndexerWorkerDomain {
   async onTxDateRange(response: TransactionDateRangeResponse): Promise<void> {
     const { txs } = response
 
-    const filterTransaction = this.hooks.ethereumFilterTransaction
-    const indexTransaction = this.hooks.ethereumIndexTransaction
+    const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
+      this.hooks,
+    )
+    const indexTransaction = this.hooks.ethereumIndexTransaction.bind(
+      this.hooks,
+    )
 
     return promisify(pipeline)(
       txs as any,
       new StreamMap(this.mapTransactionContext.bind(this, response)),
-      new StreamFilter(filterTransaction.bind(this)),
+      new StreamFilter(filterTransaction),
       new StreamBuffer(1000),
-      new StreamMap(indexTransaction.bind(this)),
+      new StreamMap(indexTransaction),
     )
   }
 

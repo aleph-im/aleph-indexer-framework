@@ -27,6 +27,7 @@ export class ParserMsClient
   /**
    * @param broker The broker instance to retrieve the actual service from.
    * @param clientEvents If true, the client will listen to the events of the service.
+   * @param eventOpts The event options
    * @param msId The moleculer service id of the indexer service.
    */
   constructor(

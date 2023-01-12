@@ -41,6 +41,7 @@ export class FetcherMainDomain {
   /**
    * Returns the fetcher state for the given non-account related fetchers.
    * @param fetchers The fetchers to get the fetcher state for.
+   * @param blockchainId The blockchain id to get the blockchain fetcher instance
    */
   async getFetcherState(
     fetchers: string[] = [],

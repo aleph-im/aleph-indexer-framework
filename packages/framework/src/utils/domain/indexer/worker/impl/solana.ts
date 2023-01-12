@@ -40,21 +40,27 @@ export default class SolanaIndexerWorkerDomain {
     const { txs } = response
 
     const filterTransaction =
-      this.hooks.solanaFilterTransaction || this.filterTransaction
+      this.hooks.solanaFilterTransaction?.bind(this.hooks) ||
+      this.filterTransaction.bind(this)
     const indexTransaction =
-      this.hooks.solanaIndexTransaction || this.indexTransaction
-    const filterInstructions = this.hooks.solanaFilterInstructions
-    const indexInstructions = this.hooks.solanaIndexInstructions
+      this.hooks.solanaIndexTransaction?.bind(this.hooks) ||
+      this.indexTransaction.bind(this)
+    const filterInstructions = this.hooks.solanaFilterInstructions.bind(
+      this.hooks,
+    )
+    const indexInstructions = this.hooks.solanaIndexInstructions.bind(
+      this.hooks,
+    )
 
     return promisify(pipeline)(
       txs as any,
       new StreamMap(this.mapTransactionContext.bind(this, response)),
-      new StreamFilter(filterTransaction.bind(this)),
-      new StreamMap(indexTransaction.bind(this)),
+      new StreamFilter(filterTransaction),
+      new StreamMap(indexTransaction),
       new StreamMap(this.mapTransaction.bind(this)),
-      new StreamMap(filterInstructions.bind(this)),
+      new StreamMap(filterInstructions),
       new StreamBuffer(1000),
-      new StreamMap(indexInstructions.bind(this)),
+      new StreamMap(indexInstructions),
     )
   }
 

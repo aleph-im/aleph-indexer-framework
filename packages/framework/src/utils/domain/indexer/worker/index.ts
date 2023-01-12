@@ -25,7 +25,7 @@ export type IndexerWorkerDomainWithStats = {
   getStats(account: string): Promise<AccountStats>
 }
 
-export type BlockchainIndexerWorkerI = {
+export interface BlockchainIndexerWorkerI {
   onTxDateRange(response: TransactionDateRangeResponse): Promise<void>
 }
 

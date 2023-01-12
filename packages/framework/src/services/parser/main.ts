@@ -94,13 +94,13 @@ export class ParserMsMain<
     if (txGroups.length > 0) {
       await Promise.all(
         txGroups.map(([group, txs]) =>
-          this.emitToClients('txs', txs, { group }),
+          this.emitToClients('txs.solana', txs, { group }),
         ),
       )
     }
 
     if (broadcast.length > 0) {
-      return this.broadcastToClients('txs', broadcast)
+      return this.broadcastToClients('txs.solana', broadcast)
     }
 
     // return this.broadcastToClients('txs', txs)

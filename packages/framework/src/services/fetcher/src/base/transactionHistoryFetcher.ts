@@ -99,10 +99,10 @@ export abstract class BaseTransactionHistoryFetcher<
 
     work.payload = work.payload.filter((id) => id !== indexerId)
 
+    await this.pendingAccounts.removeWork(work)
+
     if (work.payload.length > 0) {
       await this.pendingAccounts.addWork(work)
-    } else {
-      await this.pendingAccounts.removeWork(work)
     }
   }
 
