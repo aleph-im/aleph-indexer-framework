@@ -235,6 +235,20 @@ export enum PythEventType {
   ResizeAccount = 'resizeAccount',
 }
 
+export type ParsedEventsInfo =
+  | InitMappingInstruction
+  | AddMappingInstruction
+  | AddProductInstruction
+  | UpdProductInstruction
+  | AddPriceInstruction
+  | AddPublisherInstruction
+  | DelPublisherInstruction
+  | UpdPriceInstruction
+  | AggPriceInstruction
+  | InitPriceInstruction
+  | UpdPriceNoFailOnErrorInstruction
+  | ResizeAccountInstruction
+
 /**
  * @note: Exclude not significant events from being indexed
  * */

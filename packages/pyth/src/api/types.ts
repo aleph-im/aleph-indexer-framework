@@ -59,6 +59,8 @@ export const Candle = new GraphQLObjectType({
   },
 })
 
+export const Candles = new GraphQLList(Candle)
+
 export const PythAccountStats = new GraphQLObjectType({
   name: 'PythAccountStats',
   fields: {

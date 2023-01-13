@@ -60,7 +60,7 @@ export default class APISchema extends IndexerAPISchema {
           },
 
           candles: {
-            type: Types.Candle,
+            type: Types.Candles,
             args: {
               address: { type: new GraphQLNonNull(GraphQLString) },
               candleInterval: {

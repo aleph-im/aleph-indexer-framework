@@ -149,7 +149,7 @@ export default class WorkerDomain
   protected async indexInstructions(
     ixsContext: InstructionContextV1[],
   ): Promise<void> {
-    const parsedIxs = ixsContext.map((ix) => this.eventParser.parse(ix))
+    const parsedIxs = this.eventParser.parse(ixsContext)
 
     console.log(`indexing ${ixsContext.length} parsed ixs`)
 
