@@ -27,15 +27,19 @@ export const AssetType = new GraphQLEnumType({
   },
 })
 
-export const Price = new GraphQLObjectType({
+const Price = new GraphQLObjectType({
   name: 'Price',
   fields: {
-    timestamp: { type: new GraphQLNonNull(GraphQLDateTime) },
-    price: { type: new GraphQLNonNull(GraphQLFloat) },
-    confidence: { type: new GraphQLNonNull(GraphQLFloat) },
+    id: { type: new GraphQLNonNull(GraphQLString) },
+    timestamp: { type: new GraphQLNonNull(GraphQLInt) },
+    priceAccount: { type: new GraphQLNonNull(GraphQLString) },
+    price: { type: new GraphQLNonNull(GraphQLInt) },
+    confidence: { type: new GraphQLNonNull(GraphQLInt) },
     status: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
+
+export const Prices = new GraphQLList(Price)
 
 export const Candle = new GraphQLObjectType({
   name: 'Candle',

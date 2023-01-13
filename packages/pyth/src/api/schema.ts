@@ -47,7 +47,7 @@ export default class APISchema extends IndexerAPISchema {
           },
 
           prices: {
-            type: Types.Price,
+            type: Types.Prices,
             args: {
               address: { type: new GraphQLNonNull(GraphQLString) },
               startDate: { type: GraphQLFloat },
