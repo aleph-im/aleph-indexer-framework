@@ -8,6 +8,7 @@ import { FetcherMsClient } from '../../client.js'
 
 export type AccountTransactionHistoryState<C> = {
   fetcher: string
+  blockchain: Blockchain
   account: string
   completeHistory: boolean
   firstTimestamp?: number
@@ -31,9 +32,11 @@ export type AccountTransactionHistoryFetcherState = {
   accountFetchers: number
 }
 
-export type FetcherState = TransactionFetcherState &
+export type FetcherState<D = any> = TransactionFetcherState &
   AccountTransactionHistoryFetcherState & {
+    blockchain: Blockchain
     fetcher: string
+    data?: D
   }
 
 export type TransactionState = {
@@ -116,7 +119,7 @@ export type FetcherStateRequestArgs = Omit<
   FetcherPartitionRequestArgs,
   'blockchainId'
 > & {
-  blockchainId?: Blockchain
+  blockchainId?: Blockchain[]
 }
 
 export type CheckTransactionsRequestArgs = BlockchainRequestArgs & {

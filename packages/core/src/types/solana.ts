@@ -57,7 +57,7 @@ export type RawPartiallyDecodedInstruction = Omit<
 /**
  * Raw Instruction type
  */
-export type RawInstruction =
+export type SolanaRawInstruction =
   | RawParsedInstruction
   | RawPartiallyDecodedInstruction
 
@@ -70,7 +70,7 @@ export type RawInnerInstructionList = Omit<
   ParsedInnerInstruction,
   'instructions'
 > & {
-  instructions: RawInstruction[]
+  instructions: SolanaRawInstruction[]
 }
 
 /**
@@ -125,7 +125,7 @@ export type RawParsedMessage = Omit<
   'accountKeys' | 'instructions' | 'addressTableLookups'
 > & {
   accountKeys: RawMessageAccount[]
-  instructions: RawInstruction[]
+  instructions: SolanaRawInstruction[]
   addressTableLookups?: RawParsedAddressTableLookup[] | null
 }
 

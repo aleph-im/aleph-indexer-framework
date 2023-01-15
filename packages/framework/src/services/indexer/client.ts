@@ -13,17 +13,17 @@ import { IndexerClientI } from './interface.js'
 export class IndexerMsClient {
   /**
    * @param broker The broker instance to retrieve the actual service from.
-   * @param blockchainIndexerClients Dictionary with blockchain indexer clients.
+   * @param blockchains Dictionary with blockchain indexer clients.
    * @param msId The moleculer service id of the indexer service.
    */
   constructor(
     protected broker: ServiceBroker,
-    protected blockchainIndexerClients: Record<Blockchain, IndexerClientI>,
+    protected blockchains: Record<Blockchain, IndexerClientI>,
     protected msId: MsIds = MsIds.Indexer,
   ) {}
 
   useBlockchain(blockchainId: Blockchain): IndexerClientI {
-    return this.getBlockchainIndexerClient(blockchainId)
+    return this.getBlockchainClientInstance(blockchainId)
   }
 
   waitForAll(indexers: string[]): Promise<void> {
@@ -38,19 +38,23 @@ export class IndexerMsClient {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
+  getAllBlockchains(): Blockchain[] {
+    return Object.keys(this.blockchains) as Blockchain[]
+  }
+
   getNodeId(): string {
     return this.broker.nodeID
   }
 
-  protected getBlockchainIndexerClient(
+  protected getBlockchainClientInstance(
     blockchainId: Blockchain,
   ): IndexerClientI {
-    const client = this.blockchainIndexerClients[blockchainId]
+    const instance = this.blockchains[blockchainId]
 
-    if (!client) {
+    if (!instance) {
       throw new Error(`${blockchainId} blockchain not supported`)
     }
 
-    return client
+    return instance
   }
 }

@@ -2,13 +2,13 @@ import {
   AlephParsedErrorIx,
   SolanaParsedInstructionV1,
   SolanaParsedTransactionV1,
-  RawInstruction,
+  SolanaRawInstruction,
   SolanaRawTransaction,
   ProgramErrorType,
   TransactionErrorType,
   AlephParsedInnerTransaction,
 } from '@aleph-indexer/core'
-import { StrictParser } from './parser.js'
+import { StrictParser } from '../base/types.js'
 import { InstructionParserLibrary } from './instructionParserLibrary.js'
 
 /**
@@ -125,7 +125,7 @@ export class TransactionParser extends StrictParser<
     const innerInstructionsMap = innerInstructions.reduce((acc, curr) => {
       acc[curr.index] = curr.instructions
       return acc
-    }, {} as Record<number, RawInstruction[]>)
+    }, {} as Record<number, SolanaRawInstruction[]>)
 
     const parsedIxs = await Promise.all(
       instructions.map(async (rawIx, index) => {

@@ -64,15 +64,9 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
     })
     if (!state) return
 
-    const {
-      completeHistory,
-      firstSlot = Number.MAX_SAFE_INTEGER,
-      lastSlot = 0,
-    } = state
+    const { firstSlot = Number.MAX_SAFE_INTEGER, lastSlot = 0 } = state
 
-    const inRange =
-      (completeHistory || startSlot > firstSlot) && endSlot <= lastSlot
-
+    const inRange = startSlot > firstSlot && endSlot <= lastSlot
     if (!inRange) return
 
     const signaturesQuery = await this.accountSignatureDAL
@@ -121,8 +115,13 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
 
     const backward = state.cursors?.backward
     if (backward) {
+      // @note: Pagination in solana is by tx signature, so going backward we can't guarantee that each page contain complete date or slots ranges
+      const offset = state.completeHistory ? 0 : 1
+
       state.firstTimestamp = backward.timestamp
-      state.firstSlot = backward.slot
+        ? backward.timestamp + offset
+        : undefined
+      state.firstSlot = backward.slot ? backward.slot + offset : undefined
     }
 
     return state

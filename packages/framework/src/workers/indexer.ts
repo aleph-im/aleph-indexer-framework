@@ -6,7 +6,6 @@ import { workerData } from 'worker_threads'
 import { MsIds } from '../services/common.js'
 import { IndexerMs } from '../services/indexer/index.js'
 import { IndexerDomainContext } from '../services/indexer/src/base/types.js'
-import { ParserMsClient } from '../services/parser/client.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
 import { WorkerInfo } from '../utils/workers.js'
@@ -14,6 +13,7 @@ import {
   createFetcherMsClient,
   createIndexerMsClient,
   createIndexerMsMain,
+  createParserMsClient,
 } from './common.js'
 
 initThreadContext()
@@ -43,9 +43,12 @@ async function main() {
         })
       : localBroker
 
-  const parserMsClient = new ParserMsClient(broker, true, {
-    group: name,
-  })
+  const parserMsClient = await createParserMsClient(
+    supportedBlockchains,
+    broker,
+    true,
+    { group: name },
+  )
 
   const fetcherMsClient = await createFetcherMsClient(
     supportedBlockchains,

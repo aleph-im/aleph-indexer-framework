@@ -89,9 +89,7 @@ export interface FetcherMsI {
    * Returns global fetcher state and statistics.
    * @param args The broker nodeID of the fetcher to get the state from.
    */
-  getFetcherState(
-    args: FetcherStateRequestArgs,
-  ): Promise<Record<Blockchain, FetcherState>>
+  getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState[]>
 
   /**
    * Returns the state of transactions in the pending indexing transactions pool.

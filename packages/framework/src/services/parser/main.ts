@@ -1,56 +1,50 @@
 import { ServiceBroker } from 'moleculer'
 import {
-  SolanaParsedInstructionV1,
-  ParsedAccountInfoV1,
-  SolanaRawTransaction,
-  RawInstruction,
-  RawAccountInfo,
   RawTransaction,
   ParsedTransaction,
-  AlephParsedInnerTransaction,
+  Blockchain,
 } from '@aleph-indexer/core'
 import { ParserMsI } from './interface.js'
-import { TransactionParser } from './src/transactionParser.js'
-import { AccountParserLibrary } from './src/accountParserLibrary.js'
-import { InstructionParserLibrary } from './src/instructionParserLibrary.js'
 import { MsIds, MsMainWithEvents } from '../common.js'
-import { ParsedTransactionMsg, RawTransactionMsg } from './src/types.js'
-
-//@todo: Implement multi parser instances depending on blockchain (like fetcher ms main)
+import {
+  BlockchainParserI,
+  ParseAccountStateRequestArgs,
+  ParsedTransactionMsg,
+  ParseTransactionRequestArgs,
+  RawTransactionMsg,
+} from './src/base/types.js'
 
 export class ParserMsMain<
-    T extends RawTransaction = SolanaRawTransaction,
-    P = AlephParsedInnerTransaction,
-    PT extends ParsedTransaction<P> = ParsedTransaction<P>,
+    T extends RawTransaction = RawTransaction,
+    PT extends ParsedTransaction<unknown> = ParsedTransaction<unknown>,
+    S = unknown,
+    PS = unknown,
   >
   extends MsMainWithEvents
-  implements ParserMsI<T, PT>
+  implements ParserMsI<T, PT, S, PS>
 {
   constructor(
     protected broker: ServiceBroker,
-    protected layoutPath?: string,
-    protected instructionParserLibrary: InstructionParserLibrary = new InstructionParserLibrary(
-      layoutPath,
-    ),
-    protected accountParserLibrary: AccountParserLibrary = new AccountParserLibrary(),
-    protected transactionParser: TransactionParser = new TransactionParser(
-      instructionParserLibrary,
-    ),
+    protected blockchains: Record<Blockchain, BlockchainParserI<T, PT, S, PS>>,
   ) {
     super(broker, MsIds.Parser)
   }
 
-  async onTxs(chunk: RawTransactionMsg<T>[]): Promise<void> {
-    // console.log(`📩 ${chunk.length} txs received by the parser...`)
+  async onTxs(
+    blockchainId: Blockchain,
+    chunk: RawTransactionMsg<T>[],
+  ): Promise<void> {
+    console.log(`📩 ${chunk.length} txs received by the parser...`)
 
-    const parsedMsgs: ParsedTransactionMsg<PT>[] = []
+    const parsedMsgs: ParsedTransactionMsg<T | PT>[] = []
 
     for (const msg of chunk) {
       try {
-        const [rawTx, peers] =
+        const [tx, peers] =
           'peers' in msg ? [msg.tx, msg.peers] : [msg, undefined]
 
-        const parsedTx = await this.parseTransaction(rawTx)
+        const fetcher = this.getBlockchainInstance(blockchainId)
+        const parsedTx = await fetcher.parseTransaction({ blockchainId, tx })
         const parsedMsg = { peers, tx: parsedTx }
 
         parsedMsgs.push(parsedMsg)
@@ -60,29 +54,26 @@ export class ParserMsMain<
       }
     }
 
-    await this.emitTransactions(parsedMsgs)
+    await this.emitTransactions(blockchainId, parsedMsgs)
   }
 
-  async parseTransaction(payload: T): Promise<PT> {
-    const parsedTx = await this.transactionParser.parse(payload as any)
-    return parsedTx as unknown as PT
+  async parseTransaction(
+    args: ParseTransactionRequestArgs<T>,
+  ): Promise<T | PT> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.parseTransaction(args)
   }
 
-  async parseInstruction(
-    payload: RawInstruction,
-  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
-    return await this.instructionParserLibrary.parse(payload)
-  }
-
-  async parseAccountData(
-    account: string,
-    payload: RawAccountInfo,
-  ): Promise<RawAccountInfo | ParsedAccountInfoV1> {
-    return await this.accountParserLibrary.parse(payload, account)
+  async parseAccountState(
+    args: ParseAccountStateRequestArgs<S>,
+  ): Promise<S | PS> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.parseAccountState(args)
   }
 
   protected async emitTransactions(
-    msgs: ParsedTransactionMsg<PT>[],
+    blockchainId: Blockchain,
+    msgs: ParsedTransactionMsg<T | PT>[],
   ): Promise<void> {
     if (!msgs.length) return
 
@@ -94,13 +85,13 @@ export class ParserMsMain<
     if (txGroups.length > 0) {
       await Promise.all(
         txGroups.map(([group, txs]) =>
-          this.emitToClients('txs.solana', txs, { group }),
+          this.emitToClients(`parser.txs.${blockchainId}`, txs, { group }),
         ),
       )
     }
 
     if (broadcast.length > 0) {
-      return this.broadcastToClients('txs.solana', broadcast)
+      return this.broadcastToClients(`parser.txs.${blockchainId}`, broadcast)
     }
 
     // return this.broadcastToClients('txs', txs)
@@ -108,9 +99,9 @@ export class ParserMsMain<
   }
 
   protected groupTransactions(
-    msgs: ParsedTransactionMsg<PT>[],
-  ): [Record<string, PT[]>, PT[]] {
-    const broadcastGroup: PT[] = []
+    msgs: ParsedTransactionMsg<T | PT>[],
+  ): [Record<string, (T | PT)[]>, (T | PT)[]] {
+    const broadcastGroup: (T | PT)[] = []
 
     const groups = msgs.reduce((acc, { tx, peers }) => {
       if (!peers || peers.length === 0) {
@@ -124,8 +115,20 @@ export class ParserMsMain<
       })
 
       return acc
-    }, {} as Record<string, PT[]>)
+    }, {} as Record<string, (T | PT)[]>)
 
     return [groups, broadcastGroup]
+  }
+
+  protected getBlockchainInstance(
+    blockchainId: Blockchain,
+  ): BlockchainParserI<T, PT, S, PS> {
+    const instance = this.blockchains[blockchainId]
+
+    if (!instance) {
+      throw new Error(`${blockchainId} blockchain not supported`)
+    }
+
+    return instance
   }
 }

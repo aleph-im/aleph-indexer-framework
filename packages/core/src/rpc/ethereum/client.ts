@@ -362,8 +362,13 @@ export class EthereumClient {
     until,
     limit,
   }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
+    if (before <= 0 || until >= before)
+      throw new Error('Invalid signature chunk range')
+
+    before = before - 1
+    until = until + 1
+
     const chunk = []
-    until = Math.max(until, 0)
 
     const signatures = await this.accountSignatureDAL
       .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)

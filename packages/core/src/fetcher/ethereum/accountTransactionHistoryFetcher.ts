@@ -5,7 +5,6 @@ import {
   BaseFetcherPaginationCursors,
   BaseFetcherState,
   FetcherJobRunnerHandleFetchResult,
-  FetcherJobRunnerUpdateCursorResult,
 } from '../base/types.js'
 import {
   EthereumFetchSignaturesOptions,
@@ -15,6 +14,8 @@ import {
 import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { EthereumClient } from '../../rpc/index.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
+import { sleep } from '../../utils/time.js'
+import { JobRunnerReturnCode } from '../../utils/index.js'
 
 /**
  * Handles the fetching and processing of signatures on an account.
@@ -121,7 +122,8 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       false,
     )
 
-    const newInterval = interval + 1000
+    const newInterval =
+      error || count === 0 ? interval + 1000 : JobRunnerReturnCode.Reset
 
     return { lastCursors, error, newInterval }
   }
@@ -148,6 +150,9 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     `)
 
     try {
+      await sleep(1000 * 10)
+      // throw new Error('MOCK SIG FETCH')
+
       const signatures = this.ethereumClient.fetchSignatures(options)
 
       for await (const step of signatures) {
@@ -188,36 +193,36 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     )
   }
 
-  protected async _updateCursors(
-    type: 'forward' | 'backward',
-    ctx: {
-      prevCursors?: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
-      lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
-    },
-  ): Promise<
-    FetcherJobRunnerUpdateCursorResult<EthereumAccountTransactionHistoryPaginationCursor>
-  > {
-    const cursors = await super._updateCursors(type, ctx)
-    if (cursors.newItems) return cursors
+  // protected async _updateCursors(
+  //   type: 'forward' | 'backward',
+  //   ctx: {
+  //     prevCursors?: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
+  //     lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
+  //   },
+  // ): Promise<
+  //   FetcherJobRunnerUpdateCursorResult<EthereumAccountTransactionHistoryPaginationCursor>
+  // > {
+  //   const cursors = await super._updateCursors(type, ctx)
+  //   if (cursors.newItems) return cursors
 
-    const blockState = await this.ethereumBlockFetcher.getState()
-    const { newCursors } = cursors
-    const { prevCursors } = ctx
+  //   const blockState = await this.ethereumBlockFetcher.getState()
+  //   const { newCursors } = cursors
+  //   const { prevCursors } = ctx
 
-    const blockCursor = blockState.cursors?.[type]
-    const fetcherCursor = newCursors?.[type]
-    const blockHeight = blockCursor?.height
-    const fetcherHeight = fetcherCursor?.height
+  //   const blockCursor = blockState.cursors?.[type]
+  //   const fetcherCursor = newCursors?.[type]
+  //   const blockHeight = blockCursor?.height
+  //   const fetcherHeight = fetcherCursor?.height
 
-    if (!blockHeight || (fetcherHeight && blockHeight >= fetcherHeight))
-      return cursors
+  //   if (!blockHeight || (fetcherHeight && blockHeight >= fetcherHeight))
+  //     return cursors
 
-    return super._updateCursors(type, {
-      prevCursors,
-      lastCursors: {
-        ...newCursors,
-        [type]: blockCursor,
-      },
-    })
-  }
+  //   return super._updateCursors(type, {
+  //     prevCursors,
+  //     lastCursors: {
+  //       ...newCursors,
+  //       [type]: blockCursor,
+  //     },
+  //   })
+  // }
 }

@@ -19,6 +19,7 @@ import {
   getIntervalFromDateRange,
   mergeDateRangesFromIterable,
 } from '../../../../utils/time.js'
+import { AccountTransactionHistoryState } from '../../../fetcher/src/base/types.js'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
@@ -99,23 +100,13 @@ export class AccountTransactionIndexer {
       .useBlockchain(blockchainId)
       .getAccountTransactionFetcherState({ account })
 
-    if (
-      !state ||
-      state.firstTimestamp === undefined ||
-      state.lastTimestamp === undefined
-    )
-      return
-
-    const toFetchRange = {
-      account,
-      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
-      endDate: state.lastTimestamp,
-    }
+    const availableToFetch = this.getAvailableRangesToFetch(state)
+    if (!availableToFetch) return
 
     const processedRanges = await this.mergeStates()
 
     const pendingRanges = await clipDateRangesFromIterable(
-      [toFetchRange],
+      [availableToFetch],
       processedRanges,
     )
 
@@ -159,17 +150,12 @@ export class AccountTransactionIndexer {
       .useBlockchain(blockchainId)
       .getAccountTransactionFetcherState({ account })
 
-    if (
-      !state ||
-      state.firstTimestamp === undefined ||
-      state.lastTimestamp === undefined
-    )
-      return []
+    const availableToFetch = this.getAvailableRangesToFetch(state)
+    if (!availableToFetch) return []
 
-    const ranges = await this.calculateRangesToFetch(account, {
-      startDate: state.firstTimestamp + (state.completeHistory ? 0 : 1),
-      endDate: state.lastTimestamp,
-    })
+    const ranges = await this.calculateRangesToFetch(account, availableToFetch)
+
+    console.log(state, ranges)
 
     return ranges
   }
@@ -433,5 +419,23 @@ export class AccountTransactionIndexer {
       ))
 
     return clipDateRangesFromIterable([totalDateRange], clipRanges)
+  }
+
+  protected getAvailableRangesToFetch(
+    state: AccountTransactionHistoryState<unknown> | undefined,
+  ): AccountDateRange | undefined {
+    if (
+      !state ||
+      state.firstTimestamp === undefined ||
+      state.lastTimestamp === undefined
+    )
+      return
+
+    return {
+      blockchainId: state.blockchain,
+      account: state.account,
+      startDate: state.firstTimestamp,
+      endDate: state.lastTimestamp,
+    }
   }
 }

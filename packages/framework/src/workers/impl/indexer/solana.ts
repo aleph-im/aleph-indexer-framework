@@ -42,6 +42,4 @@ export default (
     transactionIndexerStateDAL,
     transactionFetcher,
   )
-
-
 }

@@ -8,7 +8,7 @@ import { AbstractLevel, AbstractChainedBatch } from 'abstract-level'
 import { StorageEntry } from './types'
 
 // @todo: define an abstract interface
-export type StorageCommonOptions = { sublevel?: string }
+export type StorageCommonOptions = { sublevel?: string; debug?: boolean }
 export type StorageGetOptions<K, V> = IteratorOptions<K, V> &
   StorageCommonOptions
 export type StoragePutOptions<K, V> = StorageCommonOptions & {

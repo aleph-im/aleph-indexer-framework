@@ -45,7 +45,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       accountState: {
         type: Types.AccountStateList,
         args: {
-          blockchain: { type: new GraphQLList(GraphQLString) },
+          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
           account: { type: new GraphQLList(GraphQLString) },
         },
         resolve: (_, ctx) =>
@@ -55,6 +55,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       transactionRequest: {
         type: Types.TransactionRequestList,
         args: {
+          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
           indexer: { type: new GraphQLList(GraphQLString) },
           type: { type: Types.TransactionRequestType },
           nonce: { type: GraphQLFloat },
@@ -62,7 +63,11 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
           account: { type: GraphQLString },
           signature: { type: GraphQLString },
         },
-        resolve: (_, ctx) => this.domain.getTransactionRequests(ctx as any),
+        resolve: (_, ctx) => {
+          ctx.blockchainId = ctx.blockchain
+          delete ctx.blockchain
+          return this.domain.getTransactionRequests(ctx as any)
+        },
       },
     }
 
@@ -78,7 +83,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       queryConf.fields.accountTimeSeriesStats = {
         type: AccountTimeSeriesStatsList,
         args: {
-          blockchain: { type: new GraphQLList(GraphQLString) },
+          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
           account: { type: new GraphQLList(GraphQLString) },
           type: { type: new GraphQLNonNull(GraphQLString) },
           timeFrame: { type: new GraphQLNonNull(Types.TimeFrame) },
@@ -105,7 +110,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       queryConf.fields.accountStats = {
         type: AccountStatsList,
         args: {
-          blockchain: { type: new GraphQLList(GraphQLString) },
+          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
           account: { type: new GraphQLList(GraphQLString) },
         },
         resolve: (_, ctx) =>

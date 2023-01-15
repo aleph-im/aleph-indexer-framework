@@ -20,7 +20,7 @@ import {
 export * from './services/types.js'
 
 export * from './services/fetcher/src/base/types.js'
-export * from './services/parser/src/types.js'
+export * from './services/parser/src/base/types.js'
 export * from './services/indexer/src/base/types.js'
 
 export * from './services/fetcher/interface.js'

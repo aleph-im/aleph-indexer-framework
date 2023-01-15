@@ -30,11 +30,11 @@ export class FetcherMsMain implements FetcherMsI {
   /**
    * Initialize the fetcher service.
    * @param fetcherClient The fetcher ms client.
-   * @param blockchainFetchers A dictionary of instances that implements BlockchainFetcherI interface
+   * @param blockchains A dictionary of instances that implements BlockchainFetcherI interface
    */
   constructor(
     protected fetcherClient: FetcherMsClient,
-    protected blockchainFetchers: Record<Blockchain, BlockchainFetcherI>,
+    protected blockchains: Record<Blockchain, BlockchainFetcherI>,
   ) {}
 
   /**
@@ -47,7 +47,7 @@ export class FetcherMsMain implements FetcherMsI {
     this.inited = true
 
     await Promise.all(
-      Object.values(this.blockchainFetchers).map((fetcher) => fetcher.start()),
+      Object.values(this.blockchains).map((fetcher) => fetcher.start()),
     )
   }
 
@@ -56,7 +56,7 @@ export class FetcherMsMain implements FetcherMsI {
     this.inited = false
 
     await Promise.all(
-      Object.values(this.blockchainFetchers).map((fetcher) => fetcher.stop()),
+      Object.values(this.blockchains).map((fetcher) => fetcher.stop()),
     )
   }
 
@@ -66,23 +66,17 @@ export class FetcherMsMain implements FetcherMsI {
 
   async getFetcherState(
     args: FetcherStateRequestArgs,
-  ): Promise<Record<Blockchain, FetcherState>> {
+  ): Promise<FetcherState[]> {
     const { blockchainId } = args
 
-    const blockchainFetchers = blockchainId
-      ? [blockchainId, this.getBlockchainFetcher(blockchainId)]
-      : Object.entries(this.blockchainFetchers)
+    const blockchains =
+      blockchainId && blockchainId.length > 0
+        ? blockchainId.map((id) => this.getBlockchainInstance(id))
+        : Object.values(this.blockchains)
 
-    const fetcherState = await Promise.all(
-      Object.entries(blockchainFetchers).map(
-        async ([blockchainId, fetcher]) => {
-          const state = await fetcher.getFetcherState(args)
-          return [blockchainId, state]
-        },
-      ),
+    return Promise.all(
+      blockchains.map((fetcher) => fetcher.getFetcherState(args)),
     )
-
-    return Object.fromEntries(fetcherState)
   }
 
   // Account transaction
@@ -90,21 +84,21 @@ export class FetcherMsMain implements FetcherMsI {
   async addAccountTransactionFetcher(
     args: AddAccountTransactionRequestArgs,
   ): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.addAccountTransactionFetcher(args)
   }
 
   async delAccountTransactionFetcher(
     args: DelAccountTransactionRequestArgs,
   ): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.delAccountTransactionFetcher(args)
   }
 
   async getAccountTransactionFetcherState(
     args: GetAccountTransactionStateRequestArgs,
   ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.getAccountTransactionFetcherState(args)
   }
 
@@ -113,21 +107,21 @@ export class FetcherMsMain implements FetcherMsI {
   async addAccountStateFetcher(
     args: AddAccountStateRequestArgs,
   ): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.addAccountTransactionFetcher(args)
   }
 
   async delAccountStateFetcher(
     args: DelAccountStateRequestArgs,
   ): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.delAccountTransactionFetcher(args)
   }
 
   async getAccountStateFetcherState(
     args: GetAccountStateStateRequestArgs,
   ): Promise<AccountStateState<unknown> | undefined> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.getAccountStateFetcherState(args)
   }
 
@@ -136,26 +130,26 @@ export class FetcherMsMain implements FetcherMsI {
   fetchAccountTransactionsByDate(
     args: FetchAccountTransactionsByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.fetchAccountTransactionsByDate(args)
   }
 
   fetchTransactionsBySignature(
     args: FetchTransactionsBySignatureRequestArgs,
   ): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.fetchTransactionsBySignature(args)
   }
 
   getTransactionState(
     args: CheckTransactionsRequestArgs,
   ): Promise<TransactionState[]> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.getTransactionState(args)
   }
 
   delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    const fetcher = this.getBlockchainFetcher(args.blockchainId)
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.delTransactionCache(args)
   }
 
@@ -165,7 +159,7 @@ export class FetcherMsMain implements FetcherMsI {
     args: InvokeBlockchainMethodRequestArgs<A>,
   ): Promise<R> {
     const { blockchainId, method, args: params } = args
-    const fetcher = this.getBlockchainFetcher(blockchainId)
+    const fetcher = this.getBlockchainInstance(blockchainId)
 
     if (!(method in fetcher)) {
       throw new Error(
@@ -176,14 +170,16 @@ export class FetcherMsMain implements FetcherMsI {
     return (fetcher as any)[method]({ blockchainId, ...params })
   }
 
-  protected getBlockchainFetcher(blockchainId: Blockchain): BlockchainFetcherI {
-    const fetcher = this.blockchainFetchers[blockchainId]
+  protected getBlockchainInstance(
+    blockchainId: Blockchain,
+  ): BlockchainFetcherI {
+    const instance = this.blockchains[blockchainId]
 
-    if (!fetcher) {
+    if (!instance) {
       throw new Error(`${blockchainId} blockchain not supported`)
     }
 
-    return fetcher
+    return instance
   }
 
   protected getFetcherId(): string {

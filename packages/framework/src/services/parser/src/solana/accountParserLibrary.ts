@@ -1,7 +1,7 @@
 import { AlephParsedAccountInfo, RawAccountInfo } from '@aleph-indexer/core'
 import { LayoutFactory } from './layout/layoutFactory.js'
-import { DefinedParser } from './parser.js'
 import { AccountParser } from './accountParser.js'
+import { DefinedParser } from '../base/types.js'
 
 /**
  * Finds all available account parsers and aggregates them for use.

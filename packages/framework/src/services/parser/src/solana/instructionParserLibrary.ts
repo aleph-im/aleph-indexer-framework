@@ -1,9 +1,9 @@
-import { SolanaParsedInstructionV1, RawInstruction } from '@aleph-indexer/core'
-import { LayoutFactory } from './layout/layoutFactory.js'
-import { DefinedParser } from './parser.js'
-import { SplInstructionParser } from './splInstructionParser.js'
-import { LayoutImplementation } from './layout/types.js'
-import { AnchorInstructionParser } from "./anchorInstructionParser.js";
+import { SolanaParsedInstructionV1, SolanaRawInstruction } from '@aleph-indexer/core'
+import { LayoutFactory } from '../solana/layout/layoutFactory.js'
+import { SplInstructionParser } from '../solana/splInstructionParser.js'
+import { LayoutImplementation } from '../solana/layout/types.js'
+import { AnchorInstructionParser } from './anchorInstructionParser.js'
+import { DefinedParser } from '../base/types.js'
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
@@ -11,7 +11,7 @@ import { AnchorInstructionParser } from "./anchorInstructionParser.js";
  * compatible parser is found.
  */
 export class InstructionParserLibrary extends DefinedParser<
-  RawInstruction,
+  SolanaRawInstruction,
   SolanaParsedInstructionV1
 > {
   constructor(protected layoutPath?: string) {
@@ -20,7 +20,7 @@ export class InstructionParserLibrary extends DefinedParser<
 
   protected instructionParsers: Record<
     string,
-    DefinedParser<RawInstruction, RawInstruction | SolanaParsedInstructionV1>
+    DefinedParser<SolanaRawInstruction, SolanaRawInstruction | SolanaParsedInstructionV1>
   > = {}
 
   /**
@@ -28,8 +28,8 @@ export class InstructionParserLibrary extends DefinedParser<
    * @param payload The raw instruction to parse.
    */
   async parse(
-    payload: RawInstruction | SolanaParsedInstructionV1,
-  ): Promise<RawInstruction | SolanaParsedInstructionV1> {
+    payload: SolanaRawInstruction | SolanaParsedInstructionV1,
+  ): Promise<SolanaRawInstruction | SolanaParsedInstructionV1> {
     const { programId } = payload
 
     const parser = await this.getParser(programId)
@@ -47,7 +47,7 @@ export class InstructionParserLibrary extends DefinedParser<
   protected async getParser(
     programId: string,
   ): Promise<
-    | DefinedParser<RawInstruction, RawInstruction | SolanaParsedInstructionV1>
+    | DefinedParser<SolanaRawInstruction, SolanaRawInstruction | SolanaParsedInstructionV1>
     | undefined
   > {
     let parser = this.instructionParsers[programId]
@@ -70,7 +70,7 @@ export class InstructionParserLibrary extends DefinedParser<
         implementation.name,
         implementation.getInstructionType,
         implementation.accountLayoutMap,
-        implementation.dataLayoutMap
+        implementation.dataLayoutMap,
       )
     } else {
       parser = new SplInstructionParser(

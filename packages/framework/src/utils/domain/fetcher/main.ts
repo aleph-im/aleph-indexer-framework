@@ -18,6 +18,27 @@ export class FetcherMainDomain {
   constructor(protected context: FetcherMainDomainContext) {}
 
   /**
+   * Returns the fetcher state for the given non-account related fetchers.
+   * @param fetchers The fetchers to get the fetcher state for.
+   * @param blockchainId The blockchain id to get the blockchain fetcher instance
+   */
+  async getFetcherState(
+    blockchainId: Blockchain[] = this.context.apiClient.getAllBlockchains(),
+    fetchers: string[] = this.context.apiClient.getAllFetchers(),
+  ): Promise<FetcherState[]> {
+    return (
+      await Promise.all(
+        fetchers.map((fetcher) =>
+          this.context.apiClient.getFetcherState({
+            fetcher,
+            blockchainId,
+          }),
+        ),
+      )
+    ).flatMap((x) => x)
+  }
+
+  /**
    * Returns the fetcher state for the given account-bound fetchers.
    * @param accounts The accounts of which to get the fetchers.
    */
@@ -25,7 +46,7 @@ export class FetcherMainDomain {
     blockchainId: Blockchain,
     accounts: string[] = [],
   ): Promise<AccountTransactionHistoryState<T>[]> {
-    const a = (
+    return (
       await Promise.all(
         accounts.map((account) =>
           this.context.apiClient
@@ -34,28 +55,6 @@ export class FetcherMainDomain {
         ),
       )
     ).filter((info): info is AccountTransactionHistoryState<T> => !!info)
-
-    return a
-  }
-
-  /**
-   * Returns the fetcher state for the given non-account related fetchers.
-   * @param fetchers The fetchers to get the fetcher state for.
-   * @param blockchainId The blockchain id to get the blockchain fetcher instance
-   */
-  async getFetcherState(
-    fetchers: string[] = [],
-    blockchainId?: Blockchain,
-  ): Promise<Record<Blockchain, FetcherState>[]> {
-    fetchers = fetchers.length
-      ? fetchers
-      : this.context.apiClient.getAllFetchers()
-
-    return Promise.all(
-      fetchers.map((fetcher) =>
-        this.context.apiClient.getFetcherState({ fetcher, blockchainId }),
-      ),
-    )
   }
 
   /**

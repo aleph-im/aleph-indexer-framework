@@ -1,6 +1,7 @@
 import { Blockchain } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
+  FetcherStateRequestArgs,
   GetAccountTransactionStateRequestArgs,
 } from '../base/types.js'
 
@@ -8,7 +9,10 @@ import { BaseFetcher } from '../base/fetcher.js'
 import { EthereumBlockFetcher } from './blockFetcher.js'
 import { EthereumTransactionHistoryFetcher } from './transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from './transactionFetcher.js'
-import { EthereumAccountTransactionHistoryState } from './types.js'
+import {
+  EthereumAccountTransactionHistoryState,
+  EthereumFetcherState,
+} from './types.js'
 import { EthereumAccountStateFetcher } from './accountStateFetcher.js'
 import { FetcherMsClient } from '../../client.js'
 
@@ -46,5 +50,23 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
     args: GetAccountTransactionStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
     return super.getAccountTransactionFetcherState(args)
+  }
+
+  async getFetcherState(
+    args: FetcherStateRequestArgs,
+  ): Promise<EthereumFetcherState> {
+    const state = await super.getFetcherState(args)
+    const blockState = await this.blockFetcher.getState()
+
+    const firstBlock = blockState.cursors?.backward
+    const lastBlock = blockState.cursors?.forward
+
+    return {
+      ...state,
+      data: {
+        firstBlock,
+        lastBlock,
+      },
+    }
   }
 }

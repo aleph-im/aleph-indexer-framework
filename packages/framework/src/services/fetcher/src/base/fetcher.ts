@@ -45,11 +45,19 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   ) {}
 
   async start(): Promise<void> {
-    await this.transactionFetcher.start()
+    await Promise.all([
+      this.transactionFetcher.start(),
+      this.transactionHistoryFetcher.start(),
+      this.accountStateFetcher.start(),
+    ])
   }
 
   async stop(): Promise<void> {
-    await this.transactionFetcher.stop()
+    await Promise.all([
+      this.transactionFetcher.stop(),
+      this.transactionHistoryFetcher.stop(),
+      this.accountStateFetcher.stop(),
+    ])
   }
 
   addAccountTransactionFetcher(
@@ -94,6 +102,7 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
     return {
       ...transactionFetcherState,
       ...accountFetchers,
+      blockchain: this.blockchainId,
       fetcher,
     }
   }

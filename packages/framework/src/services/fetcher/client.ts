@@ -18,12 +18,12 @@ export class FetcherMsClient {
    */
   constructor(
     protected broker: ServiceBroker,
-    protected blockchainFetcherClients: Record<Blockchain, FetcherClientI>,
+    protected blockchains: Record<Blockchain, FetcherClientI>,
     protected msId: MsIds = MsIds.Fetcher,
   ) {}
 
   useBlockchain(blockchainId: Blockchain): FetcherClientI {
-    return this.getBlockchainFetcherClient(blockchainId)
+    return this.getBlockchainClientInstance(blockchainId)
   }
 
   waitForAll(indexers: string[]): Promise<void> {
@@ -38,27 +38,29 @@ export class FetcherMsClient {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
+  getAllBlockchains(): Blockchain[] {
+    return Object.keys(this.blockchains) as Blockchain[]
+  }
+
   getNodeId(): string {
     return this.broker.nodeID
   }
 
-  getFetcherState(
-    args: FetcherStateRequestArgs,
-  ): Promise<Record<Blockchain, FetcherState>> {
+  getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState[]> {
     return this.broker.call(`${this.msId}.getFetcherState`, args, {
       nodeID: args.fetcher,
     })
   }
 
-  protected getBlockchainFetcherClient(
+  protected getBlockchainClientInstance(
     blockchainId: Blockchain,
   ): FetcherClientI {
-    const client = this.blockchainFetcherClients[blockchainId]
+    const instance = this.blockchains[blockchainId]
 
-    if (!client) {
+    if (!instance) {
       throw new Error(`${blockchainId} blockchain not supported`)
     }
 
-    return client
+    return instance
   }
 }

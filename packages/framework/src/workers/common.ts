@@ -6,6 +6,8 @@ import { IndexerMsClient, IndexerMsMain } from '../services/indexer/index.js'
 import { WorkerKind } from '../utils/workers.js'
 import { IndexerWorkerDomainI } from '../main.js'
 import { ParserMsClient } from '../services/parser/client.js'
+import { ParserMsMain } from '../services/parser/main.js'
+import { EventOptions } from '../services/common.js'
 
 // Clients -------------------------------------------
 
@@ -52,6 +54,21 @@ export async function createIndexerMsClient(
   )
 
   return new IndexerMsClient(broker, blockchainClients)
+}
+
+export async function createParserMsClient(
+  supportedBlockchains: Blockchain[],
+  broker: ServiceBroker,
+  clientEvents: boolean,
+  eventOpts?: EventOptions,
+): Promise<ParserMsClient> {
+  const blockchainClients = await importBlockchainMsClients(
+    WorkerKind.Parser,
+    supportedBlockchains,
+    broker,
+  )
+
+  return new ParserMsClient(broker, blockchainClients, clientEvents, eventOpts)
 }
 
 // Mains -------------------------------------------
@@ -111,4 +128,20 @@ export async function createIndexerMsMain(
   )
 
   return new IndexerMsMain(indexerMsClient, blockchainMains)
+}
+
+export async function createParserMsMain(
+  supportedBlockchains: Blockchain[],
+  basePath: string,
+  broker: ServiceBroker,
+  layoutPath?: string,
+): Promise<ParserMsMain> {
+  const blockchainMains = await importBlockchainMsMains(
+    WorkerKind.Parser,
+    supportedBlockchains,
+    basePath,
+    layoutPath,
+  )
+
+  return new ParserMsMain(broker, blockchainMains)
 }

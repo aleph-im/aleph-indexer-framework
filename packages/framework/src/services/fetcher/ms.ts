@@ -138,7 +138,7 @@ export class FetcherMs extends Service {
 
   getFetcherState(
     ctx: Context<FetcherStateRequestArgs>,
-  ): Promise<Record<Blockchain, FetcherState> | undefined> {
+  ): Promise<FetcherState[]> {
     return this.main.getFetcherState(ctx.params)
   }
 

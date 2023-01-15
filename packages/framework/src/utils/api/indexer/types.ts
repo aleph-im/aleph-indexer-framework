@@ -15,8 +15,10 @@ import {
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
 import { TimeFrame as TF } from '../../time.js'
-import { TimeInfo } from '../types.js'
+import { Blockchain, TimeInfo } from '../types.js'
 import { TransactionRequestType as TRT } from '../../../services/indexer/src/base/dal/transactionRequest.js'
+
+export * from '../types.js'
 
 // State
 
@@ -140,6 +142,7 @@ export function getAccountTimeSeriesStatsType(
 export { TimeInfo } from '../types.js'
 
 export const types: GraphQLNamedType[] = [
+  Blockchain,
   TimeInfo,
   AccountState,
   TimeFrame,

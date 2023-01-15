@@ -123,19 +123,13 @@ export abstract class BaseTransactionHistoryFetcher<
     })
     if (!state) return
 
-    const {
-      completeHistory,
-      firstTimestamp = Number.MAX_SAFE_INTEGER,
-      lastTimestamp = 0,
-    } = state
+    const { firstTimestamp = Number.MAX_SAFE_INTEGER, lastTimestamp = 0 } =
+      state
 
     // @todo: make sure that there wont be incomplete ranges on the right
     // containing transactions with the same timestamp, in that case we
     // are lossing data
-    const inRange =
-      (completeHistory || startDate > firstTimestamp) &&
-      endDate <= lastTimestamp
-
+    const inRange = startDate >= firstTimestamp && endDate <= lastTimestamp
     if (!inRange) return
 
     const signaturesQuery = await this.accountSignatureDAL
@@ -193,6 +187,7 @@ export abstract class BaseTransactionHistoryFetcher<
 
     return {
       fetcher: this.fetcherClient.getNodeId() || 'unknown',
+      blockchain: this.blockchainId,
       account,
       cursors: fetcherState.cursors,
       completeHistory: fetcher.isComplete('backward'),

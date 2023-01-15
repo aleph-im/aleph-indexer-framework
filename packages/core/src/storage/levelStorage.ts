@@ -243,6 +243,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options: StorageGetOptions<string, V> = { reverse: true },
   ): StorageStream<string, V> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('getAllFromTo', fromToOpts, options)
     return this.getAll({ ...options, ...fromToOpts })
   }
 
@@ -252,6 +253,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options?: StorageGetOptions<string, V>,
   ): StorageKeyStream<string> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('getAllKeysFromTo', fromToOpts, options)
     return this.getAllKeys({ ...options, ...fromToOpts })
   }
 
@@ -261,6 +263,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options?: StorageGetOptions<string, V>,
   ): StorageValueStream<V> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('getAllValuesFromTo', fromToOpts, options)
     return this.getAllValues({ ...options, ...fromToOpts })
   }
 
@@ -333,6 +336,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options: StorageGetOptions<string, V> = { reverse: true },
   ): Promise<StorageEntry<string, V> | undefined> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('findBoundingEntry', fromToOpts, options)
     let item = await this.findBoundingEntry({ ...options, ...fromToOpts })
 
     if (item && this.mapFn) {
@@ -348,6 +352,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options?: StorageGetOptions<string, V>,
   ): Promise<string | undefined> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('findBoundingKey', fromToOpts, options)
     let key = await this.findBoundingKey({ ...options, ...fromToOpts })
 
     const { mapKeyFn } = this.options
@@ -365,6 +370,7 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     options?: StorageGetOptions<string, V>,
   ): Promise<V | undefined> {
     const fromToOpts = this.getFromToFilters(start, end)
+    this.debugFromTo('findBoundingValue', fromToOpts, options)
     let value = await this.findBoundingValue({ ...options, ...fromToOpts })
 
     const { mapValueFn } = this.options
@@ -446,6 +452,20 @@ export class LevelStorage<V> extends BaseStorage<string, V> {
     } catch (e) {
       console.error(`Error store restore [${name}]`, e)
       return false
+    }
+  }
+
+  protected debugFromTo(
+    name: string,
+    fromToOpts: any,
+    options?: StorageCommonOptions,
+  ): void {
+    if (options?.debug) {
+      console.log(`
+        dbDebug:
+          ${name}: ${this.path} [${options?.sublevel}]
+          opts: ${JSON.stringify(fromToOpts)}
+      `)
     }
   }
 }

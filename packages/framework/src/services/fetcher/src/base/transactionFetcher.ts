@@ -17,7 +17,7 @@ import {
 } from './types.js'
 import { MsIds } from '../../../common.js'
 import { PendingTransactionStorage } from './dal/pendingTransaction.js'
-import { RawTransactionWithPeers } from '../../../parser/src/types.js'
+import { RawTransactionWithPeers } from '../../../parser/src/base/types.js'
 
 const { sleep } = Utils
 
@@ -320,8 +320,12 @@ export abstract class BaseTransactionFetcher<
     if (!txs.length) return
 
     console.log(`✉️  ${txs.length} txs sent by the fetcher...`)
+
     this.addThroughput(txs.length)
-    return this.broker.emit('fetcher.txs', txs, [MsIds.Parser])
+
+    return this.broker.emit(`fetcher.txs.${this.blockchainId}`, txs, [
+      MsIds.Parser,
+    ])
   }
 
   /**

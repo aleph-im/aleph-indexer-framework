@@ -4,6 +4,7 @@ import {
   DelAccountTransactionRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
+import { MAX_TIMER_INTEGER } from '@aleph-indexer/core/dist/constants.js'
 
 export interface BaseStateFetcherI {
   init(): Promise<void>
@@ -28,7 +29,7 @@ export abstract class BaseStateFetcher {
   ) {
     this.pendingAccounts = new PendingWorkPool({
       id: 'accounts',
-      interval: Number.MAX_SAFE_INTEGER, // @note: Run once
+      interval: MAX_TIMER_INTEGER, // @note: Run once
       chunkSize: 100,
       concurrency: 1,
       dal: this.accountDAL,

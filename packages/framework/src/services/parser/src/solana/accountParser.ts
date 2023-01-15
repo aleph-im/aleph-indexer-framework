@@ -1,5 +1,5 @@
 import { AlephParsedAccountInfo, RawAccountInfo } from '@aleph-indexer/core'
-import { DefinedParser } from './parser.js'
+import { DefinedParser } from '../base/types'
 
 export class AccountParser<T> extends DefinedParser<
   RawAccountInfo,

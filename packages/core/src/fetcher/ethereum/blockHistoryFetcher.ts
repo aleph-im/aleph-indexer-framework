@@ -14,6 +14,7 @@ import {
   EthereumBlockHistoryPaginationCursors,
   EthereumFetchBlocksOptions,
 } from './types.js'
+import { sleep } from '../../utils/time.js'
 
 export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBlockHistoryPaginationCursor> {
   protected lastCheckCompleteBackward = Date.now()
@@ -115,6 +116,9 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     console.log(`fetchBlocks [${goingForward ? 'forward' : 'backward'}]`)
 
     try {
+      await sleep(1000 * 10)
+      // throw new Error('MOCK BLOCK FETCH')
+
       const blocks = this.ethereumClient.fetchBlocks(options)
 
       for await (const step of blocks) {

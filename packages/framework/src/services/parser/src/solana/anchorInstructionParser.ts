@@ -3,20 +3,19 @@ import {
   AlephParsedInnerInstruction,
   AlephParsedInstruction,
   AlephParsedParsedInstruction,
-  RawInstruction,
+  SolanaRawInstruction,
 } from '@aleph-indexer/core'
-import { DefinedParser } from './parser.js'
+import { DefinedParser } from '../base/types'
 
 /**
  * Parses a raw instruction, if a parser for given solana program is available.
- * Based on solana-program-library, use {@link AnchorInstructionParser} for Anchor instructions, when using Beet as a
- * layout descriptor.
+ * This parser is automatically used for indexers generated from IDL with anchor-ts-generator.
  */
-export class SplInstructionParser<
+export class AnchorInstructionParser<
   EventTypeEnum extends string,
 > extends DefinedParser<
-  RawInstruction,
-  RawInstruction | AlephParsedInstruction
+  SolanaRawInstruction,
+  SolanaRawInstruction | AlephParsedInstruction
 > {
   constructor(
     public programId: string,
@@ -29,8 +28,8 @@ export class SplInstructionParser<
   }
 
   parse(
-    rawIx: RawInstruction | AlephParsedInstruction,
-  ): RawInstruction | AlephParsedInstruction {
+    rawIx: SolanaRawInstruction | AlephParsedInstruction,
+  ): SolanaRawInstruction | AlephParsedInstruction {
     if (!this.isCompatibleInstruction(rawIx)) return rawIx
 
     const decoded = this.getInstructionData(rawIx)
@@ -42,12 +41,18 @@ export class SplInstructionParser<
     const parsedIx: AlephParsedParsedInstruction = rawIx as any
     parsedIx.program = this.programName
 
+    const { instructionDiscriminator, ...data } = this.parseInstructionData(
+      type,
+      decoded,
+    )[0]
+    const accounts = this.parseInstructionAccounts(type, parsedIx)
+
     parsedIx.parsed = {
       type,
       info: {
         ...(rawIx as any).parsed?.info,
-        ...this.parseInstructionData(type, decoded),
-        ...this.parseInstructionAccounts(type, parsedIx),
+        data,
+        accounts,
       },
     }
 
@@ -55,13 +60,13 @@ export class SplInstructionParser<
   }
 
   protected isCompatibleInstruction(
-    ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+    ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
   ): boolean {
     return ix.programId === this.programId
   }
 
   protected getInstructionData(
-    rawIx: RawInstruction | AlephParsedInstruction,
+    rawIx: SolanaRawInstruction | AlephParsedInstruction,
   ): Buffer | undefined {
     if (!('data' in rawIx)) return
     return Buffer.from(bs58.decode(rawIx.data))
@@ -72,7 +77,7 @@ export class SplInstructionParser<
       const template = this.dataLayouts[type]
       if (!template) return {}
 
-      return this.dataLayouts[type].decode(data)
+      return this.dataLayouts[type].deserialize(data)
     } catch (e) {
       console.error(e)
     }
@@ -80,7 +85,7 @@ export class SplInstructionParser<
 
   protected parseInstructionAccounts(
     type: EventTypeEnum,
-    rawIx: RawInstruction | AlephParsedInstruction,
+    rawIx: SolanaRawInstruction | AlephParsedInstruction,
   ): any {
     const info: any = {}
 

@@ -18,7 +18,7 @@ export default class MainDomain
 
   async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<undefined>[]> {
     const alephToken = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
-    const example = '0x388c818ca8b9251b393131c08a736a67ccb19297'
+    const example = '0x9c0452EA7a6d8E860140061A9b811C8715BA4cb7'
 
     return [
       // {

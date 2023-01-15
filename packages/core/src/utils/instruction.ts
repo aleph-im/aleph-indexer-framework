@@ -3,13 +3,13 @@ import {
   AlephParsedInnerInstruction,
   AlephParsedInstruction,
   AlephParsedParsedInstruction,
-  RawInstruction,
+  SolanaRawInstruction,
 } from '../types/index.js'
 import { TOKEN_PROGRAM_ID } from '../constants.js'
 import { SolanaInstructionContextV1 } from '../parser/index.js'
 
 export function isTokenInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): boolean {
   return ix.programId === TOKEN_PROGRAM_ID
 }
@@ -18,13 +18,13 @@ export function isTokenInstruction(
  * Guard to validate if it is a valid instruction
  */
 export function isParsedIx(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {
   return 'parsed' in ix
 }
 
 export function isTokenParsedInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {
   if (!isParsedIx(ix) || !isTokenInstruction(ix)) return false
   return true

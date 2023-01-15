@@ -20,11 +20,11 @@ export class IndexerMsMain implements IndexerMsI {
 
   /**
    * @param indexerClient Retrieve contextual information of sibling indexers.
-   * @param blockchainIndexers A dictionary of instances that implements BlockchainIndexerI interface
+   * @param blockchains A dictionary of instances that implements BlockchainIndexerI interface
    */
   constructor(
     protected indexerClient: IndexerMsClient,
-    protected blockchainIndexers: Record<Blockchain, BlockchainIndexerI>,
+    protected blockchains: Record<Blockchain, BlockchainIndexerI>,
   ) {}
 
   /**
@@ -37,7 +37,7 @@ export class IndexerMsMain implements IndexerMsI {
     this.inited = true
 
     await Promise.all(
-      Object.values(this.blockchainIndexers).map((indexer) => indexer.start()),
+      Object.values(this.blockchains).map((indexer) => indexer.start()),
     )
   }
 
@@ -46,7 +46,7 @@ export class IndexerMsMain implements IndexerMsI {
     this.inited = false
 
     await Promise.all(
-      Object.values(this.blockchainIndexers).map((indexer) => indexer.stop()),
+      Object.values(this.blockchains).map((indexer) => indexer.stop()),
     )
   }
 
@@ -55,24 +55,24 @@ export class IndexerMsMain implements IndexerMsI {
   }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {
-    const indexer = this.getBlockchainIndexer(args.blockchainId)
+    const indexer = this.getBlockchainInstance(args.blockchainId)
     await indexer.indexAccount(args)
   }
 
   async deleteAccount(args: AccountIndexerRequestArgs): Promise<void> {
-    const indexer = this.getBlockchainIndexer(args.blockchainId)
+    const indexer = this.getBlockchainInstance(args.blockchainId)
     await indexer.deleteAccount(args)
   }
 
   async getAccountState(
     args: GetAccountIndexingStateRequestArgs,
   ): Promise<AccountIndexerState | undefined> {
-    const indexer = this.getBlockchainIndexer(args.blockchainId)
+    const indexer = this.getBlockchainInstance(args.blockchainId)
     return indexer.getAccountState(args)
   }
 
   async invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown> {
-    const indexer = this.getBlockchainIndexer(args.blockchainId)
+    const indexer = this.getBlockchainInstance(args.blockchainId)
     return indexer.invokeDomainMethod(args)
   }
 
@@ -81,7 +81,7 @@ export class IndexerMsMain implements IndexerMsI {
   async getTransactionRequests(
     args: GetTransactionPendingRequestsRequestArgs,
   ): Promise<TransactionRequest[]> {
-    const indexer = this.getBlockchainIndexer(args.blockchainId)
+    const indexer = this.getBlockchainInstance(args.blockchainId)
     return indexer.getTransactionRequests(args)
   }
 
@@ -91,7 +91,7 @@ export class IndexerMsMain implements IndexerMsI {
     args: InvokeBlockchainMethodRequestArgs<A>,
   ): Promise<R> {
     const { blockchainId, method, args: params } = args
-    const indexer = this.getBlockchainIndexer(blockchainId)
+    const indexer = this.getBlockchainInstance(blockchainId)
 
     if (!(method in indexer)) {
       throw new Error(
@@ -102,14 +102,16 @@ export class IndexerMsMain implements IndexerMsI {
     return (indexer as any)[method]({ blockchainId, ...params })
   }
 
-  protected getBlockchainIndexer(blockchainId: Blockchain): BlockchainIndexerI {
-    const indexer = this.blockchainIndexers[blockchainId]
+  protected getBlockchainInstance(
+    blockchainId: Blockchain,
+  ): BlockchainIndexerI {
+    const instance = this.blockchains[blockchainId]
 
-    if (!indexer) {
+    if (!instance) {
       throw new Error(`${blockchainId} blockchain not supported`)
     }
 
-    return indexer
+    return instance
   }
 
   protected getIndexerId(): string {
