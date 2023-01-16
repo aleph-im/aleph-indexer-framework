@@ -6,15 +6,5 @@
   ],
   "data": "LQM2ciSBP5",
   "programId": "FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH",
-  "program": "pyth",
-  "parsed": {
-    "type": "updPrice",
-    "info": ""
-  },
-  "innerInstructions": [
-    {
-      "index": 1,
-      "programId": "FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH"
-    }
-  ]
+  "program": "pyth"
 }
