@@ -37,15 +37,15 @@ export default async (
   // DALs
   const rawBlockDAL = createEthereumRawBlockDAL(basePath)
   const accountSignatureDAL = createEthereumAccountTransactionHistoryDAL(basePath)
-  const accountStateDAL = createAccountStateDAL<EthereumAccountState>(basePath)
+  const accountStateDAL = createAccountStateDAL<EthereumAccountState>(basePath, false)
   const blockFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_block')
   const transactionHistoryFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
   const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
   const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
-  const pendingTransactionDAL =  createPendingTransactionDAL(basePath)
-  const pendingTransactionCacheDAL =  createPendingTransactionCacheDAL(basePath)
-  const pendingTransactionFetchDAL =  createPendingTransactionFetchDAL(basePath)
-  const rawTransactionDAL =  createRawTransactionDAL<EthereumRawTransaction>(basePath)
+  const pendingTransactionDAL = createPendingTransactionDAL(basePath)
+  const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
+  const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
+  const rawTransactionDAL = createRawTransactionDAL<EthereumRawTransaction>(basePath, true)
 
   const ethereumClient = createEthereumClient(
     url,

@@ -2,9 +2,14 @@ import { EntityStorage, RawTransaction } from '@aleph-indexer/core'
 
 export type RawTransactionStorage<T extends RawTransaction> = EntityStorage<T>
 
-const signatureKey = {
-  get: <T extends RawTransaction>(e: T) => e.signature.toLowerCase(),
+const signatureCaseSensitiveKey = {
+  get: <T extends RawTransaction>(e: T) => e.signature,
   length: EntityStorage.VariableLength,
+}
+
+const signatureKey = {
+  ...signatureCaseSensitiveKey,
+  get: <T extends RawTransaction>(e: T) => e.signature.toLowerCase(),
 }
 
 /**
@@ -13,10 +18,11 @@ const signatureKey = {
  */
 export function createRawTransactionDAL<T extends RawTransaction>(
   path: string,
+  caseSensitive = true,
 ): RawTransactionStorage<T> {
   return new EntityStorage<T>({
     name: 'fetcher_raw_transaction',
     path,
-    key: [signatureKey],
+    key: [caseSensitive ? signatureCaseSensitiveKey : signatureKey],
   })
 }

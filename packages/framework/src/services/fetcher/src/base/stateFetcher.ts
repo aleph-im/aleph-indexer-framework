@@ -51,8 +51,7 @@ export abstract class BaseStateFetcher {
   }
 
   async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
-    const { indexerId } = args
-    const account = args.account.toLowerCase()
+    const { account, indexerId } = args
 
     const work = {
       id: account,
@@ -64,8 +63,7 @@ export abstract class BaseStateFetcher {
   }
 
   async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
-    const { indexerId } = args
-    const account = args.account.toLowerCase()
+    const { account, indexerId } = args
 
     if (!indexerId) return
 
@@ -86,9 +84,7 @@ export abstract class BaseStateFetcher {
    * Allows to obtain the current state of the account
    * @param account Consists of the account address
    */
-  async startAccountStateFetcher(account: string): Promise<void> {
-    account = account.toLowerCase()
-
+  protected async startAccountStateFetcher(account: string): Promise<void> {
     let fetcher = this.fetchers[account]
     if (fetcher) return
 
@@ -104,9 +100,7 @@ export abstract class BaseStateFetcher {
    * Removes an account info fetcher from the map and its existing requests.
    * @param account The account address to remove from the map.
    */
-  async stopAccountStateFetcher(account: string): Promise<void> {
-    account = account.toLowerCase()
-
+  protected async stopAccountStateFetcher(account: string): Promise<void> {
     const fetcher = this.fetchers[account]
     if (!fetcher) return
 

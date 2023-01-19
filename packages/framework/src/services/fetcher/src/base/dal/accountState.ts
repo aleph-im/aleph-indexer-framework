@@ -4,9 +4,14 @@ import {
   AccountStateStorage,
 } from '@aleph-indexer/core'
 
-const accountKey = {
-  get: (e: AccountState) => e.account.toLowerCase(),
+const accountCaseSensitiveKey = {
+  get: (e: AccountState) => e.account,
   length: EntityStorage.AddressLength,
+}
+
+const accountKey = {
+  ...accountCaseSensitiveKey,
+  get: (e: AccountState) => e.account.toLowerCase(),
 }
 
 /**
@@ -15,10 +20,11 @@ const accountKey = {
  */
 export function createAccountStateDAL<T extends AccountState>(
   path: string,
+  caseSensitive = true,
 ): AccountStateStorage<T> {
   return new EntityStorage<T>({
     name: 'fetcher_account_state',
     path,
-    key: [accountKey],
+    key: [caseSensitive ? accountCaseSensitiveKey : accountKey],
   })
 }

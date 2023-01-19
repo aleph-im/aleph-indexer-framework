@@ -7,6 +7,10 @@ import {
 import { PendingAccountStorage } from '../base/dal/account.js'
 
 import { BaseStateFetcherI, BaseStateFetcher } from '../base/stateFetcher.js'
+import {
+  AddAccountStateRequestArgs,
+  DelAccountTransactionRequestArgs,
+} from '../base/types.js'
 
 /**
  * The main class of the fetcher service.
@@ -25,9 +29,17 @@ export class EthereumAccountStateFetcher extends BaseStateFetcher {
     super(Blockchain.Ethereum, ...args)
   }
 
-  protected getAccountFetcher(account: string): BaseStateFetcherI {
-    account = account.toLowerCase()
+  async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
+    args.account = args.account.toLowerCase()
+    return super.addAccount(args)
+  }
 
+  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+    args.account = args.account.toLowerCase()
+    return super.delAccount(args)
+  }
+
+  protected getAccountFetcher(account: string): BaseStateFetcherI {
     const opts = {
       account,
       subscribeChanges: true,

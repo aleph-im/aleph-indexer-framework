@@ -77,9 +77,8 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   // }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {
-    const { blockchainId, index } = args
+    const { account, blockchainId, index } = args
     const { transactions, content } = index
-    const account = args.account.toLowerCase()
 
     if (transactions) {
       await this.indexAccountTransactions({
@@ -105,8 +104,8 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   }
 
   async deleteAccount(args: AccountIndexerRequestArgs): Promise<void> {
+    const { account } = args
     const { transactions, content } = args.index
-    const account = args.account.toLowerCase()
 
     if (transactions) {
       const accountIndexer = this.accountTransactionsIndexers[account]
@@ -119,10 +118,10 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     }
   }
 
-  async getAccountState(args: GetAccountIndexingStateRequestArgs): Promise<
-    AccountIndexerState | undefined
-  > {
-    const account = args.account.toLowerCase()
+  async getAccountState(
+    args: GetAccountIndexingStateRequestArgs,
+  ): Promise<AccountIndexerState | undefined> {
+    const { account } = args
 
     const indexer = this.accountTransactionsIndexers[account]
     if (!indexer) return
@@ -135,8 +134,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   }
 
   async invokeDomainMethod(argss: InvokeMethodRequestArgs): Promise<unknown> {
-    const { method, args = [],} = argss
-    const account = argss.account.toLowerCase()
+    const { account, method, args = [] } = argss
 
     const fn = (this.domain as any)[method]
 
@@ -161,7 +159,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   protected async indexAccountTransactions(
     args: AccountIndexerTransactionRequestArgs,
   ): Promise<void> {
-    const account = args.account.toLowerCase()
+    const { account } = args
 
     let accountIndexer = this.accountTransactionsIndexers[account]
     if (accountIndexer) return
@@ -202,7 +200,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   protected mapWithIndexerId<T>(items: T[]): T[] {
     const indexer = this.indexerClient.getNodeId()
     return items.map((item) => {
-      ; (item as any).indexer = indexer
+      ;(item as any).indexer = indexer
       return item
     })
   }

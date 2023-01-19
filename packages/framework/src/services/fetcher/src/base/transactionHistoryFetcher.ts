@@ -71,8 +71,7 @@ export abstract class BaseTransactionHistoryFetcher<
    * @param args Account address to asign to the fetcher instance,
    */
   async addAccount(args: AddAccountTransactionRequestArgs): Promise<void> {
-    const { indexerId } = args
-    const account = args.account.toLowerCase()
+    const { account, indexerId } = args
 
     const work = {
       id: account,
@@ -88,8 +87,7 @@ export abstract class BaseTransactionHistoryFetcher<
    * @param account The account address to stop the fetching process.
    */
   async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
-    const { indexerId } = args
-    const account = args.account.toLowerCase()
+    const { account, indexerId } = args
 
     if (!indexerId) return
 
@@ -114,8 +112,7 @@ export abstract class BaseTransactionHistoryFetcher<
   async fetchAccountTransactionsByDate(
     args: FetchAccountTransactionsByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { startDate, endDate, indexerId } = args
-    const account = args.account.toLowerCase()
+    const { account, startDate, endDate, indexerId } = args
 
     const state = await this.getAccountState({
       blockchainId: this.blockchainId,
@@ -161,7 +158,7 @@ export abstract class BaseTransactionHistoryFetcher<
   protected async getPartialAccountState<
     T extends AccountTransactionHistoryState<C>,
   >(args: GetAccountTransactionStateRequestArgs): Promise<T | undefined> {
-    const account = args.account.toLowerCase()
+    const { account } = args
 
     const fetcher = this.getAccountFetcher(args.account)
     const fetcherState = await fetcher.getState()

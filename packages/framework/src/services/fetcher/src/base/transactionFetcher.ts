@@ -109,8 +109,10 @@ export abstract class BaseTransactionFetcher<
    * Returns the fetch status of certain txn signatures.
    * @param signatures The txn signatures to get its state.
    */
-  async getTransactionState(args: CheckTransactionsRequestArgs): Promise<TransactionState[]> {
-    const signatures = args.signatures.map(sig => sig.toLowerCase())
+  async getTransactionState(
+    args: CheckTransactionsRequestArgs,
+  ): Promise<TransactionState[]> {
+    const { signatures } = args
     const firstPending = await this.pendingTransactions.getFirstValue()
 
     return Promise.all(
@@ -146,7 +148,7 @@ export abstract class BaseTransactionFetcher<
    * @param args The txn signatures to delete the cache for.
    */
   async delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    const signatures = args.signatures.map(sig => sig.toLowerCase())
+    const { signatures } = args
     const entities = signatures.map((signature) => {
       return { signature }
     }) as T[]
@@ -158,9 +160,10 @@ export abstract class BaseTransactionFetcher<
    * Fetch transactions from an account by signatures.
    * @param args Txn signatures.
    */
-  async fetchTransactionsBySignature(args: FetchTransactionsBySignatureRequestArgs): Promise<void> {
-    const { indexerId } = args
-    const signatures = args.signatures.map(sig => sig.toLowerCase())
+  async fetchTransactionsBySignature(
+    args: FetchTransactionsBySignatureRequestArgs,
+  ): Promise<void> {
+    const { signatures, indexerId } = args
 
     console.log(
       `🔗 ${signatures.length} new signatures added to the fetcher queue... [${indexerId}]`,
@@ -271,7 +274,8 @@ export abstract class BaseTransactionFetcher<
     await this.pendingTransactionsCache.addWork(cacheWorks)
 
     console.log(
-      `Txs fetching | Response ${txs.length} requests${totalPendings > 0 ? `, ${totalPendings} errors` : ''
+      `Txs fetching | Response ${txs.length} requests${
+        totalPendings > 0 ? `, ${totalPendings} errors` : ''
       }`,
     )
 

@@ -15,7 +15,7 @@ const signatureKey = {
 
 const accountKey = {
   get: (e: EthereumAccountTransactionHistoryEntity) =>
-    e.accounts.map(acc => acc.toLowerCase()),
+    e.accounts.map((acc) => acc.toLowerCase()),
   length: EntityStorage.EthereumAddressLength,
 }
 

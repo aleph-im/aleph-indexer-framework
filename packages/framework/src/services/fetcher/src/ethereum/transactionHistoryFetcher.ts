@@ -8,7 +8,12 @@ import {
 } from '@aleph-indexer/core'
 
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
-import { GetAccountTransactionStateRequestArgs } from '../base/types.js'
+import {
+  AddAccountTransactionRequestArgs,
+  DelAccountTransactionRequestArgs,
+  FetchAccountTransactionsByDateRequestArgs,
+  GetAccountTransactionStateRequestArgs,
+} from '../base/types.js'
 import { EthereumAccountTransactionHistoryState } from './types.js'
 import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { PendingAccountStorage } from '../base/dal/account.js'
@@ -37,6 +42,23 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
     super(Blockchain.Ethereum, ...args)
   }
 
+  async addAccount(args: AddAccountTransactionRequestArgs): Promise<void> {
+    args.account = args.account.toLowerCase()
+    return super.addAccount(args)
+  }
+
+  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+    args.account = args.account.toLowerCase()
+    return super.delAccount(args)
+  }
+
+  async fetchAccountTransactionsByDate(
+    args: FetchAccountTransactionsByDateRequestArgs,
+  ): Promise<void | AsyncIterable<string[]>> {
+    args.account = args.account.toLowerCase()
+    return super.fetchAccountTransactionsByDate(args)
+  }
+
   /**
    * Returns the state of the transaction fetch process of a given account.
    * @param args The account address to get its fetch status.
@@ -44,6 +66,8 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
   async getAccountState(
     args: GetAccountTransactionStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
+    args.account = args.account.toLowerCase()
+
     const state: EthereumAccountTransactionHistoryState | undefined =
       await this.getPartialAccountState(args)
 
@@ -69,8 +93,6 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
   protected getAccountFetcher(
     account: string,
   ): EthereumAccountTransactionHistoryFetcher {
-    account = account.toLowerCase()
-
     return new EthereumAccountTransactionHistoryFetcher(
       account,
       this.fetcherStateDAL,
