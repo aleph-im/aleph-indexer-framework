@@ -14,6 +14,7 @@ export interface FetcherPoolOptions<T>
     'checkComplete' | 'handleWork' | 'chunkSize'
   > {
   dal: PendingWorkDAL<T>
+  fetcherCache?: boolean
   getFetcher: (
     work: PendingWork<T>,
   ) => Promise<BaseHistoryFetcher<any>> | BaseHistoryFetcher<any>
@@ -28,13 +29,17 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
   protected options!: FetcherPoolOptions<T> & PendingWorkOptions<T>
 
   constructor(options: FetcherPoolOptions<T>) {
+    const { checkComplete, ...rest } = options
+
     super({
       checkComplete: async (work: PendingWork<T>): Promise<boolean> => {
-        const checkCompleteFn = this.options.checkComplete
-          ? this.options.checkComplete
+        const fetcher = await this.getFetcher(work)
+        await fetcher.init()
+
+        const checkCompleteFn = checkComplete
+          ? checkComplete
           : this.defaultCheckComplete
 
-        const fetcher = await this.getFetcher(work)
         const complete = await checkCompleteFn(work, fetcher)
         if (!complete) return false
 
@@ -55,32 +60,43 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
 
         await fetcher.init()
 
-        const sleepTime = Math.max(
-          Math.min(fetcher.getNextRun() - Date.now(), MAX_TIMER_INTEGER),
-          0,
-        )
-
-        if (sleepTime > 0) {
-          console.log(
-            `[${fetcher.getId()}] indexer running again in ${
-              Duration.fromMillis(sleepTime).toISOTime() || '+24h'
-            }`,
-          )
-
-          return sleepTime
-        }
+        const sleepTime = this.getSleepTime(fetcher)
+        if (sleepTime) return sleepTime
 
         await fetcher.run()
+
+        return this.getSleepTime(fetcher) || 1
       },
       preCheckComplete: true,
       chunkSize: 1,
-      ...options,
+      ...rest,
     })
+  }
+
+  protected getSleepTime(fetcher: BaseHistoryFetcher<any>): number {
+    const sleepTime = Math.max(
+      Math.min(fetcher.getNextRun() - Date.now(), MAX_TIMER_INTEGER),
+      0,
+    )
+
+    if (sleepTime) {
+      console.log(
+        `[${fetcher.getId()}] fetcher running again in ${
+          Duration.fromMillis(sleepTime).toISOTime() || '+24h'
+        }`,
+      )
+    }
+
+    return sleepTime
   }
 
   protected async getFetcher(
     work: PendingWork<T>,
   ): Promise<BaseHistoryFetcher<any>> {
+    if (!this.options.fetcherCache) {
+      return this.options.getFetcher(work)
+    }
+
     let fetcher = this.workFetcher[work.id]
 
     if (!fetcher) {
@@ -95,10 +111,7 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     work: PendingWork<T>,
     fetcher?: BaseHistoryFetcher<any>,
   ): boolean {
-    if (fetcher) {
-      return fetcher.isComplete()
-    }
-
+    if (fetcher) return fetcher.isComplete()
     return false
   }
 }

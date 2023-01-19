@@ -5,7 +5,7 @@ import {
 } from '@aleph-indexer/core'
 
 const accountKey = {
-  get: (e: AccountState) => e.account,
+  get: (e: AccountState) => e.account.toLowerCase(),
   length: EntityStorage.AddressLength,
 }
 

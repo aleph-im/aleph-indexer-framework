@@ -51,7 +51,7 @@ export type SolanaFetchSignaturesOptions = {
   address: string
   before?: string
   until?: string
-  maxLimit?: number
+  iterationLimit?: number
   errorFetching?: SolanaErrorFetching
   signatureBlacklist?: Set<string>
   untilSlot?: number
@@ -259,7 +259,7 @@ export class SolanaRPC {
     before,
     until,
     untilSlot,
-    maxLimit = 1000,
+    iterationLimit: maxLimit = 1000,
     errorFetching = SolanaErrorFetching.SkipErrors,
     signatureBlacklist,
   }: SolanaFetchSignaturesOptions): AsyncGenerator<SolanaTransactionHistoryPaginationResponse> {

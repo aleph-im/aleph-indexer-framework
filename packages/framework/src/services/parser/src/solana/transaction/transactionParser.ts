@@ -8,21 +8,21 @@ import {
   TransactionErrorType,
   AlephParsedInnerTransaction,
 } from '@aleph-indexer/core'
-import { StrictParser } from '../base/types.js'
-import { InstructionParserLibrary } from './instructionParserLibrary.js'
+import { StrictParser } from '../../base/types.js'
+import { SolanaInstructionParser } from '../instruction/instructionParser.js'
 
 /**
  * Core class which parses raw transactions into parsed transactions with parsed
  * instructions.
  */
-export class TransactionParser extends StrictParser<
+export class SolanaTransactionParser extends StrictParser<
   SolanaRawTransaction,
   SolanaParsedTransactionV1
 > {
   /**
    * @param instructionParserAggregator Aggregates all available instruction parsers for use.
    */
-  constructor(protected instructionParserAggregator: InstructionParserLibrary) {
+  constructor(protected instructionParserAggregator: SolanaInstructionParser) {
     super()
   }
 

@@ -1,5 +1,5 @@
 import { ParsedTransaction, RawTransaction } from '@aleph-indexer/core'
-import { BlockchainRequestArgs } from '../../../types'
+import { BlockchainRequestArgs } from '../../../types.js'
 
 /**
  * Contains the original and parsed data, as well as the context of the parsing.

@@ -8,7 +8,7 @@ export enum EthereumBlockDALIndex {
 }
 
 const signatureKey = {
-  get: (e: EthereumBlock) => e.hash,
+  get: (e: EthereumBlock) => e.hash.toLowerCase(),
   length: EntityStorage.VariableLength,
 }
 

@@ -8,13 +8,14 @@ import {
 import { AccountTransactionHistoryDALIndex } from '../../base/dal/accountTransactionHistory.js'
 
 const signatureKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) => e.signature,
+  get: (e: EthereumAccountTransactionHistoryEntity) =>
+    e.signature.toLowerCase(),
   length: EntityStorage.VariableLength,
 }
 
 const accountKey = {
   get: (e: EthereumAccountTransactionHistoryEntity) =>
-    Object.values(e.accounts),
+    e.accounts.map(acc => acc.toLowerCase()),
   length: EntityStorage.EthereumAddressLength,
 }
 

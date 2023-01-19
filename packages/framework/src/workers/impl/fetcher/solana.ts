@@ -6,6 +6,8 @@ import {
   createFetcherStateDAL,
   SolanaAccountState,
   SolanaRawTransaction,
+  solanaPrivateRPCRoundRobin,
+  solanaMainPublicRPCRoundRobin,
 } from '@aleph-indexer/core'
 import { SolanaFetcher } from '../../../services/fetcher/src/solana/fetcher.js'
 import {
@@ -23,11 +25,25 @@ import { SolanaAccountStateFetcher } from '../../../services/fetcher/src/solana/
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
 
-export default (
+export default async (
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
-): BlockchainFetcherI => {
+): Promise<BlockchainFetcherI> => {
+
+
+  // @note: Force resolve DNS and cache it before starting fetcher
+  await Promise.allSettled(
+    [
+      ...solanaPrivateRPCRoundRobin.getAllClients(),
+      ...solanaMainPublicRPCRoundRobin.getAllClients(),
+    ].map(async (client) => {
+      const conn = client.getConnection()
+      const { result } = await (conn as any)._rpcRequest('getBlockHeight', [])
+      console.log(`RPC ${conn.endpoint} last height: ${result}`)
+    }),
+  )
+
   // DALs
   const accountSignatureDAL = createSolanaAccountTransactionHistoryDAL(basePath)
   const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath)

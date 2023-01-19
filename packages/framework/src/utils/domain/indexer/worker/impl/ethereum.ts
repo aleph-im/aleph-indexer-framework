@@ -1,8 +1,8 @@
 import { pipeline } from 'stream'
 import { promisify } from 'util'
 import {
-  EthereumParsedTransactionV1,
-  EthereumParsedTransactionContextV1,
+  EthereumParsedTransaction,
+  EthereumParsedTransactionContext,
   Utils,
 } from '@aleph-indexer/core'
 import {
@@ -14,11 +14,11 @@ const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
 export type EthereumIndexerWorkerDomainI = {
   ethereumFilterTransaction(
-    ctx: EthereumParsedTransactionContextV1,
+    ctx: EthereumParsedTransactionContext,
   ): Promise<boolean>
   ethereumIndexTransaction(
-    ctx: EthereumParsedTransactionContextV1,
-  ): Promise<EthereumParsedTransactionContextV1>
+    ctx: EthereumParsedTransactionContext,
+  ): Promise<EthereumParsedTransactionContext>
 }
 
 export default class EthereumIndexerWorkerDomain {
@@ -48,8 +48,8 @@ export default class EthereumIndexerWorkerDomain {
 
   protected mapTransactionContext(
     args: TransactionDateRangeResponse,
-    tx: EthereumParsedTransactionV1,
-  ): EthereumParsedTransactionContextV1 {
+    tx: EthereumParsedTransaction,
+  ): EthereumParsedTransactionContext {
     const { account, startDate, endDate } = args
 
     return {

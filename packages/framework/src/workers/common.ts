@@ -84,7 +84,7 @@ async function importBlockchainMsMains(
       const module = await import(`./impl/${kind}/${blockchainId}.js`)
       const factory = module.default
       const blockchainBasePath = path.join(basePath, blockchainId)
-      const instance = factory(blockchainBasePath, ...args)
+      const instance = await factory(blockchainBasePath, ...args)
       return [blockchainId, instance]
     }),
   )

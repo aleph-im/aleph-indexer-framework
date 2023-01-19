@@ -1,12 +1,12 @@
 import { AlephParsedAccountInfo, RawAccountInfo } from '@aleph-indexer/core'
-import { LayoutFactory } from './layout/layoutFactory.js'
-import { AccountParser } from './accountParser.js'
-import { DefinedParser } from '../base/types.js'
+import { DefinedParser } from '../../base/types.js'
+import { LayoutFactory } from '../layout/layoutFactory.js'
+import { SolanaAccountStateBaseParser } from './accountStateBaseParser.js'
 
 /**
  * Finds all available account parsers and aggregates them for use.
  */
-export class AccountParserLibrary extends DefinedParser<
+export class SolanaAccountStateParser extends DefinedParser<
   RawAccountInfo,
   RawAccountInfo | AlephParsedAccountInfo
 > {
@@ -48,7 +48,9 @@ export class AccountParserLibrary extends DefinedParser<
     const implementation = await LayoutFactory.getSingleton(address)
     if (!implementation) return
 
-    parser = new AccountParser(implementation.accountDataLayoutMap)
+    parser = new SolanaAccountStateBaseParser(
+      implementation.accountDataLayoutMap,
+    )
     this.accountParsers[address] = parser
 
     return parser

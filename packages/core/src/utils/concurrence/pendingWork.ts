@@ -80,7 +80,6 @@ export class PendingWorkPool<T> {
     console.log(`PendingWork | Added ${work.length} items [${this.options.id}]`)
 
     this.skipNextSleep()
-    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
   }
 
   async removeWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
@@ -108,6 +107,7 @@ export class PendingWorkPool<T> {
 
   skipNextSleep(): void {
     this.skipSleep = true
+    this.debouncedJob && this.debouncedJob.run().catch(() => 'ignore')
   }
 
   protected async runJob(): Promise<number> {
@@ -117,7 +117,7 @@ export class PendingWorkPool<T> {
     const minSleepTimeRef = await concurrentPromises(generator, concurrency)
 
     const sleep = this.skipSleep
-      ? 0
+      ? 1
       : minSleepTimeRef.value === MAX_TIMER_INTEGER
       ? this.options.interval
       : minSleepTimeRef.value
@@ -175,10 +175,8 @@ export class PendingWorkPool<T> {
               minSleepTimeRef.value = Math.min(minSleepTimeRef.value, sleepTime)
             }
           } finally {
-            if (!sleepTime) {
-              // @note: Always check complete works, for not repeating them all in case that only one failed
-              await this.checkComplete(works)
-            }
+            // @note: Always check complete works, for not repeating them all in case that only one failed
+            await this.checkComplete(works)
           }
         })()
       }
@@ -216,15 +214,12 @@ export class PendingWorkPool<T> {
   protected async checkComplete(
     works: PendingWork<T>[],
   ): Promise<PendingWork<T>[]> {
-    const { checkComplete } = this.options
-    if (!checkComplete) return works
-
     const worksToDelete: PendingWork<T>[] = []
     const pendingWorks: PendingWork<T>[] = []
 
     await Promise.all(
       works.map(async (work) => {
-        const complete = await checkComplete(work)
+        const complete = (await this.options.checkComplete?.(work)) || false
         if (complete) {
           worksToDelete.push(work)
         } else {

@@ -1,9 +1,9 @@
 import { SolanaAccountTransactionHistoryPaginationCursor } from '@aleph-indexer/core'
-import { BlockchainRequestArgs } from '../../../types'
+import { BlockchainRequestArgs } from '../../../types.js'
 import {
   AccountTransactionHistoryState,
   FetcherAccountPartitionRequestArgs,
-} from '../base/types'
+} from '../base/types.js'
 
 export type SolanaAccountTransactionHistoryState =
   AccountTransactionHistoryState<SolanaAccountTransactionHistoryPaginationCursor> & {

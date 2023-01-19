@@ -108,13 +108,14 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { until = -1 } = args
+    const { until = -1, pageLimit = 1000 } = args
 
     let {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
       iterationLimit = 1000,
-      pageLimit = 1000,
     } = args
+
+    // before = 16429404 + 1
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -166,13 +167,14 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { account, until = -1 } = args
+    const { account, until = -1, pageLimit = 1000 } = args
 
     let {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
       iterationLimit = 1000,
-      pageLimit = 1000,
     } = args
+
+    // before = 16429404 + 1
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -373,8 +375,8 @@ export class EthereumClient {
     const signatures = await this.accountSignatureDAL
       .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
       .getAllValuesFromTo([account, until], [account, before], {
-        atomic: true,
         limit,
+        atomic: true,
       })
 
     for await (const sig of signatures) chunk.push(sig)

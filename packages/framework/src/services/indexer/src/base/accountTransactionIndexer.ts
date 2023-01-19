@@ -36,6 +36,7 @@ export class AccountTransactionIndexer {
     protected transactionFetcher: TransactionFetcher,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
   ) {
+    config.account = config.account.toLowerCase()
     const { account } = config
 
     this.fetchAllJob = new JobRunner({
@@ -305,13 +306,13 @@ export class AccountTransactionIndexer {
       `💿 compact fetching states *
         newStates: [
           ${newStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
-            .join('\n')}
+        .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
+        .join('\n')}
         ],
         oldStates: [
           ${oldStates
-            .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
-            .join('\n')}
+        .map((s) => `[${s.state}]${getIntervalFromDateRange(s).toISO()}`)
+        .join('\n')}
         ]
       `,
     )

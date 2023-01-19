@@ -28,6 +28,8 @@ export class SolanaAccountStateFetcher extends BaseStateFetcher {
   }
 
   protected getAccountFetcher(account: string): BaseStateFetcherI {
+    account = account.toLowerCase()
+
     const opts = {
       account,
       subscribeChanges: true,

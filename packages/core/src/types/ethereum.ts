@@ -5,6 +5,11 @@ export type EthereumBlock = BlockTransactionObject
 
 export type EthereumRawTransaction = RawTransaction & Transaction
 
+export type EthereumRawAccountState = {
+  account: string
+  balance: number
+}
+
 export type EthereumSignature = {
   signature: string
   height: number

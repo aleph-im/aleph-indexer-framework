@@ -25,11 +25,11 @@ import {
 import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/rawTransaction.js'
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
 
-export default (
+export default async (
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
-): BlockchainFetcherI => {
+): Promise<BlockchainFetcherI> => {
   const url = config.ETHEREUM_RPC
 
   if (!url) throw new Error('ETHEREUM_RPC not configured')

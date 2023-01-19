@@ -64,7 +64,7 @@ export class Connection extends SolConnection {
     // Solana RPC client is limiting the socket pool to 25
     // (override this behavior by deleting their agent with the node default)
     const overrideAgent: FetchMiddleware = (url, options, fetch) => {
-      options.agent = agent
+      ;(options as any).agent = agent
     }
 
     // GenesysGo needs an authentication token

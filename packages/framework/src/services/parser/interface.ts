@@ -1,9 +1,9 @@
 import { ParsedTransaction, RawTransaction } from '@aleph-indexer/core'
-import { BlockchainRequestArgs } from '../types'
+import { BlockchainRequestArgs } from '../types.js'
 import {
   ParseAccountStateRequestArgs,
   ParseTransactionRequestArgs,
-} from './src/base/types'
+} from './src/base/types.js'
 
 export interface ParserMsI<
   T extends RawTransaction,

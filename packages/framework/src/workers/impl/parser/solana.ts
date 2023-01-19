@@ -1,27 +1,29 @@
 /* eslint-disable prettier/prettier */
 import { ParsedAccountInfoV1, RawAccountInfo, SolanaParsedTransactionV1, SolanaRawTransaction } from '@aleph-indexer/core'
 import { SolanaParser } from '../../../services/parser/src/solana/parser.js'
-import { AccountParserLibrary } from '../../../services/parser/src/solana/accountParserLibrary.js'
-import { TransactionParser } from '../../../services/parser/src/solana/transactionParser.js'
+import { SolanaTransactionParser } from '../../../services/parser/src/solana/transaction/transactionParser.js'
+import { SolanaInstructionParser } from '../../../services/parser/src/solana/instruction/instructionParser.js'
+import { SolanaAccountStateParser } from '../../../services/parser/src/solana/accountState/accountStateParser.js'
 import { BlockchainParserI } from '../../../services/parser/src/base/types.js'
-import { InstructionParserLibrary } from '../../../services/parser/src/solana/instructionParserLibrary.js'
 
-export default (
+export default async (
   basePath: string,
   layoutPath?: string,
-): BlockchainParserI<
-  SolanaRawTransaction,
-  SolanaParsedTransactionV1,
-  RawAccountInfo,
-  ParsedAccountInfoV1
+): Promise<
+  BlockchainParserI<
+    SolanaRawTransaction,
+    SolanaParsedTransactionV1,
+    RawAccountInfo,
+    ParsedAccountInfoV1
+  >
 > => {
-  const instructionParserLibrary = new InstructionParserLibrary(layoutPath)
-  const accountParserLibrary = new AccountParserLibrary()
-  const transactionParser = new TransactionParser(instructionParserLibrary)
+  const solanaInstructionParser = new SolanaInstructionParser(layoutPath)
+  const solanaTransactionParser = new SolanaTransactionParser(solanaInstructionParser)
+  const solanaAccountStateParser = new SolanaAccountStateParser()
 
   return new SolanaParser(
-    instructionParserLibrary,
-    accountParserLibrary,
-    transactionParser,
+    solanaInstructionParser,
+    solanaTransactionParser,
+    solanaAccountStateParser,
   )
 }

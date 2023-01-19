@@ -21,12 +21,19 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseFetcher {
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected ethereumClient: EthereumClient,
     protected ethereumBlockFetcher: EthereumBlockHistoryFetcher,
+    protected times = 1,
   ) {
     super(
       {
         account,
-        forward: true,
-        backward: true,
+        forward: {
+          times,
+          iterationFetchLimit: Number.MAX_SAFE_INTEGER,
+        },
+        backward: {
+          times,
+          iterationFetchLimit: 1000,
+        },
         indexSignatures: (...args) => this.indexSignatures(...args),
       },
       fetcherStateDAL,

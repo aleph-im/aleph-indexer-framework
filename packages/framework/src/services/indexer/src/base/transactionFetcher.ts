@@ -257,7 +257,7 @@ export class TransactionFetcher {
 
   protected async handleIncomingTxs(
     works: PendingWork<SolanaParsedTransactionV1>[],
-  ): Promise<void> {
+  ): Promise<number | void> {
     const chunk = works.map((work) => work.payload)
 
     const now1 = Date.now()

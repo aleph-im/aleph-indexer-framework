@@ -1,4 +1,4 @@
-import { EthereumParsedTransactionContextV1 } from '@aleph-indexer/core'
+import { EthereumParsedTransactionContext } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
@@ -27,14 +27,14 @@ export default class WorkerDomain
   }
 
   async ethereumFilterTransaction(
-    ctx: EthereumParsedTransactionContextV1,
+    ctx: EthereumParsedTransactionContext,
   ): Promise<boolean> {
     return true
   }
 
   async ethereumIndexTransaction(
-    ctx: EthereumParsedTransactionContextV1,
-  ): Promise<EthereumParsedTransactionContextV1> {
+    ctx: EthereumParsedTransactionContext,
+  ): Promise<EthereumParsedTransactionContext> {
     console.log('Index ETH transaction', ctx)
     return ctx
   }

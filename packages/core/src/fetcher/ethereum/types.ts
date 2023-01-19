@@ -13,6 +13,7 @@ export type EthereumFetcherJobRunnerOptions<C> = Omit<
   'handleFetch' | 'updateCursors' | 'interval'
 > & {
   interval?: number
+  iterationFetchLimit?: number
 }
 
 // Blocks

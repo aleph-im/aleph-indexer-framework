@@ -1,8 +1,7 @@
-import { Blockchain } from '@aleph-indexer/core'
 import {
   BlockchainRequestArgs,
   InvokeBlockchainMethodRequestArgs,
-} from '../types'
+} from '../types.js'
 import {
   AddAccountStateRequestArgs,
   FetchAccountTransactionsByDateRequestArgs,
@@ -19,7 +18,7 @@ import {
   CheckTransactionsRequestArgs,
   TransactionState,
   DelTransactionsRequestArgs,
-} from './src/base/types'
+} from './src/base/types.js'
 
 /**
  * Provides outward facing methods from the fetcher service.

@@ -5,14 +5,14 @@ import {
   AlephParsedParsedInstruction,
   SolanaRawInstruction,
 } from '@aleph-indexer/core'
-import { DefinedParser } from '../base/types'
+import { DefinedParser } from '../../base/types.js'
 
 /**
  * Parses a raw instruction, if a parser for given solana program is available.
  * Based on solana-program-library, use {@link AnchorInstructionParser} for Anchor instructions, when using Beet as a
  * layout descriptor.
  */
-export class SplInstructionParser<
+export class SolanaInstructionBaseParser<
   EventTypeEnum extends string,
 > extends DefinedParser<
   SolanaRawInstruction,
@@ -42,12 +42,14 @@ export class SplInstructionParser<
     const parsedIx: AlephParsedParsedInstruction = rawIx as any
     parsedIx.program = this.programName
 
+    const data = this.parseInstructionData(type, decoded)
+    const accounts = this.parseInstructionAccounts(type, parsedIx)
     parsedIx.parsed = {
       type,
       info: {
         ...(rawIx as any).parsed?.info,
-        ...this.parseInstructionData(type, decoded),
-        ...this.parseInstructionAccounts(type, parsedIx),
+        data,
+        accounts,
       },
     }
 
@@ -55,7 +57,10 @@ export class SplInstructionParser<
   }
 
   protected isCompatibleInstruction(
-    ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+    ix:
+      | SolanaRawInstruction
+      | AlephParsedInstruction
+      | AlephParsedInnerInstruction,
   ): boolean {
     return ix.programId === this.programId
   }

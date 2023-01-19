@@ -69,11 +69,17 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
   protected getAccountFetcher(
     account: string,
   ): EthereumAccountTransactionHistoryFetcher {
+    account = account.toLowerCase()
+
     return new EthereumAccountTransactionHistoryFetcher(
       account,
       this.fetcherStateDAL,
       this.ethereumClient,
       this.blockFetcher,
     )
+  }
+
+  protected checkTransactionHistory(): void {
+    this.pendingAccounts.skipNextSleep()
   }
 }

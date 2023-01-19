@@ -6,14 +6,14 @@ import {
   RawAccountInfo,
   SolanaParsedTransactionV1,
 } from '@aleph-indexer/core'
-import { InstructionParserLibrary } from './instructionParserLibrary.js'
-import { AccountParserLibrary } from './accountParserLibrary.js'
-import { TransactionParser } from './transactionParser.js'
+import { SolanaTransactionParser } from './transaction/transactionParser.js'
 import { BaseParser } from '../base/parser.js'
 import {
   ParseAccountStateRequestArgs,
   ParseTransactionRequestArgs,
 } from '../base/types.js'
+import { SolanaInstructionParser } from './instruction/instructionParser.js'
+import { SolanaAccountStateParser } from './accountState/accountStateParser.js'
 
 export class SolanaParser extends BaseParser<
   SolanaRawTransaction,
@@ -22,9 +22,9 @@ export class SolanaParser extends BaseParser<
   ParsedAccountInfoV1
 > {
   constructor(
-    protected instructionParserLibrary: InstructionParserLibrary,
-    protected accountParserLibrary: AccountParserLibrary,
-    protected transactionParser: TransactionParser,
+    protected instructionParser: SolanaInstructionParser,
+    protected transactionParser: SolanaTransactionParser,
+    protected accountStateParser: SolanaAccountStateParser,
   ) {
     super()
   }
@@ -38,12 +38,12 @@ export class SolanaParser extends BaseParser<
   async parseInstruction(
     payload: SolanaRawInstruction,
   ): Promise<SolanaRawInstruction | SolanaParsedInstructionV1> {
-    return this.instructionParserLibrary.parse(payload)
+    return this.instructionParser.parse(payload)
   }
 
   async parseAccountState(
     args: ParseAccountStateRequestArgs<RawAccountInfo>,
   ): Promise<RawAccountInfo | ParsedAccountInfoV1> {
-    return this.accountParserLibrary.parse(args.state, args.account)
+    return this.accountStateParser.parse(args.state, args.account)
   }
 }

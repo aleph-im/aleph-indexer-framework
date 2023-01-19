@@ -1,7 +1,14 @@
-import { EthereumRawTransaction } from '../../types'
+import ethers from 'ethers'
+import {
+  EthereumRawAccountState,
+  ParsedTransaction,
+} from '../../types/index.js'
 import { ParsedTransactionContextV1 } from '../base/index.js'
 
-export type EthereumParsedTransactionV1 = EthereumRawTransaction
+export type EthereumParsedTransaction =
+  ParsedTransaction<ethers.ethers.utils.TransactionDescription>
 
-export type EthereumParsedTransactionContextV1 =
-  ParsedTransactionContextV1<EthereumParsedTransactionV1>
+export type EthereumParsedTransactionContext =
+  ParsedTransactionContextV1<EthereumParsedTransaction>
+
+export type EthereumParsedAccountState = EthereumRawAccountState

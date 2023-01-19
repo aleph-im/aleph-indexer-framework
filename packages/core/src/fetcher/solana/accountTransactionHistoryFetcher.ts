@@ -97,7 +97,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const { signature: until, slot: untilSlot } =
       this.fetcherState.cursors?.forward || {}
 
-    const maxLimit = !until
+    const iterationLimit = !until
       ? 1000
       : forward?.iterationFetchLimit ||
         (firstRun ? 1000 : Number.MAX_SAFE_INTEGER)
@@ -107,7 +107,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       address,
       until,
       untilSlot,
-      maxLimit,
+      iterationLimit,
       errorFetching,
     }
 
@@ -146,13 +146,14 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     // @note: until is autodetected by the node (height 0 / first block)
     const before = this.fetcherState.cursors?.backward?.signature
     const until = backward?.fetchUntil
-    const maxLimit = backward?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
+    const iterationLimit =
+      backward?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
 
     const options: SolanaFetchSignaturesOptions = {
       until,
       before,
       address,
-      maxLimit,
+      iterationLimit,
       errorFetching,
     }
 

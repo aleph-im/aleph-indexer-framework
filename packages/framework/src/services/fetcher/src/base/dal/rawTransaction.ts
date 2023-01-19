@@ -3,7 +3,7 @@ import { EntityStorage, RawTransaction } from '@aleph-indexer/core'
 export type RawTransactionStorage<T extends RawTransaction> = EntityStorage<T>
 
 const signatureKey = {
-  get: <T extends RawTransaction>(e: T) => e.signature,
+  get: <T extends RawTransaction>(e: T) => e.signature.toLowerCase(),
   length: EntityStorage.VariableLength,
 }
 

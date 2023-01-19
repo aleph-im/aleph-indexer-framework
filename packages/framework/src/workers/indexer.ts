@@ -43,6 +43,7 @@ async function main() {
         })
       : localBroker
 
+  console.log('supportedBlockchains')
   const parserMsClient = await createParserMsClient(
     supportedBlockchains,
     broker,

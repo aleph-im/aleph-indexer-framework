@@ -28,7 +28,7 @@ export abstract class BaseStateFetcher {
     protected accountDAL: PendingAccountStorage,
   ) {
     this.pendingAccounts = new PendingWorkPool({
-      id: 'accounts',
+      id: 'state-accounts',
       interval: MAX_TIMER_INTEGER, // @note: Run once
       chunkSize: 100,
       concurrency: 1,
@@ -51,7 +51,8 @@ export abstract class BaseStateFetcher {
   }
 
   async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
-    const { account, indexerId } = args
+    const { indexerId } = args
+    const account = args.account.toLowerCase()
 
     const work = {
       id: account,
@@ -62,10 +63,10 @@ export abstract class BaseStateFetcher {
     await this.pendingAccounts.addWork(work)
   }
 
-  async delAccount({
-    account,
-    indexerId,
-  }: DelAccountTransactionRequestArgs): Promise<void> {
+  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+    const { indexerId } = args
+    const account = args.account.toLowerCase()
+
     if (!indexerId) return
 
     const work = await this.accountDAL.getFirstValueFromTo([account], [account])
@@ -86,6 +87,8 @@ export abstract class BaseStateFetcher {
    * @param account Consists of the account address
    */
   async startAccountStateFetcher(account: string): Promise<void> {
+    account = account.toLowerCase()
+
     let fetcher = this.fetchers[account]
     if (fetcher) return
 
@@ -102,6 +105,8 @@ export abstract class BaseStateFetcher {
    * @param account The account address to remove from the map.
    */
   async stopAccountStateFetcher(account: string): Promise<void> {
+    account = account.toLowerCase()
+
     const fetcher = this.fetchers[account]
     if (!fetcher) return
 

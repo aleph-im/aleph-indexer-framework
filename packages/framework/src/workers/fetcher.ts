@@ -3,10 +3,6 @@
  */
 import path from 'path'
 import { workerData } from 'worker_threads'
-import {
-  solanaPrivateRPCRoundRobin,
-  solanaMainPublicRPCRoundRobin,
-} from '@aleph-indexer/core'
 import { FetcherMs } from '../services/fetcher/index.js'
 import { getMoleculerBroker, TransportType } from '../utils/moleculer/config.js'
 import { initThreadContext } from '../utils/threads.js'
@@ -21,18 +17,6 @@ async function main() {
     workerData as WorkerInfo
 
   const basePath = path.join(workerData.dataPath, name)
-
-  // @note: Force resolve DNS and cache it before starting fetcher
-  await Promise.allSettled(
-    [
-      ...solanaPrivateRPCRoundRobin.getAllClients(),
-      ...solanaMainPublicRPCRoundRobin.getAllClients(),
-    ].map(async (client) => {
-      const conn = client.getConnection()
-      const { result } = await (conn as any)._rpcRequest('getBlockHeight', [])
-      console.log(`RPC ${conn.endpoint} last height: ${result}`)
-    }),
-  )
 
   const localBroker = getMoleculerBroker(name, TransportType.Thread, {
     channels,

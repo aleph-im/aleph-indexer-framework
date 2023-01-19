@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import {
   EthereumClient,
   EthereumBlock,
@@ -21,6 +22,7 @@ export class EthereumBlockFetcher extends BaseFetcher {
     protected ethereumClient: EthereumClient,
     protected blockDAL: EthereumBlockStorage,
     protected fetcherStateDAL: FetcherStateLevelStorage,
+    public events = new EventEmitter(),
   ) {
     super(
       {
@@ -37,6 +39,8 @@ export class EthereumBlockFetcher extends BaseFetcher {
     blocks: EthereumBlock[],
     goingForward: boolean,
   ): Promise<void> {
+    if (!blocks.length) return
+
     // @todo: Refactor config vars
     if (config.ETHEREUM_INDEX_BLOCKS === 'true') {
       await this.blockDAL.save(blocks)

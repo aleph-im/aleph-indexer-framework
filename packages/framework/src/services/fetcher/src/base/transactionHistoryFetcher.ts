@@ -2,11 +2,10 @@ import { compose } from 'node:stream'
 import {
   BaseHistoryFetcher,
   Blockchain,
-  PendingWork,
-  PendingWorkPool,
   SolanaSignatureInfo,
   StorageEntry,
   Utils,
+  FetcherPool,
 } from '@aleph-indexer/core'
 import {
   FetchAccountTransactionsByDateRequestArgs,
@@ -33,7 +32,7 @@ export abstract class BaseTransactionHistoryFetcher<
   C,
   S extends AccountTransactionHistoryStorageEntity,
 > {
-  protected pendingAccounts: PendingWorkPool<string[]>
+  protected pendingAccounts: FetcherPool<string[]>
 
   /**
    * Initialize the fetcher service.
@@ -48,14 +47,13 @@ export abstract class BaseTransactionHistoryFetcher<
     protected accountSignatureDAL: AccountTransactionHistoryStorage<S>,
     protected accountDAL: PendingAccountStorage,
   ) {
-    this.pendingAccounts = new PendingWorkPool({
-      id: 'accounts',
+    this.pendingAccounts = new FetcherPool({
+      id: 'transaction-history-accounts',
       interval: 0,
-      chunkSize: 100,
       concurrency: 1,
       dal: this.accountDAL,
-      handleWork: this._handleAccounts.bind(this),
-      checkComplete: () => false,
+      getFetcher: ({ id }) => this.getAccountFetcher(id),
+      // checkComplete: () => false, // @note: Delegated to each baseFetcher
     })
   }
 
@@ -73,7 +71,8 @@ export abstract class BaseTransactionHistoryFetcher<
    * @param args Account address to asign to the fetcher instance,
    */
   async addAccount(args: AddAccountTransactionRequestArgs): Promise<void> {
-    const { account, indexerId } = args
+    const { indexerId } = args
+    const account = args.account.toLowerCase()
 
     const work = {
       id: account,
@@ -88,10 +87,10 @@ export abstract class BaseTransactionHistoryFetcher<
    * Stops the fetching process of that instance of the fetcher for that account.
    * @param account The account address to stop the fetching process.
    */
-  async delAccount({
-    account,
-    indexerId,
-  }: DelAccountTransactionRequestArgs): Promise<void> {
+  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+    const { indexerId } = args
+    const account = args.account.toLowerCase()
+
     if (!indexerId) return
 
     const work = await this.accountDAL.getFirstValueFromTo([account], [account])
@@ -115,7 +114,8 @@ export abstract class BaseTransactionHistoryFetcher<
   async fetchAccountTransactionsByDate(
     args: FetchAccountTransactionsByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startDate, endDate, indexerId } = args
+    const { startDate, endDate, indexerId } = args
+    const account = args.account.toLowerCase()
 
     const state = await this.getAccountState({
       blockchainId: this.blockchainId,
@@ -158,28 +158,10 @@ export abstract class BaseTransactionHistoryFetcher<
     )
   }
 
-  /**
-   * Fetch signatures from accounts.
-   * @param works Txn signatures with extra properties as time and payload.
-   */
-  protected async _handleAccounts(
-    works: PendingWork<string[]>[],
-  ): Promise<void> {
-    console.log(`Accounts | Start handling ${works.length} accounts`)
-
-    const accounts = works.map((work) => work.id)
-
-    for (const account of accounts) {
-      const fetcher = this.getAccountFetcher(account)
-      await fetcher.init()
-      await fetcher.run()
-    }
-  }
-
   protected async getPartialAccountState<
     T extends AccountTransactionHistoryState<C>,
   >(args: GetAccountTransactionStateRequestArgs): Promise<T | undefined> {
-    const { account } = args
+    const account = args.account.toLowerCase()
 
     const fetcher = this.getAccountFetcher(args.account)
     const fetcherState = await fetcher.getState()

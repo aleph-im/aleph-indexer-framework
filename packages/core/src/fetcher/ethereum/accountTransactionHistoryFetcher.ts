@@ -14,7 +14,6 @@ import {
 import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 import { EthereumClient } from '../../rpc/index.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
-import { sleep } from '../../utils/time.js'
 import { JobRunnerReturnCode } from '../../utils/index.js'
 
 /**
@@ -42,9 +41,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     const backward = typeof opts.backward === 'boolean' ? {} : opts.backward
 
     const config: BaseFetcherOptions<EthereumAccountTransactionHistoryPaginationCursor> =
-      {
-        id: `ethereum:account-signature-history:${opts.account}`,
-      }
+      { id: `ethereum:account-signature-history:${opts.account}` }
 
     if (forward) {
       config.jobs = config.jobs || {}
@@ -70,14 +67,27 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     super(config, fetcherStateDAL)
   }
 
+  getNextRun(fetcherType?: 'forward' | 'backward'): number {
+    // @note: If the block store is not completely synced, ignore backward job and focus on forward job times
+    if (!this.ethereumBlockFetcher.isComplete('backward')) {
+      return super.getNextRun('forward')
+    }
+
+    return super.getNextRun(fetcherType)
+  }
+
   protected async fetchForward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountTransactionHistoryPaginationCursor>
   > {
     const { account } = this.opts
+    const forward =
+      typeof this.opts.forward === 'boolean' ? {} : this.opts.forward
 
     // @note: not "before" (autodetected by the client (last block height))
     const until = this.fetcherState.cursors?.forward?.height
-    const iterationLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
+    const iterationLimit = !until
+      ? 1000
+      : forward?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchSignaturesOptions = {
       before: undefined,
@@ -99,6 +109,8 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     FetcherJobRunnerHandleFetchResult<EthereumAccountTransactionHistoryPaginationCursor>
   > {
     const { account } = this.opts
+    const backward =
+      typeof this.opts.backward === 'boolean' ? {} : this.opts.backward
 
     // @note: until is autodetected by the client (height 0 / first block)
     let before = this.fetcherState.cursors?.backward?.height
@@ -108,7 +120,8 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       before = blockState.cursors?.forward?.height
     }
 
-    const iterationLimit = Number.MAX_SAFE_INTEGER
+    const iterationLimit =
+      backward?.iterationFetchLimit || Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchSignaturesOptions = {
       until: undefined,
@@ -150,9 +163,6 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     `)
 
     try {
-      await sleep(1000 * 10)
-      // throw new Error('MOCK SIG FETCH')
-
       const signatures = this.ethereumClient.fetchSignatures(options)
 
       for await (const step of signatures) {
@@ -192,37 +202,4 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       fetcherBackward <= 0
     )
   }
-
-  // protected async _updateCursors(
-  //   type: 'forward' | 'backward',
-  //   ctx: {
-  //     prevCursors?: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
-  //     lastCursors: BaseFetcherPaginationCursors<EthereumAccountTransactionHistoryPaginationCursor>
-  //   },
-  // ): Promise<
-  //   FetcherJobRunnerUpdateCursorResult<EthereumAccountTransactionHistoryPaginationCursor>
-  // > {
-  //   const cursors = await super._updateCursors(type, ctx)
-  //   if (cursors.newItems) return cursors
-
-  //   const blockState = await this.ethereumBlockFetcher.getState()
-  //   const { newCursors } = cursors
-  //   const { prevCursors } = ctx
-
-  //   const blockCursor = blockState.cursors?.[type]
-  //   const fetcherCursor = newCursors?.[type]
-  //   const blockHeight = blockCursor?.height
-  //   const fetcherHeight = fetcherCursor?.height
-
-  //   if (!blockHeight || (fetcherHeight && blockHeight >= fetcherHeight))
-  //     return cursors
-
-  //   return super._updateCursors(type, {
-  //     prevCursors,
-  //     lastCursors: {
-  //       ...newCursors,
-  //       [type]: blockCursor,
-  //     },
-  //   })
-  // }
 }

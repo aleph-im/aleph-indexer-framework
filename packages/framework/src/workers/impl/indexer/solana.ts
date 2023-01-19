@@ -11,13 +11,13 @@ import { TransactionFetcher } from '../../../services/indexer/src/base/transacti
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { ParserMsClient } from '../../../services/parser/client.js'
 
-export default (
+export default async (
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
   fetcherMsClient: FetcherMsClient,
   parserMsClient: ParserMsClient,
-): BlockchainIndexerI => {
+): Promise<BlockchainIndexerI> => {
   // DALs
   const transactionRequestDAL = createTransactionRequestDAL(basePath)
   const transactionRequestIncomingTransactionDAL = createTransactionRequestIncomingTransactionDAL(basePath)

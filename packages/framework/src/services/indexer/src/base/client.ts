@@ -9,7 +9,7 @@ import {
   InvokeMethodRequestArgs,
   GetAccountIndexingStateRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
-} from './types'
+} from './types.js'
 import { BlockchainRequestArgs } from '../../../types.js'
 
 /**

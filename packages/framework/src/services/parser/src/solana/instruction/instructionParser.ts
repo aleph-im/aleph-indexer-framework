@@ -1,16 +1,19 @@
-import { SolanaParsedInstructionV1, SolanaRawInstruction } from '@aleph-indexer/core'
-import { LayoutFactory } from '../solana/layout/layoutFactory.js'
-import { SplInstructionParser } from '../solana/splInstructionParser.js'
-import { LayoutImplementation } from '../solana/layout/types.js'
-import { AnchorInstructionParser } from './anchorInstructionParser.js'
-import { DefinedParser } from '../base/types.js'
+import {
+  SolanaParsedInstructionV1,
+  SolanaRawInstruction,
+} from '@aleph-indexer/core'
+import { DefinedParser } from '../../base/types.js'
+import { LayoutFactory } from '../layout/layoutFactory.js'
+import { LayoutImplementation } from '../layout/types.js'
+import { SolanaAnchorInstructionParser } from './anchorInstructionParser.js'
+import { SolanaInstructionBaseParser } from './InstructionBaseParser.js'
 
 /**
  * Finds all available instruction parsers and aggregates them for use.
  * It is a strict but optional parser, thus it may return raw instruction if no
  * compatible parser is found.
  */
-export class InstructionParserLibrary extends DefinedParser<
+export class SolanaInstructionParser extends DefinedParser<
   SolanaRawInstruction,
   SolanaParsedInstructionV1
 > {
@@ -20,7 +23,10 @@ export class InstructionParserLibrary extends DefinedParser<
 
   protected instructionParsers: Record<
     string,
-    DefinedParser<SolanaRawInstruction, SolanaRawInstruction | SolanaParsedInstructionV1>
+    DefinedParser<
+      SolanaRawInstruction,
+      SolanaRawInstruction | SolanaParsedInstructionV1
+    >
   > = {}
 
   /**
@@ -47,7 +53,10 @@ export class InstructionParserLibrary extends DefinedParser<
   protected async getParser(
     programId: string,
   ): Promise<
-    | DefinedParser<SolanaRawInstruction, SolanaRawInstruction | SolanaParsedInstructionV1>
+    | DefinedParser<
+        SolanaRawInstruction,
+        SolanaRawInstruction | SolanaParsedInstructionV1
+      >
     | undefined
   > {
     let parser = this.instructionParsers[programId]
@@ -64,23 +73,18 @@ export class InstructionParserLibrary extends DefinedParser<
     if (!implementation) return
 
     // @note: deserialize() is used in Beet, so we will use AnchorInstructionParser here
-    if (Object.values(implementation.dataLayoutMap)[0].deserialize) {
-      parser = new AnchorInstructionParser(
-        implementation.programID,
-        implementation.name,
-        implementation.getInstructionType,
-        implementation.accountLayoutMap,
-        implementation.dataLayoutMap,
-      )
-    } else {
-      parser = new SplInstructionParser(
-        implementation.programID,
-        implementation.name,
-        implementation.getInstructionType,
-        implementation.accountLayoutMap,
-        implementation.dataLayoutMap,
-      )
-    }
+    const ParserClass = Object.values(implementation.dataLayoutMap)[0]
+      .deserialize
+      ? SolanaAnchorInstructionParser
+      : SolanaInstructionBaseParser
+
+    parser = new ParserClass(
+      implementation.programID,
+      implementation.name,
+      implementation.getInstructionType,
+      implementation.accountLayoutMap,
+      implementation.dataLayoutMap,
+    )
 
     this.instructionParsers[programId] = parser
 

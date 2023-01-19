@@ -56,7 +56,8 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
   async fetchAccountTransactionsBySlot(
     args: FetchAccountTransactionsBySlotRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startSlot, endSlot, indexerId } = args
+    const { startSlot, endSlot, indexerId } = args
+    const account = args.account.toLowerCase()
 
     const state = await this.getAccountState({
       blockchainId: this.blockchainId,
@@ -130,6 +131,8 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
   protected getAccountFetcher(
     account: string,
   ): SolanaAccountTransactionHistoryFetcher {
+    account = account.toLowerCase()
+
     return new SolanaAccountTransactionHistoryFetcher(
       account,
       this.accountSignatureDAL,
