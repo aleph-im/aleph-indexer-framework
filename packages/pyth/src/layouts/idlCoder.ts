@@ -7,14 +7,14 @@ import { Layout } from '@aleph-indexer/layout'
 import * as borsh from '@coral-xyz/borsh'
 import { IdlError, Idl } from '@coral-xyz/anchor'
 import {
-  IdlInstruction,
   IdlEnumVariant,
   IdlField,
   IdlType,
   IdlTypeDef,
 } from '@coral-xyz/anchor/dist/cjs/idl'
-import { PythIdlInstruction } from '../types.js'
+import { PythIdlInstruction, PythOracle } from '../types.js'
 import bs58 from 'bs58'
+import idl from '../idl.json' assert { type: 'json' }
 
 export class IdlCoder {
   // Instruction args layout. Maps namespaced method
@@ -25,12 +25,12 @@ export class IdlCoder {
   public ixDiscriminator: Map<string, Buffer>
   public discriminatorLength: number | undefined
 
-  constructor(idl: Idl) {
+  public constructor(private idl: Idl) {
     this.ixLayout = this.parseIxLayout(idl)
 
     const discriminatorLayouts = new Map()
     const ixDiscriminator = new Map()
-    idl.instructions.forEach((ix: IdlInstruction) => {
+    idl.instructions.forEach((ix) => {
       const pythIx = ix as PythIdlInstruction
       let discriminatorLength: number
       if (pythIx.discriminant) {
@@ -63,18 +63,16 @@ export class IdlCoder {
   }
 
   private parseIxLayout(idl: Idl): Map<string, Layout> {
-    const ixLayouts = idl.instructions.map(
-      (ix: IdlInstruction): [string, Layout<unknown>] => {
-        const fieldLayouts = ix.args.map((arg: IdlField) =>
-          this.fieldLayout(
-            arg,
-            Array.from([...(idl.accounts ?? []), ...(idl.types ?? [])]),
-          ),
-        )
-        const name = camelCase(ix.name)
-        return [name, borsh.struct(fieldLayouts, name)]
-      },
-    )
+    const ixLayouts = idl.instructions.map((ix): [string, Layout<unknown>] => {
+      const fieldLayouts = ix.args.map((arg: IdlField) =>
+        this.fieldLayout(
+          arg,
+          Array.from([...(idl.accounts ?? []), ...(idl.types ?? [])]),
+        ),
+      )
+      const name = camelCase(ix.name)
+      return [name, borsh.struct(fieldLayouts, name)]
+    })
 
     return new Map(ixLayouts)
   }
@@ -198,7 +196,7 @@ export class IdlCoder {
     name?: string,
   ): Layout {
     if (typeDef.type.kind === 'struct') {
-      const fieldLayouts = typeDef.type.fields.map((field: IdlField) => {
+      const fieldLayouts = typeDef.type.fields.map((field) => {
         const x = this.fieldLayout(field, types)
         return x
       })
@@ -240,3 +238,5 @@ export class IdlCoder {
     }
   }
 }
+
+export default new IdlCoder(idl as PythOracle)

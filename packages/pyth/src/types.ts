@@ -98,156 +98,58 @@ export type Price = {
 }
 
 // ------------------- INSTRUCTIONS -------------------
-export type InitMappingInstruction = {
-  accounts: {
-    fundingAccount: string
-    fresh_mappingAccount: string
-  }
-}
-
-export type AddMappingInstruction = {
-  accounts: {
-    fundingAccount: string
-    cur_mappingAccount: string
-    next_mappingAccount: string
-  }
-}
-
-export type AddProductInstruction = {
-  accounts: {
-    fundingAccount: string
-    tail_mappingAccount: string
-    new_productAccount: string
-  }
-}
-
-export type UpdProductInstruction = {
-  new_data: Buffer
-  accounts: {
-    fundingAccount: string
-    productAccount: string
-  }
-}
-
-export type AddPriceInstruction = {
-  expo_: number
-  ptype_: number
-  accounts: {
-    fundingAccount: string
-    productAccount: string
-    priceAccount: string
-  }
-}
-
-export type AddPublisherInstruction = {
-  pub_: PublicKey
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-  }
-}
-
-export type DelPublisherInstruction = {
-  pub_: PublicKey
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-  }
+export type IxAccounts = {
+  fundingAccount: string
+  productAccount: string
+  priceAccount: string
 }
 
 export type UpdPriceInstruction = {
-  status_: number
-  unused_: number
-  price_: BN
-  conf_: BN
-  pub_slot_: BN
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-    clockAccount: string
-  }
+  status: number
+  unused: number
+  price: number
+  conf: number
+  pubSlot: number
+  accounts: IxAccounts
 }
 
 export type AggPriceInstruction = {
-  status_: number
-  unused_: number
-  price_: BN
-  conf_: BN
-  pub_slot_: BN
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-    clockAccount: string
-  }
-}
-
-export type InitPriceInstruction = {
-  expo_: number
-  ptype_: number
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-  }
-}
-
-export type SetMinPubInstruction = {
-  min_pub_: number
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-  }
+  status: number
+  unused: number
+  price: number
+  conf: number
+  pubSlot: number
+  accounts: IxAccounts
 }
 
 export type UpdPriceNoFailOnErrorInstruction = {
-  status_: number
-  unused_: number
-  price_: BN
-  conf_: BN
-  pub_slot_: BN
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-    clockAccount: string
-  }
-}
-
-export type ResizeAccountInstruction = {
-  accounts: {
-    fundingAccount: string
-    priceAccount: string
-  }
+  status: number
+  unused: number
+  price: number
+  conf: number
+  pubSlot: number
+  accounts: IxAccounts
 }
 
 // @note: https://github.com/pyth-network/pyth-client/blob/idl/program/idl.json
 export enum PythEventType {
-  InitMapping = 'initMapping',
-  AddMapping = 'addMapping',
-  AddProduct = 'addProduct',
-  UpdProduct = 'updProduct',
-  AddPrice = 'addPrice',
-  AddPublisher = 'addPublisher',
-  DelPublisher = 'delPublisher',
   UpdPrice = 'updPrice',
   AggPrice = 'aggPrice',
-  InitPrice = 'initPrice',
-  SetMinPub = 'setMinPub',
   UpdPriceNoFailOnError = 'updPriceNoFailOnError',
-  ResizeAccount = 'resizeAccount',
+}
+
+export type IxEventInfo = {
+  status: number
+  unused: number
+  price: BN
+  conf: BN
+  pubSlot: BN
 }
 
 export type ParsedEventsInfo =
-  | InitMappingInstruction
-  | AddMappingInstruction
-  | AddProductInstruction
-  | UpdProductInstruction
-  | AddPriceInstruction
-  | AddPublisherInstruction
-  | DelPublisherInstruction
   | UpdPriceInstruction
   | AggPriceInstruction
-  | InitPriceInstruction
   | UpdPriceNoFailOnErrorInstruction
-  | ResizeAccountInstruction
 
 /**
  * @note: Exclude not significant events from being indexed
@@ -256,21 +158,7 @@ export type ParsedEventsInfo =
 export type PythEventBase = EventBase<PythEventType>
 
 export type PythEvent = PythEventBase &
-  (
-    | InitMappingInstruction
-    | AddMappingInstruction
-    | AddProductInstruction
-    | UpdProductInstruction
-    | AddPriceInstruction
-    | AddPublisherInstruction
-    | DelPublisherInstruction
-    | UpdPriceInstruction
-    | AggPriceInstruction
-    | InitPriceInstruction
-    | SetMinPubInstruction
-    | UpdPriceNoFailOnErrorInstruction
-    | ResizeAccountInstruction
-  )
+  (UpdPriceInstruction | AggPriceInstruction | UpdPriceNoFailOnErrorInstruction)
 
 // @note: The only significant event is the price update
 export type UpdatePriceEvent = PythEventBase &
@@ -278,64 +166,14 @@ export type UpdatePriceEvent = PythEventBase &
     type: PythEventType.UpdPrice
   }
 
-export type InitMappingEvent = PythEventBase &
-  InitMappingInstruction & {
-    type: PythEventType.InitMapping
-  }
-
-export type AddMappingEvent = PythEventBase &
-  AddMappingInstruction & {
-    type: PythEventType.AddMapping
-  }
-
-export type AddProductEvent = PythEventBase &
-  AddProductInstruction & {
-    type: PythEventType.AddProduct
-  }
-
-export type UpdateProductEvent = PythEventBase &
-  UpdProductInstruction & {
-    type: PythEventType.UpdProduct
-  }
-
-export type AddPriceEvent = PythEventBase &
-  AddPriceInstruction & {
-    type: PythEventType.AddPrice
-  }
-
-export type AddPublisherEvent = PythEventBase &
-  AddPublisherInstruction & {
-    type: PythEventType.AddPublisher
-  }
-
-export type DeletePublisherEvent = PythEventBase &
-  DelPublisherInstruction & {
-    type: PythEventType.DelPublisher
-  }
-
 export type AggregatePriceEvent = PythEventBase &
   AggPriceInstruction & {
     type: PythEventType.AggPrice
   }
 
-export type InitPriceEvent = PythEventBase &
-  InitPriceInstruction & {
-    type: PythEventType.InitPrice
-  }
-
-export type SetMinPublishersEvent = PythEventBase &
-  SetMinPubInstruction & {
-    type: PythEventType.SetMinPub
-  }
-
 export type UpdatePriceNoFailOnErrorEvent = PythEventBase &
   UpdPriceNoFailOnErrorInstruction & {
     type: PythEventType.UpdPriceNoFailOnError
-  }
-
-export type ResizeAccountEvent = PythEventBase &
-  ResizeAccountInstruction & {
-    type: PythEventType.ResizeAccount
   }
 
 // -------------- STATS -------------------
@@ -434,7 +272,21 @@ export type PythOracle = {
         {
           name: 'freshMappingAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: []
@@ -451,12 +303,26 @@ export type PythOracle = {
         {
           name: 'curMapping'
           isMut: true
-          isSigner: true
+          isSigner: false
         },
         {
           name: 'nextMapping'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: []
@@ -473,12 +339,26 @@ export type PythOracle = {
         {
           name: 'tailMappingAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
         },
         {
           name: 'productAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: []
@@ -495,10 +375,31 @@ export type PythOracle = {
         {
           name: 'productAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
-      args: []
+      args: [
+        {
+          name: 'productMetadata'
+          type: {
+            defined: 'ProductMetadata'
+          }
+        },
+      ]
     },
     {
       name: 'addPrice'
@@ -512,12 +413,26 @@ export type PythOracle = {
         {
           name: 'productAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
         },
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: [
@@ -543,7 +458,21 @@ export type PythOracle = {
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: [
@@ -565,7 +494,21 @@ export type PythOracle = {
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: [
@@ -673,7 +616,21 @@ export type PythOracle = {
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: [
@@ -699,7 +656,21 @@ export type PythOracle = {
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: [
@@ -759,23 +730,6 @@ export type PythOracle = {
       ]
     },
     {
-      name: 'resizeAccount'
-      discriminant: { value: [2, 0, 0, 0, 14, 0, 0, 0] }
-      accounts: [
-        {
-          name: 'fundingAccount'
-          isMut: true
-          isSigner: true
-        },
-        {
-          name: 'priceAccount'
-          isMut: true
-          isSigner: true
-        },
-      ]
-      args: []
-    },
-    {
       name: 'delPrice'
       discriminant: { value: [2, 0, 0, 0, 15, 0, 0, 0] }
       accounts: [
@@ -787,12 +741,26 @@ export type PythOracle = {
         {
           name: 'productAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
         },
         {
           name: 'priceAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: []
@@ -809,12 +777,26 @@ export type PythOracle = {
         {
           name: 'mappingAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
         },
         {
           name: 'productAccount'
           isMut: true
-          isSigner: true
+          isSigner: false
+        },
+        {
+          name: 'permissionsAccount'
+          isMut: false
+          isSigner: false
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                type: 'string'
+                value: 'permissions'
+              },
+            ]
+          }
         },
       ]
       args: []
@@ -867,6 +849,15 @@ export type PythOracle = {
           type: 'publicKey'
         },
       ]
+    },
+  ]
+  types: [
+    {
+      name: 'ProductMetadata'
+      type: {
+        kind: 'struct'
+        fields: []
+      }
     },
   ]
 }

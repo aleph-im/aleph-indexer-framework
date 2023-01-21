@@ -18,9 +18,8 @@ import {
   Candle,
   PythAccountInfo,
   Price,
-  PythEventType,
-  UpdatePriceEvent,
   PythAccountStats,
+  PythEvent,
 } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createCandles } from './stats/timeSeries.js'
@@ -42,7 +41,7 @@ export default class WorkerDomain
     protected priceDAL = createPriceDAL(context.dataPath),
     protected statsStateDAL = createStatsStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
-    protected previousSlotBatch: UpdatePriceEvent[] = [],
+    protected previousSlotBatch: PythEvent[] = [],
   ) {
     super(context)
   }
@@ -138,48 +137,44 @@ export default class WorkerDomain
     ixsContext: InstructionContextV1[],
   ): Promise<InstructionContextV1[]> {
     return ixsContext.filter(({ ix }) => {
-      return (
-        isParsedIx(ix) &&
-        ix.programId === PYTH_PROGRAM_ID &&
-        ix.parsed.type === PythEventType.UpdPrice
-      )
+      return isParsedIx(ix) && ix.programId === PYTH_PROGRAM_ID
     })
   }
 
   protected async indexInstructions(
     ixsContext: InstructionContextV1[],
   ): Promise<void> {
-    const parsedIxs = this.eventParser.parse(ixsContext)
-
     console.log(`indexing ${ixsContext.length} parsed ixs`)
 
-    // group by slot
-    let slotBatches = Object.entries(
-      listGroupBy(parsedIxs, (ix) => Number(ix.pub_slot_)),
-    )
+    const parsedIxns = this.eventParser.parse(ixsContext)
 
-    // append previous last slot batch, if necessary
-    if (
-      this.previousSlotBatch.length > 0 &&
-      Number(this.previousSlotBatch[0].pub_slot_) ===
-        Number(slotBatches[0][1][0].pub_slot_)
-    ) {
-      slotBatches[0].unshift(this.previousSlotBatch)
-    }
-    this.previousSlotBatch = slotBatches[slotBatches.length - 1][1]
-    slotBatches = slotBatches.slice(0, -1)
-
-    // group by data feed
-    const accountSlotBatches = Object.entries(
-      listGroupBy(slotBatches, (batch) => batch[1][0].accounts.priceAccount),
-    )
-
-    // aggregate prices for each batch (data feed -> slot -> price)
-    const parsedPrices = accountSlotBatches.flatMap((accountBatch) =>
-      accountBatch[1].map((slotBatch) =>
-        this.priceParser.parse(slotBatch[1], this.accounts),
+    // group by data feed or price account
+    const accountsIxns: [string, PythEvent[]][] = Object.entries(
+      listGroupBy(
+        parsedIxns,
+        (event: PythEvent) => event.accounts.priceAccount,
       ),
     )
+
+    // group by slots
+    const accountsSlotBatches: Record<string, Record<string, PythEvent[]>> = {}
+    for (const accountIxns of accountsIxns) {
+      if (this.accounts[accountIxns[0]] === undefined) continue // if the account is not discovered yet
+
+      accountsSlotBatches[accountIxns[0]] = listGroupBy(
+        accountIxns[1],
+        (event: PythEvent) => event.pubSlot,
+      )
+    }
+
+    // aggregate prices for each batch (data feed -> slot -> price)
+    const parsedPrices: Price[] = []
+    for (const accountSlotBatches of Object.values(accountsSlotBatches)) {
+      for (const slotBatch of Object.values(accountSlotBatches)) {
+        const price = this.priceParser.parse(slotBatch, this.accounts)
+        if (price) parsedPrices.push(price)
+      }
+    }
 
     await this.priceDAL.save(parsedPrices)
   }

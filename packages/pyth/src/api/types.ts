@@ -1,4 +1,4 @@
-import { GraphQLBigNumber } from '@aleph-indexer/core/dist/index.js'
+import { GraphQLBigNumber } from '@aleph-indexer/core'
 import {
   GraphQLEnumType,
   GraphQLFloat,
@@ -31,10 +31,10 @@ const Price = new GraphQLObjectType({
   name: 'Price',
   fields: {
     id: { type: new GraphQLNonNull(GraphQLString) },
-    timestamp: { type: new GraphQLNonNull(GraphQLInt) },
+    timestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
     priceAccount: { type: new GraphQLNonNull(GraphQLString) },
-    price: { type: new GraphQLNonNull(GraphQLInt) },
-    confidence: { type: new GraphQLNonNull(GraphQLInt) },
+    price: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    confidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
     status: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })
