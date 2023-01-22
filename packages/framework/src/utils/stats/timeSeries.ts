@@ -1,5 +1,5 @@
-import {Utils} from '@aleph-indexer/core'
-import {DateTime, Interval} from 'luxon'
+import { Utils } from '@aleph-indexer/core'
+import { DateTime, Interval } from 'luxon'
 import {
   clipDateRangesFromIterable,
   DateRange,
@@ -11,9 +11,22 @@ import {
   mergeDateRangesFromIterable,
   TimeFrame,
 } from '../time.js'
-import {StatsState, StatsStateDALIndex, StatsStateState, StatsStateStorage,} from './dal/statsState.js'
-import {StatsTimeSeries, StatsTimeSeriesStorage,} from './dal/statsTimeSeries.js'
-import {AccountStatsFilters, PrevValueFactoryFnArgs, TimeSeries, TimeSeriesStatsConfig,} from './types.js'
+import {
+  StatsState,
+  StatsStateDALIndex,
+  StatsStateState,
+  StatsStateStorage,
+} from './dal/statsState.js'
+import {
+  StatsTimeSeries,
+  StatsTimeSeriesStorage,
+} from './dal/statsTimeSeries.js'
+import {
+  AccountStatsFilters,
+  PrevValueFactoryFnArgs,
+  TimeSeries,
+  TimeSeriesStatsConfig,
+} from './types.js'
 
 const { BufferExec } = Utils
 
@@ -145,7 +158,7 @@ export class TimeSeriesStats<I, O> {
           if (stateEntries.length) {
             // @note: Remove first and last item, as they were included
             // for including ranges that might be needed in bigger time frames
-            if(timeFrame !== TimeFrame.All) {
+            if (timeFrame !== TimeFrame.All) {
               stateEntries.shift()
               stateEntries.pop()
             }
@@ -191,9 +204,11 @@ export class TimeSeriesStats<I, O> {
           reverse,
         )
 
-        if(timeFrame !== TimeFrame.All) {
+        if (timeFrame !== TimeFrame.All) {
           intervals.unshift(getPreviousInterval(intervals[0], timeFrame))
-          intervals.push(getNextInterval(intervals[intervals.length - 1], timeFrame))
+          intervals.push(
+            getNextInterval(intervals[intervals.length - 1], timeFrame),
+          )
         }
 
         if (!intervals.length) continue
@@ -228,7 +243,8 @@ export class TimeSeriesStats<I, O> {
 
           let data: O | undefined
           for await (const value of inputs) {
-            const input = 'data' in value && timeFrameIndex !== 0 ? value.data : value
+            const input =
+              'data' in value && timeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,
@@ -250,12 +266,15 @@ export class TimeSeriesStats<I, O> {
         await processedIntervalsBuffer.drain()
       }
       if (addedEntries) {
-        console.log(`💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${
-          Interval.fromDateTimes(
+        console.log(
+          `💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${Interval.fromDateTimes(
             DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
-            DateTime.fromMillis(pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1].endDate)
-          ).toISO()
-        }`)
+            DateTime.fromMillis(
+              pendingTimeFrameDateRanges[pendingTimeFrameDateRanges.length - 1]
+                .endDate,
+            ),
+          ).toISO()}`,
+        )
       }
     }
   }

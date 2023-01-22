@@ -1,5 +1,5 @@
 import { SolanaParsedEvent, EventBase } from '../../types/index.js'
-import { SolanaInstructionContextV1 } from './types.js'
+import { SolanaInstructionContext } from './types.js'
 
 /**
  * Handles the parsing process of an instruction.
@@ -13,9 +13,9 @@ export abstract class EventParser<
    * Processes the instruction to obtain an event.
    * @param ixCtx Stores ixns and txn info.
    */
-  abstract parse(ixCtx: SolanaInstructionContextV1): Event
+  abstract parse(ixCtx: SolanaInstructionContext): Event
 
-  parseBase(ixCtx: SolanaInstructionContextV1): EventBase<EventType> {
+  parseBase(ixCtx: SolanaInstructionContext): EventBase<EventType> {
     const { ix, parentIx, txContext } = ixCtx
     const parentTx = txContext.tx
 

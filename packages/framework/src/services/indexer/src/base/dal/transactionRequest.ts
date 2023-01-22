@@ -36,6 +36,7 @@ export type TransactionRequestParams =
 
 export type TransactionRequest = {
   nonce: number
+  count: number
   complete?: boolean
   // type: TransactionRequestType
   // params: TransactionRequestParams

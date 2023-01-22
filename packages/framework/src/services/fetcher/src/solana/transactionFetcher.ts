@@ -39,7 +39,7 @@ export class SolanaTransactionFetcher extends BaseTransactionFetcher<SolanaRawTr
     const rpc = isRetry ? this.solanaMainPublicRpc : this.solanaRpc
 
     return rpc.getConfirmedTransactions(signatures, {
-      shallowErrors: true,
+      swallowErrors: true,
     })
   }
 }

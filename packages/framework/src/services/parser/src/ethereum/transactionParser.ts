@@ -1,31 +1,33 @@
-import ethers from 'ethers'
 import {
   EthereumRawTransaction,
   EthereumParsedTransaction,
+  EthereumClient,
 } from '@aleph-indexer/core'
 import { DefinedParser } from '../base/types.js'
-import { Abi, AbiFactory } from './abi/abiFactory.js'
+import { AbiFactory } from './abiFactory.js'
 
 export class EthereumTransactionParser extends DefinedParser<
   EthereumRawTransaction,
   EthereumParsedTransaction
 > {
+  constructor(
+    protected abiFactory: AbiFactory,
+    protected ethereumClient: EthereumClient,
+  ) {
+    super()
+  }
+
   async parse(
     rawTx: EthereumRawTransaction,
   ): Promise<EthereumRawTransaction | EthereumParsedTransaction> {
     if (!rawTx.to) return rawTx
 
-    const abi: Abi = await AbiFactory.getAbi(rawTx.to)
-    const iface = new ethers.utils.Interface(abi as any)
+    console.log('rawTx', JSON.stringify(rawTx, null, 2))
 
-    const parsed = iface.parseTransaction({
-      data: rawTx.input,
-      value: rawTx.value,
-    })
+    const abi = await this.abiFactory.getAbi(rawTx.to)
+    const parsedTx = this.ethereumClient.parseTransaction(rawTx, abi)
 
-    const parsedTx = { ...rawTx, parsed }
-
-    console.log('ETH parsed => ', parsedTx)
+    console.log('ETH parsed => ', JSON.stringify(parsedTx, null, 2))
     return parsedTx
   }
 }

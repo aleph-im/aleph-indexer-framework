@@ -1,5 +1,7 @@
 import { promisify } from 'node:util'
+import ethers from 'ethers'
 import Web3 from 'web3'
+import { Transaction, Eth } from 'web3-eth'
 import { errors } from 'web3-core-helpers'
 import {
   EthereumBlockPaginationResponse,
@@ -16,12 +18,12 @@ import {
   EthereumAccountTransactionHistoryDALIndex,
   EthereumAccountTransactionHistoryStorage,
 } from './dal.js'
+import { EthereumParsedTransaction } from '../../parser/index.js'
 
 // Common
 
 export interface EthereumClientOptions {
   url: string
-  dbPath: string
   rateLimit?: boolean
   indexBlockSignatures?: boolean
 }
@@ -58,12 +60,13 @@ export type EthereumSignaturesChunkResponse = {
   count: number
 }
 
+// @note: Refactor to only use "ethers" and remove web3 deps
 export class EthereumClient {
   protected sdk: Web3
 
   constructor(
     protected options: EthereumClientOptions,
-    protected accountSignatureDAL: EthereumAccountTransactionHistoryStorage,
+    protected accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
   ) {
     this.sdk = new Web3(options.url)
   }
@@ -76,30 +79,44 @@ export class EthereumClient {
     return this.sdk.eth.getBalance(account)
   }
 
-  getTransactions(
+  // @note: Take a look at:
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
+  async getTransactions(
     signatures: string[],
-    options?: { shallowErrors?: boolean },
+    options?: { swallowErrors: boolean },
   ): Promise<(EthereumRawTransaction | null)[]> {
-    return Promise.all(
-      signatures.map(async (signature) => {
-        try {
-          const tx = (await this.sdk.eth.getTransaction(
-            signature,
-          )) as EthereumRawTransaction | null
+    const args = signatures.map((signature) => [signature])
 
-          if (tx) tx.signature = tx.hash
-
-          return tx
-        } catch (error) {
-          if (options?.shallowErrors) {
-            console.log(error)
-            return null
-          }
-
-          throw error
-        }
-      }),
+    const txs: (Transaction | null)[] = await this.batchRequest(
+      'getTransaction',
+      args,
+      options,
     )
+
+    return Promise.all(
+      txs.map((tx) => this.completeTransactionsWithBlockInfo(tx)),
+    )
+  }
+
+  getContractCode(account: string): Promise<string> {
+    return this.sdk.eth.getCode(account)
+  }
+
+  parseTransaction(
+    rawTx: EthereumRawTransaction,
+    abi?: any,
+  ): EthereumParsedTransaction {
+    if (!abi) return { ...rawTx, parsed: null }
+
+    const iface = new ethers.utils.Interface(abi)
+
+    const parsed = iface.parseTransaction({
+      data: rawTx.input,
+      value: rawTx.value,
+    })
+
+    return { ...rawTx, parsed }
   }
 
   async *fetchBlocks(
@@ -140,7 +157,7 @@ export class EthereumClient {
       if (!lastKey && lastItem) {
         lastKey = {
           height: lastItem.number,
-          timestamp: Number(lastItem.timestamp),
+          timestamp: Number(lastItem.timestamp) * 1000,
           signature: lastItem.hash,
         }
       }
@@ -148,7 +165,7 @@ export class EthereumClient {
       if (firstItem) {
         firstKey = {
           height: firstItem.number,
-          timestamp: Number(firstItem.timestamp),
+          timestamp: Number(firstItem.timestamp) * 1000,
           signature: firstItem.hash,
         }
       }
@@ -202,7 +219,7 @@ export class EthereumClient {
       if (!lastKey && lastItem) {
         lastKey = {
           height: lastItem.height,
-          timestamp: Number(lastItem.timestamp),
+          timestamp: Number(lastItem.timestamp) * 1000,
           signature: lastItem.signature,
         }
       }
@@ -210,7 +227,7 @@ export class EthereumClient {
       if (firstItem) {
         firstKey = {
           height: firstItem.height,
-          timestamp: Number(firstItem.timestamp),
+          timestamp: Number(firstItem.timestamp) * 1000,
           signature: firstItem.signature,
         }
       }
@@ -224,6 +241,11 @@ export class EthereumClient {
   }
 
   async indexBlockSignatures(blocks: EthereumBlock[]): Promise<void> {
+    if (!this.accountSignatureDAL)
+      throw new Error(
+        'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
+      )
+
     const signatures = blocks.flatMap((block) =>
       block.transactions.map((tx) => {
         const accounts = [tx.from]
@@ -283,30 +305,23 @@ export class EthereumClient {
     }
   }
 
-  // @note: Take a look at:
-  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
-  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
   protected async getBlocks(
     blockHashOrBlockNumber: (number | string)[],
     returnTransactionObjects = true,
   ): Promise<EthereumBlock[]> {
-    const method = (this.sdk.eth.getBlock as any).method
+    const args = blockHashOrBlockNumber.map((blockOrNum) => [
+      blockOrNum,
+      returnTransactionObjects,
+    ])
 
-    const payload = blockHashOrBlockNumber.map((blockNumber) =>
-      method.toPayload([blockNumber, returnTransactionObjects]),
-    )
+    const blocks: EthereumBlock[] = await this.batchRequest('getBlock', args, {
+      swallowErrors: false,
+    })
 
-    const sendBatch = promisify(
-      method.requestManager.sendBatch.bind(method.requestManager),
-    )
-
-    const results = await sendBatch(payload)
-    const items = this.processJsonRpcResult(results)
-    const output = method.formatOutput(items)
-
-    return output
+    return blocks
   }
 
+  // @todo: Deprecated
   protected async getBlocksInParallel(
     blockHashOrBlockNumber: (number | string)[],
     retries = 2,
@@ -329,30 +344,87 @@ export class EthereumClient {
     return chunk
   }
 
+  // @todo: Deprecated
+  protected getTransactionsInParallel(
+    signatures: string[],
+    options?: { swallowErrors?: boolean },
+  ): Promise<(EthereumRawTransaction | null)[]> {
+    return Promise.all(
+      signatures.map(async (signature) => {
+        try {
+          const tx = (await this.sdk.eth.getTransaction(
+            signature,
+          )) as Transaction | null
+
+          return await this.completeTransactionsWithBlockInfo(tx)
+        } catch (error) {
+          if (!options?.swallowErrors) throw error
+
+          console.log(error)
+          return null
+        }
+      }),
+    )
+  }
+
+  // @note: Take a look at:
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
+  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
+  protected async batchRequest<
+    T,
+    A extends Array<unknown>,
+    S extends boolean,
+    R = S extends false ? T[] : (T | null)[],
+  >(method: keyof Eth, args: A[], options?: { swallowErrors: S }): Promise<R> {
+    const methodInstance = this.sdk.eth[method].method
+    const payload = args.map((arg) => methodInstance.toPayload(arg))
+
+    const sendBatch = promisify(
+      methodInstance.requestManager.sendBatch.bind(
+        methodInstance.requestManager,
+      ),
+    )
+
+    const results = await sendBatch(payload)
+    const items = this.processJsonRpcResult(results, options?.swallowErrors)
+    return methodInstance.formatOutput(items)
+  }
+
   protected processJsonRpcResult<
     T extends { error?: Error; jsonrpc: string; id: string; result: any },
-  >(result: T | T[]): T | T[] {
+  >(result: T | T[], swallowErrors = false): T | null | (T | null)[] {
     const isArray = Array.isArray(result)
     const messages = isArray ? result : [result]
-    const output = []
+    const output: (T | null)[] = []
 
     for (const message of messages) {
-      if (message && message.error) {
-        throw errors.ErrorResponse(message as unknown as Error)
+      let result: T | null
+
+      try {
+        if (message && message.error) {
+          throw errors.ErrorResponse(message as unknown as Error)
+        }
+
+        if (
+          !message ||
+          message.error ||
+          message.jsonrpc !== '2.0' ||
+          (typeof message.id !== 'number' && typeof message.id !== 'string') ||
+          message.result === undefined ||
+          message.result === null
+        ) {
+          throw errors.InvalidResponse(message as unknown as Error)
+        }
+
+        result = message.result
+      } catch (error) {
+        if (!swallowErrors) throw error
+
+        console.log(error)
+        result = null
       }
 
-      if (
-        !message ||
-        message.error ||
-        message.jsonrpc !== '2.0' ||
-        (typeof message.id !== 'number' && typeof message.id !== 'string') ||
-        message.result === undefined ||
-        message.result === null
-      ) {
-        throw errors.InvalidResponse(result as unknown as Error)
-      }
-
-      output.push(message.result)
+      output.push(result)
     }
 
     return isArray ? output : output[0]
@@ -364,6 +436,11 @@ export class EthereumClient {
     until,
     limit,
   }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
+    if (!this.accountSignatureDAL)
+      throw new Error(
+        'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
+      )
+
     if (before <= 0 || until >= before)
       throw new Error('Invalid signature chunk range')
 
@@ -382,15 +459,15 @@ export class EthereumClient {
     for await (const sig of signatures) chunk.push(sig)
 
     const count = chunk.length
-    const lastItem = chunk[0]
-    const firstItem = chunk[chunk.length - 1]
+    const firstItem = chunk[0]
+    const lastItem = chunk[chunk.length - 1]
 
     if (chunk.length > 0)
       console.log(
         'signature chunk => ',
-        chunk.length,
-        chunk[chunk.length - 1].height,
-        chunk[0].height,
+        count,
+        firstItem.height,
+        lastItem.height,
       )
 
     return {
@@ -399,5 +476,30 @@ export class EthereumClient {
       firstItem,
       lastItem,
     }
+  }
+
+  protected async completeTransactionsWithBlockInfo(
+    tx: Transaction | null,
+  ): Promise<EthereumRawTransaction | null> {
+    if (!tx) return tx
+
+    const newTx = tx as EthereumRawTransaction
+    newTx.signature = tx.hash
+
+    let timestamp: number | undefined
+
+    if (this.accountSignatureDAL) {
+      const sigInfo = await this.accountSignatureDAL.get(newTx.signature)
+      timestamp = sigInfo?.timestamp
+    } else if (newTx.blockNumber) {
+      const [block] = await this.getBlocks([newTx.blockNumber], false)
+      timestamp = Number(block.timestamp)
+    }
+
+    if (!timestamp) return null
+
+    newTx.timestamp = timestamp
+
+    return newTx
   }
 }

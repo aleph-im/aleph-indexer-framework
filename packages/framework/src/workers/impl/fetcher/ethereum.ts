@@ -6,6 +6,7 @@ import {
   config,
   EthereumAccountState,
   EthereumRawTransaction,
+  Utils,
 } from '@aleph-indexer/core'
 import { EthereumFetcher } from '../../../services/fetcher/src/ethereum/fetcher.js'
 import { createEthereumBlockDAL as createEthereumRawBlockDAL } from '../../../services/fetcher/src/ethereum/dal/block.js'
@@ -31,8 +32,9 @@ export default async (
   fetcherClient: FetcherMsClient,
 ): Promise<BlockchainFetcherI> => {
   const url = config.ETHEREUM_RPC
-
   if (!url) throw new Error('ETHEREUM_RPC not configured')
+
+  if (basePath) await Utils.ensurePath(basePath)
 
   // DALs
   const rawBlockDAL = createEthereumRawBlockDAL(basePath)
@@ -47,11 +49,7 @@ export default async (
   const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
   const rawTransactionDAL = createRawTransactionDAL<EthereumRawTransaction>(basePath, true)
 
-  const ethereumClient = createEthereumClient(
-    url,
-    basePath,
-    accountSignatureDAL,
-  )
+  const ethereumClient = createEthereumClient(url, accountSignatureDAL)
 
   const blockFetcher = new EthereumBlockFetcher(
     ethereumClient,

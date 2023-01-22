@@ -65,7 +65,6 @@ export class IndexerMs extends Service {
   }
 
   deleteAccount(ctx: Context<AccountIndexerRequestArgs>): Promise<void> {
-    this.logger.info('🏀', ctx.params.account)
     return this.main.deleteAccount(ctx.params)
   }
 

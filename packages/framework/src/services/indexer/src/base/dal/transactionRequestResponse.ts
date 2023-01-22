@@ -1,7 +1,7 @@
 import {
   EntityStorage,
   EntityUpdateOp,
-  SolanaParsedTransactionV1,
+  ParsedTransaction,
 } from '@aleph-indexer/core'
 
 export type TransactionSignatureResponse = {
@@ -9,40 +9,45 @@ export type TransactionSignatureResponse = {
   nonceIndexes: Record<string, number>
 }
 
-export type TransactionParsedResponse = SolanaParsedTransactionV1 &
-  TransactionSignatureResponse
+export type TransactionParsedResponse<T extends ParsedTransaction<unknown>> =
+  T & TransactionSignatureResponse
 
-export type TransactionRequestResponse =
+export type TransactionRequestResponse<T extends ParsedTransaction<unknown>> =
   | TransactionSignatureResponse
-  | TransactionParsedResponse
+  | TransactionParsedResponse<T>
 
-export type TransactionRequestResponseStorage =
-  EntityStorage<TransactionRequestResponse>
+export type TransactionRequestResponseStorage<
+  T extends ParsedTransaction<unknown>,
+> = EntityStorage<TransactionRequestResponse<T>>
 
 export enum TransactionRequestResponseDALIndex {
   NonceIndex = 'nonce_index',
 }
 
 const signatureKey = {
-  get: (e: TransactionRequestResponse) => e.signature,
+  get: (e: TransactionRequestResponse<ParsedTransaction<unknown>>) =>
+    e.signature,
   length: EntityStorage.VariableLength,
 }
 
 const nonceKey = {
-  get: (e: TransactionRequestResponse) => Object.keys(e.nonceIndexes || {}),
+  get: (e: TransactionRequestResponse<ParsedTransaction<unknown>>) =>
+    Object.keys(e.nonceIndexes || {}),
   length: EntityStorage.TimestampLength,
 }
 
 const indexKey = {
-  get: (e: TransactionRequestResponse, [nonce]: string[]) =>
-    e.nonceIndexes[nonce],
+  get: (
+    e: TransactionRequestResponse<ParsedTransaction<unknown>>,
+    [nonce]: string[],
+  ) => e.nonceIndexes[nonce],
   length: 8,
 }
 
-export function createTransactionRequestResponseDAL(
-  path: string,
-): TransactionRequestResponseStorage {
-  return new EntityStorage<TransactionRequestResponse>({
+export function createTransactionRequestResponseDAL<
+  T extends ParsedTransaction<unknown>,
+>(path: string): TransactionRequestResponseStorage<T> {
+  return new EntityStorage<TransactionRequestResponse<T>>({
     name: 'transaction_request_responses',
     path,
     key: [signatureKey],
@@ -53,8 +58,8 @@ export function createTransactionRequestResponseDAL(
       },
     ],
     async updateCheckFn(
-      oldEntity: TransactionRequestResponse | undefined,
-      newEntity: TransactionRequestResponse,
+      oldEntity: TransactionRequestResponse<T> | undefined,
+      newEntity: TransactionRequestResponse<T>,
     ): Promise<EntityUpdateOp> {
       if (oldEntity) {
         const nonceIndexes = {

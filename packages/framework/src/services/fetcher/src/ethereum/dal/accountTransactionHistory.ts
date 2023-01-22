@@ -20,7 +20,7 @@ const accountKey = {
 }
 
 const timestampKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) => e.timestamp,
+  get: (e: EthereumAccountTransactionHistoryEntity) => e.timestamp * 1000,
   length: EntityStorage.TimestampLength,
 }
 

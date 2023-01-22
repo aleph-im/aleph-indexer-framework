@@ -1,12 +1,11 @@
 import { EventEmitter } from 'node:events'
-
 import {
-  SolanaParsedTransactionV1,
   PendingWork,
   PendingWorkPool,
   StorageValueStream,
   Utils,
   Blockchain,
+  ParsedTransaction,
 } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { NonceTimestamp } from './nonce.js'
@@ -44,19 +43,21 @@ const {
   arrayFromAsyncIterator,
 } = Utils
 
-export interface TransactionResponse {
+export interface TransactionResponse<T> {
   request: TransactionRequest
-  response: StorageValueStream<TransactionParsedResponse>
+  response: StorageValueStream<T>
   remove: () => Promise<void>
 }
 
-export class TransactionFetcher {
+export abstract class BaseTransactionFetcher<
+  T extends ParsedTransaction<unknown>,
+> {
   protected checkPendingRetriesJob!: Utils.JobRunner
   protected checkCompletionJob!: Utils.DebouncedJob<void>
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
-  protected incomingTransactions: PendingWorkPool<SolanaParsedTransactionV1>
+  protected incomingTransactions: PendingWorkPool<T>
   protected toRetryBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
   protected toRemoveBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
 
@@ -64,9 +65,9 @@ export class TransactionFetcher {
     protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
     protected transactionRequestDAL: TransactionRequestStorage,
-    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage,
+    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage<T>,
     protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
-    protected transactionRequestResponseDAL: TransactionRequestResponseStorage,
+    protected transactionRequestResponseDAL: TransactionRequestResponseStorage<T>,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
     this.incomingTransactions = new PendingWorkPool({
@@ -75,7 +76,7 @@ export class TransactionFetcher {
       chunkSize: 1000,
       concurrency: 1,
       dal: this.transactionRequestIncomingTransactionDAL,
-      handleWork: this.handleIncomingTxs.bind(this),
+      handleWork: this.handleIncomingTransactions.bind(this),
       checkComplete: async (): Promise<boolean> => true,
     })
 
@@ -191,8 +192,8 @@ export class TransactionFetcher {
     return requests
   }
 
-  async onTxs(chunk: SolanaParsedTransactionV1[]): Promise<void> {
-    return this.storeIncomingTxs(chunk)
+  async onTxs(chunk: T[]): Promise<void> {
+    return this.storeIncomingTransactions(chunk)
   }
 
   async isRequestComplete(nonce: number): Promise<boolean> {
@@ -211,7 +212,7 @@ export class TransactionFetcher {
     }
   }
 
-  async getResponse(nonce: number): Promise<TransactionResponse> {
+  async getResponse(nonce: number): Promise<TransactionResponse<T>> {
     const request = await this.transactionRequestDAL.get(nonce.toString())
     if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
 
@@ -223,7 +224,7 @@ export class TransactionFetcher {
       .useIndex(TransactionRequestResponseDALIndex.NonceIndex)
       .getAllValuesFromTo([nonce], [nonce], {
         reverse: false,
-      })) as StorageValueStream<TransactionParsedResponse>
+      })) as StorageValueStream<TransactionParsedResponse<T>>
 
     return {
       request,
@@ -243,9 +244,7 @@ export class TransactionFetcher {
   //   await this.transactionRequestDAL.remove(request)
   // }
 
-  protected async storeIncomingTxs(
-    chunk: SolanaParsedTransactionV1[],
-  ): Promise<void> {
+  protected async storeIncomingTransactions(chunk: T[]): Promise<void> {
     const works = chunk.map((tx) => ({
       id: tx.signature,
       time: Date.now(),
@@ -255,8 +254,8 @@ export class TransactionFetcher {
     return this.incomingTransactions.addWork(works)
   }
 
-  protected async handleIncomingTxs(
-    works: PendingWork<SolanaParsedTransactionV1>[],
+  protected async handleIncomingTransactions(
+    works: PendingWork<T>[],
   ): Promise<number | void> {
     const chunk = works.map((work) => work.payload)
 
@@ -267,8 +266,11 @@ export class TransactionFetcher {
     try {
       const requests = await this.transactionRequestDAL.getAllValues()
 
-      let filteredTxs: SolanaParsedTransactionV1[] = []
-      let remainingTxs: SolanaParsedTransactionV1[] = chunk
+      const requestsNonces = []
+      let lastFilteredTxs = 0
+
+      let filteredTxs: T[] = []
+      let remainingTxs: T[] = chunk
       let requestCount = 0
       const requestCountId = []
 
@@ -276,11 +278,18 @@ export class TransactionFetcher {
         const { nonce, complete } = request
         if (complete) continue
 
-        const result = this.filterTxsByRequest(remainingTxs, request)
+        const result = this.filterIncomingTransactionsByRequest(
+          remainingTxs,
+          request,
+        )
+
         filteredTxs = filteredTxs.concat(result.filteredTxs)
         remainingTxs = result.remainingTxs
         requestCount++
         requestCountId.push(nonce)
+
+        lastFilteredTxs = filteredTxs.length - lastFilteredTxs
+        requestsNonces.push([nonce, lastFilteredTxs])
       }
 
       console.log(
@@ -290,10 +299,12 @@ export class TransactionFetcher {
       if (filteredTxs.length === 0) return
 
       const requestResponse =
-        filteredTxs as unknown as TransactionRequestResponse[]
+        filteredTxs as unknown as TransactionRequestResponse<T>[]
 
       const pendingSignatures =
         filteredTxs as unknown as TransactionRequestPendingSignature[]
+
+      console.log('_____REMOVE FILTERED__', requestsNonces)
 
       await this.transactionRequestResponseDAL.save(requestResponse)
       await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
@@ -309,62 +320,17 @@ export class TransactionFetcher {
     console.log(`onTxs time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
   }
 
-  protected filterTxsByRequest(
-    txs: SolanaParsedTransactionV1[],
+  protected filterIncomingTransactionsByRequest(
+    txs: T[],
     request: TransactionRequest,
   ): {
-    filteredTxs: SolanaParsedTransactionV1[]
-    remainingTxs: SolanaParsedTransactionV1[]
+    filteredTxs: T[]
+    remainingTxs: T[]
   } {
-    const filteredTxs: SolanaParsedTransactionV1[] = []
-    const remainingTxs: SolanaParsedTransactionV1[] = []
+    const filteredTxs: T[] = []
+    const remainingTxs: T[] = []
 
     switch (request.type) {
-      case TransactionRequestType.ByDateRange: {
-        const { account, startDate, endDate } = request.params
-
-        for (const tx of txs) {
-          if (!tx.parsed) {
-            console.log(
-              '👺 error incoming tx without parsed field',
-              request.nonce,
-              tx,
-            )
-            continue
-          }
-
-          const timestamp = (tx.blockTime || 0) * 1000
-
-          let valid = timestamp >= startDate && timestamp <= endDate
-
-          valid =
-            valid &&
-            tx.parsed.message.accountKeys.some(
-              ({ pubkey }) => pubkey === account,
-            )
-
-          valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
-        }
-
-        break
-      }
-      case TransactionRequestType.BySlotRange: {
-        const { account, startSlot, endSlot } = request.params
-
-        for (const tx of txs) {
-          let valid = tx.slot >= startSlot && tx.slot <= endSlot
-
-          valid =
-            valid &&
-            tx.parsed.message.accountKeys.some(
-              ({ pubkey }) => pubkey === account,
-            )
-
-          valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
-        }
-
-        break
-      }
       case TransactionRequestType.BySignatures: {
         const { signatures } = request.params
         const sigSet = new Set(signatures)
@@ -375,6 +341,10 @@ export class TransactionFetcher {
           valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
         }
 
+        break
+      }
+      default: {
+        remainingTxs.push(...txs)
         break
       }
     }
@@ -397,32 +367,9 @@ export class TransactionFetcher {
     const now2 = Date.now()
 
     try {
-      const signaturesStream = await (async (): Promise<
-        void | string[][] | AsyncIterable<string[]>
-      > => {
-        const { type, params } = requestParams
-
-        switch (type) {
-          case TransactionRequestType.BySignatures: {
-            await this.fetcherMsClient
-              .useBlockchain(this.blockchainId)
-              .fetchTransactionsBySignature(params)
-            return [params.signatures]
-          }
-          case TransactionRequestType.ByDateRange: {
-            return this.fetcherMsClient
-              .useBlockchain(this.blockchainId)
-              .fetchAccountTransactionsByDate(params)
-          }
-          case TransactionRequestType.BySlotRange: {
-            // @toto: Implement extended methods
-            return []
-            // return this.fetcherMsClient
-            //   .useBlockchain(params.blockchainId)
-            //   .fetchAccountTransactionsBySlot(params)
-          }
-        }
-      })()
+      const signaturesStream = await this.fetchTransactionSignatures(
+        requestParams,
+      )
 
       if (!signaturesStream)
         throw new Error(
@@ -445,13 +392,16 @@ export class TransactionFetcher {
         await this.transactionRequestResponseDAL.save(requestResponse)
         await this.transactionRequestPendingSignatureDAL.save(pendingSignatures)
 
-        count++
+        console.log('_____SAVE FILTERED__', nonce, pendingSignatures.length)
+
+        count += signatures.length
       }
 
       const request = {
         blockchainId,
         nonce,
         complete: !count,
+        count,
         ...requestParams,
       }
 
@@ -479,6 +429,29 @@ export class TransactionFetcher {
     return nonce
   }
 
+  protected async fetchTransactionSignatures(
+    requestParams: TransactionRequestParams,
+  ): Promise<void | string[][] | AsyncIterable<string[]>> {
+    const { type, params } = requestParams
+
+    switch (type) {
+      case TransactionRequestType.BySignatures: {
+        await this.fetcherMsClient
+          .useBlockchain(this.blockchainId)
+          .fetchTransactionsBySignature(params)
+        return [params.signatures]
+      }
+      case TransactionRequestType.ByDateRange: {
+        return this.fetcherMsClient
+          .useBlockchain(this.blockchainId)
+          .fetchAccountTransactionsByDate(params)
+      }
+      default: {
+        return []
+      }
+    }
+  }
+
   protected async checkAllRequestCompletion(): Promise<void> {
     const requests = await this.transactionRequestDAL.getAllValues()
 
@@ -493,13 +466,29 @@ export class TransactionFetcher {
     const { nonce, complete } = request
     if (complete) return
 
-    const pending = await this.transactionRequestPendingSignatureDAL
+    let pending = !!(await this.transactionRequestPendingSignatureDAL
       .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
-      .getFirstKeyFromTo(
-        [this.blockchainId, nonce],
-        [this.blockchainId, nonce],
-        { atomic: true },
-      )
+      .getFirstKeyFromTo([nonce], [nonce], { atomic: true }))
+
+    // @note: Debug false positives completing request when there are pending txs
+    if (!pending) {
+      console.log('pending enter =>', pending)
+
+      const pendings = await this.transactionRequestPendingSignatureDAL
+        .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+        .getAllFromTo([nonce], [nonce], { atomic: true })
+
+      let pending2 = false
+      for await (const item of pendings) {
+        pending2 = true
+        break
+      }
+
+      if (pending !== pending2) {
+        pending = pending2
+        console.log('👺👺👺 ERROR checkRequestCompletion => ', nonce)
+      }
+    }
 
     if (pending) {
       console.log(`🔴 Request ${nonce} pending`)
@@ -530,11 +519,7 @@ export class TransactionFetcher {
 
     const pendings = await this.transactionRequestPendingSignatureDAL
       .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
-      .getAllValuesFromTo(
-        [this.blockchainId, nonce],
-        [this.blockchainId, nonce],
-        { atomic: true },
-      )
+      .getAllValuesFromTo([nonce], [nonce], { atomic: true })
 
     for await (const pending of pendings) {
       const { signature } = pending

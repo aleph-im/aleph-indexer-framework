@@ -1,11 +1,11 @@
 import { pipeline } from 'stream'
 import { promisify } from 'util'
 import {
-  SolanaInstructionContextV1,
-  SolanaParsedInnerInstructionV1,
-  SolanaParsedInstructionV1,
-  SolanaParsedTransactionV1,
-  SolanaParsedTransactionContextV1,
+  SolanaInstructionContext,
+  SolanaParsedInnerInstruction,
+  SolanaParsedInstruction,
+  SolanaParsedTransaction,
+  SolanaParsedTransactionContext,
   Utils,
 } from '@aleph-indexer/core'
 import {
@@ -17,17 +17,15 @@ const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
 export type SolanaIndexerWorkerDomainI = {
   solanaFilterTransaction?(
-    ctx: SolanaParsedTransactionContextV1,
+    ctx: SolanaParsedTransactionContext,
   ): Promise<boolean>
   solanaIndexTransaction?(
-    ctx: SolanaParsedTransactionContextV1,
-  ): Promise<SolanaParsedTransactionContextV1>
+    ctx: SolanaParsedTransactionContext,
+  ): Promise<SolanaParsedTransactionContext>
   solanaFilterInstructions(
-    ixsContext: SolanaInstructionContextV1[],
-  ): Promise<SolanaInstructionContextV1[]>
-  solanaIndexInstructions(
-    ixsContext: SolanaInstructionContextV1[],
-  ): Promise<void>
+    ixsContext: SolanaInstructionContext[],
+  ): Promise<SolanaInstructionContext[]>
+  solanaIndexInstructions(ixsContext: SolanaInstructionContext[]): Promise<void>
 }
 
 export default class SolanaIndexerWorkerDomain {
@@ -36,7 +34,9 @@ export default class SolanaIndexerWorkerDomain {
     protected hooks: SolanaIndexerWorkerDomainI,
   ) {}
 
-  async onTxDateRange(response: TransactionDateRangeResponse): Promise<void> {
+  async onTxDateRange(
+    response: TransactionDateRangeResponse<SolanaParsedTransaction>,
+  ): Promise<void> {
     const { txs } = response
 
     const filterTransaction =
@@ -65,9 +65,9 @@ export default class SolanaIndexerWorkerDomain {
   }
 
   protected mapTransactionContext(
-    args: TransactionDateRangeResponse,
-    tx: SolanaParsedTransactionV1,
-  ): SolanaParsedTransactionContextV1 {
+    args: TransactionDateRangeResponse<SolanaParsedTransaction>,
+    tx: SolanaParsedTransaction,
+  ): SolanaParsedTransactionContext {
     const { account, startDate, endDate } = args
 
     return {
@@ -81,11 +81,11 @@ export default class SolanaIndexerWorkerDomain {
   }
 
   protected groupInstructions(
-    ixs: (SolanaParsedInstructionV1 | SolanaParsedInnerInstructionV1)[],
-    ctx: SolanaParsedTransactionContextV1,
-    parentIx?: SolanaParsedInstructionV1,
-    ixsCtx: SolanaInstructionContextV1[] = [],
-  ): SolanaInstructionContextV1[] {
+    ixs: (SolanaParsedInstruction | SolanaParsedInnerInstruction)[],
+    ctx: SolanaParsedTransactionContext,
+    parentIx?: SolanaParsedInstruction,
+    ixsCtx: SolanaInstructionContext[] = [],
+  ): SolanaInstructionContext[] {
     for (const ix of ixs) {
       // @note: index inner ixs before
       if ('innerInstructions' in ix && ix.innerInstructions) {
@@ -99,20 +99,20 @@ export default class SolanaIndexerWorkerDomain {
   }
 
   protected async filterTransaction(
-    ctx: SolanaParsedTransactionContextV1,
+    ctx: SolanaParsedTransactionContext,
   ): Promise<boolean> {
     return true
   }
 
   protected async indexTransaction(
-    ctx: SolanaParsedTransactionContextV1,
-  ): Promise<SolanaParsedTransactionContextV1> {
+    ctx: SolanaParsedTransactionContext,
+  ): Promise<SolanaParsedTransactionContext> {
     return ctx
   }
 
   protected async mapTransaction(
-    ctx: SolanaParsedTransactionContextV1,
-  ): Promise<SolanaInstructionContextV1[]> {
+    ctx: SolanaParsedTransactionContext,
+  ): Promise<SolanaInstructionContext[]> {
     if (ctx.tx.parsed === undefined) {
       console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
       return this.groupInstructions([], ctx)

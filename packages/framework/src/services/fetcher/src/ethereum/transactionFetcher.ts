@@ -61,7 +61,7 @@ export class EthereumTransactionFetcher extends BaseTransactionFetcher<EthereumR
     isRetry: boolean,
   ): Promise<(EthereumRawTransaction | null | undefined)[]> {
     return this.ethereumClient.getTransactions(signatures, {
-      shallowErrors: true,
+      swallowErrors: true,
     })
   }
 }

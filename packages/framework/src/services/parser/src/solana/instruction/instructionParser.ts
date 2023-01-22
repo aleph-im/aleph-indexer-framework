@@ -1,5 +1,5 @@
 import {
-  SolanaParsedInstructionV1,
+  SolanaParsedInstruction,
   SolanaRawInstruction,
 } from '@aleph-indexer/core'
 import { DefinedParser } from '../../base/types.js'
@@ -15,7 +15,7 @@ import { SolanaInstructionBaseParser } from './InstructionBaseParser.js'
  */
 export class SolanaInstructionParser extends DefinedParser<
   SolanaRawInstruction,
-  SolanaParsedInstructionV1
+  SolanaParsedInstruction
 > {
   constructor(protected layoutPath?: string) {
     super()
@@ -25,7 +25,7 @@ export class SolanaInstructionParser extends DefinedParser<
     string,
     DefinedParser<
       SolanaRawInstruction,
-      SolanaRawInstruction | SolanaParsedInstructionV1
+      SolanaRawInstruction | SolanaParsedInstruction
     >
   > = {}
 
@@ -34,15 +34,15 @@ export class SolanaInstructionParser extends DefinedParser<
    * @param payload The raw instruction to parse.
    */
   async parse(
-    payload: SolanaRawInstruction | SolanaParsedInstructionV1,
-  ): Promise<SolanaRawInstruction | SolanaParsedInstructionV1> {
+    payload: SolanaRawInstruction | SolanaParsedInstruction,
+  ): Promise<SolanaRawInstruction | SolanaParsedInstruction> {
     const { programId } = payload
 
     const parser = await this.getParser(programId)
     if (!parser) return payload
 
     const parsedData = await parser.parse(payload)
-    return parsedData as SolanaParsedInstructionV1
+    return parsedData as SolanaParsedInstruction
   }
 
   /**
@@ -55,7 +55,7 @@ export class SolanaInstructionParser extends DefinedParser<
   ): Promise<
     | DefinedParser<
         SolanaRawInstruction,
-        SolanaRawInstruction | SolanaParsedInstructionV1
+        SolanaRawInstruction | SolanaParsedInstruction
       >
     | undefined
   > {

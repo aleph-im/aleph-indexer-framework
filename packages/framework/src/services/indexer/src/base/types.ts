@@ -1,4 +1,8 @@
-import { Blockchain, StorageValueStream } from '@aleph-indexer/core'
+import {
+  Blockchain,
+  ParsedTransaction,
+  StorageValueStream,
+} from '@aleph-indexer/core'
 import { TransportType } from '../../../../utils/index.js'
 import { BlockchainRequestArgs } from '../../../types.js'
 import { IndexerMsClient } from '../../client.js'
@@ -9,10 +13,10 @@ import {
 import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
 
 export {
-  SolanaInstructionContextV1,
-  SolanaParsedTransactionV1 as ParsedTransactionV1,
-  SolanaParsedInstructionV1 as ParsedInstructionV1,
-  SolanaParsedInnerInstructionV1 as ParsedInnerInstructionV1,
+  SolanaInstructionContext as SolanaInstructionContextV1,
+  SolanaParsedTransaction as ParsedTransactionV1,
+  SolanaParsedInstruction as ParsedInstructionV1,
+  SolanaParsedInnerInstruction as ParsedInnerInstructionV1,
 } from '@aleph-indexer/core'
 
 /**
@@ -46,10 +50,11 @@ export type AccountSlotRange = {
 /**
  * {@link AccountDateRange} bundled with fetched transactions.
  */
-export type TransactionDateRangeResponse = AccountDateRange & {
-  blockchainId: Blockchain
-  txs: StorageValueStream<TransactionParsedResponse>
-}
+export type TransactionDateRangeResponse<T extends ParsedTransaction<unknown>> =
+  AccountDateRange & {
+    blockchainId: Blockchain
+    txs: StorageValueStream<T>
+  }
 
 export type IndexerAccountPartitionRequestArgs = {
   /**
@@ -173,8 +178,8 @@ export type AccountEventsFilters = AccountDateRange
 /**
  * Describes an object capable of handling transaction streams.
  */
-export type TransactionIndexerHandler = {
-  onTxDateRange(data: TransactionDateRangeResponse): Promise<void>
+export type TransactionIndexerHandler<T extends ParsedTransaction<unknown>> = {
+  onTxDateRange(data: TransactionDateRangeResponse<T>): Promise<void>
 }
 
 export type IndexerCommonDomainContext = {
@@ -209,7 +214,9 @@ export type IndexerDomainContext = IndexerCommonDomainContext & {
  * Describes an indexer worker domain,
  * capable of indexing transactions and adding new accounts to be indexed.
  */
-export type IndexerWorkerDomainI = TransactionIndexerHandler & {
+export type IndexerWorkerDomainI = TransactionIndexerHandler<
+  ParsedTransaction<unknown>
+> & {
   init(): Promise<void>
   onNewAccount(args: AccountIndexerRequestArgs): Promise<void>
 }

@@ -6,7 +6,7 @@ import {
   SolanaRawInstruction,
 } from '../types/index.js'
 import { TOKEN_PROGRAM_ID } from '../constants.js'
-import { SolanaInstructionContextV1 } from '../parser/index.js'
+import { SolanaInstructionContext } from '../parser/index.js'
 
 export function isTokenInstruction(
   ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
@@ -99,7 +99,7 @@ export function getCollateralAmount(
 }
 
 export function getSubInstructions(
-  ixCtx: SolanaInstructionContextV1,
+  ixCtx: SolanaInstructionContext,
 ): (AlephParsedInstruction | AlephParsedInnerInstruction)[] {
   const { ix, parentIx } = ixCtx
 

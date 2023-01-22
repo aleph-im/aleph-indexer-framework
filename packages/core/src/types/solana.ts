@@ -179,14 +179,14 @@ export type AlephParsedInstruction =
   | AlephParsedParsedInstruction
   | AlephParsedPartiallyDecodedInstruction
 
-export type SolanaParsedInstructionV1 = AlephParsedInstruction
+export type SolanaParsedInstruction = AlephParsedInstruction
 
 export type AlephParsedInnerInstruction = Omit<
   AlephParsedInstruction,
   'innerInstructions'
 >
 
-export type SolanaParsedInnerInstructionV1 = AlephParsedInnerInstruction
+export type SolanaParsedInnerInstruction = AlephParsedInnerInstruction
 
 export type AlephParsedErrorIx = {
   index: number
@@ -215,7 +215,7 @@ export type AlephParsedTransaction = Omit<SolanaRawTransactionOld, 'parsed'> & {
   index: number
 }
 
-export type SolanaParsedTransactionV1 = Omit<
+export type SolanaParsedTransaction = Omit<
   SolanaRawTransaction,
   'parsed' | 'transaction'
 > & {

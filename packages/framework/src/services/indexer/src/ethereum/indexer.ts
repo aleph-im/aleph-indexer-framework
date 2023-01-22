@@ -1,8 +1,7 @@
-import { Blockchain } from '@aleph-indexer/core'
+import { Blockchain, EthereumParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { ParserMsClient } from '../../../parser/client.js'
 import { TransactionIndexerStateStorage } from '../base/dal/transactionIndexerState.js'
-import { TransactionFetcher } from '../base/transactionFetcher.js'
 import {
   AccountIndexerRequestArgs,
   AccountIndexerState,
@@ -15,15 +14,19 @@ import {
 } from '../base/types.js'
 import { BaseIndexer } from '../base/indexer.js'
 import { IndexerMsClient } from '../../client.js'
+import { EthereumTransactionFetcher } from './transactionFetcher.js'
 
-export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
+export class EthereumIndexer
+  extends BaseIndexer<EthereumParsedTransaction>
+  implements BlockchainIndexerI
+{
   constructor(
     protected domain: IndexerWorkerDomainI,
     protected indexerClient: IndexerMsClient,
     protected fetcherClient: FetcherMsClient,
     protected parserClient: ParserMsClient,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
-    protected transactionFetcher: TransactionFetcher,
+    protected transactionFetcher: EthereumTransactionFetcher,
   ) {
     super(
       Blockchain.Ethereum,

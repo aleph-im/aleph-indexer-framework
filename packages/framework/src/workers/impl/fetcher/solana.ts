@@ -8,6 +8,7 @@ import {
   SolanaRawTransaction,
   solanaPrivateRPCRoundRobin,
   solanaMainPublicRPCRoundRobin,
+  Utils,
 } from '@aleph-indexer/core'
 import { SolanaFetcher } from '../../../services/fetcher/src/solana/fetcher.js'
 import {
@@ -30,7 +31,7 @@ export default async (
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
 ): Promise<BlockchainFetcherI> => {
-
+  if (basePath) await Utils.ensurePath(basePath)
 
   // @note: Force resolve DNS and cache it before starting fetcher
   await Promise.allSettled(

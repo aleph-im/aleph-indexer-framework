@@ -1,4 +1,4 @@
-import { Blockchain, SolanaParsedTransactionV1 } from '@aleph-indexer/core'
+import { Blockchain, ParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { ParserMsClient } from '../../../parser/client.js'
 import { TransactionIndexerStateStorage } from './dal/transactionIndexerState.js'
@@ -13,20 +13,23 @@ import {
   InvokeMethodRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
 } from './types.js'
-import { AccountTransactionIndexer } from './accountTransactionIndexer.js'
+import { BaseAccountTransactionIndexer } from './accountTransactionIndexer.js'
 import { BlockchainIndexerI } from './types.js'
 import { IndexerMsClient } from '../../client.js'
-import { TransactionFetcher } from './transactionFetcher.js'
+import { BaseTransactionFetcher } from './transactionFetcher.js'
 
 /**
  * Main class of the indexer service. Creates and manages all indexers.
  */
-export abstract class BaseIndexer implements BlockchainIndexerI {
+export abstract class BaseIndexer<T extends ParsedTransaction<unknown>>
+  implements BlockchainIndexerI
+{
   protected accountTransactionsIndexers: Record<
     string,
-    AccountTransactionIndexer
+    BaseAccountTransactionIndexer<T>
   > = {}
-  protected txsHandler: (chunk: SolanaParsedTransactionV1[]) => Promise<void>
+
+  protected txsHandler: (chunk: T[]) => Promise<void>
 
   /**
    * @param blockchainId The blockchain identifier.
@@ -44,7 +47,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     protected fetcherClient: FetcherMsClient,
     protected parserClient: ParserMsClient,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
-    protected transactionFetcher: TransactionFetcher,
+    protected transactionFetcher: BaseTransactionFetcher<T>,
   ) {
     this.txsHandler = this.onTxs.bind(this)
   }
@@ -58,12 +61,12 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     await this.fetcherClient.waitForService()
     await this.parserClient.waitForService()
 
-    this.parserClient.on(`txs.${this.blockchainId}`, this.txsHandler)
+    this.parserClient.on(`parser.txs.${this.blockchainId}`, this.txsHandler)
     await this.transactionFetcher.start().catch(() => 'ignore')
   }
 
   async stop(): Promise<void> {
-    this.parserClient.off(`txs.${this.blockchainId}`, this.txsHandler)
+    this.parserClient.off(`parser.txs.${this.blockchainId}`, this.txsHandler)
     await this.transactionFetcher.stop().catch(() => 'ignore')
   }
 
@@ -144,8 +147,8 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     return fn.call(this.domain, account, ...args)
   }
 
-  protected async onTxs(chunk: SolanaParsedTransactionV1[]): Promise<void> {
-    // console.log(`💌 ${chunk.length} txs received by the indexer...`)
+  protected async onTxs(chunk: T[]): Promise<void> {
+    console.log(`💌 ${chunk.length} txs received by the indexer...`)
     await this.transactionFetcher.onTxs(chunk)
   }
 
@@ -164,7 +167,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     let accountIndexer = this.accountTransactionsIndexers[account]
     if (accountIndexer) return
 
-    accountIndexer = new AccountTransactionIndexer(
+    accountIndexer = new BaseAccountTransactionIndexer<T>(
       args,
       this.domain,
       this.fetcherClient,

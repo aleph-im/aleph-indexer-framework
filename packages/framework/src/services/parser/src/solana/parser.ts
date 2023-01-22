@@ -1,10 +1,10 @@
 import {
-  SolanaParsedInstructionV1,
+  SolanaParsedInstruction,
   ParsedAccountInfoV1,
   SolanaRawTransaction,
   SolanaRawInstruction,
   RawAccountInfo,
-  SolanaParsedTransactionV1,
+  SolanaParsedTransaction,
 } from '@aleph-indexer/core'
 import { SolanaTransactionParser } from './transaction/transactionParser.js'
 import { BaseParser } from '../base/parser.js'
@@ -17,7 +17,7 @@ import { SolanaAccountStateParser } from './accountState/accountStateParser.js'
 
 export class SolanaParser extends BaseParser<
   SolanaRawTransaction,
-  SolanaParsedTransactionV1,
+  SolanaParsedTransaction,
   RawAccountInfo,
   ParsedAccountInfoV1
 > {
@@ -31,13 +31,13 @@ export class SolanaParser extends BaseParser<
 
   async parseTransaction(
     args: ParseTransactionRequestArgs<SolanaRawTransaction>,
-  ): Promise<SolanaRawTransaction | SolanaParsedTransactionV1> {
+  ): Promise<SolanaRawTransaction | SolanaParsedTransaction> {
     return this.transactionParser.parse(args.tx)
   }
 
   async parseInstruction(
     payload: SolanaRawInstruction,
-  ): Promise<SolanaRawInstruction | SolanaParsedInstructionV1> {
+  ): Promise<SolanaRawInstruction | SolanaParsedInstruction> {
     return this.instructionParser.parse(payload)
   }
 

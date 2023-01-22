@@ -27,7 +27,9 @@ export default class EthereumIndexerWorkerDomain {
     protected hooks: EthereumIndexerWorkerDomainI,
   ) {}
 
-  async onTxDateRange(response: TransactionDateRangeResponse): Promise<void> {
+  async onTxDateRange(
+    response: TransactionDateRangeResponse<EthereumParsedTransaction>,
+  ): Promise<void> {
     const { txs } = response
 
     const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
@@ -47,7 +49,7 @@ export default class EthereumIndexerWorkerDomain {
   }
 
   protected mapTransactionContext(
-    args: TransactionDateRangeResponse,
+    args: TransactionDateRangeResponse<EthereumParsedTransaction>,
     tx: EthereumParsedTransaction,
   ): EthereumParsedTransactionContext {
     const { account, startDate, endDate } = args

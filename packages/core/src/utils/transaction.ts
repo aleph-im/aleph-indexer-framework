@@ -1,47 +1,43 @@
 import { PublicKey } from '@solana/web3.js'
 import {
-  SolanaParsedInstructionV1,
-  SolanaParsedTransactionV1,
+  SolanaParsedInstruction,
+  SolanaParsedTransaction,
 } from '../types/index.js'
 import { isParsedIx } from './instruction.js'
 
 export function txIxsCheck(
-  tx: SolanaParsedTransactionV1,
-  check: (ix: SolanaParsedInstructionV1) => boolean,
+  tx: SolanaParsedTransaction,
+  check: (ix: SolanaParsedInstruction) => boolean,
 ): boolean {
   const ixs = tx.parsed.message.instructions
   if (ixs.some(check)) return true
 
   for (const ix of ixs) {
-    const iixs = (ix.innerInstructions || []) as SolanaParsedInstructionV1[]
+    const iixs = (ix.innerInstructions || []) as SolanaParsedInstruction[]
     if (iixs.some(check)) return true
   }
   return false
 }
 
 export function txHasProgramId(
-  tx: SolanaParsedTransactionV1,
+  tx: SolanaParsedTransaction,
   programId: PublicKey | string,
 ): boolean {
   return txIxsCheck(
     tx,
-    (ix: SolanaParsedInstructionV1) => ix.programId === programId.toString(),
+    (ix: SolanaParsedInstruction) => ix.programId === programId.toString(),
   )
 }
 
-export function txHasType(
-  tx: SolanaParsedTransactionV1,
-  type: string,
-): boolean {
+export function txHasType(tx: SolanaParsedTransaction, type: string): boolean {
   return txIxsCheck(
     tx,
-    (ix: SolanaParsedInstructionV1) =>
-      isParsedIx(ix) && ix.parsed.type === type,
+    (ix: SolanaParsedInstruction) => isParsedIx(ix) && ix.parsed.type === type,
   )
 }
 
 export function getTokenBalance(
-  tx: SolanaParsedTransactionV1,
+  tx: SolanaParsedTransaction,
   address: string,
   post = true,
 ): string | undefined {
@@ -85,7 +81,7 @@ export function getTokenBalance(
 }
 
 export function getBalance(
-  tx: SolanaParsedTransactionV1,
+  tx: SolanaParsedTransaction,
   address: string,
   post = true,
 ): string | undefined {

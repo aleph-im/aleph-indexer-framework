@@ -210,7 +210,7 @@ export class SolanaRPC {
 
   async getConfirmedTransactions(
     signatures: string[],
-    options?: { shallowErrors?: boolean },
+    options?: { swallowErrors?: boolean },
   ): Promise<(SolanaRawTransaction | null)[]> {
     let batch: any[] = signatures.map((signature) => {
       return {
@@ -238,7 +238,7 @@ export class SolanaRPC {
       if (error) {
         const message = `failed to get confirmed transactions: ${error.message}`
 
-        if (options?.shallowErrors) {
+        if (options?.swallowErrors) {
           console.log(message)
           return null
         }

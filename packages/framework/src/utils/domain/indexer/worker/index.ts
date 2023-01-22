@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/core/dist/index.js'
+import { Blockchain, ParsedTransaction } from '@aleph-indexer/core'
 import {
   AccountIndexerRequestArgs,
   IndexerDomainContext,
@@ -25,8 +25,10 @@ export type IndexerWorkerDomainWithStats = {
   getStats(account: string): Promise<AccountStats>
 }
 
-export interface BlockchainIndexerWorkerI {
-  onTxDateRange(response: TransactionDateRangeResponse): Promise<void>
+export interface BlockchainIndexerWorkerI<
+  T extends ParsedTransaction<unknown>,
+> {
+  onTxDateRange(response: TransactionDateRangeResponse<T>): Promise<void>
 }
 
 export type { EthereumIndexerWorkerDomainI } from './impl/ethereum.js'
@@ -35,7 +37,10 @@ export type { SolanaIndexerWorkerDomainI } from './impl/solana.js'
 /**
  * Describes an indexer worker domain, implements some common methods for any instance
  */
-export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
+export abstract class IndexerWorkerDomain<
+  T extends ParsedTransaction<unknown> = ParsedTransaction<unknown>,
+> implements IndexerWorkerDomainI
+{
   protected instance!: number
 
   constructor(protected context: IndexerDomainContext) {
@@ -51,7 +56,9 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
 
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
 
-  async onTxDateRange(response: TransactionDateRangeResponse): Promise<void> {
+  async onTxDateRange(
+    response: TransactionDateRangeResponse<T>,
+  ): Promise<void> {
     const { blockchainId, account, startDate, endDate } = response
 
     console.log('Processing', blockchainId, account, startDate, endDate)
@@ -62,7 +69,7 @@ export abstract class IndexerWorkerDomain implements IndexerWorkerDomainI {
 
   protected async getBlockchainWorker(
     blockchainId: Blockchain,
-  ): Promise<BlockchainIndexerWorkerI> {
+  ): Promise<BlockchainIndexerWorkerI<T>> {
     return BlockchainWorkerFactory.getSingleton(
       blockchainId,
       'default',

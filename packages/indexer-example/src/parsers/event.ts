@@ -1,6 +1,6 @@
 import BN from 'bn.js'
 import {
-  SolanaInstructionContextV1,
+  SolanaInstructionContext,
   Utils,
   SolanaParsedEvent,
 } from '@aleph-indexer/core'
@@ -38,7 +38,7 @@ const {
 } = Utils
 
 export class EventParser {
-  parse(ixCtx: SolanaInstructionContextV1): LendingEvent {
+  parse(ixCtx: SolanaInstructionContext): LendingEvent {
     const { ix, parentIx, txContext } = ixCtx
     const { tx: parentTx } = txContext
 

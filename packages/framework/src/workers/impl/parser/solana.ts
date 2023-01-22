@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { ParsedAccountInfoV1, RawAccountInfo, SolanaParsedTransactionV1, SolanaRawTransaction } from '@aleph-indexer/core'
+import { ParsedAccountInfoV1, RawAccountInfo, SolanaParsedTransaction, SolanaRawTransaction, Utils } from '@aleph-indexer/core'
 import { SolanaParser } from '../../../services/parser/src/solana/parser.js'
 import { SolanaTransactionParser } from '../../../services/parser/src/solana/transaction/transactionParser.js'
 import { SolanaInstructionParser } from '../../../services/parser/src/solana/instruction/instructionParser.js'
@@ -12,12 +12,15 @@ export default async (
 ): Promise<
   BlockchainParserI<
     SolanaRawTransaction,
-    SolanaParsedTransactionV1,
+    SolanaParsedTransaction,
     RawAccountInfo,
     ParsedAccountInfoV1
   >
 > => {
-  const solanaInstructionParser = new SolanaInstructionParser(layoutPath)
+  const layoutBasePath = layoutPath // || path.join(basePath, 'layout')
+  if (layoutBasePath) await Utils.ensurePath(layoutBasePath)
+
+  const solanaInstructionParser = new SolanaInstructionParser(layoutBasePath)
   const solanaTransactionParser = new SolanaTransactionParser(solanaInstructionParser)
   const solanaAccountStateParser = new SolanaAccountStateParser()
 

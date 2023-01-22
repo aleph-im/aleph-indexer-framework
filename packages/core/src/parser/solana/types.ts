@@ -1,15 +1,15 @@
 import {
-  SolanaParsedInnerInstructionV1,
-  SolanaParsedInstructionV1,
-  SolanaParsedTransactionV1,
+  SolanaParsedInnerInstruction,
+  SolanaParsedInstruction,
+  SolanaParsedTransaction,
 } from '../../types'
-import { ParsedTransactionContextV1 } from '../base/index.js'
+import { ParsedTransactionContext } from '../base/index.js'
 
-export type SolanaParsedTransactionContextV1 =
-  ParsedTransactionContextV1<SolanaParsedTransactionV1>
+export type SolanaParsedTransactionContext =
+  ParsedTransactionContext<SolanaParsedTransaction>
 
-export type SolanaInstructionContextV1 = {
-  txContext: SolanaParsedTransactionContextV1
-  parentIx?: SolanaParsedInstructionV1
-  ix: SolanaParsedInstructionV1 | SolanaParsedInnerInstructionV1
+export type SolanaInstructionContext = {
+  txContext: SolanaParsedTransactionContext
+  parentIx?: SolanaParsedInstruction
+  ix: SolanaParsedInstruction | SolanaParsedInnerInstruction
 }

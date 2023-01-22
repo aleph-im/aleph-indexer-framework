@@ -1,5 +1,9 @@
-import { StorageValueStream, Utils } from '@aleph-indexer/core'
-import { TransactionFetcher } from './transactionFetcher.js'
+import {
+  ParsedTransaction,
+  StorageValueStream,
+  Utils,
+} from '@aleph-indexer/core'
+import { BaseTransactionFetcher } from './transactionFetcher.js'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import {
   TransactionIndexerState,
@@ -23,7 +27,9 @@ import { AccountTransactionHistoryState } from '../../../fetcher/src/base/types.
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
-export class AccountTransactionIndexer {
+export class BaseAccountTransactionIndexer<
+  T extends ParsedTransaction<unknown>,
+> {
   protected fetchAllJob!: Utils.JobRunner
   protected compactionJob!: Utils.JobRunner
   protected processorJob!: Utils.JobRunner
@@ -31,9 +37,9 @@ export class AccountTransactionIndexer {
 
   constructor(
     protected config: AccountIndexerTransactionRequestArgs,
-    protected handler: TransactionIndexerHandler,
+    protected handler: TransactionIndexerHandler<T>,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionFetcher: TransactionFetcher,
+    protected transactionFetcher: BaseTransactionFetcher<T>,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
   ) {
     const { account } = config

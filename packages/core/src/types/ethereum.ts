@@ -3,7 +3,10 @@ import { RawTransaction } from './common.js'
 
 export type EthereumBlock = BlockTransactionObject
 
-export type EthereumRawTransaction = RawTransaction & Transaction
+export type EthereumRawTransaction = RawTransaction &
+  Transaction & {
+    timestamp: number
+  }
 
 export type EthereumRawAccountState = {
   account: string

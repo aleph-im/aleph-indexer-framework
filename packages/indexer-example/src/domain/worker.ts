@@ -35,7 +35,7 @@ export default class WorkerDomain
   async ethereumIndexTransaction(
     ctx: EthereumParsedTransactionContext,
   ): Promise<EthereumParsedTransactionContext> {
-    console.log('Index ETH transaction', ctx)
+    console.log('Index ETH transaction', JSON.stringify(ctx, null, 2))
     return ctx
   }
 
