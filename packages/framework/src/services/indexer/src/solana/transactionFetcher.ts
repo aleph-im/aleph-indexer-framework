@@ -38,39 +38,6 @@ export class SolanaTransactionFetcher extends BaseTransactionFetcher<SolanaParse
     )
   }
 
-  fetchTransactionsBySignature(params: SignatureRange): Promise<number> {
-    params.signatures = params.signatures.map((sig) => sig.toLocaleLowerCase())
-    return super.fetchTransactionsBySignature(params)
-  }
-
-  fetchAccountTransactionsByDate(params: AccountDateRange): Promise<number> {
-    params.account = params.account.toLowerCase()
-    return super.fetchAccountTransactionsByDate(params)
-  }
-
-  getRequests(
-    filters?: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]> {
-    if (filters?.account) {
-      filters.account = filters.account.toLowerCase()
-    }
-
-    if (filters?.signature) {
-      filters.signature = filters.signature.toLowerCase()
-    }
-
-    return super.getRequests(filters)
-  }
-
-  onTxs(chunk: SolanaParsedTransaction[]): Promise<void> {
-    chunk = chunk.map((item) => {
-      item.signature = item.signature.toLowerCase()
-      return item
-    })
-
-    return super.onTxs(chunk)
-  }
-
   protected async fetchTransactionSignatures(
     requestParams: TransactionRequestParams,
   ): Promise<void | string[][] | AsyncIterable<string[]>> {

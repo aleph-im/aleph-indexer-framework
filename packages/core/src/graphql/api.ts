@@ -66,7 +66,7 @@ export class GraphQLServer {
   }
 
   start(port = 8080): void {
-    this.app.listen(port, () => {
+    this.app.listen(port, '::', () => {
       console.log(`Running a GraphQL API server at localhost:${port}`)
     })
   }

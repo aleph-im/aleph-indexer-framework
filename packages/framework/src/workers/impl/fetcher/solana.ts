@@ -47,14 +47,14 @@ export default async (
 
   // DALs
   const accountSignatureDAL = createSolanaAccountTransactionHistoryDAL(basePath)
-  const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath)
+  const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath, true)
   const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
   const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
   const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
   const pendingTransactionDAL = createPendingTransactionDAL(basePath)
   const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
   const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
-  const rawTransactionDAL = createRawTransactionDAL<SolanaRawTransaction>(basePath)
+  const rawTransactionDAL = createRawTransactionDAL<SolanaRawTransaction>(basePath, true)
 
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     solanaPrivateRPC,

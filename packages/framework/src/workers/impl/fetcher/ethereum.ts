@@ -47,7 +47,7 @@ export default async (
   const pendingTransactionDAL = createPendingTransactionDAL(basePath)
   const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
   const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
-  const rawTransactionDAL = createRawTransactionDAL<EthereumRawTransaction>(basePath, true)
+  const rawTransactionDAL = createRawTransactionDAL<EthereumRawTransaction>(basePath, false)
 
   const ethereumClient = createEthereumClient(url, accountSignatureDAL)
 
