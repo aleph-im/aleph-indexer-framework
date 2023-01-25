@@ -135,22 +135,15 @@ export const Product = new GraphQLObjectType({
   name: 'Product',
   fields: {
     symbol: { type: new GraphQLNonNull(GraphQLString) },
-    assetType: { type: new GraphQLNonNull(GraphQLString) },
-    quoteCurrency: { type: new GraphQLNonNull(GraphQLString) },
+    asset_type: { type: new GraphQLNonNull(GraphQLString) },
+    quote_currency: { type: new GraphQLNonNull(GraphQLString) },
     tenor: { type: new GraphQLNonNull(GraphQLString) },
-    priceAccount: { type: new GraphQLNonNull(GraphQLString) },
+    price_account: { type: new GraphQLNonNull(GraphQLString) },
     index: { type: new GraphQLNonNull(GraphQLString) },
   },
 })
 
 // ------------------- ACCOUNTS ---------------------------
-
-export const AccountsEnum = new GraphQLEnumType({
-  name: 'AccountsEnum',
-  values: {
-    ProductAccount: { value: 'ProductAccount' },
-  },
-})
 
 export const ParsedAccountsData = new GraphQLObjectType({
   name: 'ParsedAccountsData',
@@ -188,25 +181,13 @@ export const ParsedAccountsData = new GraphQLObjectType({
   },
 })
 
-const commonAccountInfoFields = {
-  name: { type: new GraphQLNonNull(GraphQLString) },
-  programId: { type: new GraphQLNonNull(GraphQLString) },
-  address: { type: new GraphQLNonNull(GraphQLString) },
-  type: { type: new GraphQLNonNull(AccountsEnum) },
-}
-
-const Account = new GraphQLInterfaceType({
-  name: 'Account',
-  fields: {
-    ...commonAccountInfoFields,
-  },
-})
-
 export const PythOracleAccountsInfo = new GraphQLObjectType({
   name: 'PythOracleAccountsInfo',
-  interfaces: [Account],
   fields: {
-    ...commonAccountInfoFields,
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    programId: { type: new GraphQLNonNull(GraphQLString) },
+    address: { type: new GraphQLNonNull(GraphQLString) },
+    type: { type: new GraphQLNonNull(GraphQLString) },
     data: { type: new GraphQLNonNull(ParsedAccountsData) },
   },
 })
