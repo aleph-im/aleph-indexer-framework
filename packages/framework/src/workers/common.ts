@@ -1,6 +1,5 @@
 import path from 'path'
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '@aleph-indexer/core'
 import { FetcherMsClient, FetcherMsMain } from '../services/fetcher/index.js'
 import { IndexerMsClient, IndexerMsMain } from '../services/indexer/index.js'
 import { WorkerKind } from '../utils/workers.js'
@@ -8,6 +7,7 @@ import { IndexerWorkerDomainI } from '../main.js'
 import { ParserMsClient } from '../services/parser/client.js'
 import { ParserMsMain } from '../services/parser/main.js'
 import { EventOptions } from '../services/common.js'
+import { Blockchain } from '../types/common.js'
 
 // Clients -------------------------------------------
 

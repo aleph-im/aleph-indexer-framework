@@ -1,5 +1,4 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
-import { Blockchain } from '@aleph-indexer/core'
 import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import { FetcherMsMain } from './main.js'
 import {

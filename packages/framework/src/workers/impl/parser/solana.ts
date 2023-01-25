@@ -1,10 +1,11 @@
 /* eslint-disable prettier/prettier */
-import { ParsedAccountInfoV1, RawAccountInfo, SolanaParsedTransaction, SolanaRawTransaction, Utils } from '@aleph-indexer/core'
+import {  Utils } from '@aleph-indexer/core'
 import { SolanaParser } from '../../../services/parser/src/solana/parser.js'
 import { SolanaTransactionParser } from '../../../services/parser/src/solana/transaction/transactionParser.js'
 import { SolanaInstructionParser } from '../../../services/parser/src/solana/instruction/instructionParser.js'
 import { SolanaAccountStateParser } from '../../../services/parser/src/solana/accountState/accountStateParser.js'
 import { BlockchainParserI } from '../../../services/parser/src/base/types.js'
+import { ParsedAccountInfoV1, RawAccountInfo, SolanaParsedTransaction, SolanaRawTransaction } from '../../../types/solana.js'
 
 export default async (
   basePath: string,

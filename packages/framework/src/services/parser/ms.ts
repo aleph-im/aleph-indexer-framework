@@ -1,9 +1,9 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
 import {
-  RawTransaction,
-  ParsedTransaction,
   Blockchain,
-} from '@aleph-indexer/core'
+  ParsedTransaction,
+  RawTransaction,
+} from '../../types/common.js'
 import { MsIds, MainFactory } from '../common.js'
 import { ParserMsMain } from './main.js'
 import {

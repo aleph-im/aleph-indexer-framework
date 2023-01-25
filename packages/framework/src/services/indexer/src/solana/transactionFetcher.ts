@@ -1,4 +1,3 @@
-import { Blockchain, SolanaParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { NonceTimestamp } from '../base/nonce.js'
 import {
@@ -11,11 +10,8 @@ import { TransactionRequestPendingSignatureStorage } from '../base/dal/transacti
 import { TransactionRequestResponseStorage } from '../base/dal/transactionRequestResponse.js'
 import { TransactionRequestIncomingTransactionStorage } from '../base/dal/transactionRequestIncomingTransaction.js'
 import { BaseTransactionFetcher } from '../base/transactionFetcher.js'
-import {
-  AccountDateRange,
-  GetTransactionPendingRequestsRequestArgs,
-  SignatureRange,
-} from '../base/types.js'
+import { Blockchain } from '../../../../types/common.js'
+import { SolanaParsedTransaction } from '../../../../types/solana.js'
 
 export class SolanaTransactionFetcher extends BaseTransactionFetcher<SolanaParsedTransaction> {
   constructor(

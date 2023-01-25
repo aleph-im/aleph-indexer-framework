@@ -1,12 +1,3 @@
-import {
-  FetcherStateLevelStorage,
-  EthereumAccountTransactionHistoryPaginationCursor,
-  EthereumAccountTransactionHistoryStorage,
-  Blockchain,
-  EthereumClient,
-  EthereumSignature,
-} from '@aleph-indexer/core'
-
 import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher.js'
 import {
   AddAccountTransactionRequestArgs,
@@ -14,11 +5,21 @@ import {
   FetchAccountTransactionsByDateRequestArgs,
   GetAccountTransactionStateRequestArgs,
 } from '../base/types.js'
-import { EthereumAccountTransactionHistoryState } from './types.js'
+import {
+  EthereumAccountTransactionHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryState,
+} from './types.js'
 import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { PendingAccountStorage } from '../base/dal/account.js'
 import { FetcherMsClient } from '../../client.js'
-import { EthereumBlockFetcher } from './blockFetcher.js'
+import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
+import { Blockchain } from '../../../../types/common.js'
+import { EthereumSignature } from '../../../../types/ethereum.js'
+import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
+import {
+  EthereumAccountTransactionHistoryStorage,
+  EthereumClient,
+} from '../../../../rpc/ethereum/index.js'
 
 export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFetcher<
   EthereumAccountTransactionHistoryPaginationCursor,
@@ -32,7 +33,7 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
   constructor(
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
-    protected blockFetcher: EthereumBlockFetcher,
+    protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
     ...args: [
       FetcherMsClient,
       EthereumAccountTransactionHistoryStorage,
@@ -97,7 +98,7 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
       account,
       this.fetcherStateDAL,
       this.ethereumClient,
-      this.blockFetcher,
+      this.blockHistoryFetcher,
     )
   }
 

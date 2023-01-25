@@ -1,9 +1,7 @@
 import { ServiceBroker } from 'moleculer'
-import {
-  Blockchain,
-  EthereumClient,
-  EthereumRawTransaction,
-} from '@aleph-indexer/core'
+import { EthereumClient } from '../../../../rpc/ethereum/client.js'
+import { Blockchain } from '../../../../types/common.js'
+import { EthereumRawTransaction } from '../../../../types/ethereum.js'
 import { PendingTransactionStorage } from '../base/dal/pendingTransaction.js'
 import { RawTransactionStorage } from '../base/dal/rawTransaction.js'
 import { BaseTransactionFetcher } from '../base/transactionFetcher.js'

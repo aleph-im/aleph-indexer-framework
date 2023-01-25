@@ -1,17 +1,19 @@
 import { pipeline } from 'stream'
 import { promisify } from 'util'
-import {
-  SolanaInstructionContext,
-  SolanaParsedInnerInstruction,
-  SolanaParsedInstruction,
-  SolanaParsedTransaction,
-  SolanaParsedTransactionContext,
-  Utils,
-} from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   TransactionDateRangeResponse,
 } from '../../../../../services/indexer/src/base/types.js'
+import {
+  SolanaInstructionContext,
+  SolanaParsedTransactionContext,
+} from '../../../../../services/parser/src/solana/types.js'
+import {
+  SolanaParsedInnerInstruction,
+  SolanaParsedInstruction,
+  SolanaParsedTransaction,
+} from '../../../../../types/solana.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 

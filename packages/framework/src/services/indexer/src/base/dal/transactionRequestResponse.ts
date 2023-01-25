@@ -1,8 +1,5 @@
-import {
-  EntityStorage,
-  EntityUpdateOp,
-  ParsedTransaction,
-} from '@aleph-indexer/core'
+import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
+import { ParsedTransaction } from '../../../../../types/common.js'
 
 export type TransactionSignatureResponse = {
   signature: string

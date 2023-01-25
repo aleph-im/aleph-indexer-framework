@@ -1,4 +1,3 @@
-import { EthereumParsedTransactionContext } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
@@ -7,9 +6,8 @@ import {
   createStatsTimeSeriesDAL,
   EthereumIndexerWorkerDomainI,
 } from '@aleph-indexer/framework'
-import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
-import { ACCOUNT_MAP } from '../constants.js'
+import { EthereumParsedTransactionContext } from '@aleph-indexer/framework'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
@@ -17,11 +15,9 @@ export default class WorkerDomain
 {
   constructor(
     protected context: IndexerDomainContext,
-    protected eventParser = eParser,
     protected eventDAL = createEventDAL(context.dataPath),
     protected statsStateDAL = createStatsStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
-    protected programId = ACCOUNT_MAP[context.projectId],
   ) {
     super(context)
   }

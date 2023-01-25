@@ -1,9 +1,9 @@
 import {
   EntityUpdateOp,
-  ParsedTransaction,
   PendingWork,
   PendingWorkStorage,
 } from '@aleph-indexer/core'
+import { ParsedTransaction } from '../../../../../types/common.js'
 
 export type TransactionRequestIncomingTransactionStorage<
   T extends ParsedTransaction<unknown>,

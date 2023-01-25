@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Blockchain, EthereumParsedTransaction, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import { BlockchainIndexerI, IndexerMsClient, IndexerWorkerDomainI } from '../../../main.js'
 import { EthereumIndexer } from '../../../services/indexer/src/ethereum/indexer.js'
 import { createTransactionIndexerStateDAL } from '../../../services/indexer/src/base/dal/transactionIndexerState.js'
@@ -10,6 +10,8 @@ import { createTransactionRequestResponseDAL } from '../../../services/indexer/s
 import { EthereumTransactionFetcher } from '../../../services/indexer/src/ethereum/transactionFetcher.js'
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { ParserMsClient } from '../../../services/parser/client.js'
+import { Blockchain } from '../../../types/common.js'
+import { EthereumParsedTransaction } from '../../../services/parser/src/ethereum/types.js'
 
 export default async (
   basePath: string,

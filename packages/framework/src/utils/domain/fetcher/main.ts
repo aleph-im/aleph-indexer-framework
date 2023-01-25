@@ -1,10 +1,11 @@
-import { Blockchain, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   FetcherMainDomainContext,
   AccountTransactionHistoryState,
   FetcherState,
   TransactionState,
 } from '../../../services/fetcher/src/base/types.js'
+import { Blockchain } from '../../../types/common.js'
 
 /**
  * The main fetcher domain class.

@@ -1,12 +1,15 @@
 /* eslint-disable prettier/prettier */
 import path from 'path'
-import { EthereumParsedAccountState, EthereumRawAccountState, EthereumParsedTransaction, EthereumRawTransaction, createEthereumClient, config } from '@aleph-indexer/core'
+import {  config } from '@aleph-indexer/core'
 import { EthereumParser } from '../../../services/parser/src/ethereum/parser.js'
 import { EthereumAccountStateParser } from '../../../services/parser/src/ethereum/accountStateParser.js'
 import { EthereumTransactionParser } from '../../../services/parser/src/ethereum/transactionParser.js'
 import { BlockchainParserI } from '../../../services/parser/src/base/types.js'
 import { AbiFactory } from '../../../services/parser/src/ethereum/abiFactory.js'
 import { Utils } from '@aleph-indexer/core'
+import { EthereumRawAccountState, EthereumRawTransaction } from '../../../types/ethereum.js'
+import { EthereumParsedAccountState, EthereumParsedTransaction } from '../../../services/parser/src/ethereum/types.js'
+import { createEthereumClient } from '../../../rpc/ethereum/index.js'
 
 export default async (
   basePath: string,

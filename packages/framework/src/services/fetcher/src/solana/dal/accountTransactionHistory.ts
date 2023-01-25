@@ -1,12 +1,9 @@
-import {
-  EntityStorage,
-  EntityUpdateOp,
-  SolanaSignature,
-} from '@aleph-indexer/core'
+import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 import {
   AccountTransactionHistoryDALIndex,
   AccountTransactionHistoryStorage,
 } from '../../base/dal/accountTransactionHistory.js'
+import { SolanaSignature } from '../types.js'
 
 export type SolanaAccountTransactionHistoryStorage =
   AccountTransactionHistoryStorage<SolanaSignature>

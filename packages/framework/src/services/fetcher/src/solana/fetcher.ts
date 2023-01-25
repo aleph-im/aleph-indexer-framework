@@ -1,4 +1,3 @@
-import { Blockchain } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   GetAccountTransactionStateRequestArgs,
@@ -9,16 +8,17 @@ import {
   FetchAccountTransactionsBySlotRequestArgs,
   SolanaAccountTransactionHistoryState,
 } from './types.js'
-import { SolanaAccountStateFetcher } from './accountStateFetcher.js'
+import { SolanaStateFetcher } from './stateFetcher.js'
 import { BaseFetcher } from '../base/fetcher.js'
 import { FetcherMsClient } from '../../client.js'
+import { Blockchain } from '../../../../types/common.js'
 
 export class SolanaFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
     protected fetcherClient: FetcherMsClient,
     protected transactionHistoryFetcher: SolanaTransactionHistoryFetcher,
     protected transactionFetcher: SolanaTransactionFetcher,
-    protected accountStateFetcher: SolanaAccountStateFetcher,
+    protected accountStateFetcher: SolanaStateFetcher,
   ) {
     super(
       Blockchain.Solana,

@@ -1,10 +1,8 @@
-import {
-  EthereumRawTransaction,
-  EthereumParsedTransaction,
-  EthereumClient,
-} from '@aleph-indexer/core'
+import { EthereumClient } from '../../../../rpc/ethereum/index.js'
+import { EthereumRawTransaction } from '../../../../types/ethereum.js'
 import { DefinedParser } from '../base/types.js'
 import { AbiFactory } from './abiFactory.js'
+import { EthereumParsedTransaction } from './types.js'
 
 export class EthereumTransactionParser extends DefinedParser<
   EthereumRawTransaction,

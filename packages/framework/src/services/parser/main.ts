@@ -1,9 +1,4 @@
 import { ServiceBroker } from 'moleculer'
-import {
-  RawTransaction,
-  ParsedTransaction,
-  Blockchain,
-} from '@aleph-indexer/core'
 import { ParserMsI } from './interface.js'
 import { MsIds, MsMainWithEvents } from '../common.js'
 import {
@@ -13,6 +8,11 @@ import {
   ParseTransactionRequestArgs,
   RawTransactionMsg,
 } from './src/base/types.js'
+import {
+  Blockchain,
+  ParsedTransaction,
+  RawTransaction,
+} from '../../types/common.js'
 
 export class ParserMsMain<
     T extends RawTransaction = RawTransaction,

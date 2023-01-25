@@ -1,4 +1,3 @@
-import { Blockchain, ParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { ParserMsClient } from '../../../parser/client.js'
 import { TransactionIndexerStateStorage } from './dal/transactionIndexerState.js'
@@ -17,6 +16,7 @@ import { BaseAccountTransactionIndexer } from './accountTransactionIndexer.js'
 import { BlockchainIndexerI } from './types.js'
 import { IndexerMsClient } from '../../client.js'
 import { BaseTransactionFetcher } from './transactionFetcher.js'
+import { Blockchain, ParsedTransaction } from '../../../../types/common.js'
 
 /**
  * Main class of the indexer service. Creates and manages all indexers.

@@ -1,5 +1,4 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '@aleph-indexer/core'
 import { MsIds } from '../../../common.js'
 import { IndexerClientI } from '../../interface.js'
 import { TransactionRequest } from './dal/transactionRequest.js'
@@ -11,6 +10,7 @@ import {
   GetTransactionPendingRequestsRequestArgs,
 } from './types.js'
 import { BlockchainRequestArgs } from '../../../types.js'
+import { Blockchain } from '../../../../types/common.js'
 
 /**
  * Client to access the main indexer service through the broker.

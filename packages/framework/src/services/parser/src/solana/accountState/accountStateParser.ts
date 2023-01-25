@@ -1,4 +1,7 @@
-import { AlephParsedAccountInfo, RawAccountInfo } from '@aleph-indexer/core'
+import {
+  AlephParsedAccountInfo,
+  RawAccountInfo,
+} from '../../../../../types/solana.js'
 import { DefinedParser } from '../../base/types.js'
 import { LayoutFactory } from '../layout/layoutFactory.js'
 import { SolanaAccountStateBaseParser } from './accountStateBaseParser.js'

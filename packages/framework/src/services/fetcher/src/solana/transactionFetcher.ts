@@ -1,9 +1,7 @@
 import { ServiceBroker } from 'moleculer'
-import {
-  Blockchain,
-  SolanaRawTransaction,
-  SolanaRPC,
-} from '@aleph-indexer/core'
+import { SolanaRPC } from '../../../../rpc/solana/client.js'
+import { Blockchain } from '../../../../types/common.js'
+import { SolanaRawTransaction } from '../../../../types/solana.js'
 import { PendingTransactionStorage } from '../base/dal/pendingTransaction.js'
 import { RawTransactionStorage } from '../base/dal/rawTransaction.js'
 import { BaseTransactionFetcher } from '../base/transactionFetcher.js'

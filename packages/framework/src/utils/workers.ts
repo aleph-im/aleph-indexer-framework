@@ -1,7 +1,7 @@
-import { Blockchain } from '@aleph-indexer/core'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { MessageChannel, MessagePort, Worker } from 'worker_threads'
+import { Blockchain } from '../types/common.js'
 import { TransportType } from './moleculer/config.js'
 
 const __filename = fileURLToPath(import.meta.url)

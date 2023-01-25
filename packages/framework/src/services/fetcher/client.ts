@@ -1,5 +1,5 @@
-import { Blockchain } from '@aleph-indexer/core'
 import { ServiceBroker } from 'moleculer'
+import { Blockchain } from '../../types/common.js'
 import {
   MsIds,
   getRegistryNodesWithService,

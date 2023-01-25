@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/core'
+import { Blockchain } from '@aleph-indexer/framework'
 import {
   IndexerMainDomain,
   IndexerMainDomainWithDiscovery,
@@ -17,8 +17,9 @@ export default class MainDomain
   }
 
   async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<undefined>[]> {
-    const alephToken = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
-    const example = '0x159a5ef80524a18e8a03a73213ea5d059400f33b'
+    // const alephToken = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
+    // const example = '0x159a5ef80524a18e8a03a73213ea5d059400f33b'
+    const alephMessages = '0x166fd4299364B21c7567e163d85D78d2fb2f8Ad5'
 
     return [
       // {
@@ -35,7 +36,7 @@ export default class MainDomain
       // },
       {
         blockchainId: Blockchain.Ethereum,
-        account: example,
+        account: alephMessages,
         meta: undefined,
         index: {
           transactions: {

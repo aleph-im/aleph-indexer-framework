@@ -1,8 +1,5 @@
-import {
-  Blockchain,
-  ParsedTransaction,
-  StorageValueStream,
-} from '@aleph-indexer/core'
+import { StorageValueStream } from '@aleph-indexer/core'
+import { Blockchain, ParsedTransaction } from '../../../../types/common.js'
 import { TransportType } from '../../../../utils/index.js'
 import { BlockchainRequestArgs } from '../../../types.js'
 import { IndexerMsClient } from '../../client.js'
@@ -10,14 +7,6 @@ import {
   TransactionRequest,
   TransactionRequestType,
 } from './dal/transactionRequest.js'
-import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
-
-export {
-  SolanaInstructionContext as SolanaInstructionContextV1,
-  SolanaParsedTransaction as ParsedTransactionV1,
-  SolanaParsedInstruction as ParsedInstructionV1,
-  SolanaParsedInnerInstruction as ParsedInnerInstructionV1,
-} from '@aleph-indexer/core'
 
 /**
  * Describes a date range associated with an account.

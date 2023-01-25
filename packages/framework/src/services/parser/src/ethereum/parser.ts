@@ -1,10 +1,3 @@
-import {
-  EthereumRawTransaction,
-  EthereumParsedTransaction,
-  EthereumRawAccountState,
-  EthereumParsedAccountState,
-} from '@aleph-indexer/core'
-
 import { BaseParser } from '../base/parser.js'
 import { EthereumAccountStateParser } from './accountStateParser.js'
 import { EthereumTransactionParser } from './transactionParser.js'
@@ -12,6 +5,14 @@ import {
   ParseAccountStateRequestArgs,
   ParseTransactionRequestArgs,
 } from '../base/types.js'
+import {
+  EthereumRawAccountState,
+  EthereumRawTransaction,
+} from '../../../../types/ethereum.js'
+import {
+  EthereumParsedAccountState,
+  EthereumParsedTransaction,
+} from './types.js'
 
 export class EthereumParser extends BaseParser<
   EthereumRawTransaction,

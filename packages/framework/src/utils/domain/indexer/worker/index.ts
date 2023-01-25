@@ -1,10 +1,10 @@
-import { Blockchain, ParsedTransaction } from '@aleph-indexer/core'
 import {
   AccountIndexerRequestArgs,
   IndexerDomainContext,
   IndexerWorkerDomainI,
   TransactionDateRangeResponse,
 } from '../../../../services/indexer/src/base/types.js'
+import { Blockchain, ParsedTransaction } from '../../../../types/common.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,

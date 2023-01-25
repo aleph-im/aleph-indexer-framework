@@ -1,15 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ServiceBroker } from 'moleculer'
-import {
-  solanaPrivateRPC,
-  solanaMainPublicRPC,
-  createFetcherStateDAL,
-  SolanaAccountState,
-  SolanaRawTransaction,
-  solanaPrivateRPCRoundRobin,
-  solanaMainPublicRPCRoundRobin,
-  Utils,
-} from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import { SolanaFetcher } from '../../../services/fetcher/src/solana/fetcher.js'
 import {
   createPendingTransactionCacheDAL,
@@ -22,9 +13,13 @@ import { createPendingAccountDAL } from '../../../services/fetcher/src/base/dal/
 import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
 import { SolanaTransactionFetcher } from '../../../services/fetcher/src/solana/transactionFetcher.js'
 import { SolanaTransactionHistoryFetcher } from '../../../services/fetcher/src/solana/transactionHistoryFetcher.js'
-import { SolanaAccountStateFetcher } from '../../../services/fetcher/src/solana/accountStateFetcher.js'
+import { SolanaStateFetcher } from '../../../services/fetcher/src/solana/stateFetcher.js'
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
+import { solanaMainPublicRPC, solanaMainPublicRPCRoundRobin, solanaPrivateRPC, solanaPrivateRPCRoundRobin } from '../../../rpc/solana/index.js'
+import { SolanaAccountState } from '../../../services/fetcher/src/solana/types.js'
+import { createFetcherStateDAL } from '../../../services/fetcher/src/base/dal/fetcherState.js'
+import { SolanaRawTransaction } from '../../../types/solana.js'
 
 export default async (
   basePath: string,
@@ -75,7 +70,7 @@ export default async (
     rawTransactionDAL,
   )
 
-  const accountStateFetcher = new SolanaAccountStateFetcher(
+  const accountStateFetcher = new SolanaStateFetcher(
     solanaPrivateRPC,
     solanaMainPublicRPC,
     accountStateDAL,

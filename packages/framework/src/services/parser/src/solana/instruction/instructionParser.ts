@@ -1,7 +1,7 @@
 import {
   SolanaParsedInstruction,
   SolanaRawInstruction,
-} from '@aleph-indexer/core'
+} from '../../../../../types/solana.js'
 import { DefinedParser } from '../../base/types.js'
 import { LayoutFactory } from '../layout/layoutFactory.js'
 import { LayoutImplementation } from '../layout/types.js'

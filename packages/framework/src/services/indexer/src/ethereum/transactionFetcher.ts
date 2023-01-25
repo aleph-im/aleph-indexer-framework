@@ -1,4 +1,3 @@
-import { Blockchain, EthereumParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { NonceTimestamp } from '../base/nonce.js'
 import {
@@ -15,6 +14,8 @@ import {
   GetTransactionPendingRequestsRequestArgs,
   SignatureRange,
 } from '../base/types.js'
+import { Blockchain } from '../../../../types/common.js'
+import { EthereumParsedTransaction } from '../../../parser/src/ethereum/types.js'
 
 export class EthereumTransactionFetcher extends BaseTransactionFetcher<EthereumParsedTransaction> {
   constructor(

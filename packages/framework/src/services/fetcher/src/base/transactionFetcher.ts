@@ -1,12 +1,6 @@
 import { DateTime } from 'luxon'
 import { ServiceBroker } from 'moleculer'
-import {
-  Blockchain,
-  PendingWork,
-  PendingWorkPool,
-  RawTransaction,
-  Utils,
-} from '@aleph-indexer/core'
+import { PendingWork, PendingWorkPool, Utils } from '@aleph-indexer/core'
 import { RawTransactionStorage } from './dal/rawTransaction.js'
 import {
   CheckTransactionsRequestArgs,
@@ -18,6 +12,7 @@ import {
 import { MsIds } from '../../../common.js'
 import { PendingTransactionStorage } from './dal/pendingTransaction.js'
 import { RawTransactionWithPeers } from '../../../parser/src/base/types.js'
+import { Blockchain, RawTransaction } from '../../../../types/common.js'
 
 const { sleep } = Utils
 

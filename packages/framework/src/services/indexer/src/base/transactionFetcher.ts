@@ -4,8 +4,6 @@ import {
   PendingWorkPool,
   StorageValueStream,
   Utils,
-  Blockchain,
-  ParsedTransaction,
 } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { NonceTimestamp } from './nonce.js'
@@ -33,6 +31,7 @@ import {
   GetTransactionPendingRequestsRequestArgs,
   SignatureRange,
 } from './types.js'
+import { Blockchain, ParsedTransaction } from '../../../../types/common.js'
 
 const {
   Future,

@@ -1,6 +1,6 @@
 import BN from 'bn.js'
 import { TokenInfo } from '@solana/spl-token-registry'
-import { EventBase } from '@aleph-indexer/core'
+import { EventBase } from '@aleph-indexer/framework'
 
 export enum LendingEventType {
   InitLendingMarket = 'initLendingMarket',

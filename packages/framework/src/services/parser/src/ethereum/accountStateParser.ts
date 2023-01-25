@@ -1,8 +1,6 @@
-import {
-  EthereumRawAccountState,
-  EthereumParsedAccountState,
-} from '@aleph-indexer/core'
+import { EthereumRawAccountState } from '../../../../types/ethereum.js'
 import { DefinedParser } from '../base/types.js'
+import { EthereumParsedAccountState } from './types.js'
 
 export class EthereumAccountStateParser extends DefinedParser<
   EthereumRawAccountState,

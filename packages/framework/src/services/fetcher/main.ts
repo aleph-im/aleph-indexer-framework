@@ -1,4 +1,3 @@
-import { Blockchain } from '@aleph-indexer/core'
 import { FetcherMsI } from './interface.js'
 import {
   AddAccountTransactionRequestArgs,
@@ -20,6 +19,7 @@ import {
 } from './src/base/types.js'
 import { FetcherMsClient } from './client.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
+import { Blockchain } from '../../types/common.js'
 
 /**
  * The main class of the fetcher service.

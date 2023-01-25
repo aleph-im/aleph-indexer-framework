@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/core'
+import { Blockchain } from '../types'
 
 export type BlockchainRequestArgs = {
   blockchainId: Blockchain

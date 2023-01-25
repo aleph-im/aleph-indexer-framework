@@ -1,54 +1,46 @@
+import { EthereumClient } from '../../../../rpc/ethereum/index.js'
 import {
+  EthereumAccountStateFetcherOptions,
   EthereumAccountStateStorage,
-  EthereumClient,
-  EthereumAccountStateFetcher as EthereumStateFetcher,
-  Blockchain,
-} from '@aleph-indexer/core'
-import { PendingAccountStorage } from '../base/dal/account.js'
-
-import { BaseStateFetcherI, BaseStateFetcher } from '../base/stateFetcher.js'
-import {
-  AddAccountStateRequestArgs,
-  DelAccountTransactionRequestArgs,
-} from '../base/types.js'
+} from './types.js'
 
 /**
- * The main class of the fetcher service.
+ * Fetcher account info class: Component of the fetcher that is in charge of managing the
+ * process of obtaining information from the account.
  */
-export class EthereumAccountStateFetcher extends BaseStateFetcher {
+export class EthereumAccountStateFetcher {
   /**
-   * Initialize the fetcher service.
-   * @param accountStateDAL The account info storage.
-   * @param ethereumClient The solana RPC client to use.
+   * Initialize the AccountInfoFetcher and saves the account info in the data access layer.
+   * @param opts Options where the account address is stored and if it needs to be updated.
+   * @param dal The account info storage.
+   * @param ethereumClient The ethereum RPC client to use.
+   * @param id Identifier containing the account address.
    */
   constructor(
+    protected opts: EthereumAccountStateFetcherOptions,
+    protected dal: EthereumAccountStateStorage,
     protected ethereumClient: EthereumClient,
-    protected accountStateDAL: EthereumAccountStateStorage,
-    ...args: [PendingAccountStorage]
-  ) {
-    super(Blockchain.Ethereum, ...args)
+    protected id = `ethereum:account-state:${opts.account}`,
+  ) {}
+
+  async init(): Promise<void> {
+    // @note: no-op
   }
 
-  async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.addAccount(args)
+  async stop(): Promise<void> {
+    // @note: no-op
   }
 
-  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.delAccount(args)
-  }
+  async run(): Promise<void> {
+    const balance = await this.ethereumClient
+      .getSDK()
+      .eth.getBalance(this.opts.account)
 
-  protected getAccountFetcher(account: string): BaseStateFetcherI {
-    const opts = {
-      account,
-      subscribeChanges: true,
+    const state = {
+      account: this.opts.account,
+      balance,
     }
 
-    return new EthereumStateFetcher(
-      opts,
-      this.accountStateDAL,
-      this.ethereumClient,
-    )
+    await this.dal.save(state)
   }
 }

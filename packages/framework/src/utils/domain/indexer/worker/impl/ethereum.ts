@@ -1,14 +1,14 @@
 import { pipeline } from 'stream'
 import { promisify } from 'util'
-import {
-  EthereumParsedTransaction,
-  EthereumParsedTransactionContext,
-  Utils,
-} from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   TransactionDateRangeResponse,
 } from '../../../../../services/indexer/src/base/types.js'
+import {
+  EthereumParsedTransaction,
+  EthereumParsedTransactionContext,
+} from '../../../../../services/parser/src/ethereum/types.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 

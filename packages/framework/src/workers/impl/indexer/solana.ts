@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Blockchain, SolanaParsedTransaction, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import { BlockchainIndexerI, IndexerMsClient, IndexerWorkerDomainI } from '../../../main.js'
 import { SolanaIndexer } from '../../../services/indexer/src/solana/indexer.js'
 import { createTransactionIndexerStateDAL } from '../../../services/indexer/src/base/dal/transactionIndexerState.js'
@@ -10,6 +10,8 @@ import { createTransactionRequestResponseDAL } from '../../../services/indexer/s
 import { SolanaTransactionFetcher } from '../../../services/indexer/src/solana/transactionFetcher.js'
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import { ParserMsClient } from '../../../services/parser/client.js'
+import { Blockchain } from '../../../types/common.js'
+import { SolanaParsedTransaction } from '../../../types/solana.js'
 
 export default async (
   basePath: string,

@@ -1,10 +1,9 @@
+import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 import {
+  EthereumAccountTransactionHistoryDALIndex,
   EthereumAccountTransactionHistoryEntity,
   EthereumAccountTransactionHistoryStorage,
-  EthereumAccountTransactionHistoryDALIndex,
-  EntityStorage,
-  EntityUpdateOp,
-} from '@aleph-indexer/core'
+} from '../../../../../rpc/ethereum/dal.js'
 import { AccountTransactionHistoryDALIndex } from '../../base/dal/accountTransactionHistory.js'
 
 const signatureKey = {

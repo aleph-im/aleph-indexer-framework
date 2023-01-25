@@ -1,4 +1,3 @@
-import { Blockchain } from '@aleph-indexer/core'
 import {
   AddAccountStateRequestArgs,
   BlockchainFetcherI,
@@ -20,6 +19,7 @@ import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher
 import { BaseTransactionFetcher } from '../base/transactionFetcher.js'
 import { BaseStateFetcher } from './stateFetcher.js'
 import { FetcherMsClient } from '../../client.js'
+import { Blockchain } from '../../../../types/common.js'
 
 /**
  * The main class of the fetcher service.

@@ -1,8 +1,7 @@
-import {
-  EntityStorage,
-  AccountState,
-  AccountStateStorage,
-} from '@aleph-indexer/core'
+import { EntityStorage } from '@aleph-indexer/core'
+
+export type AccountState = { account: string }
+export type AccountStateStorage<T extends AccountState> = EntityStorage<T>
 
 const accountCaseSensitiveKey = {
   get: (e: AccountState) => e.account,

@@ -1,4 +1,5 @@
-import { EntityStorage, EthereumBlock } from '@aleph-indexer/core'
+import { EntityStorage } from '@aleph-indexer/core'
+import { EthereumBlock } from '../../../../../types/ethereum.js'
 
 export type EthereumBlockStorage = EntityStorage<EthereumBlock>
 

@@ -1,15 +1,5 @@
 import { compose } from 'node:stream'
-import {
-  FetcherStateLevelStorage,
-  SolanaSignatureInfo,
-  SolanaRPC,
-  SolanaAccountTransactionHistoryPaginationCursor,
-  StorageEntry,
-  Utils,
-  Blockchain,
-  SolanaSignature,
-} from '@aleph-indexer/core'
-
+import { StorageEntry, Utils } from '@aleph-indexer/core'
 import {
   SolanaAccountTransactionHistoryDALIndex,
   SolanaAccountTransactionHistoryStorage,
@@ -18,11 +8,17 @@ import { BaseTransactionHistoryFetcher } from '../base/transactionHistoryFetcher
 import { GetAccountTransactionStateRequestArgs } from '../base/types.js'
 import {
   FetchAccountTransactionsBySlotRequestArgs,
+  SolanaAccountTransactionHistoryPaginationCursor,
   SolanaAccountTransactionHistoryState,
+  SolanaSignature,
+  SolanaSignatureInfo,
 } from './types.js'
 import { SolanaAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { PendingAccountStorage } from '../base/dal/account.js'
 import { FetcherMsClient } from '../../client.js'
+import { Blockchain } from '../../../../types/common.js'
+import { SolanaRPC } from '../../../../rpc/solana/index.js'
+import { FetcherStateLevelStorage } from '../base/dal/fetcherState.js'
 
 const { StreamBuffer, StreamMap } = Utils
 

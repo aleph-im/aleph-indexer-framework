@@ -1,12 +1,5 @@
 import { compose } from 'node:stream'
-import {
-  BaseHistoryFetcher,
-  Blockchain,
-  SolanaSignatureInfo,
-  StorageEntry,
-  Utils,
-  FetcherPool,
-} from '@aleph-indexer/core'
+import { StorageEntry, Utils } from '@aleph-indexer/core'
 import {
   FetchAccountTransactionsByDateRequestArgs,
   AccountTransactionHistoryFetcherState,
@@ -22,6 +15,10 @@ import {
   AccountTransactionHistoryStorage,
   AccountTransactionHistoryStorageEntity,
 } from './dal/accountTransactionHistory.js'
+import { FetcherPool } from './fetcherPool.js'
+import { Blockchain } from '../../../../types/common.js'
+import { SolanaSignatureInfo } from '../solana/types.js'
+import { BaseHistoryFetcher } from './baseHistoryFetcher.js'
 
 const { StreamBuffer, StreamMap } = Utils
 

@@ -1,11 +1,3 @@
-import {
-  SolanaParsedInstruction,
-  ParsedAccountInfoV1,
-  SolanaRawTransaction,
-  SolanaRawInstruction,
-  RawAccountInfo,
-  SolanaParsedTransaction,
-} from '@aleph-indexer/core'
 import { SolanaTransactionParser } from './transaction/transactionParser.js'
 import { BaseParser } from '../base/parser.js'
 import {
@@ -14,6 +6,14 @@ import {
 } from '../base/types.js'
 import { SolanaInstructionParser } from './instruction/instructionParser.js'
 import { SolanaAccountStateParser } from './accountState/accountStateParser.js'
+import {
+  ParsedAccountInfoV1,
+  RawAccountInfo,
+  SolanaParsedInstruction,
+  SolanaParsedTransaction,
+  SolanaRawInstruction,
+  SolanaRawTransaction,
+} from '../../../../types/solana.js'
 
 export class SolanaParser extends BaseParser<
   SolanaRawTransaction,

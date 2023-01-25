@@ -1,5 +1,16 @@
-import { ParsedTransaction, RawTransaction } from '@aleph-indexer/core'
+import { ParsedTransaction, RawTransaction } from '../../../../types/common.js'
 import { BlockchainRequestArgs } from '../../../types.js'
+
+export type ParserContext = {
+  account: string
+  startDate: number
+  endDate: number
+}
+
+export type ParsedTransactionContext<T> = {
+  tx: T
+  parserContext: ParserContext
+}
 
 /**
  * Contains the original and parsed data, as well as the context of the parsing.

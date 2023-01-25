@@ -1,13 +1,13 @@
 import {
   AlephParsedErrorIx,
+  AlephParsedInnerTransaction,
+  ProgramErrorType,
   SolanaParsedInstruction,
   SolanaParsedTransaction,
   SolanaRawInstruction,
   SolanaRawTransaction,
-  ProgramErrorType,
   TransactionErrorType,
-  AlephParsedInnerTransaction,
-} from '@aleph-indexer/core'
+} from '../../../../../types/solana.js'
 import { StrictParser } from '../../base/types.js'
 import { SolanaInstructionParser } from '../instruction/instructionParser.js'
 

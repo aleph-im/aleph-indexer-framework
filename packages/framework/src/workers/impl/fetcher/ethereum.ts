@@ -1,21 +1,14 @@
 /* eslint-disable prettier/prettier */
 import { ServiceBroker } from 'moleculer'
-import {
-  createFetcherStateDAL,
-  createEthereumClient,
-  config,
-  EthereumAccountState,
-  EthereumRawTransaction,
-  Utils,
-} from '@aleph-indexer/core'
+import { config, Utils } from '@aleph-indexer/core'
 import { EthereumFetcher } from '../../../services/fetcher/src/ethereum/fetcher.js'
 import { createEthereumBlockDAL as createEthereumRawBlockDAL } from '../../../services/fetcher/src/ethereum/dal/block.js'
 import { createEthereumAccountTransactionHistoryDAL } from '../../../services/fetcher/src/ethereum/dal/accountTransactionHistory.js'
 import { BlockchainFetcherI } from '../../../services/fetcher/src/base/types.js'
 import { EthereumTransactionHistoryFetcher } from '../../../services/fetcher/src/ethereum/transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from '../../../services/fetcher/src/ethereum/transactionFetcher.js'
-import { EthereumAccountStateFetcher } from '../../../services/fetcher/src/ethereum/accountStateFetcher.js'
-import { EthereumBlockFetcher } from '../../../services/fetcher/src/ethereum/blockFetcher.js'
+import { EthereumStateFetcher } from '../../../services/fetcher/src/ethereum/stateFetcher.js'
+import { EthereumBlockHistoryFetcher } from '../../../services/fetcher/src/ethereum/blockHistoryFetcher.js'
 import { createPendingAccountDAL } from '../../../services/fetcher/src/base/dal/account.js'
 import { FetcherMsClient } from '../../../services/fetcher/client.js'
 import {
@@ -25,6 +18,10 @@ import {
 } from '../../../services/fetcher/src/base/dal/pendingTransaction.js'
 import { createRawTransactionDAL } from '../../../services/fetcher/src/base/dal/rawTransaction.js'
 import { createAccountStateDAL } from '../../../services/fetcher/src/base/dal/accountState.js'
+import { EthereumAccountState } from '../../../services/fetcher/src/ethereum/types.js'
+import { createFetcherStateDAL } from '../../../services/fetcher/src/base/dal/fetcherState.js'
+import { EthereumRawTransaction } from '../../../types/ethereum.js'
+import { createEthereumClient } from '../../../rpc/ethereum/index.js'
 
 export default async (
   basePath: string,
@@ -51,7 +48,7 @@ export default async (
 
   const ethereumClient = createEthereumClient(url, accountSignatureDAL)
 
-  const blockFetcher = new EthereumBlockFetcher(
+  const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
     ethereumClient,
     rawBlockDAL,
     blockFetcherHistoryStateDAL,
@@ -60,7 +57,7 @@ export default async (
   const transactionHistoryFetcher = new EthereumTransactionHistoryFetcher(
     ethereumClient,
     transactionHistoryFetcherHistoryStateDAL,
-    blockFetcher,
+    blockHistoryFetcher,
     fetcherClient,
     accountSignatureDAL,
     transactionHistoryPendingAccountDAL,
@@ -75,7 +72,7 @@ export default async (
     rawTransactionDAL,
   )
 
-  const accountStateFetcher = new EthereumAccountStateFetcher(
+  const accountStateFetcher = new EthereumStateFetcher(
     ethereumClient,
     accountStateDAL,
     accountStatePendingAccountDAL,
@@ -86,6 +83,6 @@ export default async (
     transactionHistoryFetcher,
     transactionFetcher,
     accountStateFetcher,
-    blockFetcher,
+    blockHistoryFetcher,
   )
 }

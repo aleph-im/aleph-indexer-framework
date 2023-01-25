@@ -1,4 +1,3 @@
-import { Blockchain, EthereumParsedTransaction } from '@aleph-indexer/core'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import { ParserMsClient } from '../../../parser/client.js'
 import { TransactionIndexerStateStorage } from '../base/dal/transactionIndexerState.js'
@@ -15,6 +14,8 @@ import {
 import { BaseIndexer } from '../base/indexer.js'
 import { IndexerMsClient } from '../../client.js'
 import { EthereumTransactionFetcher } from './transactionFetcher.js'
+import { Blockchain } from '../../../../types/common.js'
+import { EthereumParsedTransaction } from '../../../parser/src/ethereum/types.js'
 
 export class EthereumIndexer
   extends BaseIndexer<EthereumParsedTransaction>

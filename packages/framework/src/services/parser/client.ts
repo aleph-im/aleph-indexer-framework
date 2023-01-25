@@ -1,9 +1,9 @@
 import { ServiceBroker } from 'moleculer'
 import {
   Blockchain,
-  RawTransaction,
   ParsedTransaction,
-} from '@aleph-indexer/core'
+  RawTransaction,
+} from '../../types/common.js'
 import {
   EventOptions,
   getRegistryNodesWithService,

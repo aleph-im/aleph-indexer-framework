@@ -2,7 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import fetch from 'node-fetch'
 import { AbiItem } from 'web3-utils'
-import { config, EthereumClient } from '@aleph-indexer/core'
+import { config } from '@aleph-indexer/core'
+import { EthereumClient } from '../../../../rpc/ethereum/index.js'
 
 export type Abi = [AbiItem]
 

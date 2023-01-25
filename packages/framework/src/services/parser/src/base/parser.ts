@@ -1,4 +1,4 @@
-import { RawTransaction, ParsedTransaction } from '@aleph-indexer/core'
+import { ParsedTransaction, RawTransaction } from '../../../../types/common.js'
 import {
   BlockchainParserI,
   ParseAccountStateRequestArgs,

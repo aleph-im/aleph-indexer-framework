@@ -1,10 +1,12 @@
-import { PendingWorkPool, PendingWork, Blockchain } from '@aleph-indexer/core'
+import { PendingWorkPool, PendingWork, Utils } from '@aleph-indexer/core'
 import {
   AddAccountStateRequestArgs,
   DelAccountTransactionRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
-import { MAX_TIMER_INTEGER } from '@aleph-indexer/core/dist/constants.js'
+import { Blockchain } from '../../../../types/common.js'
+
+const { MAX_TIMER_INTEGER } = Utils
 
 export interface BaseStateFetcherI {
   init(): Promise<void>

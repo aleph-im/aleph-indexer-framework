@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/core'
+import { Blockchain } from '../../types/common.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 import { IndexerMsClient } from './client.js'
 import { IndexerMsI } from './interface.js'

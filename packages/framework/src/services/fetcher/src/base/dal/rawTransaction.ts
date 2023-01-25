@@ -1,4 +1,5 @@
-import { EntityStorage, RawTransaction } from '@aleph-indexer/core'
+import { EntityStorage } from '@aleph-indexer/core'
+import { RawTransaction } from '../../../../../types/index.js'
 
 export type RawTransactionStorage<T extends RawTransaction> = EntityStorage<T>
 

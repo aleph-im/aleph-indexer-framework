@@ -1,8 +1,4 @@
-import {
-  ParsedTransaction,
-  StorageValueStream,
-  Utils,
-} from '@aleph-indexer/core'
+import { StorageValueStream, Utils } from '@aleph-indexer/core'
 import { BaseTransactionFetcher } from './transactionFetcher.js'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import {
@@ -24,6 +20,7 @@ import {
   mergeDateRangesFromIterable,
 } from '../../../../utils/time.js'
 import { AccountTransactionHistoryState } from '../../../fetcher/src/base/types.js'
+import { ParsedTransaction } from '../../../../types/common.js'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 

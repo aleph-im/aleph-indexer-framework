@@ -1,9 +1,4 @@
 import { ServiceBroker } from 'moleculer'
-import {
-  RawTransaction,
-  ParsedTransaction,
-  Blockchain,
-} from '@aleph-indexer/core'
 import { MsIds } from '../../../common.js'
 import { ParserClientI } from '../../interface.js'
 import {
@@ -11,6 +6,11 @@ import {
   ParseTransactionRequestArgs,
 } from './types.js'
 import { BlockchainRequestArgs } from '../../../types.js'
+import {
+  Blockchain,
+  ParsedTransaction,
+  RawTransaction,
+} from '../../../../types/common.js'
 
 export abstract class BaseParserClient<
   T extends RawTransaction,

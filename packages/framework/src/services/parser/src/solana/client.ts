@@ -1,11 +1,11 @@
 import {
-  SolanaRawTransaction,
-  SolanaParsedTransaction,
-  RawAccountInfo,
   ParsedAccountInfoV1,
-  SolanaRawInstruction,
+  RawAccountInfo,
   SolanaParsedInstruction,
-} from '@aleph-indexer/core'
+  SolanaParsedTransaction,
+  SolanaRawInstruction,
+  SolanaRawTransaction,
+} from '../../../../types/solana.js'
 import { BlockchainRequestArgs } from '../../../types.js'
 import { BaseParserClient } from '../base/client.js'
 import { ParseInstructionRequestArgs } from './types.js'
