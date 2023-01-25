@@ -7,6 +7,7 @@ import {
   PythAccountInfo,
 } from '../types.js'
 import MainDomain from '../domain/main.js'
+import { getTimeFrame } from '../constants.js'
 
 export type PricesFilters = {
   address: string
@@ -96,11 +97,12 @@ export class APIResolver {
     if (limit < 1 || limit > 1000)
       throw new Error('400 Bad Request: 1 <= limit <= 1000')
 
+    const timeFrame = getTimeFrame(candleInterval)
     const result: Candle[] = []
 
     const { series } = await this.domain.getCandles(
       address,
-      candleInterval,
+      timeFrame,
       startDate,
       endDate,
       {

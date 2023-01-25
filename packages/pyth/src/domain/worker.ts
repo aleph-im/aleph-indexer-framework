@@ -24,7 +24,6 @@ import {
 import { AccountDomain } from './account.js'
 import { createCandles } from './stats/timeSeries.js'
 import { PYTH_PROGRAM_ID } from '../constants.js'
-import { DateTime } from 'luxon'
 
 const { isParsedIx, listGroupBy } = Utils
 
@@ -118,18 +117,18 @@ export default class WorkerDomain
   async getCandles(
     account: string,
     timeFrame: number,
-    startDate: DateTime,
-    endDate: DateTime,
-    opts: any,
+    startDate: number,
+    endDate: number,
+    opts?: any,
   ): Promise<AccountTimeSeriesStats<Candle>> {
     const { limit, reverse } = opts
     const feed = this.getAccount(account)
     return await feed.getTimeSeriesStats('candle', {
-      startTimestamp: startDate.toMillis(),
-      endTimestamp: endDate.toMillis(),
+      timeFrame: timeFrame,
+      startTimestamp: startDate,
+      endTimestamp: endDate,
       limit,
       reverse,
-      timeFrame,
     })
   }
 
@@ -171,7 +170,7 @@ export default class WorkerDomain
     const parsedPrices: Price[] = []
     for (const accountSlotBatches of Object.values(accountsSlotBatches)) {
       for (const slotBatch of Object.values(accountSlotBatches)) {
-        const price = this.priceParser.parse(slotBatch, this.accounts)
+        const price = this.priceParser.parse(slotBatch, this.getAccount(slotBatch[0].accounts.priceAccount).info)
         if (price) parsedPrices.push(price)
       }
     }

@@ -110,15 +110,15 @@ export default class MainDomain
 
   async getCandles(
     account: string,
-    candleSize: CandleInterval,
+    timeFrame: number,
     startDate: number,
-    endDate?: number,
+    endDate: number,
     opts?: any,
   ): Promise<AccountTimeSeriesStats<Candle>> {
     const stats = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'getCandles',
-      args: [candleSize, startDate, endDate, opts],
+      args: [timeFrame, startDate, endDate, opts],
     })) as AccountTimeSeriesStats
     console.log('getCandles stats', typeof stats)
     return stats
@@ -135,7 +135,7 @@ export default class MainDomain
     for (const account of Object.values(accounts)) {
       const data = account.info.data
       globalStats.totalDataFeeds++
-      switch (data.product.assetType) {
+      switch (data.product.asset_type) {
         case 'Crypto':
           globalStats.totalCryptoDataFeeds++
           break
