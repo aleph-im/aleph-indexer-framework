@@ -111,7 +111,7 @@ export class TimeSeriesStats<I, O> {
       if (timeFrameIndex > 0) {
         trueDivideTimeFrameIndex--
       }
-      if (timeFrame !== TimeFrame.All && trueDivideTimeFrameIndex < 0) {
+      if (timeFrame !== TimeFrame.All && trueDivideTimeFrameIndex > 0) {
         const timeFrameSize = Duration.fromObject({[timeFrameName.toLowerCase()]: 1}).toMillis()
         while (true) {
           if (trueDivideTimeFrameIndex <= 0) break
