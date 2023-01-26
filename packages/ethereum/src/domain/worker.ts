@@ -17,16 +17,23 @@ export type EthereumIndexerWorkerDomainI = {
   ethereumFilterTransaction(
     ctx: EthereumParsedTransactionContext,
   ): Promise<boolean>
-  ethereumIndexTransaction(
-    ctx: EthereumParsedTransactionContext,
-  ): Promise<EthereumParsedTransactionContext>
+  ethereumIndexTransaction(ctx: EthereumParsedTransactionContext): Promise<void>
 }
 
 export class EthereumIndexerWorkerDomain {
   constructor(
     protected context: IndexerDomainContext,
     protected hooks: EthereumIndexerWorkerDomainI,
-  ) {}
+  ) {
+    if (
+      this.hooks.ethereumFilterTransaction === undefined ||
+      this.hooks.ethereumIndexTransaction === undefined
+    ) {
+      throw new Error(
+        'EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+      )
+    }
+  }
 
   async onTxDateRange(
     response: TransactionDateRangeResponse<EthereumParsedTransaction>,

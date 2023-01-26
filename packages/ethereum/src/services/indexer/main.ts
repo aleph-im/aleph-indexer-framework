@@ -69,10 +69,10 @@ export class EthereumIndexer
     return super.indexAccountTransactions(args)
   }
 
-  protected async indexAccountContent(
+  protected async indexAccountState(
     args: AccountIndexerStateRequestArgs,
   ): Promise<void> {
     args.account = args.account.toLowerCase()
-    return super.indexAccountContent(args)
+    return super.indexAccountState(args)
   }
 }

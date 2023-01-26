@@ -1,12 +1,12 @@
 import { Utils } from '@aleph-indexer/core'
-import { TransactionRequest } from '../../../services/indexer/src/base/dal/transactionRequest.js'
+import { TransactionRequest } from '../../../services/indexer/src/dal/transactionRequest.js'
 import {
   AccountIndexerRequestArgs,
   AccountIndexerState,
   GetTransactionPendingRequestsRequestArgs,
   IndexerMainDomainContext,
-} from '../../../services/indexer/src/base/types.js'
-import { Blockchain } from '../../../types/common.js'
+} from '../../../services/indexer/src/types.js'
+import { Blockchain } from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,

@@ -18,7 +18,7 @@ import {
   CheckTransactionsRequestArgs,
   TransactionState,
   DelTransactionsRequestArgs,
-} from './src/base/types.js'
+} from './src/types.js'
 
 /**
  * Provides outward facing methods from the fetcher service.

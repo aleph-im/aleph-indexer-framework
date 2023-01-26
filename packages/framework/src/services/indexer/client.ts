@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '../../types/common.js'
+import { Blockchain } from '../../types.js'
 import {
   MsIds,
   getRegistryNodesWithService,

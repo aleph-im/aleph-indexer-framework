@@ -1,8 +1,8 @@
-import { Blockchain } from '../../types/common.js'
+import { Blockchain } from '../../types.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 import { IndexerMsClient } from './client.js'
 import { IndexerMsI } from './interface.js'
-import { TransactionRequest } from './src/base/dal/transactionRequest.js'
+import { TransactionRequest } from './src/dal/transactionRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
@@ -10,7 +10,7 @@ import {
   InvokeMethodRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
   BlockchainIndexerI,
-} from './src/base/types.js'
+} from './src/types.js'
 
 /**
  * Main class of the indexer service. Creates and manages all indexers.

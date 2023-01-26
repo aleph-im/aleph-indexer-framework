@@ -1,12 +1,12 @@
 import { BlockchainRequestArgs } from '../types.js'
-import { TransactionRequest } from './src/base/dal/transactionRequest.js'
+import { TransactionRequest } from './src/dal/transactionRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
   InvokeMethodRequestArgs,
   GetAccountIndexingStateRequestArgs,
   GetTransactionPendingRequestsRequestArgs,
-} from './src/base/types.js'
+} from './src/types.js'
 
 /**
  * Provides outward-facing methods of the indexer.

@@ -1,12 +1,12 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '../../types/common.js'
+import { Blockchain } from '../../types.js'
 import {
   MsIds,
   getRegistryNodesWithService,
   waitForAllNodesWithService,
 } from '../common.js'
 import { FetcherClientI } from './interface.js'
-import { FetcherStateRequestArgs, FetcherState } from './src/base/types.js'
+import { FetcherStateRequestArgs, FetcherState } from './src/types.js'
 
 /**
  * Client to access the main fetcher service through the broker.

@@ -7,7 +7,7 @@ import { IndexerWorkerDomainI } from '../main.js'
 import { ParserMsClient } from '../services/parser/client.js'
 import { ParserMsMain } from '../services/parser/main.js'
 import { EventOptions } from '../services/common.js'
-import { Blockchain } from '../types/common.js'
+import { Blockchain } from '../types.js'
 
 // Clients -------------------------------------------
 
@@ -18,25 +18,16 @@ async function importBlockchainMsClients(
 ): Promise<Record<Blockchain, any>> {
   const blockchainClients = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {
-      if (blockchainId === Blockchain.Ethereum) {
-        const module = await import(`@aleph-indexer/${blockchainId}`)
-        const factory = module.default?.[kind]?.client
+      const module = await import(`@aleph-indexer/${blockchainId}`)
+      const factory = module.default?.[kind]?.client
 
-        if (!factory)
-          throw new Error(
-            `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
-          )
-
-        const instance = await factory(blockchainId, broker)
-        return [blockchainId, instance]
-      } else {
-        const module = await import(
-          `../services/${kind}/src/${blockchainId}/client.js`
+      if (!factory)
+        throw new Error(
+          `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
         )
-        const clazz = module.default
-        const instance = new clazz(blockchainId, broker)
-        return [blockchainId, instance]
-      }
+
+      const instance = await factory(blockchainId, broker)
+      return [blockchainId, instance]
     }),
   )
 
@@ -96,20 +87,13 @@ async function importBlockchainMsMains(
     supportedBlockchains.map(async (blockchainId) => {
       const blockchainBasePath = path.join(basePath, blockchainId)
 
-      let factory
+      const module = await import(`@aleph-indexer/${blockchainId}`)
+      const factory = module.default?.[kind]?.main
 
-      if (blockchainId === Blockchain.Ethereum) {
-        const module = await import(`@aleph-indexer/${blockchainId}`)
-        factory = module.default?.[kind]?.main
-
-        if (!factory)
-          throw new Error(
-            `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
-          )
-      } else {
-        const module = await import(`./impl/${kind}/${blockchainId}.js`)
-        factory = module.default
-      }
+      if (!factory)
+        throw new Error(
+          `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
+        )
 
       const instance = await factory(blockchainBasePath, ...args)
       return [blockchainId, instance]

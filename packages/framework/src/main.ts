@@ -7,22 +7,19 @@ import {
   WorkerKind,
 } from './utils/workers.js'
 import { initThreadContext } from './utils/threads.js'
-import { getMoleculerBroker, TransportType } from './utils/moleculer/config.js'
-import { IndexerMainDomainContext } from './services/indexer/src/base/types.js'
 import { FetcherMainDomain } from './utils/index.js'
-import { FetcherMainDomainContext } from './services/fetcher/src/base/types.js'
+import { getMoleculerBroker, TransportType } from './utils/moleculer/config.js'
 import { FetcherAPISchema } from './utils/api/fetcher/schema.js'
+import { IndexerMainDomainContext } from './services/indexer/index.js'
+import { FetcherMainDomainContext } from './services/fetcher/index.js'
 import {
   createFetcherMsClient,
   createIndexerMsClient,
 } from './workers/common.js'
-import { Blockchain } from './types/common.js'
+import { Blockchain } from './types.js'
 
-export * from './types/index.js'
+export * from './types.js'
 export * from './services/types.js'
-
-// @todo: Refactor
-export * from './services/parser/src/solana/types.js'
 
 export * from './services/fetcher/index.js'
 export * from './services/parser/index.js'

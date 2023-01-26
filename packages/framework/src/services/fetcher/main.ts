@@ -16,10 +16,10 @@ import {
   TransactionState,
   DelTransactionsRequestArgs,
   FetcherStateRequestArgs,
-} from './src/base/types.js'
+} from './src/types.js'
 import { FetcherMsClient } from './client.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
-import { Blockchain } from '../../types/common.js'
+import { Blockchain } from '../../types.js'
 
 /**
  * The main class of the fetcher service.

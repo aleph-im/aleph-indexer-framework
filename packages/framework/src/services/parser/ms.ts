@@ -1,16 +1,12 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
-import {
-  Blockchain,
-  ParsedTransaction,
-  RawTransaction,
-} from '../../types/common.js'
+import { Blockchain, ParsedTransaction, RawTransaction } from '../../types.js'
 import { MsIds, MainFactory } from '../common.js'
 import { ParserMsMain } from './main.js'
 import {
   ParseAccountStateRequestArgs,
   ParseTransactionRequestArgs,
   RawTransactionMsg,
-} from './src/base/types.js'
+} from './src/types.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main fetcher service through the broker.

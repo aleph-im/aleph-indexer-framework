@@ -2,9 +2,9 @@
   "packages": [
     "packages/core",
     "packages/layout",
-    "packages/middleware",
     "packages/framework",
     "packages/ethereum",
+    "packages/solana",
     "packages/indexer-example"
   ],
   "version": "1.0.24"

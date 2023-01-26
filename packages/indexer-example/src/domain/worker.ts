@@ -5,24 +5,53 @@ import {
   createStatsStateDAL,
   createStatsTimeSeriesDAL,
 } from '@aleph-indexer/framework'
-import { createEventDAL } from '../dal/event.js'
 import {
   EthereumIndexerWorkerDomainI,
   EthereumParsedTransactionContext,
 } from '@aleph-indexer/ethereum'
+import {
+  SolanaIndexerWorkerDomainI,
+  SolanaInstructionContext,
+} from '@aleph-indexer/solana'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
-  implements EthereumIndexerWorkerDomainI
+  implements EthereumIndexerWorkerDomainI, SolanaIndexerWorkerDomainI
 {
   constructor(
     protected context: IndexerDomainContext,
-    protected eventDAL = createEventDAL(context.dataPath),
     protected statsStateDAL = createStatsStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
   ) {
     super(context)
   }
+
+  // Common hooks
+
+  async onNewAccount(
+    config: AccountIndexerConfigWithMeta<undefined>,
+  ): Promise<void> {
+    const { account, meta } = config
+    const { projectId, instanceName, apiClient: indexerApi } = this.context
+
+    console.log('Account indexing', instanceName, account)
+  }
+
+  // Solana mandatory hooks implemented
+
+  async solanaFilterInstructions(
+    ixsContext: SolanaInstructionContext[],
+  ): Promise<SolanaInstructionContext[]> {
+    return ixsContext
+  }
+
+  async solanaIndexInstructions(
+    ixsContext: SolanaInstructionContext[],
+  ): Promise<void> {
+    console.log('Index SOL transaction', JSON.stringify(ixsContext, null, 2))
+  }
+
+  // Ethereum mandatory hooks implemented
 
   async ethereumFilterTransaction(
     ctx: EthereumParsedTransactionContext,
@@ -32,17 +61,7 @@ export default class WorkerDomain
 
   async ethereumIndexTransaction(
     ctx: EthereumParsedTransactionContext,
-  ): Promise<EthereumParsedTransactionContext> {
-    console.log('Index ETH transaction', JSON.stringify(ctx, null, 2))
-    return ctx
-  }
-
-  async onNewAccount(
-    config: AccountIndexerConfigWithMeta<undefined>,
   ): Promise<void> {
-    const { account, meta } = config
-    const { projectId, instanceName, apiClient: indexerApi } = this.context
-
-    console.log('Account indexing', instanceName, account)
+    console.log('Index ETH transaction', JSON.stringify(ctx, null, 2))
   }
 }

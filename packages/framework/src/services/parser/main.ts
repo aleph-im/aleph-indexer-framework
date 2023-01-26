@@ -7,12 +7,8 @@ import {
   ParsedTransactionMsg,
   ParseTransactionRequestArgs,
   RawTransactionMsg,
-} from './src/base/types.js'
-import {
-  Blockchain,
-  ParsedTransaction,
-  RawTransaction,
-} from '../../types/common.js'
+} from './src/types.js'
+import { Blockchain, ParsedTransaction, RawTransaction } from '../../types.js'
 
 export class ParserMsMain<
     T extends RawTransaction = RawTransaction,

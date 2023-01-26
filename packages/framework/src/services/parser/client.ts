@@ -1,9 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import {
-  Blockchain,
-  ParsedTransaction,
-  RawTransaction,
-} from '../../types/common.js'
+import { Blockchain, ParsedTransaction, RawTransaction } from '../../types.js'
 import {
   EventOptions,
   getRegistryNodesWithService,

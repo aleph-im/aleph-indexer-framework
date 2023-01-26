@@ -1,9 +1,9 @@
-import { ParsedTransaction, RawTransaction } from '../../types/common.js'
+import { ParsedTransaction, RawTransaction } from '../../types.js'
 import { BlockchainRequestArgs } from '../types.js'
 import {
   ParseAccountStateRequestArgs,
   ParseTransactionRequestArgs,
-} from './src/base/types.js'
+} from './src/types.js'
 
 export interface ParserMsI<
   T extends RawTransaction,

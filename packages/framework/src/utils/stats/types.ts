@@ -3,7 +3,7 @@ import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
-import { Blockchain } from '../../types/common.js'
+import { Blockchain } from '../../types.js'
 
 export type PrevValueFactoryFnArgs = {
   account: string

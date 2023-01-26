@@ -14,7 +14,7 @@ import {
   AccountTransactionHistoryState,
   AccountStateState,
   DelAccountStateRequestArgs,
-} from './src/base/types.js'
+} from './src/types.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 
 /**

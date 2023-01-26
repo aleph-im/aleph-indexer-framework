@@ -4,8 +4,8 @@ import {
   AccountTransactionHistoryState,
   FetcherState,
   TransactionState,
-} from '../../../services/fetcher/src/base/types.js'
-import { Blockchain } from '../../../types/common.js'
+} from '../../../services/fetcher/src/types.js'
+import { Blockchain } from '../../../types.js'
 
 /**
  * The main fetcher domain class.
