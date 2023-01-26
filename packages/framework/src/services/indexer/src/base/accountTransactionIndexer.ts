@@ -1,5 +1,5 @@
 import { StorageValueStream, Utils } from '@aleph-indexer/core'
-import { BaseTransactionFetcher } from './transactionFetcher.js'
+import { BaseIndexerTransactionFetcher } from './transactionFetcher.js'
 import { FetcherMsClient } from '../../../fetcher/client.js'
 import {
   TransactionIndexerState,
@@ -36,7 +36,7 @@ export class BaseAccountTransactionIndexer<
     protected config: AccountIndexerTransactionRequestArgs,
     protected handler: TransactionIndexerHandler<T>,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionFetcher: BaseTransactionFetcher<T>,
+    protected transactionFetcher: BaseIndexerTransactionFetcher<T>,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
   ) {
     const { account } = config

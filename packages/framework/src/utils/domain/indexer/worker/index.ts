@@ -10,7 +10,8 @@ import {
   AccountStatsFilters,
   AccountStats,
 } from '../../../stats/index.js'
-import { BlockchainWorkerFactory } from './factory.js'
+import { WorkerKind } from '../../../workers.js'
+import { importBlockchainWorkerIndexerDomain } from '../../common.js'
 
 /**
  * Describes an indexer worker domain, capable of stats processing.
@@ -31,7 +32,6 @@ export interface BlockchainIndexerWorkerI<
   onTxDateRange(response: TransactionDateRangeResponse<T>): Promise<void>
 }
 
-export type { EthereumIndexerWorkerDomainI } from './impl/ethereum.js'
 export type { SolanaIndexerWorkerDomainI } from './impl/solana.js'
 
 /**
@@ -42,6 +42,10 @@ export abstract class IndexerWorkerDomain<
 > implements IndexerWorkerDomainI
 {
   protected instance!: number
+  protected blockchainInstances!: Record<
+    Blockchain,
+    BlockchainIndexerWorkerI<T>
+  >
 
   constructor(protected context: IndexerDomainContext) {
     this.instance = Number(context.instanceName.split('-')[1])
@@ -49,9 +53,12 @@ export abstract class IndexerWorkerDomain<
 
   async init(): Promise<void> {
     // @note: Preload supported blockchains
-    for (const blockchainId of this.context.supportedBlockchains) {
-      await this.getBlockchainWorker(blockchainId)
-    }
+    this.blockchainInstances = await importBlockchainWorkerIndexerDomain(
+      WorkerKind.Indexer,
+      this.context.supportedBlockchains,
+      this.context,
+      this,
+    )
   }
 
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
@@ -63,18 +70,7 @@ export abstract class IndexerWorkerDomain<
 
     console.log('Processing', blockchainId, account, startDate, endDate)
 
-    const worker = await this.getBlockchainWorker(blockchainId)
+    const worker = this.blockchainInstances[blockchainId]
     await worker.onTxDateRange(response)
-  }
-
-  protected async getBlockchainWorker(
-    blockchainId: Blockchain,
-  ): Promise<BlockchainIndexerWorkerI<T>> {
-    return BlockchainWorkerFactory.getSingleton(
-      blockchainId,
-      'default',
-      this.context,
-      this,
-    )
   }
 }

@@ -18,12 +18,25 @@ async function importBlockchainMsClients(
 ): Promise<Record<Blockchain, any>> {
   const blockchainClients = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(
-        `../services/${kind}/src/${blockchainId}/client.js`
-      )
-      const clazz = module.default
-      const instance = new clazz(blockchainId, broker)
-      return [blockchainId, instance]
+      if (blockchainId === Blockchain.Ethereum) {
+        const module = await import(`@aleph-indexer/${blockchainId}`)
+        const factory = module.default?.[kind]?.client
+
+        if (!factory)
+          throw new Error(
+            `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
+          )
+
+        const instance = await factory(blockchainId, broker)
+        return [blockchainId, instance]
+      } else {
+        const module = await import(
+          `../services/${kind}/src/${blockchainId}/client.js`
+        )
+        const clazz = module.default
+        const instance = new clazz(blockchainId, broker)
+        return [blockchainId, instance]
+      }
     }),
   )
 
@@ -81,9 +94,23 @@ async function importBlockchainMsMains(
 ): Promise<Record<Blockchain, any>> {
   const blockchainMains = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {
-      const module = await import(`./impl/${kind}/${blockchainId}.js`)
-      const factory = module.default
       const blockchainBasePath = path.join(basePath, blockchainId)
+
+      let factory
+
+      if (blockchainId === Blockchain.Ethereum) {
+        const module = await import(`@aleph-indexer/${blockchainId}`)
+        factory = module.default?.[kind]?.main
+
+        if (!factory)
+          throw new Error(
+            `Module not found, try: npm i @aleph-indexer/${blockchainId}`,
+          )
+      } else {
+        const module = await import(`./impl/${kind}/${blockchainId}.js`)
+        factory = module.default
+      }
+
       const instance = await factory(blockchainBasePath, ...args)
       return [blockchainId, instance]
     }),

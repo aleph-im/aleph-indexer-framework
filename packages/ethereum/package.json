@@ -1,5 +1,5 @@
 {
-  "name": "@aleph-indexer/framework",
+  "name": "@aleph-indexer/ethereum",
   "version": "1.0.24",
   "description": "",
   "main": "dist/index.js",
@@ -20,35 +20,25 @@
   "peerDependencies": {
     "graphql": "^15.8.0",
     "graphql-type-json": "^0.3.2",
-    "luxon": "^3.0.4",
-    "@aleph-indexer/ethereum": "^1.x.x"
+    "luxon": "^3.0.4"
   },
   "devDependencies": {
-    "@types/bs58": "^4.0.1",
-    "@types/dotenv-defaults": "^2.0.1",
     "@types/luxon": "^3.0.1",
     "@types/node": "^17.0.33",
-    "@types/uuid": "^8.3.4",
     "graphql": "^15.8.0",
     "graphql-type-json": "^0.3.2",
-    "luxon": "^3.0.4",
-    "@aleph-indexer/ethereum": "^1.0.24"
+    "luxon": "^3.0.4"
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.0.24",
-    "@aleph-indexer/layout": "^1.0.14",
-    "@solana/web3.js": "^1.66.2",
-    "@solana/spl-token-registry": "^0.2.7",
-    "bn.js": "^5.2.0",
-    "bs58": "^5.0.0",
-    "buffer-layout": "^1.2.2",
+    "@aleph-indexer/framework": "^1.0.24",
+    "ethers": "^5.7.2",
     "moleculer": "^0.14.24",
-    "nats": "^2.7.1",
     "node-fetch": "^3.3.0",
-    "uuid": "^8.3.2"
+    "web3": "^1.8.1"
   },
   "typedoc": {
     "entryPoint": "./index.ts",
-    "displayName": "Indexer Framework"
+    "displayName": "Ethereum Indexer Framework"
   }
 }

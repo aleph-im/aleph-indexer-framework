@@ -48,7 +48,7 @@ export interface TransactionResponse<T> {
   remove: () => Promise<void>
 }
 
-export abstract class BaseTransactionFetcher<
+export abstract class BaseIndexerTransactionFetcher<
   T extends ParsedTransaction<unknown>,
 > {
   protected checkPendingRetriesJob!: Utils.JobRunner

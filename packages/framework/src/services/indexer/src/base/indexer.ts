@@ -15,7 +15,7 @@ import {
 import { BaseAccountTransactionIndexer } from './accountTransactionIndexer.js'
 import { BlockchainIndexerI } from './types.js'
 import { IndexerMsClient } from '../../client.js'
-import { BaseTransactionFetcher } from './transactionFetcher.js'
+import { BaseIndexerTransactionFetcher } from './transactionFetcher.js'
 import { Blockchain, ParsedTransaction } from '../../../../types/common.js'
 
 /**
@@ -47,7 +47,7 @@ export abstract class BaseIndexer<T extends ParsedTransaction<unknown>>
     protected fetcherClient: FetcherMsClient,
     protected parserClient: ParserMsClient,
     protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
-    protected transactionFetcher: BaseTransactionFetcher<T>,
+    protected transactionFetcher: BaseIndexerTransactionFetcher<T>,
   ) {
     this.txsHandler = this.onTxs.bind(this)
   }

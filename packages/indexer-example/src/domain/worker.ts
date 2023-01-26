@@ -4,10 +4,12 @@ import {
   IndexerWorkerDomain,
   createStatsStateDAL,
   createStatsTimeSeriesDAL,
-  EthereumIndexerWorkerDomainI,
 } from '@aleph-indexer/framework'
 import { createEventDAL } from '../dal/event.js'
-import { EthereumParsedTransactionContext } from '@aleph-indexer/framework'
+import {
+  EthereumIndexerWorkerDomainI,
+  EthereumParsedTransactionContext,
+} from '@aleph-indexer/ethereum'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain

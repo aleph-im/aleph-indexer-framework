@@ -1,0 +1,23 @@
+version: '2'
+
+services:
+  framework:
+    build: ../..
+    container_name: framework-fetcher-parser
+    volumes:
+      - ~/indexer.data:/app/data:rw
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ../../.env
+      - ./.env
+    environment:
+      - INDEXER=framework
+      # - INDEXER_FRAMEWORK_SERVICES=fetcher parser
+      # - INDEXER_FRAMEWORK_INSTANCES=1
+      # - INDEXER_FRAMEWORK_NAMESPACE=global
+      # - INDEXER_FRAMEWORK_TRANSPORT=LocalNet
+      # ports:
+      #   - 7700-7709:7700-7709
+      #   - 7800-7809:7800-7809
+    network_mode: bridge

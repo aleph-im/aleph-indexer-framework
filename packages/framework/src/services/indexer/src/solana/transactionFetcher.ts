@@ -9,11 +9,11 @@ import {
 import { TransactionRequestPendingSignatureStorage } from '../base/dal/transactionRequestPendingSignature.js'
 import { TransactionRequestResponseStorage } from '../base/dal/transactionRequestResponse.js'
 import { TransactionRequestIncomingTransactionStorage } from '../base/dal/transactionRequestIncomingTransaction.js'
-import { BaseTransactionFetcher } from '../base/transactionFetcher.js'
+import { BaseIndexerTransactionFetcher } from '../base/transactionFetcher.js'
 import { Blockchain } from '../../../../types/common.js'
 import { SolanaParsedTransaction } from '../../../../types/solana.js'
 
-export class SolanaTransactionFetcher extends BaseTransactionFetcher<SolanaParsedTransaction> {
+export class SolanaTransactionFetcher extends BaseIndexerTransactionFetcher<SolanaParsedTransaction> {
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,

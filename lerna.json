@@ -4,6 +4,7 @@
     "packages/layout",
     "packages/middleware",
     "packages/framework",
+    "packages/ethereum",
     "packages/indexer-example"
   ],
   "version": "1.0.24"

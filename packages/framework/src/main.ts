@@ -21,18 +21,12 @@ import { Blockchain } from './types/common.js'
 export * from './types/index.js'
 export * from './services/types.js'
 
-export * from './services/fetcher/src/base/types.js'
-export * from './services/parser/src/base/types.js'
-export * from './services/indexer/src/base/types.js'
-
 // @todo: Refactor
 export * from './services/parser/src/solana/types.js'
-export * from './services/fetcher/src/ethereum/types.js'
-export * from './services/parser/src/ethereum/types.js'
 
-export * from './services/fetcher/interface.js'
-export * from './services/parser/interface.js'
-export * from './services/indexer/interface.js'
+export * from './services/fetcher/index.js'
+export * from './services/parser/index.js'
+export * from './services/indexer/index.js'
 
 export * from './services/indexer/client.js'
 export * from './utils/index.js'
