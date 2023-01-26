@@ -29,6 +29,7 @@ export type IndexerMainDomainWithStats = {
    * @param filters The transformations and clipping to apply to the time-series.
    */
   getAccountTimeSeriesStats(
+    blockchainId: Blockchain,
     accounts: string[],
     type: string,
     filters: AccountStatsFilters,
@@ -37,7 +38,10 @@ export type IndexerMainDomainWithStats = {
    * Returns the global stats for the given accounts.
    * @param accounts The accounts to get the summary from.
    */
-  getAccountStats(accounts: string[]): Promise<AccountStats[]>
+  getAccountStats(
+    blockchainId: Blockchain,
+    accounts: string[],
+  ): Promise<AccountStats[]>
 }
 
 /**
@@ -66,7 +70,9 @@ export type IndexerMainDomainConfig = {
  * with the services, which can be powered by multiple workers. All of this is
  * abstracted away through this class.
  */
-export class IndexerMainDomain {
+export abstract class IndexerMainDomain
+  implements IndexerMainDomainWithStats, IndexerMainDomainWithDiscovery
+{
   protected discoverJob: Utils.JobRunner | undefined
   protected statsJob: Utils.JobRunner | undefined
   protected accounts: Record<Blockchain, Set<string>>
@@ -216,6 +222,9 @@ export class IndexerMainDomain {
       ),
     )
   }
+
+  abstract updateStats(now: number): Promise<void>
+  abstract discoverAccounts(): Promise<AccountIndexerRequestArgs[]>
 
   protected getBlockchainAccounts(
     blockchainId: Blockchain,
