@@ -9,6 +9,7 @@ import { solanaWorkerDomainFactory } from './src/domain/worker.js'
 
 export * from './src/domain/worker.js'
 export * from './src/types.js'
+export * from './src/utils/index.js'
 
 export * from './src/services/fetcher/index.js'
 export * from './src/services/parser/index.js'
