@@ -70,9 +70,7 @@ export type IndexerMainDomainConfig = {
  * with the services, which can be powered by multiple workers. All of this is
  * abstracted away through this class.
  */
-export abstract class IndexerMainDomain
-  implements IndexerMainDomainWithStats, IndexerMainDomainWithDiscovery
-{
+export abstract class IndexerMainDomain {
   protected discoverJob: Utils.JobRunner | undefined
   protected statsJob: Utils.JobRunner | undefined
   protected accounts: Record<Blockchain, Set<string>>
@@ -222,9 +220,6 @@ export abstract class IndexerMainDomain
       ),
     )
   }
-
-  abstract updateStats(now: number): Promise<void>
-  abstract discoverAccounts(): Promise<AccountIndexerRequestArgs[]>
 
   protected getBlockchainAccounts(
     blockchainId: Blockchain,
