@@ -5,7 +5,7 @@ There are two crucial repos you should be aware of:
 2. [Solana indexer library](https://github.com/aleph-im/solana-indexer-library): This is where you need to start if you want to create your own indexer.
 
 
-## Aleph Indexer Framework v0.1
+## Aleph Indexer Framework v1.0
 
 The Aleph Indexer Framework is a high-level abstraction for building multithreaded indexers on Aleph. It is designed to be used by developers who want to build an indexer for a specific Solana program, but don't want to worry about:
 - Fetching blocks from the Solana cluster
