@@ -49,6 +49,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   static AddressLength = EntityIndexStorage.AddressLength
   static TimestampLength = EntityIndexStorage.TimestampLength
   static VariableLength = EntityIndexStorage.VariableLength
+  static EthereumAddressLength = EntityIndexStorage.EthereumAddressLength
 
   constructor(
     protected options: EntityStorageOptions<Entity>,
@@ -107,6 +108,10 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         EntityUpdateOp.Update,
       )
 
+      // console.log('toRemove', JSON.stringify(toRemove, null, 2))
+      // console.log('toUpdate', JSON.stringify(toUpdate, null, 2))
+
+      // console.log('HEY')
       // @note: Order of operations is relevant for not causing inconsistent indexes lookup keys
       // and race conditions issues:
       // 1. Save Entity by id

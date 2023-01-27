@@ -137,25 +137,30 @@ export class DebouncedJob<T = void, R = unknown> {
   protected async _run(): Promise<R | void> {
     if (this.running) return
     this.running = true
-    let result: R | void = undefined
 
     try {
-      while (this.pendingRun) {
-        const ts = this.lastRun + this.throttle - Date.now()
-        if (ts > 0) await sleep(ts)
-
-        const data = this.pendingData
-        this.pendingData = undefined
-        this.pendingRun = false
-
-        this.lastRun = Date.now()
-        result = await this.callback(data as T)
-      }
-
-      return result
+      return await this._runLoop()
     } finally {
       this.running = false
     }
+  }
+
+  protected async _runLoop(): Promise<R | void> {
+    let result: R | void = undefined
+
+    while (this.pendingRun) {
+      const ts = this.lastRun + this.throttle - Date.now()
+      if (ts > 0) await sleep(ts)
+
+      const data = this.pendingData
+      this.pendingData = undefined
+      this.pendingRun = false
+
+      this.lastRun = Date.now()
+      result = await this.callback(data as T)
+    }
+
+    return result
   }
 }
 
@@ -173,6 +178,7 @@ export class DebouncedJobRunner extends DebouncedJob<void, number> {
 
   protected async _run(): Promise<void> {
     if (this.running) return
+    this.running = true
 
     const { name } = this.options
 
@@ -184,7 +190,7 @@ export class DebouncedJobRunner extends DebouncedJob<void, number> {
     let sleepTime: number | void
 
     try {
-      sleepTime = await super._run()
+      sleepTime = await super._runLoop()
     } catch (e) {
       console.log('error', e)
       sleepTime = 1000
@@ -208,6 +214,8 @@ export class DebouncedJobRunner extends DebouncedJob<void, number> {
         Duration.fromMillis(elapsedTime).toISOTime() || '+24h'
       })`,
     )
+
+    this.running = false
   }
 }
 

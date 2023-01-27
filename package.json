@@ -2,7 +2,7 @@
   "name": "@aleph-indexer/lerna",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aleph-im/solana-indexer-framework.git"
+    "url": "https://github.com/aleph-im/aleph-indexer-framework.git"
   },
   "version": "1.0.0",
   "main": "index.js",
@@ -11,8 +11,7 @@
   "scripts": {
     "prepare": "husky install",
     "postinstall": "npm run bootstrap && npm run build",
-    "start": "npm i && ./run.sh",
-    "start-alone": "./run.sh",
+    "start": "npm run postinstall && ./run.sh",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:rebuild": "npm run build && npm run test",

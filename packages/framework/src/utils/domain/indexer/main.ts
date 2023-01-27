@@ -6,6 +6,7 @@ import {
   GetTransactionPendingRequestsRequestArgs,
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
+import { Blockchain } from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -28,6 +29,7 @@ export type IndexerMainDomainWithStats = {
    * @param filters The transformations and clipping to apply to the time-series.
    */
   getAccountTimeSeriesStats(
+    blockchainId: Blockchain,
     accounts: string[],
     type: string,
     filters: AccountStatsFilters,
@@ -36,7 +38,10 @@ export type IndexerMainDomainWithStats = {
    * Returns the global stats for the given accounts.
    * @param accounts The accounts to get the summary from.
    */
-  getAccountStats(accounts: string[]): Promise<AccountStats[]>
+  getAccountStats(
+    blockchainId: Blockchain,
+    accounts: string[],
+  ): Promise<AccountStats[]>
 }
 
 /**
@@ -65,15 +70,20 @@ export type IndexerMainDomainConfig = {
  * with the services, which can be powered by multiple workers. All of this is
  * abstracted away through this class.
  */
-export class IndexerMainDomain {
+export abstract class IndexerMainDomain {
   protected discoverJob: Utils.JobRunner | undefined
   protected statsJob: Utils.JobRunner | undefined
-  protected accounts: Set<string> = new Set()
+  protected accounts: Record<Blockchain, Set<string>>
 
   constructor(
     protected context: IndexerMainDomainContext,
     protected baseConfig?: IndexerMainDomainConfig,
   ) {
+    this.accounts = this.context.supportedBlockchains.reduce((acc, curr) => {
+      acc[curr] = new Set<string>()
+      return acc
+    }, {} as Record<Blockchain, Set<string>>)
+
     if (typeof baseConfig?.discoveryInterval === 'number') {
       this.discoverJob = new Utils.JobRunner({
         name: `main-account-discovery`,
@@ -139,17 +149,15 @@ export class IndexerMainDomain {
    * @param accounts The accounts to get the state from.
    */
   async getAccountState(
+    blockchainId: Blockchain,
     accounts: string[] = [],
   ): Promise<AccountIndexerState[]> {
-    accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
-
     return (
       await Promise.all(
-        accounts.map(async (account) =>
-          this.context.apiClient.getAccountState({
-            account,
-          }),
+        this.getBlockchainAccounts(blockchainId, accounts).map((account) =>
+          this.context.apiClient
+            .useBlockchain(blockchainId)
+            .getAccountState({ account }),
         ),
       )
     ).filter((info): info is AccountIndexerState => !!info)
@@ -162,25 +170,27 @@ export class IndexerMainDomain {
    * @param filters The transformations and clipping to apply to the time-series.
    */
   async getAccountTimeSeriesStats<V>(
+    blockchainId: Blockchain,
     accounts: string[] = [],
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats<V>[]> {
     this.checkStats()
 
-    accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
-
     return Promise.all(
-      accounts.map(async (account) => {
-        const stats = (await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'getTimeSeriesStats',
-          args: [type, filters],
-        })) as AccountTimeSeriesStats<V>
+      this.getBlockchainAccounts(blockchainId, accounts).map(
+        async (account) => {
+          const stats = (await this.context.apiClient
+            .useBlockchain(blockchainId)
+            .invokeDomainMethod({
+              account,
+              method: 'getTimeSeriesStats',
+              args: [type, filters],
+            })) as AccountTimeSeriesStats<V>
 
-        return stats
-      }),
+          return stats
+        },
+      ),
     )
   }
 
@@ -188,22 +198,38 @@ export class IndexerMainDomain {
    * Returns the global stats for the given accounts.
    * @param accounts The accounts to get the summary from.
    */
-  async getAccountStats<V>(accounts: string[] = []): Promise<AccountStats<V>[]> {
+  async getAccountStats<V>(
+    blockchainId: Blockchain,
+    accounts: string[] = [],
+  ): Promise<AccountStats<V>[]> {
     this.checkStats()
 
-    accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
-    return Promise.all(
-      accounts.map(async (account) => {
-        const stats = (await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'getStats',
-          args: [],
-        })) as AccountStats<V>
+    return await Promise.all(
+      this.getBlockchainAccounts(blockchainId, accounts).map(
+        async (account) => {
+          const stats = (await this.context.apiClient
+            .useBlockchain(blockchainId)
+            .invokeDomainMethod({
+              account,
+              method: 'getStats',
+              args: [],
+            })) as AccountStats<V>
 
-        return stats
-      }),
+          return stats
+        },
+      ),
     )
+  }
+
+  protected getBlockchainAccounts(
+    blockchainId: Blockchain,
+    accounts: string[] = [],
+  ): string[] {
+    const accountsSet = this.accounts[blockchainId]
+
+    return accounts.length === 0
+      ? Array.from(accountsSet.values())
+      : accounts.filter((account) => accountsSet.has(account))
   }
 
   protected async _discover(): Promise<void> {
@@ -211,9 +237,15 @@ export class IndexerMainDomain {
 
     const options = await this.discoverAccounts()
 
-    const newOptions = options.filter(
-      ({ account }) => !this.accounts.has(account),
-    )
+    const newOptions = options.filter(({ blockchainId, account }) => {
+      const blockchainAccounts = this.accounts[blockchainId]
+      if (!blockchainAccounts)
+        throw new Error(
+          `Accounts that belongs to "${blockchainId}" blockchain are supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
+        )
+
+      return !this.accounts[blockchainId].has(account)
+    })
 
     await this.onDiscover(newOptions)
   }
@@ -228,8 +260,10 @@ export class IndexerMainDomain {
   ): Promise<void> {
     await Promise.all(
       options.map(async (option) => {
-        await this.context.apiClient.indexAccount(option)
-        this.accounts.add(option.account)
+        await this.context.apiClient
+          .useBlockchain(option.blockchainId)
+          .indexAccount(option)
+        this.accounts[option.blockchainId].add(option.account)
       }),
     )
   }
@@ -238,15 +272,23 @@ export class IndexerMainDomain {
     if (!this.checkStats()) return
 
     const now = Date.now()
-    const accounts = Array.from(this.accounts.values())
+    const blockchains = Object.keys(this.accounts) as Blockchain[]
 
     await Promise.all(
-      accounts.map(async (account) => {
-        await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'updateStats',
-          args: [now],
-        })
+      blockchains.map(async (blockchainId) => {
+        const accounts = Array.from(this.accounts[blockchainId].values())
+
+        await Promise.all(
+          accounts.map(async (account) => {
+            await this.context.apiClient
+              .useBlockchain(blockchainId)
+              .invokeDomainMethod({
+                account,
+                method: 'updateStats',
+                args: [now],
+              })
+          }),
+        )
       }),
     )
 
@@ -293,7 +335,9 @@ export class IndexerMainDomain {
     return (
       await Promise.all(
         indexers.map((indexer) =>
-          this.context.apiClient.getTransactionRequests({ ...args, indexer }),
+          this.context.apiClient
+            .useBlockchain(args.blockchainId)
+            .getTransactionRequests({ ...args, indexer }),
         ),
       )
     ).flatMap((requests) => requests)

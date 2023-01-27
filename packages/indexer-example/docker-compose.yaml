@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  example-indexer:
+    build: ../..
+    volumes:
+      - ~/indexer.data:/app/data:rw
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ../../.env
+      - ./.env
+    environment:
+      - INDEXER=example
+      - LETSENCRYPT_HOST=example.api.aleph.cloud
+      - VIRTUAL_HOST=example.api.aleph.cloud
+      - VIRTUAL_PORT=8081
+      - SOLANA_RPC=http://solrpc1.aleph.cloud:7725/
+    network_mode: bridge

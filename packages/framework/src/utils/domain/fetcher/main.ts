@@ -1,10 +1,11 @@
 import { Utils } from '@aleph-indexer/core'
 import {
   FetcherMainDomainContext,
+  AccountTransactionHistoryState,
   FetcherState,
-  SignatureFetcherState,
   TransactionState,
 } from '../../../services/fetcher/src/types.js'
+import { Blockchain } from '../../../types.js'
 
 /**
  * The main fetcher domain class.
@@ -18,39 +19,43 @@ export class FetcherMainDomain {
   constructor(protected context: FetcherMainDomainContext) {}
 
   /**
-   * Returns the fetcher state for the given account-bound fetchers.
-   * @param accounts The accounts of which to get the fetchers.
+   * Returns the fetcher state for the given non-account related fetchers.
+   * @param fetchers The fetchers to get the fetcher state for.
+   * @param blockchainId The blockchain id to get the blockchain fetcher instance
    */
-  async getAccountFetcherState(
-    accounts: string[] = [],
-  ): Promise<SignatureFetcherState[]> {
+  async getFetcherState(
+    blockchainId: Blockchain[] = this.context.apiClient.getAllBlockchains(),
+    fetchers: string[] = this.context.apiClient.getAllFetchers(),
+  ): Promise<FetcherState[]> {
     return (
       await Promise.all(
-        accounts.map((account) =>
-          this.context.apiClient.getAccountFetcherState({
-            account,
+        fetchers.map((fetcher) =>
+          this.context.apiClient.getFetcherState({
+            fetcher,
+            blockchainId,
           }),
         ),
       )
-    ).filter((info): info is SignatureFetcherState => !!info)
+    ).flatMap((x) => x)
   }
 
   /**
-   * Returns the fetcher state for the given non-account related fetchers.
-   * @param fetchers The fetchers to get the fetcher state for.
+   * Returns the fetcher state for the given account-bound fetchers.
+   * @param accounts The accounts of which to get the fetchers.
    */
-  async getFetcherState(fetchers: string[] = []): Promise<FetcherState[]> {
-    fetchers = fetchers.length
-      ? fetchers
-      : this.context.apiClient.getAllFetchers()
-
-    return Promise.all(
-      fetchers.map((fetcher) =>
-        this.context.apiClient.getFetcherState({
-          fetcher,
-        }),
-      ),
-    )
+  async getAccountTransactionFetcherState<T>(
+    blockchainId: Blockchain,
+    accounts: string[] = [],
+  ): Promise<AccountTransactionHistoryState<T>[]> {
+    return (
+      await Promise.all(
+        accounts.map((account) =>
+          this.context.apiClient
+            .useBlockchain(blockchainId)
+            .getAccountTransactionFetcherState({ account }),
+        ),
+      )
+    ).filter((info): info is AccountTransactionHistoryState<T> => !!info)
   }
 
   /**
@@ -58,21 +63,25 @@ export class FetcherMainDomain {
    * @param signatures The signatures of the transactions to get the state for.
    */
   async getTransactionState(
+    blockchainId: Blockchain,
     signatures: string[] = [],
   ): Promise<TransactionState[]> {
-    return this.context.apiClient.getTransactionState({
-      signatures,
-    })
+    return this.context.apiClient
+      .useBlockchain(blockchainId)
+      .getTransactionState({ signatures })
   }
 
   /**
    * Force to delete the cached transaction (Useful when rpc nodes return flaw txs).
    * @param signatures The txn signatures to delete the cache for.
    */
-  async delTransactionCache(signatures: string[] = []): Promise<boolean> {
-    await this.context.apiClient.delTransactionCache({
-      signatures,
-    })
+  async delTransactionCache(
+    blockchainId: Blockchain,
+    signatures: string[] = [],
+  ): Promise<boolean> {
+    await this.context.apiClient
+      .useBlockchain(blockchainId)
+      .delTransactionCache({ signatures })
 
     return true
   }

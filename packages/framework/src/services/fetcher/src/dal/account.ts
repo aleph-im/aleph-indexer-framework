@@ -4,16 +4,16 @@ import {
   PendingWorkStorage,
 } from '@aleph-indexer/core'
 
-export type AccountStorage = PendingWorkStorage<string[]>
+export type PendingAccountStorage = PendingWorkStorage<string[]>
 
 /**
  * Creates a new pending transaction storage for the fetcher.
  * @param path Path to the database.
  */
-export function createAccountDAL(
+export function createPendingAccountDAL(
   path: string,
-  name = 'fetcher_accounts',
-): AccountStorage {
+  name = 'fetcher_pending_account',
+): PendingAccountStorage {
   return new PendingWorkStorage({
     name,
     path,

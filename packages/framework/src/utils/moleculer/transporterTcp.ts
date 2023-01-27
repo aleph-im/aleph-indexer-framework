@@ -49,61 +49,61 @@ export class FrameworkTCPTransporter extends SuperClass {
   }
 
   //@note: Filter usd discovery packets
-  addOfflineNode(nodeID: string, host: string, port: number): any {
-    const isAllowed = isNodeIdAllowed(this.nodeID, nodeID)
-    if (!isAllowed) return {}
+  // addOfflineNode(nodeID: string, host: string, port: number): any {
+  //   const isAllowed = isNodeIdAllowed(this.nodeID, nodeID)
+  //   if (!isAllowed) return {}
 
-    return super.addOfflineNode(nodeID, host, port)
-  }
+  //   return super.addOfflineNode(nodeID, host, port)
+  // }
 
   // @note: Doing this on deserialize for a better performance
   // async receive(type: string, message: Buffer, socket?: any): Promise<void>
-  deserialize(type: string, buf: Buffer): (Packet & any) | null {
-    const packet: any = super.deserialize(type, buf)
+  // deserialize(type: string, buf: Buffer): (Packet & any) | null {
+  //   const packet: any = super.deserialize(type, buf)
 
-    const sender = packet?.payload.sender
-    if (!sender) return packet
+  //   const sender = packet?.payload.sender
+  //   if (!sender) return packet
 
-    const isAllowed = isNodeIdAllowed(sender, this.nodeID)
-    if (!isAllowed) return null
-    this.cleanGossipNodeLists(packet)
+  //   const isAllowed = isNodeIdAllowed(sender, this.nodeID)
+  //   if (!isAllowed) return null
+  //   this.cleanGossipNodeLists(packet)
 
-    return packet
-  }
+  //   return packet
+  // }
 
-  async publish(packet: Packet & any): Promise<void> {
-    const target = packet?.target
-    if (!target) return
+  // async publish(packet: Packet & any): Promise<void> {
+  //   const target = packet?.target
+  //   if (!target) return
 
-    const isAllowed = isNodeIdAllowed(this.nodeID, target)
-    if (!isAllowed) return
-    this.cleanGossipNodeLists(packet)
+  //   const isAllowed = isNodeIdAllowed(this.nodeID, target)
+  //   if (!isAllowed) return
+  //   this.cleanGossipNodeLists(packet)
 
-    return super.publish(packet)
-  }
+  //   return super.publish(packet)
+  // }
 
-  protected cleanGossipNodeLists(packet: any): void {
-    if (['GOSSIP_REQ', 'GOSSIP_RES', 'GOSSIP_HELLO'].includes(packet.type)) {
-      this.cleanGossipNodeList(packet, 'online')
-      this.cleanGossipNodeList(packet, 'offline')
-    }
-  }
+  // protected cleanGossipNodeLists(packet: any): void {
+  //   if (['GOSSIP_REQ', 'GOSSIP_RES', 'GOSSIP_HELLO'].includes(packet.type)) {
+  //     this.cleanGossipNodeList(packet, 'online')
+  //     this.cleanGossipNodeList(packet, 'offline')
+  //   }
+  // }
 
-  protected cleanGossipNodeList(packet: any, list: 'online' | 'offline'): void {
-    const nodeList: Record<string, number[]> | undefined = packet.payload[list]
-    if (!nodeList) return
+  // protected cleanGossipNodeList(packet: any, list: 'online' | 'offline'): void {
+  //   const nodeList: Record<string, number[]> | undefined = packet.payload[list]
+  //   if (!nodeList) return
 
-    for (const target of Object.keys(nodeList)) {
-      const source = packet.target || this.nodeID
-      const allowed = isNodeIdAllowed(source, target)
+  //   for (const target of Object.keys(nodeList)) {
+  //     const source = packet.target || this.nodeID
+  //     const allowed = isNodeIdAllowed(source, target)
 
-      if (!allowed) {
-        delete nodeList[target]
-      }
-    }
+  //     if (!allowed) {
+  //       delete nodeList[target]
+  //     }
+  //   }
 
-    if (Object.keys(nodeList).length === 0) {
-      delete packet.payload[list]
-    }
-  }
+  //   if (Object.keys(nodeList).length === 0) {
+  //     delete packet.payload[list]
+  //   }
+  // }
 }

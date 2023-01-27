@@ -1,5 +1,5 @@
 import { Utils } from '@aleph-indexer/core'
-import { IndexerMsI } from '../../services/indexer/index.js'
+import { IndexerMsClient } from '../../services/indexer/index.js'
 import {
   DateRange,
   getDateRangeFromInterval,
@@ -30,7 +30,7 @@ export class AccountTimeSeriesStatsManager<V> {
 
   constructor(
     public config: AccountTimeSeriesStatsConfig<V>,
-    protected indexerApi: IndexerMsI,
+    protected indexerClient: IndexerMsClient,
     protected stateDAL: StatsStateStorage,
     protected timeSeriesDAL: StatsTimeSeriesStorage,
   ) {
@@ -85,11 +85,13 @@ export class AccountTimeSeriesStatsManager<V> {
   }
 
   protected async aggregateTimeSeries(now: number): Promise<void> {
-    const { account } = this.config
+    const { blockchainId, account } = this.config
 
-    const state = await this.indexerApi.getAccountState({ account })
+    const state = await this.indexerClient
+      .useBlockchain(blockchainId)
+      .getAccountState({ account })
+
     if (!state) return
-
     if (!state.processed.length) return
 
     const pendingRanges: DateRange[] = state.processed.map(

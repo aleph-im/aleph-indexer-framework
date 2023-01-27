@@ -1,20 +1,26 @@
 import { StorageValueStream } from '@aleph-indexer/core'
+import { Blockchain, ParsedTransaction } from '../../../types.js'
 import { TransportType } from '../../../utils/index.js'
-import { IndexerMsI, PrivateIndexerMsI } from '../interface.js'
-import { TransactionRequestType } from './dal/transactionRequest.js'
-import { TransactionParsedResponse } from './dal/transactionRequestResponse.js'
+import { BlockchainRequestArgs } from '../../types.js'
+import { IndexerMsClient } from '../client.js'
+import {
+  TransactionRequest,
+  TransactionRequestType,
+} from './dal/transactionRequest.js'
 
-export {
-  InstructionContextV1,
-  ParsedTransactionV1,
-  ParsedInstructionV1,
-  ParsedInnerInstructionV1,
-} from '@aleph-indexer/core'
+/**
+ * Describes a date range associated with an account.
+ */
+export type SignatureRange = {
+  blockchainId: Blockchain
+  signatures: string[]
+}
 
 /**
  * Describes a date range associated with an account.
  */
 export type AccountDateRange = {
+  blockchainId: Blockchain
   account: string
   startDate: number
   endDate: number
@@ -24,6 +30,7 @@ export type AccountDateRange = {
  * Describes a slot range associated with an account.
  */
 export type AccountSlotRange = {
+  blockchainId: Blockchain
   account: string
   startSlot: number
   endSlot: number
@@ -32,37 +39,13 @@ export type AccountSlotRange = {
 /**
  * {@link AccountDateRange} bundled with fetched transactions.
  */
-export type TransactionDateRangeResponse = AccountDateRange & {
-  txs: StorageValueStream<TransactionParsedResponse>
-}
+export type TransactionDateRangeResponse<T extends ParsedTransaction<unknown>> =
+  AccountDateRange & {
+    blockchainId: Blockchain
+    txs: StorageValueStream<T>
+  }
 
-export type AccountTransactionsIndexerArgs = {
-  /**
-   * Account to index.
-   */
-  account: string
-  /**
-   * How often to fetch a new chunk of transactions. (@todo: what is this helpful for?)
-   */
-  chunkDelay: number
-  /**
-   * How large the timeframe of a chunk is. (@todo: what is this helpful for?)
-   */
-  chunkTimeframe: number
-}
-
-export type AccountContentIndexerArgs = {
-  /**
-   * Account to index.
-   */
-  account: string
-  /**
-   * How often to fetch a new snapshot of the account's content. (@todo: what is this helpful for? Why not subscribe to the account's content?)
-   */
-  snapshotDelay: number
-}
-
-export type AccountPartitionRequestArgs = {
+export type IndexerAccountPartitionRequestArgs = {
   /**
    * Account to partition.
    */
@@ -73,28 +56,57 @@ export type AccountPartitionRequestArgs = {
   partitionKey?: string
 }
 
-export type IndexerPartitionRequestArgs = {
+export type IndexerIndexerPartitionRequestArgs = {
   /**
    * @todo: what is this helpful for? similar to above?
    */
   indexer: string
 }
 
-export type AccountIndexerRequestArgs = AccountPartitionRequestArgs & {
-  /**
-   * Indexer options.
-   */
-  index: {
+// Account  ------------------------------
+
+export type AccountIndexerTransactionRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
     /**
-     * Whether to index transactions or arguments to the transaction indexer.
+     * How often to fetch a new chunk of transactions. (@todo: what is this helpful for?)
      */
-    transactions: boolean | Omit<AccountTransactionsIndexerArgs, 'account'>
+    chunkDelay: number
     /**
-     * Whether to index account content or arguments to the account indexer.
+     * How large the timeframe of a chunk is. (@todo: what is this helpful for?)
      */
-    content: boolean | Omit<AccountContentIndexerArgs, 'account'>
+    chunkTimeframe: number
   }
-}
+
+export type AccountIndexerStateRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
+    /**
+     * How often to fetch a new snapshot of the account's content. (@todo: what is this helpful for? Why not subscribe to the account's content?)
+     */
+    snapshotDelay: number
+  }
+
+export type AccountIndexerRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
+    /**
+     * Indexer options.
+     */
+    index: {
+      /**
+       * Whether to index transactions or arguments to the transaction indexer.
+       */
+      transactions:
+        | boolean
+        | Omit<AccountIndexerTransactionRequestArgs, 'account' | 'blockchainId'>
+      /**
+       * Whether to index account state or arguments to the account indexer.
+       */
+      state?:
+        | boolean
+        | Omit<AccountIndexerStateRequestArgs, 'account' | 'blockchainId'>
+    }
+  }
+
+// Other --------------------------------------------------
 
 /**
  * Indexer configuration with account information.
@@ -106,21 +118,27 @@ export type AccountIndexerConfigWithMeta<T> = AccountIndexerRequestArgs & {
   meta: T
 }
 
-export type GetAccountIndexingStateRequestArgs = AccountPartitionRequestArgs
+export type GetAccountIndexingStateRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs
 
-export type InvokeMethodRequestArgs = AccountPartitionRequestArgs & {
-  /**
-   * Method to invoke.
-   */
-  method: string
-  /**
-   * Arguments to pass to the method.
-   */
-  args?: unknown[]
-}
+export type InvokeMethodRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
+    /**
+     * Method to invoke.
+     */
+    method: string
+    /**
+     * Arguments to pass to the method.
+     */
+    args?: unknown[]
+    /**
+     * Indexer to execute.
+     */
+    indexer?: string
+  }
 
-export type GetTransactionPendingRequestsRequestArgs =
-  IndexerPartitionRequestArgs & {
+export type GetTransactionPendingRequestsRequestArgs = BlockchainRequestArgs &
+  IndexerIndexerPartitionRequestArgs & {
     /**
      * Whether to filter by slot, date or signature requests.
      */
@@ -149,8 +167,8 @@ export type AccountEventsFilters = AccountDateRange
 /**
  * Describes an object capable of handling transaction streams.
  */
-export type TransactionIndexerHandler = {
-  onTxDateRange(data: TransactionDateRangeResponse): Promise<void>
+export type TransactionIndexerHandler<T extends ParsedTransaction<unknown>> = {
+  onTxDateRange(data: TransactionDateRangeResponse<T>): Promise<void>
 }
 
 export type IndexerCommonDomainContext = {
@@ -159,13 +177,18 @@ export type IndexerCommonDomainContext = {
    */
   projectId: string
   /**
+   * Supported blockchains
+   */
+  supportedBlockchains: Blockchain[]
+  /**
    * Transport type used to communicate inside the indexer.
    */
   transport: TransportType
   /**
    * Client for calling the indexer service.
    */
-  apiClient: IndexerMsI & PrivateIndexerMsI
+  apiClient: IndexerMsClient
+  // apiClient: IndexerMsI & PrivateIndexerMsI
   /**
    * Path to the directory where data is stored.
    */
@@ -180,7 +203,9 @@ export type IndexerDomainContext = IndexerCommonDomainContext & {
  * Describes an indexer worker domain,
  * capable of indexing transactions and adding new accounts to be indexed.
  */
-export type IndexerWorkerDomainI = TransactionIndexerHandler & {
+export type IndexerWorkerDomainI = TransactionIndexerHandler<
+  ParsedTransaction<unknown>
+> & {
   init(): Promise<void>
   onNewAccount(args: AccountIndexerRequestArgs): Promise<void>
 }
@@ -215,4 +240,44 @@ export type AccountIndexerState = {
    * Which transactions have been indexed.
    */
   processed: string[]
+}
+
+export interface BlockchainIndexerI {
+  start(): Promise<void>
+  stop(): Promise<void>
+
+  /**
+   * Registers a new indexer for the given account, either for transactions or content or both.
+   * @param config The indexer configuration.
+   */
+  indexAccount(config: AccountIndexerRequestArgs): Promise<void>
+
+  /**
+   * Returns the indexing state of the given account.
+   * @param args The account to get the state of.
+   */
+  getAccountState(
+    args: GetAccountIndexingStateRequestArgs,
+  ): Promise<AccountIndexerState | undefined>
+
+  /**
+   * Invokes a domain method with the given account.
+   * This will be forwarded through the broker to the worker. @todo: Correct?
+   * @param args The account, the method and additional arguments to pass to the method.
+   */
+  invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown>
+
+  /**
+   * Remove the indexer for the given account, either for transactions or content or both.
+   * @param config The indexer configuration.
+   */
+  deleteAccount(config: AccountIndexerRequestArgs): Promise<void>
+
+  /**
+   * Returns all pending and processed transaction requests.
+   * @param args
+   */
+  getTransactionRequests(
+    args: GetTransactionPendingRequestsRequestArgs,
+  ): Promise<TransactionRequest[]>
 }
