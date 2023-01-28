@@ -8,6 +8,7 @@ const { splitDurationIntoIntervals } = Utils
  * Gaps in between the ranges are for adding new ranges.
  */
 export enum TimeFrame {
+  Tick = 0,
   Hour = 30,
   Day = 40,
   Week = 50,
@@ -23,6 +24,7 @@ export const TimeFrameDurationUnitsMap: Record<
   TimeFrame,
   [DateTimeUnit, number]
 > = {
+  [TimeFrame.Tick]: ['millisecond', 1],
   [TimeFrame.Hour]: ['hour', 1],
   [TimeFrame.Day]: ['day', 1],
   [TimeFrame.Week]: ['week', 1],
@@ -142,7 +144,6 @@ function clipDateRanges(
  * @todo: needs a better function name, idk what it exactly does but it also sorts the ranges
  * @param ranges
  * @param clipRanges
- * @param log
  */
 export async function clipDateRangesFromIterable<T extends DateRangeArrayOrMap>(
   ranges: T,
@@ -250,6 +251,9 @@ export function getTimeFrameOptions(
     case TimeFrame.Year:
     case TimeFrame.All: {
       return [interval.start, interval.end, ...duration]
+    }
+    case TimeFrame.Tick: {
+      throw new Error('TimeFrame.Tick is not usable with Time')
     }
   }
 }

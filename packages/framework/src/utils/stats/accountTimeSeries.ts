@@ -1,23 +1,14 @@
 import { Utils } from '@aleph-indexer/core'
 import { IndexerMsClient } from '../../services/indexer/index.js'
+import { DateRange, getDateRangeFromInterval, mergeDateRangesFromIterable, TimeFrame } from '../time.js'
 import {
-  DateRange,
-  getDateRangeFromInterval,
-  mergeDateRangesFromIterable,
-} from '../time.js'
-import {
-  StatsStateStorage,
-  StatsStateState,
-  StatsStateDALIndex,
-  StatsState,
-} from './dal/statsState.js'
-import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
-import {
-  AccountTimeSeriesStats,
-  AccountStatsFilters,
-  AccountTimeSeriesStatsConfig,
-  AccountStats,
-} from './types.js'
+  TimeFrameState,
+  TimeFrameStateCode,
+  TimeFrameStateDALIndex,
+  TimeFrameStateStorage,
+} from './dal/timeFrameState.js'
+import { TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
+import { AccountStats, AccountTimeSeriesStats, AccountTimeSeriesStatsConfig, TimeSeriesStatsFilters } from './types.js'
 
 const { JobRunner } = Utils
 
@@ -31,8 +22,8 @@ export class AccountTimeSeriesStatsManager<V> {
   constructor(
     public config: AccountTimeSeriesStatsConfig<V>,
     protected indexerClient: IndexerMsClient,
-    protected stateDAL: StatsStateStorage,
-    protected timeSeriesDAL: StatsTimeSeriesStorage,
+    protected stateDAL: TimeFrameStateStorage,
+    protected timeSeriesDAL: TimeFrameStatsStorage,
   ) {
     this.compactionJob = new JobRunner({
       name: `stats-compactor ${config.account}`,
@@ -49,7 +40,7 @@ export class AccountTimeSeriesStatsManager<V> {
 
   async getTimeSeriesStats(
     type: string,
-    filters: AccountStatsFilters,
+    filters: TimeSeriesStatsFilters,
   ): Promise<AccountTimeSeriesStats> {
     const { account } = this.config
 
@@ -61,7 +52,7 @@ export class AccountTimeSeriesStatsManager<V> {
       throw new Error(`Stats for ${account} of type "${type}" not found`)
 
     const series = await timeSeries.getStats(account, filters)
-    const { timeFrame } = filters
+    const timeFrame = filters.timeFrame ?? TimeFrame.Tick
 
     return {
       account,
@@ -137,10 +128,10 @@ export class AccountTimeSeriesStatsManager<V> {
 
   protected async compactStates(): Promise<void> {
     const { account } = this.config
-    const { Processed } = StatsStateState
+    const { Processed } = TimeFrameStateCode
 
     const fetchedRanges = await this.stateDAL
-      .useIndex(StatsStateDALIndex.AccountTypeState)
+      .useIndex(TimeFrameStateDALIndex.AccountTypeState)
       .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
       })
@@ -150,14 +141,14 @@ export class AccountTimeSeriesStatsManager<V> {
     )
 
     const newStates = newRanges.map((range) => {
-      const newState = range as StatsState
+      const newState = range as TimeFrameState
       newState.account = account
       newState.state = Processed
       return newState
     })
 
     const oldStates = oldRanges.map((range) => {
-      const oldState = range as StatsState
+      const oldState = range as TimeFrameState
       oldState.account = account
       oldState.state = Processed
       return oldState

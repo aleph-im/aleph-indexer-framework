@@ -7,11 +7,7 @@ import {
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
 import { Blockchain } from '../../../types.js'
-import {
-  AccountTimeSeriesStats,
-  AccountStatsFilters,
-  AccountStats,
-} from '../../stats/types.js'
+import { AccountStats, AccountTimeSeriesStats, TimeSeriesStatsFilters } from '../../stats/types.js'
 
 /**
  * Describes the main indexer domain class capable of calculating stats.
@@ -24,6 +20,7 @@ export type IndexerMainDomainWithStats = {
   updateStats(now: number): Promise<void>
   /**
    * Returns the time-series stats for the given account.
+   * @param blockchainId The blockchain to get the time-series stats from.
    * @param accounts The accounts to get the time-series stats from.
    * @param type The type of time-series to get.
    * @param filters The transformations and clipping to apply to the time-series.
@@ -32,10 +29,11 @@ export type IndexerMainDomainWithStats = {
     blockchainId: Blockchain,
     accounts: string[],
     type: string,
-    filters: AccountStatsFilters,
+    filters: TimeSeriesStatsFilters,
   ): Promise<AccountTimeSeriesStats[]>
   /**
    * Returns the global stats for the given accounts.
+   * @param blockchainId The blockchain to get the summary from.
    * @param accounts The accounts to get the summary from.
    */
   getAccountStats(
@@ -146,6 +144,7 @@ export abstract class IndexerMainDomain {
 
   /**
    * Gets the indexing state of the given accounts.
+   * @param blockchainId The blockchain to get the state from.
    * @param accounts The accounts to get the state from.
    */
   async getAccountState(
@@ -165,6 +164,7 @@ export abstract class IndexerMainDomain {
 
   /**
    * Returns the time-series stats for the given account.
+   * @param blockchainId The blockchain to get the time-series stats from.
    * @param accounts The accounts to get the time-series stats from.
    * @param type The type of time-series to get.
    * @param filters The transformations and clipping to apply to the time-series.
@@ -173,7 +173,7 @@ export abstract class IndexerMainDomain {
     blockchainId: Blockchain,
     accounts: string[] = [],
     type: string,
-    filters: AccountStatsFilters,
+    filters: TimeSeriesStatsFilters,
   ): Promise<AccountTimeSeriesStats<V>[]> {
     this.checkStats()
 
@@ -196,6 +196,7 @@ export abstract class IndexerMainDomain {
 
   /**
    * Returns the global stats for the given accounts.
+   * @param blockchainId The blockchain to get the summary from.
    * @param accounts The accounts to get the summary from.
    */
   async getAccountStats<V>(

@@ -1,9 +1,9 @@
 import { Interval } from 'luxon'
 import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
-import { TimeSeriesStats } from './timeSeries.js'
-import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
-import { Blockchain } from '../../types.js'
+import { TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
+import { Blockchain, EventBase } from '../../types.js'
+import { StatsI } from './interface.js'
 
 export type PrevValueFactoryFnArgs = {
   account: string
@@ -21,7 +21,7 @@ export type InputStreamFactoryFnArgs = {
 
 export type TimeSeriesAggregatorFnArgs<I, O> = {
   input: I | O
-  interval: Interval
+  interval?: Interval
   prevValue?: O
   cache: Record<string, unknown>
 }
@@ -32,35 +32,36 @@ export type TimeSeriesAggregatorFnArgs<I, O> = {
 export type AccountAggregatorFnArgs = {
   now: number
   account: string
-  timeSeriesDAL: StatsTimeSeriesStorage
+  timeSeriesDAL: TimeFrameStatsStorage
 }
 
-export type TimeSeriesStatsConfig<I, O> = {
+export type TimeSeriesStatsConfig<I extends EventBase<any>, O> = {
   type: string
-  startDate: number
-  timeFrames: TimeFrame[]
+  beginStatsDate: number
   getInputStream: (
     args: InputStreamFactoryFnArgs,
   ) => Promise<StorageValueStream<I>>
   aggregate: (args: TimeSeriesAggregatorFnArgs<I, O>) => O
-  // getPrevValue?: (
-  //   args: PrevValueFactoryFnArgs,
-  //   defaultFn: (args: PrevValueFactoryFnArgs) => Promise<O | undefined>,
-  // ) => Promise<O | undefined>
   reverse?: boolean
+  timeFrames?: TimeFrame[]
+}
+export type TickStatsConfig<I extends EventBase<any>, O> = TimeSeriesStatsConfig<I, O>
+
+export type TimeFrameStatsConfig<I extends EventBase<any>, O> = Omit<TimeSeriesStatsConfig<I, O>, 'timeFrames'> & {
+  timeFrames: TimeFrame[]
 }
 
 export type AccountTimeSeriesStatsConfig<V> = {
   blockchainId: Blockchain
   account: string
-  series: TimeSeriesStats<any, any>[]
+  series: StatsI<any, any>[]
   aggregate?: (args: AccountAggregatorFnArgs) => Promise<V>
 }
 
 export type TypedValue = { type: string }
 
 export type TimeSeriesItem<V = any> = {
-  date: string // ISO left bound of the interval
+  date: string // ISO left bound of the time frame or the date of the tick
   value: V & TypedValue
 }
 
@@ -87,8 +88,8 @@ export type AccountStats<V = any> = {
 /**
  * Transformations and clipping to apply to the time-series.
  */
-export type AccountStatsFilters = {
-  timeFrame: TimeFrame
+export type TimeSeriesStatsFilters = {
+  timeFrame?: TimeFrame
   startDate?: number
   endDate?: number
   limit?: number

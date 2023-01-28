@@ -1,2 +1,2 @@
-export * from './statsState.js'
-export * from './statsTimeSeries.js'
+export * from './timeFrameState.js'
+export * from './timeFrameEntity.js'

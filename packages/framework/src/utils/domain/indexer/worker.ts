@@ -5,11 +5,7 @@ import {
   TransactionDateRangeResponse,
 } from '../../../services/indexer/src/types.js'
 import { Blockchain, ParsedTransaction } from '../../../types.js'
-import {
-  AccountTimeSeriesStats,
-  AccountStatsFilters,
-  AccountStats,
-} from '../../stats/index.js'
+import { AccountStats, AccountTimeSeriesStats, TimeSeriesStatsFilters } from '../../stats/index.js'
 import { WorkerKind } from '../../workers.js'
 import { importBlockchainWorkerIndexerDomain } from '../common.js'
 
@@ -21,7 +17,7 @@ export type IndexerWorkerDomainWithStats = {
   getTimeSeriesStats(
     account: string,
     type: string,
-    filters: AccountStatsFilters,
+    filters: TimeSeriesStatsFilters,
   ): Promise<AccountTimeSeriesStats>
   getStats(account: string): Promise<AccountStats>
 }

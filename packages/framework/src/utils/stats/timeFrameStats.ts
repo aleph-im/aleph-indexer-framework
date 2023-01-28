@@ -12,21 +12,15 @@ import {
   TimeFrame,
 } from '../time.js'
 import {
-  StatsState,
-  StatsStateDALIndex,
-  StatsStateState,
-  StatsStateStorage,
-} from './dal/statsState.js'
-import {
-  StatsTimeSeries,
-  StatsTimeSeriesStorage,
-} from './dal/statsTimeSeries.js'
-import {
-  AccountStatsFilters,
-  PrevValueFactoryFnArgs,
-  TimeSeries,
-  TimeSeriesStatsConfig,
-} from './types.js'
+  TimeFrameState,
+  TimeFrameStateCode,
+  TimeFrameStateDALIndex,
+  TimeFrameStateStorage,
+} from './dal/timeFrameState.js'
+import { TimeFrameEntity, TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
+import { TimeFrameStatsConfig, TimeSeries, TimeSeriesStatsFilters } from './types.js'
+import { StatsI } from './interface.js'
+import { EventBase } from '../../types.js'
 
 const { BufferExec } = Utils
 
@@ -35,12 +29,13 @@ const { BufferExec } = Utils
  * @type I The event type that the stats are based on.
  * @type O The time frame type of the stats ("candles"/"bars").
  */
-export class TimeSeriesStats<I, O> {
+export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O> {
   constructor(
-    public config: TimeSeriesStatsConfig<I, O>,
-    protected stateDAL: StatsStateStorage,
-    protected timeSeriesDAL: StatsTimeSeriesStorage,
-  ) {}
+    public config: TimeFrameStatsConfig<I, O>,
+    protected stateDAL: TimeFrameStateStorage,
+    protected timeSeriesDAL: TimeFrameStatsStorage,
+  ) {
+  }
 
   /**
    * Get the stats for a given interval, time frame size and account.
@@ -49,7 +44,7 @@ export class TimeSeriesStats<I, O> {
    * @param startDate The start date of the interval.
    * @param endDate The end date of the interval.
    * @param limit The maximum number of time frames to return.
-   * @param reverse Whether to return the time frames in reverse order (oldest-to-newest). @todo: correct?
+   * @param reverse Whether to return the time frames in reverse order (oldest-to-newest).
    */
   async getStats(
     account: string,
@@ -59,8 +54,8 @@ export class TimeSeriesStats<I, O> {
       endDate,
       limit = 1000,
       reverse = true,
-    }: AccountStatsFilters,
-  ): Promise<TimeSeries> {
+    }: TimeSeriesStatsFilters,
+  ): Promise<TimeSeries<O>> {
     const { type } = this.config
 
     const values = await this.timeSeriesDAL.getAllValuesFromTo(
@@ -102,7 +97,7 @@ export class TimeSeriesStats<I, O> {
     const {
       timeFrames,
       type,
-      startDate,
+      beginStatsDate,
       getInputStream,
       aggregate: aggregator,
       reverse,
@@ -110,9 +105,9 @@ export class TimeSeriesStats<I, O> {
 
     const sortedTimeFrames = timeFrames.sort()
 
-    if (startDate !== undefined) {
+    if (beginStatsDate !== undefined) {
       pendingDateRanges = await clipDateRangesFromIterable(pendingDateRanges, [
-        { startDate: 0, endDate: startDate - 1 },
+        { startDate: 0, endDate: beginStatsDate - 1 },
       ])
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
@@ -130,25 +125,23 @@ export class TimeSeriesStats<I, O> {
       )
       let addedEntries = 0
       for (const pendingRange of pendingTimeFrameDateRanges) {
-        const processedIntervalsBuffer = new BufferExec<
-          StatsTimeSeries<O | undefined>
-        >(async (entries) => {
+        const processedIntervalsBuffer = new BufferExec<TimeFrameEntity<O | undefined>>(async (entries) => {
           // @note: Save entries that have any data
           const valueEntries = entries.filter(
-            (entry): entry is StatsTimeSeries<O> => entry.data !== undefined,
+            (entry): entry is TimeFrameEntity<O> => entry.data !== undefined,
           )
           await this.timeSeriesDAL.save(valueEntries)
           addedEntries += valueEntries.length
 
           // @note: Save states for all interval, either with empty data or not
-          const stateEntries: StatsState[] = entries.map(
+          const stateEntries: TimeFrameState[] = entries.map(
             ({ account, startDate, endDate, type, timeFrame }) => ({
               account,
               startDate,
               endDate,
               type,
               timeFrame,
-              state: StatsStateState.Processed,
+              state: TimeFrameStateCode.Processed,
             }),
           )
 
@@ -279,26 +272,11 @@ export class TimeSeriesStats<I, O> {
     }
   }
 
-  async getPrevValue({
-    account,
-    type,
-    timeFrame: frame,
-    interval,
-    reverse,
-  }: PrevValueFactoryFnArgs): Promise<O | undefined> {
-    const prevInterval = getPreviousInterval(interval, frame, reverse)
-
-    const key = [account, type, frame, prevInterval.start.toMillis()]
-    const timeSeries = await this.timeSeriesDAL.get(key)
-
-    return timeSeries?.data
-  }
-
   protected async compactStates(account: string): Promise<void> {
-    const { Processed } = StatsStateState
+    const { Processed } = TimeFrameStateCode
 
     const fetchedRanges = await this.stateDAL
-      .useIndex(StatsStateDALIndex.AccountTypeState)
+      .useIndex(TimeFrameStateDALIndex.AccountTypeState)
       .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
       })
@@ -310,14 +288,14 @@ export class TimeSeriesStats<I, O> {
     if (!newRanges.length) return
 
     const newStates = newRanges.map((range) => {
-      const newState = range as StatsState
+      const newState = range as TimeFrameState
       newState.account = account
       newState.state = Processed
       return newState
     })
 
     const oldStates = oldRanges.map((range) => {
-      const oldState = range as StatsState
+      const oldState = range as TimeFrameState
       oldState.account = account
       oldState.state = Processed
       return oldState
