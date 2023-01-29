@@ -5,6 +5,7 @@ import {
   GraphQLBoolean,
   GraphQLEnumType,
   GraphQLFloat,
+  GraphQLInt,
   GraphQLList,
   GraphQLNamedType,
   GraphQLNonNull,
@@ -14,10 +15,12 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
-import { TimeInfo } from '../types.js'
+import { Blockchain, TimeInfo } from '../types.js'
 import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
 import { Duration } from 'luxon'
 import { MAX_TIMEFRAME } from '../../time.js'
+
+export * from '../types.js'
 
 // State
 
@@ -52,6 +55,7 @@ export const TransactionRequest = new GraphQLObjectType({
     indexer: { type: new GraphQLNonNull(GraphQLString) },
     nonce: { type: new GraphQLNonNull(GraphQLFloat) },
     type: { type: new GraphQLNonNull(TransactionRequestType) },
+    count: { type: GraphQLInt },
     complete: { type: GraphQLBoolean },
     params: { type: GraphQLJSONObject },
   },
@@ -141,6 +145,7 @@ export function getAccountTimeSeriesStatsType(
 export { TimeInfo } from '../types.js'
 
 export const types: GraphQLNamedType[] = [
+  Blockchain,
   TimeInfo,
   AccountState,
   TimeFrame,

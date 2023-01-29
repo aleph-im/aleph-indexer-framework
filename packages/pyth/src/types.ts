@@ -1,4 +1,4 @@
-import { EventBase } from '@aleph-indexer/core'
+import { EventBase } from '@aleph-indexer/framework'
 import {
   PriceStatus,
   PriceData,

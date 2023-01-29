@@ -6,14 +6,13 @@ import {
   PythAccountInfo,
 } from '../types.js'
 import { PYTH_PROGRAM_ID, PYTH_PROGRAM_ID_PK } from '../constants.js'
-import { solanaPrivateRPC } from '@aleph-indexer/core'
+import { solanaPrivateRPC } from '@aleph-indexer/solana'
 import { AccountInfo, PublicKey } from '@solana/web3.js'
 import {
   parseBaseData,
   parsePriceData,
   parseProductData,
 } from '@pythnetwork/client'
-import { Connection } from '@aleph-indexer/core/dist/lib/solana/web3.js'
 import BN from 'bn.js'
 
 export default class DiscoveryHelper {
@@ -58,7 +57,6 @@ export default class DiscoveryHelper {
         const accountInfo = await this.deserializeAccountResponse(
           account,
           AccountsType.PriceAccount,
-          connection,
         )
         accountsInfo.push(accountInfo)
       }
@@ -70,11 +68,9 @@ export default class DiscoveryHelper {
   async deserializeAccountResponse(
     resp: { pubkey: PublicKey; account: AccountInfo<Buffer> },
     type: AccountsType,
-    connection: Connection,
   ): Promise<PythAccountInfo> {
     const data: ParsedAccountsData = await this.getParsedAccountData(
       resp.account.data,
-      connection,
     )
     const address = data.priceAccountKey.toString()
     // Parsing names from on-chain account data can be complicated at times...
@@ -96,8 +92,8 @@ export default class DiscoveryHelper {
 
   async getParsedAccountData(
     data: Buffer,
-    connection: Connection,
   ): Promise<ParsedAccountsData> {
+    const connection = solanaPrivateRPC.getConnection()
     const responseProduct = parseProductData(data)
     if (responseProduct.priceAccountKey) {
       const priceAccount = await connection.getAccountInfo(

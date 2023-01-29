@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import {
   StorageBatch,
+  StorageCommonOptions,
   StorageGetOptions,
   StoragePutOptions,
 } from './baseStorage.js'
@@ -28,7 +29,9 @@ export type EntityIndexStorageOptions<Entity> = LevelStorageOptions<
   count?: boolean
 }
 
-export type EntityIndexStorageInvokeOptions = { atomic?: boolean }
+export type EntityIndexStorageInvokeOptions = StorageCommonOptions & {
+  atomic?: boolean
+}
 export type EntityIndexStorageCallOptions = EntityIndexStorageInvokeOptions
 export type EntityIndexStorageSaveOptions<V> = StoragePutOptions<string, V> &
   EntityIndexStorageInvokeOptions & {
@@ -53,6 +56,10 @@ export class EntityIndexStorage<
   // @note: Timestamps in millis take 13 chars
   static TimestampLength = 13
   static VariableLength = 0
+
+  // @note: Refactor
+  // @note: 20 bytes (40 hex chars + 2 chars for "0x" prefix) = 42
+  static EthereumAddressLength = 42
 
   protected self: typeof EntityIndexStorage
   protected noopMutex = Promise.resolve((): void => {})
@@ -154,13 +161,22 @@ export class EntityIndexStorage<
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
-      const stream = this.storage.getAllFromTo(
-        this.mapKeyChunks(start, false),
-        this.mapKeyChunks(end, true),
-        { ...options, sublevel: this.options.sublevel },
-      )
+      const from = this.mapKeyChunks(start, false)
+      const to = this.mapKeyChunks(end, true)
+      const opts = { ...options, sublevel: this.options.sublevel }
 
-      return this.mapItems(stream)
+      if (options.debug) {
+        console.log(`
+          dbDebug:
+            getAllFromTo: ${this.options.name} [${opts.sublevel}]
+            from: ${from}
+            to: ${to}
+        `)
+      }
+
+      const stream = this.storage.getAllFromTo(from, to, opts)
+
+      return this.mapItems(stream, options)
     } finally {
       release()
     }
@@ -192,14 +208,23 @@ export class EntityIndexStorage<
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
-      const item = await this.storage.getFirstItemFromTo(
-        this.mapKeyChunks(start, false),
-        this.mapKeyChunks(end, true),
-        { sublevel: this.options.sublevel },
-      )
+      const from = this.mapKeyChunks(start, false)
+      const to = this.mapKeyChunks(end, true)
+      const opts = { ...options, sublevel: this.options.sublevel }
+
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            getFirstItemFromTo: ${this.options.name} [${opts.sublevel}]
+            from: ${from}
+            to: ${to}
+        `)
+      }
+
+      const item = await this.storage.getFirstItemFromTo(from, to, opts)
 
       if (!item) return
-      return this.mapItem(item, options?.atomic)
+      return this.mapItem(options, item)
     } finally {
       release()
     }
@@ -231,14 +256,23 @@ export class EntityIndexStorage<
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
-      const item = await this.storage.getLastItemFromTo(
-        this.mapKeyChunks(start, false),
-        this.mapKeyChunks(end, true),
-        { sublevel: this.options.sublevel },
-      )
+      const from = this.mapKeyChunks(start, false)
+      const to = this.mapKeyChunks(end, true)
+      const opts = { ...options, sublevel: this.options.sublevel }
+
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            getLastItemFromTo: ${this.options.name} [${opts.sublevel}]
+            from: ${from}
+            to: ${to}
+        `)
+      }
+
+      const item = await this.storage.getLastItemFromTo(from, to, opts)
 
       if (!item) return
-      return this.mapItem(item, options?.atomic)
+      return this.mapItem(options, item)
     } finally {
       release()
     }
@@ -276,10 +310,7 @@ export class EntityIndexStorage<
         typeof key === 'string' &&
         key.indexOf(this.self.keyValueDelimiter) >= 0
       ) {
-        const mappedItem = await this.mapItem(
-          { key, value: '' },
-          options?.atomic,
-        )
+        const mappedItem = await this.mapItem(options, { key, value: '' })
         return mappedItem?.value
       }
 
@@ -293,7 +324,7 @@ export class EntityIndexStorage<
 
       if (!value) return
 
-      const item = await this.mapItem({ key: innerKey, value }, options?.atomic)
+      const item = await this.mapItem(options, { key: innerKey, value })
       return item?.value
     } finally {
       release()
@@ -320,8 +351,8 @@ export class EntityIndexStorage<
       if (!values || !values.length) return []
 
       const items = await this.mapManyItem(
+        options,
         values.map((v, i) => ({ key: innerKeys[i], value: v })),
-        options?.atomic,
       )
 
       return items.map((item) => item.value)
@@ -514,15 +545,16 @@ export class EntityIndexStorage<
 
   protected mapItems(
     stream: StorageStream<string, Entity | string>,
+    options: StorageCommonOptions,
   ): StorageStream<string, Returned> {
     return stream
-      .pipe(new StreamMap(this.mapItem.bind(this)))
+      .pipe(new StreamMap(this.mapItem.bind(this, options)))
       .pipe(new StreamFilter(this.filterItem.bind(this)))
   }
 
   protected async mapItem(
+    options: EntityIndexStorageInvokeOptions | undefined,
     item: StorageEntry<string, string | Entity>,
-    atomic?: boolean,
   ): Promise<StorageEntry<string, Returned> | undefined> {
     const { entityStore } = this.options
 
@@ -531,7 +563,17 @@ export class EntityIndexStorage<
       const [, entityKey] = key.split(this.self.keyValueDelimiter)
       const value = await entityStore.get(entityKey)
 
-      if (value === undefined && atomic) {
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            mapItem: ${this.options.name} [${options.sublevel}]
+            indexKey: ${key}
+            entityKey: ${entityKey}
+            hasValue: ${!!value}
+        `)
+      }
+
+      if (value === undefined && options?.atomic) {
         console.log(
           `🟥 Inconsistent lookup key [${entityKey}] from key (${key}) on index [${this.options.sublevel}]`,
         )
@@ -545,8 +587,8 @@ export class EntityIndexStorage<
   }
 
   protected async mapManyItem(
+    options: EntityIndexStorageGetStreamOptions<Returned> | undefined,
     items: StorageEntry<string, string | Entity>[],
-    atomic?: boolean,
   ): Promise<StorageEntry<string, Returned>[]> {
     const { entityStore } = this.options
 
@@ -557,7 +599,7 @@ export class EntityIndexStorage<
 
       const values = await entityStore.getMany(entityKeys)
 
-      if ((!values || !values.length) && atomic) {
+      if ((!values || !values.length) && options?.atomic) {
         console.log(
           `🟥 Inconsistent lookup keys from key on index [${this.options.sublevel}]`,
         )

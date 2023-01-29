@@ -47,7 +47,7 @@ export async function* getIntervalsFromStorageStream(
   stream: AsyncIterable<IntervalEntity>,
 ): AsyncGenerator<Interval> {
   for await (const entry of stream) {
-    yield getIntervalFromDateRange(entry.startTimestamp, entry.endTimestamp)
+    yield getIntervalFromDateRange(entry.startDate, entry.endDate)
   }
 }
 
@@ -231,7 +231,7 @@ export function isEqualIntervalEntity(
   b: IntervalEntity,
 ): boolean {
   return (
-    a.startTimestamp === b.startTimestamp && a.endTimestamp === b.endTimestamp
+    a.startDate === b.startDate && a.endDate === b.endDate
   )
 }
 

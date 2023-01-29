@@ -1,0 +1,44 @@
+{
+  "name": "@aleph-indexer/ethereum",
+  "version": "1.0.29",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.js",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ALEPH.im",
+  "license": "ISC",
+  "peerDependencies": {
+    "graphql": "^15.8.0",
+    "graphql-type-json": "^0.3.2",
+    "luxon": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.0.1",
+    "@types/node": "^17.0.33",
+    "graphql": "^15.8.0",
+    "graphql-type-json": "^0.3.2",
+    "luxon": "^3.0.4"
+  },
+  "dependencies": {
+    "@aleph-indexer/core": "^1.0.26",
+    "@aleph-indexer/framework": "^1.0.29",
+    "ethers": "^5.7.2",
+    "moleculer": "^0.14.24",
+    "node-fetch": "^3.3.0",
+    "web3": "^1.8.1"
+  },
+  "typedoc": {
+    "entryPoint": "./index.ts",
+    "displayName": "Ethereum Indexer Framework"
+  }
+}

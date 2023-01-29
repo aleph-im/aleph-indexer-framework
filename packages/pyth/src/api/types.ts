@@ -33,7 +33,7 @@ const Price = new GraphQLObjectType({
     id: { type: new GraphQLNonNull(GraphQLString) },
     timestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
     priceAccount: { type: new GraphQLNonNull(GraphQLString) },
-    price: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    price: { type: new GraphQLNonNull(GraphQLFloat) },
     confidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
     status: { type: new GraphQLNonNull(GraphQLInt) },
   },

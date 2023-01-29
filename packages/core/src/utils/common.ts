@@ -1,5 +1,9 @@
 import path from 'node:path'
 import fs from 'node:fs'
+import { mkdir } from 'node:fs/promises'
+import { promisify } from 'node:util'
+
+const fsExists = promisify(fs.exists)
 
 // Get the date part in ISO format (UTC) for a timestamp
 export function isoDate(timestamp: number, unit: 's' | 'ms' = 's'): string {
@@ -107,16 +111,17 @@ export function sortTimeStatsMap<T extends { interval: string }>(
   )
 }
 
-export function ensurePath(dest: string): void {
+export async function ensurePath(dest: string): Promise<void> {
   const paths = dest.split('/')
   let fullPath = ''
 
   for (const p of paths) {
     fullPath = path.join(fullPath, p)
 
-    if (!fs.existsSync(fullPath)) {
-      fs.mkdirSync(fullPath, { recursive: true })
-    }
+    const exists = await fsExists(fullPath)
+    if (exists) continue
+
+    await mkdir(fullPath, { recursive: true })
   }
 }
 

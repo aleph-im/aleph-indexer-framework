@@ -30,7 +30,7 @@ const timeFrameKey = {
 
 // @note: start date in millis of the interval
 const startDateKey = {
-  get: (e: StatsTimeSeries<unknown>) => e.startTimestamp,
+  get: (e: StatsTimeSeries<unknown>) => e.startDate,
   length: EntityStorage.TimestampLength,
 }
 

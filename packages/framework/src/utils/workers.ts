@@ -1,6 +1,7 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { MessageChannel, MessagePort, Worker } from 'worker_threads'
+import { Blockchain } from '../types.js'
 import { TransportType } from './moleculer/config.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -36,6 +37,10 @@ export type WorkerInfo = {
    * Name of the project the worker is running for.
    */
   projectId: string
+  /**
+   * Supported blockchains (default: solana)
+   */
+  supportedBlockchains: Blockchain[]
   /**
    * Type of the transport the worker is using.
    */

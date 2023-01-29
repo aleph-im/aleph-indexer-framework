@@ -184,8 +184,8 @@ const ixsContext: InstructionContextV1[] = [
       },
       parserContext: {
         account: 'CrCpTerNqtZvqLcKqz1k13oVeXV9WkMD2zA9hBKXrsbN',
-        startTimestamp: 0,
-        endTimestamp: Date.now(),
+        startDate: 0,
+        endDate: Date.now(),
       },
     },
     ix: {

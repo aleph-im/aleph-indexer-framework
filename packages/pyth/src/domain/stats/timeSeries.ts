@@ -1,6 +1,7 @@
 import {
   AccountTimeSeriesStatsManager,
-  IndexerMsI,
+  Blockchain,
+  IndexerMsClient,
   StatsStateStorage,
   StatsTimeSeriesStorage,
   TimeSeriesStats,
@@ -12,8 +13,9 @@ import { TIME_FRAMES_AS_DURATION } from '../../constants.js'
 import statsAggregator from './statsAggregator.js'
 
 export function createCandles(
+  blockchainId: Blockchain,
   account: string,
-  indexerApi: IndexerMsI,
+  indexerApi: IndexerMsClient,
   priceDAL: PriceStorage,
   statsStateDAL: StatsStateStorage,
   statsTimeSeriesDAL: StatsTimeSeriesStorage,
@@ -21,14 +23,14 @@ export function createCandles(
   const timeSeriesStats = new TimeSeriesStats<Price, Candle>(
     {
       type: 'candle',
-      startTimestamp: 0,
+      startDate: 0,
       timeFrames: TIME_FRAMES_AS_DURATION,
-      getInputStream: ({ account, startTimestamp, endTimestamp }) => {
+      getInputStream: ({ account, startDate, endDate }) => {
         return priceDAL
           .useIndex(PriceDALIndex.AccountTimestamp)
           .getAllValuesFromTo(
-            [account, startTimestamp],
-            [account, endTimestamp],
+            [account, startDate],
+            [account, endDate],
           )
       },
       aggregate: ({ input, prevValue }): Candle => {
@@ -41,6 +43,7 @@ export function createCandles(
 
   return new AccountTimeSeriesStatsManager<PythAccountStats>(
     {
+      blockchainId,
       account,
       series: [timeSeriesStats],
       aggregate(args) {

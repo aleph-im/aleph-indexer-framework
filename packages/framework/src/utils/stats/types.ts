@@ -2,10 +2,11 @@ import { Duration, Interval } from 'luxon'
 import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
+import { Blockchain } from '../../types.js'
 
 export type IntervalEntity = {
-  startTimestamp: number
-  endTimestamp: number
+  startDate: number
+  endDate: number
 }
 
 export type PrevValueFactoryFnArgs = {
@@ -18,8 +19,8 @@ export type PrevValueFactoryFnArgs = {
 
 export type InputStreamFactoryFnArgs = {
   account: string
-  startTimestamp: number
-  endTimestamp: number
+  startDate: number
+  endDate: number
 }
 
 export type TimeSeriesAggregatorFnArgs<I, O> = {
@@ -40,7 +41,7 @@ export type AccountAggregatorFnArgs = {
 
 export type TimeSeriesStatsConfig<I, O> = {
   type: string
-  startTimestamp: number
+  startDate: number
   timeFrames: Duration[]
   getInputStream: (
     args: InputStreamFactoryFnArgs,
@@ -54,6 +55,7 @@ export type TimeSeriesStatsConfig<I, O> = {
 }
 
 export type AccountTimeSeriesStatsConfig<V> = {
+  blockchainId: Blockchain
   account: string
   series: TimeSeriesStats<any, any>[]
   aggregate?: (args: AccountAggregatorFnArgs) => Promise<V>
@@ -91,8 +93,8 @@ export type AccountStats<V = any> = {
  */
 export type AccountStatsFilters = {
   timeFrame: number
-  startTimestamp?: number
-  endTimestamp?: number
+  startDate?: number
+  endDate?: number
   limit?: number
   reverse?: boolean
 }

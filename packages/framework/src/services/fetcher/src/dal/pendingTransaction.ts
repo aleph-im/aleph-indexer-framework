@@ -12,7 +12,7 @@ export type PendingTransactionStorage = PendingWorkStorage<string[]>
  */
 export function createPendingTransactionDAL(
   path: string,
-  name = 'fetcher_pending_transactions',
+  name = 'fetcher_pending_transaction',
 ): PendingTransactionStorage {
   return new PendingWorkStorage({
     name,
@@ -40,11 +40,11 @@ export function createPendingTransactionDAL(
 export function createPendingTransactionCacheDAL(
   path: string,
 ): PendingTransactionStorage {
-  return createPendingTransactionDAL(path, 'fetcher_pending_transactions_cache')
+  return createPendingTransactionDAL(path, 'fetcher_pending_transaction_cache')
 }
 
 export function createPendingTransactionFetchDAL(
   path: string,
 ): PendingTransactionStorage {
-  return createPendingTransactionDAL(path, 'fetcher_pending_transactions_fetch')
+  return createPendingTransactionDAL(path, 'fetcher_pending_transaction_fetch')
 }

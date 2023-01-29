@@ -6,6 +6,7 @@ import {
   IndexerMainDomainContext,
   IndexerMainDomainWithDiscovery,
   IndexerMainDomainWithStats,
+  Blockchain,
 } from '@aleph-indexer/framework'
 import {
   Candle,
@@ -46,6 +47,7 @@ export default class MainDomain
 
     return products.map((meta) => {
       return {
+        blockchainId: Blockchain.Solana,
         account: meta.address,
         meta,
         index: {
@@ -65,7 +67,7 @@ export default class MainDomain
     const accounts: Record<string, PythAccountData> = {}
 
     await Promise.all(
-      Array.from(this.accounts || []).map(async (account) => {
+      Array.from(this.accounts.solana || []).map(async (account) => {
         const actual = await this.getAccount(account, includeStats)
         accounts[account] = actual as PythAccountData
       }),
@@ -78,17 +80,21 @@ export default class MainDomain
     account: string,
     includeStats?: boolean,
   ): Promise<PythAccountData> {
-    const info = (await this.context.apiClient.invokeDomainMethod({
-      account,
-      method: 'getAccountInfo',
-    })) as PythAccountInfo
+    const info = (await this.context.apiClient
+      .useBlockchain(Blockchain.Solana)
+      .invokeDomainMethod({
+        account,
+        method: 'getAccountInfo',
+      })) as PythAccountInfo
 
     if (!includeStats) return { info }
 
-    const { stats } = (await this.context.apiClient.invokeDomainMethod({
-      account,
-      method: 'getAccountStats',
-    })) as AccountStats<PythAccountStats>
+    const { stats } = (await this.context.apiClient
+      .useBlockchain(Blockchain.Solana)
+      .invokeDomainMethod({
+        account,
+        method: 'getAccountStats',
+      })) as AccountStats<PythAccountStats>
 
     return { info, stats }
   }
@@ -99,11 +105,14 @@ export default class MainDomain
     endDate?: number,
     opts?: any,
   ): Promise<StorageStream<string, Price>> {
-    const stream = await this.context.apiClient.invokeDomainMethod({
-      account,
-      method: 'getHistoricalPrices',
-      args: [startDate, endDate, opts],
-    })
+    const stream = await this.context.apiClient
+      .useBlockchain(Blockchain.Solana)
+      .invokeDomainMethod({
+        account,
+        method: 'getHistoricalPrices',
+        args: [startDate, endDate, opts],
+      })
+
     console.log('getHistoricalPrices stream', typeof stream)
     return stream as StorageStream<string, Price>
   }
@@ -115,11 +124,14 @@ export default class MainDomain
     endDate: number,
     opts?: any,
   ): Promise<AccountTimeSeriesStats<Candle>> {
-    const stats = (await this.context.apiClient.invokeDomainMethod({
-      account,
-      method: 'getCandles',
-      args: [timeFrame, startDate, endDate, opts],
-    })) as AccountTimeSeriesStats
+    const stats = (await this.context.apiClient
+      .useBlockchain(Blockchain.Solana)
+      .invokeDomainMethod({
+        account,
+        method: 'getCandles',
+        args: [timeFrame, startDate, endDate, opts],
+      })) as AccountTimeSeriesStats
+
     console.log('getCandles stats', typeof stats)
     return stats
   }

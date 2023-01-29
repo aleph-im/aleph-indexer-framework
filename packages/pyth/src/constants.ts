@@ -1,5 +1,5 @@
 import BN from 'bn.js'
-import { constants } from '@aleph-indexer/core'
+import { usdDecimals } from '@aleph-indexer/solana'
 import { getPythProgramKeyForCluster } from '@pythnetwork/client'
 import { CandleInterval } from './types'
 import { MAX_TIMEFRAME } from '@aleph-indexer/framework'
@@ -79,9 +79,9 @@ export const TIME_FRAMES_AS_DURATION = TIME_FRAMES.map((tf) => {
 })
 
 // WADS
-export const usdDecimals = new BN(constants.usdDecimals)
+export const usdDecimalsBN = new BN(usdDecimals)
 export const usdWad = new BN(
-  '1'.concat(Array(usdDecimals.toNumber() + 1).join('0')),
+  '1'.concat(Array(usdDecimalsBN.toNumber() + 1).join('0')),
 )
 export const WAD_DECIMALS = new BN(18)
 export const WAD = new BN(

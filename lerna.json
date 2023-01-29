@@ -2,10 +2,11 @@
   "packages": [
     "packages/core",
     "packages/layout",
-    "packages/middleware",
     "packages/framework",
-    "packages/pyth",
-    "packages/marinade_finance"
+    "packages/ethereum",
+    "packages/solana",
+    "packages/indexer-example",
+    "packages/pyth"
   ],
-  "version": "1.0.21"
+  "version": "1.0.29"
 }

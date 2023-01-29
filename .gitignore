@@ -10,6 +10,7 @@ dist
 .DS_Store
 test.js
 logs.log
+lerna-debug.log
 
 # "Lockfiles for apps, but not for packages." https://twitter.com/sindresorhus/status/878240818363981827
 # Doesn't work with "lerna version"

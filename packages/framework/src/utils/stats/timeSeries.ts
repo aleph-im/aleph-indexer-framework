@@ -11,6 +11,7 @@ import {
 } from '../time.js'
 import {
   StatsState,
+  StatsStateDALIndex,
   StatsStateState,
   StatsStateStorage,
 } from './dal/statsState.js'
@@ -20,6 +21,7 @@ import {
 } from './dal/statsTimeSeries.js'
 import {
   AccountStatsFilters,
+  PrevValueFactoryFnArgs,
   TimeSeries,
   TimeSeriesStatsConfig,
 } from './types.js'
@@ -51,8 +53,8 @@ export class TimeSeriesStats<I extends object, O> {
     account: string,
     {
       timeFrame,
-      startTimestamp,
-      endTimestamp,
+      startDate,
+      endDate,
       limit = 1000,
       reverse = true,
     }: AccountStatsFilters,
@@ -60,8 +62,8 @@ export class TimeSeriesStats<I extends object, O> {
     const { type } = this.config
 
     const values = await this.timeSeriesDAL.getAllValuesFromTo(
-      [account, type, timeFrame, startTimestamp],
-      [account, type, timeFrame, endTimestamp],
+      [account, type, timeFrame, startDate],
+      [account, type, timeFrame, endDate],
       { limit, reverse },
     )
 
@@ -71,7 +73,7 @@ export class TimeSeriesStats<I extends object, O> {
       value.data.type = type
 
       series.push({
-        date: DateTime.fromMillis(value.startTimestamp).toUTC().toISO(),
+        date: DateTime.fromMillis(value.startDate).toUTC().toISO(),
         value: value.data,
       })
 
@@ -98,7 +100,7 @@ export class TimeSeriesStats<I extends object, O> {
     const {
       timeFrames,
       type,
-      startTimestamp,
+      startDate,
       getInputStream,
       aggregate: aggregator,
       reverse,
@@ -108,12 +110,12 @@ export class TimeSeriesStats<I extends object, O> {
       (a, b) => a.toMillis() - b.toMillis(),
     )
 
-    if (startTimestamp !== undefined) {
+    if (startDate !== undefined) {
       intervalsToProcess = clipIntervals(
         intervalsToProcess,
         Interval.fromDateTimes(
           DateTime.fromMillis(0),
-          DateTime.fromMillis(startTimestamp - 1),
+          DateTime.fromMillis(startDate - 1),
         ),
       )
     }
@@ -170,10 +172,10 @@ export class TimeSeriesStats<I extends object, O> {
 
           // @note: Save states for all interval, either with empty data or not
           const stateEntries: StatsState[] = entries.map(
-            ({ account, startTimestamp, endTimestamp, type, timeFrame }) => ({
+            ({ account, startDate, endDate, type, timeFrame }) => ({
               account,
-              startTimestamp,
-              endTimestamp,
+              startDate,
+              endDate,
               type,
               timeFrame,
               state: StatsStateState.Processed,
@@ -194,12 +196,12 @@ export class TimeSeriesStats<I extends object, O> {
             const firstItem = stateEntries[firstIndex]
 
             if (
-              firstItem.startTimestamp < pendingInterval.start.toMillis() &&
+              firstItem.startDate < pendingInterval.start.toMillis() &&
               pendingInterval.start.toMillis() !== minDate
             ) {
               //console.log(
               //  `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
-              //    firstItem.startTimestamp, firstItem.endTimestamp,
+              //    firstItem.startDate, firstItem.endDate,
               //  ).toISO()}`,
               //)
               reverse ? stateEntries.pop() : stateEntries.shift()
@@ -212,10 +214,10 @@ export class TimeSeriesStats<I extends object, O> {
             const lastIndex = reverse ? 0 : stateEntries.length - 1
             const lastItem = stateEntries[lastIndex]
 
-            if (lastItem.endTimestamp - 1 > pendingInterval.end.toMillis()) {
+            if (lastItem.endDate - 1 > pendingInterval.end.toMillis()) {
               //console.log(
               //  `📊 Recalculate incomplete LAST interval ${type} ${timeFrameUnit} ${getIntervalFromDateRange(
-              //    lastItem.startTimestamp, lastItem.endTimestamp
+              //    lastItem.startDate, lastItem.endDate
               //  ).toISO()}`,
               //)
               reverse ? stateEntries.shift() : stateEntries.pop()
@@ -231,6 +233,13 @@ export class TimeSeriesStats<I extends object, O> {
           reverse,
         )
 
+        if (!pendingTimeFrame.equals(MAX_TIMEFRAME)) {
+          intervals.unshift(getPreviousInterval(intervals[0], pendingTimeFrame))
+          intervals.push(
+            getNextInterval(intervals[intervals.length - 1], pendingTimeFrame),
+          )
+        }
+
         if (!intervals.length) continue
 
         // @note: add the previous and following intervals to be calculated in case they might have been clipped
@@ -243,8 +252,8 @@ export class TimeSeriesStats<I extends object, O> {
 
         const aggregatedValues = 0
         for (const interval of intervals) {
-          const startTimestamp = interval.start.toMillis()
-          const endTimestamp = interval.end.toMillis() - 1
+          const startDate = interval.start.toMillis()
+          const endDate = interval.end.toMillis() - 1
 
           // @note: get the data for the current interval aggregation, if previousTimeFrameIndex is -1, we fetch events
           const cache = {}
@@ -252,21 +261,21 @@ export class TimeSeriesStats<I extends object, O> {
             previousTimeFrameIndex < 0
               ? await getInputStream({
                   account,
-                  startTimestamp,
-                  endTimestamp,
+                  startDate,
+                  endDate,
                 })
               : await this.timeSeriesDAL.getAllValuesFromTo(
                   [
                     account,
                     type,
                     sortedTimeFrames[previousTimeFrameIndex].toMillis(),
-                    startTimestamp,
+                    startDate,
                   ],
                   [
                     account,
                     type,
                     sortedTimeFrames[previousTimeFrameIndex].toMillis(),
-                    endTimestamp,
+                    endDate,
                   ],
                 )
 
@@ -288,8 +297,8 @@ export class TimeSeriesStats<I extends object, O> {
             account,
             type,
             timeFrame: pendingTimeFrame.toMillis(),
-            startTimestamp,
-            endTimestamp,
+            startDate,
+            endDate,
             data,
           })
         }

@@ -6,15 +6,18 @@ import {
   IxEventInfo,
   IxAccounts,
 } from '../types.js'
-import { AlephParsedEvent, InstructionContextV1 } from '@aleph-indexer/core'
+import {
+  SolanaInstructionContext,
+  SolanaParsedEvent,
+} from '@aleph-indexer/solana'
 import { pythOracleCoder } from '@pythnetwork/client'
 
 export class EventParser {
-  parse(ixsContext: InstructionContextV1[]): PythEvent[] {
+  parse(ixsContext: SolanaInstructionContext[]): PythEvent[] {
     const updatePriceEvents: PythEvent[] = []
     for (const ixCtx of ixsContext) {
       const { ix, parentIx, txContext } = ixCtx
-      const parsed = (ix as AlephParsedEvent<PythEventType, ParsedEventsInfo>)
+      const parsed = (ix as SolanaParsedEvent<PythEventType, ParsedEventsInfo>)
         .parsed
 
       if ('data' in ix) {

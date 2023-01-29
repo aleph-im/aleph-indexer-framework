@@ -1,4 +1,5 @@
 import { EntityStorage } from '@aleph-indexer/core'
+import { Blockchain } from '../../../../types.js'
 
 export enum TransactionRequestType {
   ByDateRange = 0,
@@ -8,12 +9,21 @@ export enum TransactionRequestType {
 
 export type TransactionRequestDateRange = {
   type: TransactionRequestType.ByDateRange
-  params: { account: string; startDate: number; endDate: number }
+  params: {
+    blockchainId: Blockchain
+    account: string
+    startDate: number
+    endDate: number
+  }
 }
 
 export type TransactionRequestSlotRange = {
   type: TransactionRequestType.BySlotRange
-  params: { account: string; startSlot: number; endSlot: number }
+  params: {
+    account: string
+    startSlot: number
+    endSlot: number
+  }
 }
 
 export type TransactionRequestSignatures = {
@@ -28,6 +38,7 @@ export type TransactionRequestParams =
 
 export type TransactionRequest = {
   nonce: number
+  count: number
   complete?: boolean
   // type: TransactionRequestType
   // params: TransactionRequestParams

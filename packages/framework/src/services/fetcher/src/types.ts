@@ -1,37 +1,124 @@
-import { RawTransactionV1 } from '@aleph-indexer/core'
-import { FetcherMsI, PrivateFetcherMsI } from '../interface.js'
+import { Utils } from '@aleph-indexer/core'
+import { Blockchain, RawTransaction } from '../../../types.js'
+import { BlockchainRequestArgs } from '../../types.js'
+import { FetcherMsClient } from '../client.js'
 
-export type SignatureFetcherState = {
+// ---------------------- Pagination --------------------------
+
+export interface BaseFetcherPaginationCursors<C> {
+  backward?: C
+  forward?: C
+}
+
+export type BaseFetcherPaginationResponse<D, C> = {
+  cursors: BaseFetcherPaginationCursors<C>
+  chunk: D[]
+}
+
+// ------------------------ Options ---------------------
+
+export type FetcherJobRunnerHandleFetchResult<C> = {
+  error?: Error
+  newInterval?: number
+  lastCursors: BaseFetcherPaginationCursors<C>
+}
+
+export type FetcherJobRunnerUpdateCursorResult<C> = {
+  newItems: boolean
+  newCursors: BaseFetcherPaginationCursors<C>
+}
+
+export type BaseFetcherJobRunnerOptions<C> = Omit<
+  Utils.JobRunnerOptions,
+  'name' | 'intervalFn'
+> & {
+  handleFetch: (ctx: {
+    firstRun: boolean
+    interval: number
+  }) => Promise<FetcherJobRunnerHandleFetchResult<C>>
+  updateCursors?: (ctx: {
+    prevCursors?: BaseFetcherPaginationCursors<C>
+    lastCursors: BaseFetcherPaginationCursors<C>
+  }) => Promise<FetcherJobRunnerUpdateCursorResult<C>>
+  checkComplete?: (ctx: {
+    fetcherState: BaseFetcherState<C>
+    jobState: BaseFetcherJobState
+    newItems: boolean
+    error?: Error
+  }) => Promise<boolean>
+}
+
+export interface BaseFetcherOptions<C> {
+  id: string
+  jobs?: {
+    forward?: BaseFetcherJobRunnerOptions<C>
+    backward?: BaseFetcherJobRunnerOptions<C>
+  }
+}
+
+// ---------------------- State --------------------------
+
+export type BaseFetcherJobState = {
+  frequency?: number
+  lastRun: number
+  numRuns: number
+  complete: boolean
+  useHistoricRPC: boolean
+}
+
+export type BaseFetcherJobStates = {
+  forward: BaseFetcherJobState
+  backward: BaseFetcherJobState
+}
+
+export type BaseFetcherState<C> = {
+  id: string
+  jobs: BaseFetcherJobStates
+  cursors?: BaseFetcherPaginationCursors<C>
+}
+
+// ---------------------------------------------------------
+
+export type AccountTransactionHistoryState<C> = {
   fetcher: string
+  blockchain: Blockchain
   account: string
+  completeHistory: boolean
   firstTimestamp?: number
   lastTimestamp?: number
-  firstSlot?: number
-  lastSlot?: number
-  firstSignature?: string
-  lastSignature?: string
-  completeHistory: boolean
+  cursors?: BaseFetcherPaginationCursors<C>
 }
 
-export type FetcherPartitionRequestArgs = {
+// @todo
+export type AccountStateState<T> = any
+
+export type FetcherPartitionRequestArgs = BlockchainRequestArgs & {
   fetcher: string
 }
 
-export type FetcherState = {
-  fetcher: string
+export type TransactionFetcherState = {
   pendingTransactions: number
-  accountFetchers: number
   transactionThroughput: number
 }
 
+export type AccountTransactionHistoryFetcherState = {
+  accountFetchers: number
+}
+
+export type FetcherState<D = any> = TransactionFetcherState &
+  AccountTransactionHistoryFetcherState & {
+    blockchain: Blockchain
+    fetcher: string
+    data?: D
+  }
+
 export type TransactionState = {
-  fetcher: string
   signature: string
   isCached: boolean
   isPending: boolean
   pendingAddTime?: string
   pendingExecTime?: string
-  data?: RawTransactionV1
+  data?: RawTransaction
 }
 
 export type FetcherAccountPartitionRequestArgs = {
@@ -42,7 +129,20 @@ export type FetcherAccountPartitionRequestArgs = {
   indexerId?: string
 }
 
-export type AddAccountInfoFetcherRequestArgs =
+// Account transaction ------------------------------
+
+export type AddAccountTransactionRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs
+
+export type DelAccountTransactionRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs
+
+export type GetAccountTransactionStateRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs
+
+// Account state ------------------------------
+
+export type AddAccountStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs & {
     /**
      * Whether to subscribe to future account updates.
@@ -50,33 +150,15 @@ export type AddAccountInfoFetcherRequestArgs =
     subscribeChanges: boolean
   }
 
-/**
- * Accounts and timestamp range to get the signatures for.
- */
-export type FetchAccountTransactionsByDateRequestArgs =
-  FetcherAccountPartitionRequestArgs & {
-    startDate: number
-    endDate: number
-    /**
-     * Indexer instance id, the result will be delivered here
-     */
-    indexerId?: string
-  }
+export type DelAccountStateRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs
 
-/**
- * Account and slot range to get the signatures for.
- */
-export type FetchAccountTransactionsBySlotRequestArgs =
-  FetcherAccountPartitionRequestArgs & {
-    startSlot: number
-    endSlot: number
-    /**
-     * Indexer instance id, the result will be delivered here
-     */
-    indexerId?: string
-  }
+export type GetAccountStateStateRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs
 
-export type FetchTransactionsBySignatureRequestArgs = {
+// Transactions ------------------------------
+
+export type FetchTransactionsBySignatureRequestArgs = BlockchainRequestArgs & {
   /**
    * Whether to refresh the transaction cache.
    */
@@ -91,18 +173,38 @@ export type FetchTransactionsBySignatureRequestArgs = {
   indexerId?: string
 }
 
-export type FetcherStateRequestArgs = FetcherPartitionRequestArgs
+/**
+ * Accounts and timestamp range to get the signatures for.
+ */
+export type FetchAccountTransactionsByDateRequestArgs = BlockchainRequestArgs &
+  FetcherAccountPartitionRequestArgs & {
+    startDate: number
+    endDate: number
+    /**
+     * Indexer instance id, the result will be delivered here
+     */
+    indexerId?: string
+  }
 
-export type CheckTransactionsRequestArgs = {
+// ------------------ Other ----------------------
+
+export type FetcherStateRequestArgs = Omit<
+  FetcherPartitionRequestArgs,
+  'blockchainId'
+> & {
+  blockchainId?: Blockchain[]
+}
+
+export type CheckTransactionsRequestArgs = BlockchainRequestArgs & {
   signatures: string[]
 }
 
-export type DelTransactionsRequestArgs = {
+export type DelTransactionsRequestArgs = BlockchainRequestArgs & {
   signatures: string[]
 }
 
 export type FetcherCommonDomainContext = {
-  apiClient: FetcherMsI & PrivateFetcherMsI
+  apiClient: FetcherMsClient
   dataPath: string
 }
 
@@ -112,69 +214,70 @@ export type FetcherInstanceDomainContext = FetcherCommonDomainContext & {
 
 export type FetcherMainDomainContext = FetcherCommonDomainContext
 
-/**
- * Enumerates the possible requests that can be made to the fetcher service.
- */
-export enum FetcherOptionsTypes {
-  AccountFetcher = 'account_fetcher',
-  AccountInfoFetcher = 'account_info_fetcher',
-  TransactionSignatureFetcher = 'transaction_signature_fetcher',
-  AccountTransactionDateFetcher = 'account_transaction_date_fetcher',
-  AccountTransactionSlotFetcher = 'account_transaction_slot_fetcher',
-}
+export interface BlockchainFetcherI<C = any> {
+  start(): Promise<void>
+  stop(): Promise<void>
 
-export type BaseFetcherRequest = {
-  id: string
-  type: string
-}
+  /**
+   * Requests a new signature fetcher, which will fetch all txn signatures including a given account.
+   * @param args Arguments for the fetcher.
+   */
+  addAccountTransactionFetcher(
+    args: AddAccountTransactionRequestArgs,
+  ): Promise<void>
+  /**
+   * Requests to remove a signature fetcher.
+   * @param args The account to remove the fetcher from.
+   */
+  delAccountTransactionFetcher(
+    args: DelAccountTransactionRequestArgs,
+  ): Promise<void>
+  /**
+   * Returns a signature fetcher's state.
+   * @param args The account to get the fetcher's state from.
+   */
+  getAccountTransactionFetcherState(
+    args: GetAccountTransactionStateRequestArgs,
+  ): Promise<AccountTransactionHistoryState<C> | undefined>
 
-export type FetcherAccountRequest = Omit<BaseFetcherRequest, 'type'> & {
-  type: FetcherOptionsTypes.AccountFetcher
-  options: {
-    account: string
-  }
-}
+  /**
+   * Requests a new account info fetcher, which will fetch current account info.
+   * @param args Arguments for the fetcher.
+   */
+  addAccountStateFetcher(args: AddAccountStateRequestArgs): Promise<void>
+  /**
+   * Requests to remove a signature fetcher.
+   * @param args The account to remove the fetcher from.
+   */
+  delAccountStateFetcher(args: DelAccountStateRequestArgs): Promise<void>
+  /**
+   * Returns a signature fetcher's state.
+   * @param args The account to get the fetcher's state from.
+   */
+  getAccountStateFetcherState(
+    args: GetAccountStateStateRequestArgs,
+  ): Promise<AccountStateState<unknown> | undefined>
 
-export type FetcherAccountInfoRequest = Omit<BaseFetcherRequest, 'type'> & {
-  type: FetcherOptionsTypes.AccountInfoFetcher
-  options: {
-    account: string
-    subscribeChanges: boolean
-  }
-}
+  /**
+   * Returns all txn signatures fetched for a given account by timestamp range as a stream.
+   * @param args Account and timestamp range to get the signatures for.
+   */
+  fetchAccountTransactionsByDate(
+    args: FetchAccountTransactionsByDateRequestArgs,
+  ): Promise<void | AsyncIterable<string[]>>
+  /**
+   * Adds new signatures to the fetcher loop to fetch their related transactions.
+   * @param args The signatures of the transactions to fetch.
+   */
+  fetchTransactionsBySignature(
+    args: FetchTransactionsBySignatureRequestArgs,
+  ): Promise<void>
 
-export type FetcherSignatureRequest = Omit<BaseFetcherRequest, 'type'> & {
-  type: FetcherOptionsTypes.TransactionSignatureFetcher
-  options: {
-    account: string
-    signatures: string[]
-    indexerId: string
-  }
-}
+  getFetcherState(args: FetcherStateRequestArgs): Promise<FetcherState>
 
-export type FetcherDateRequest = Omit<BaseFetcherRequest, 'type'> & {
-  type: FetcherOptionsTypes.AccountTransactionDateFetcher
-  options: {
-    account: string
-    startDate: number
-    endDate: number
-    indexerId: string
-  }
-}
+  getTransactionState(
+    args: CheckTransactionsRequestArgs,
+  ): Promise<TransactionState[]>
 
-export type FetcherSlotRequest = Omit<BaseFetcherRequest, 'type'> & {
-  type: FetcherOptionsTypes.AccountTransactionSlotFetcher
-  options: {
-    account: string
-    startSlot: number
-    endSlot: number
-    indexerId: string
-  }
+  delTransactionCache(args: DelTransactionsRequestArgs): Promise<void>
 }
-
-export type FetcherRequest =
-  | FetcherAccountRequest
-  | FetcherAccountInfoRequest
-  | FetcherSignatureRequest
-  | FetcherDateRequest
-  | FetcherSlotRequest
