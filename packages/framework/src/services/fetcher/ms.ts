@@ -3,15 +3,15 @@ import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import { FetcherMsMain } from './main.js'
 import {
   AddAccountStateRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
-  AddAccountTransactionRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  DelAccountTransactionRequestArgs,
+  AddAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  DelAccountEntityRequestArgs,
   GetAccountStateStateRequestArgs,
-  AccountTransactionHistoryState,
+  AccountEntityHistoryState,
   AccountStateState,
   DelAccountStateRequestArgs,
 } from './src/types.js'
@@ -88,20 +88,20 @@ export class FetcherMs extends Service {
   }
 
   addAccountTransactionFetcher(
-    ctx: Context<AddAccountTransactionRequestArgs>,
+    ctx: Context<AddAccountEntityRequestArgs>,
   ): Promise<void> {
     return this.main.addAccountTransactionFetcher(ctx.params)
   }
 
   delAccountTransactionFetcher(
-    ctx: Context<DelAccountTransactionRequestArgs>,
+    ctx: Context<DelAccountEntityRequestArgs>,
   ): Promise<void> {
     return this.main.delAccountTransactionFetcher(ctx.params)
   }
 
   getAccountTransactionFetcherState(
-    ctx: Context<GetAccountTransactionStateRequestArgs>,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
+    ctx: Context<GetAccountEntityStateRequestArgs>,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined> {
     return this.main.getAccountTransactionFetcherState(ctx.params)
   }
 
@@ -124,7 +124,7 @@ export class FetcherMs extends Service {
   }
 
   fetchAccountTransactionsByDate(
-    ctx: Context<FetchAccountTransactionsByDateRequestArgs>,
+    ctx: Context<FetchAccountEntitiesByDateRequestArgs>,
   ): Promise<void | AsyncIterable<string[]>> {
     return this.main.fetchAccountTransactionsByDate(ctx.params)
   }

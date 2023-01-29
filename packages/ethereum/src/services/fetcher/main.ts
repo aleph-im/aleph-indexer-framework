@@ -4,7 +4,7 @@ import {
   BlockchainFetcherI,
   FetcherMsClient,
   FetcherStateRequestArgs,
-  GetAccountTransactionStateRequestArgs,
+  GetAccountEntityStateRequestArgs,
 } from '@aleph-indexer/framework'
 import { EthereumTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from './src/transactionFetcher.js'
@@ -46,7 +46,7 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   }
 
   getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
+    args: GetAccountEntityStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
     return super.getAccountTransactionFetcherState(args)
   }

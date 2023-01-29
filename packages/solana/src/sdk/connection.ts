@@ -6,8 +6,6 @@ import {
 import http, { AgentOptions } from 'http'
 import https from 'https'
 import CacheableLookup from 'cacheable-lookup'
-import { Base64 } from 'js-base64'
-import fetch from 'cross-fetch'
 import { Utils } from '@aleph-indexer/core'
 
 export class Connection extends SolConnection {
@@ -61,25 +59,9 @@ export class Connection extends SolConnection {
       ;(options as any).agent = agent
     }
 
-    // GenesysGo needs an authentication token
-    // const overrideAuth: FetchMiddleware = async (url, options, fetch) => {
-    //   if (!this.tokenInfo || this.tokenInfo.expiry <= Date.now()) {
-    //     const token = await this._getGenesysgoAuthToken()
-    //     this.tokenInfo = { token, expiry: Date.now() + 1000 * 60 * 5 }
-    //   }
-
-    //   options.headers = {
-    //     ...(options || {}).headers,
-    //     Authorization: 'Bearer ' + this.tokenInfo.token,
-    //   }
-    // }
-
-    // const isAuth = endpoint.indexOf('genesysgo') !== -1
-
     super(endpoint, {
       ...config,
       fetchMiddleware: async (url, options, fetch) => {
-        // if (isAuth) await overrideAuth(url, options, fetch)
         overrideAgent(url, options, fetch)
         return fetch(url, options)
       },
@@ -136,32 +118,6 @@ export class Connection extends SolConnection {
         }
       }
     }
-  }
-
-  protected async _getGenesysgoAuthToken(): Promise<string> {
-    const {
-      GENESYSGO_AUTH_CLIENT,
-      GENESYSGO_AUTH_SECRET,
-      GENESYSGO_AUTH_ISSUER,
-    } = process.env
-
-    const token = Base64.encode(
-      `${GENESYSGO_AUTH_CLIENT}:${GENESYSGO_AUTH_SECRET}`,
-    )
-
-    const url = `${GENESYSGO_AUTH_ISSUER}/token`
-
-    // eslint-disable-next-line camelcase
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        authorization: `Basic ${token}`,
-      },
-      body: 'grant_type=client_credentials',
-    })
-
-    return (await response.json()).access_token
   }
 
   async _rpcRequestAndRetry(

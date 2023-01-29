@@ -3,17 +3,17 @@ import {
   BlockchainFetcherI,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetcherState,
   FetcherStateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
   TransactionState,
-  AddAccountTransactionRequestArgs,
-  DelAccountTransactionRequestArgs,
-  GetAccountTransactionStateRequestArgs,
+  AddAccountEntityRequestArgs,
+  DelAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
   DelAccountStateRequestArgs,
   GetAccountStateStateRequestArgs,
-  AccountTransactionHistoryState,
+  AccountEntityHistoryState,
 } from './types.js'
 import { BaseTransactionHistoryFetcher } from './transactionHistoryFetcher.js'
 import { BaseTransactionFetcher } from './transactionFetcher.js'
@@ -61,20 +61,20 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   }
 
   addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
+    args: AddAccountEntityRequestArgs,
   ): Promise<void> {
     return this.transactionHistoryFetcher.addAccount(args)
   }
 
   delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
+    args: DelAccountEntityRequestArgs,
   ): Promise<void> {
     return this.transactionHistoryFetcher.delAccount(args)
   }
 
   getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<any> | undefined> {
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<any> | undefined> {
     return this.transactionHistoryFetcher.getAccountState(args)
   }
 
@@ -108,7 +108,7 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   }
 
   fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
     return this.transactionHistoryFetcher.fetchAccountTransactionsByDate(args)
   }

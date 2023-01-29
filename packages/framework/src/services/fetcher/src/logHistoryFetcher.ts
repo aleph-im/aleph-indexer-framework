@@ -1,24 +1,24 @@
 import { FetcherMsClient } from '../client.js'
 import { PendingAccountStorage } from './dal/account.js'
-import {
-  AccountTransactionHistoryStorage,
-  AccountTransactionHistoryStorageEntity,
-} from './dal/accountTransactionHistory.js'
 import { Blockchain } from '../../../types.js'
 import { BaseEntityHistoryFetcher } from './entityHistoryFetcher.js'
 import {
   AccountEntityHistoryFetcherState,
   FetchAccountEntitiesByDateRequestArgs,
 } from './types.js'
+import {
+  AccountLogHistoryStorage,
+  AccountLogHistoryStorageEntity,
+} from './dal/accountLogHistory.js'
 
-export abstract class BaseTransactionHistoryFetcher<
+export abstract class BaseLogHistoryFetcher<
   C,
-  E extends AccountTransactionHistoryStorageEntity,
+  E extends AccountLogHistoryStorageEntity,
 > extends BaseEntityHistoryFetcher<C, E> {
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherClient: FetcherMsClient,
-    protected accountSignatureDAL: AccountTransactionHistoryStorage<E>,
+    protected accountSignatureDAL: AccountLogHistoryStorage<E>,
     protected accountDAL: PendingAccountStorage,
   ) {
     super(
@@ -26,11 +26,11 @@ export abstract class BaseTransactionHistoryFetcher<
       fetcherClient,
       accountSignatureDAL,
       accountDAL,
-      `${blockchainId}:transaction-history-accounts`,
+      `${blockchainId}:log-history-accounts`,
     )
   }
 
-  async fetchAccountTransactionsByDate(
+  async fetchAccountLogsByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
     return super.fetchAccountEntitiesByDate(args)

@@ -79,7 +79,7 @@ export type BaseFetcherState<C> = {
 
 // ---------------------------------------------------------
 
-export type AccountTransactionHistoryState<C> = {
+export type AccountEntityHistoryState<C> = {
   fetcher: string
   blockchain: Blockchain
   account: string
@@ -101,12 +101,12 @@ export type TransactionFetcherState = {
   transactionThroughput: number
 }
 
-export type AccountTransactionHistoryFetcherState = {
+export type AccountEntityHistoryFetcherState = {
   accountFetchers: number
 }
 
 export type FetcherState<D = any> = TransactionFetcherState &
-  AccountTransactionHistoryFetcherState & {
+  AccountEntityHistoryFetcherState & {
     blockchain: Blockchain
     fetcher: string
     data?: D
@@ -131,13 +131,13 @@ export type FetcherAccountPartitionRequestArgs = {
 
 // Account transaction ------------------------------
 
-export type AddAccountTransactionRequestArgs = BlockchainRequestArgs &
+export type AddAccountEntityRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
-export type DelAccountTransactionRequestArgs = BlockchainRequestArgs &
+export type DelAccountEntityRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
-export type GetAccountTransactionStateRequestArgs = BlockchainRequestArgs &
+export type GetAccountEntityStateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs
 
 // Account state ------------------------------
@@ -176,7 +176,7 @@ export type FetchTransactionsBySignatureRequestArgs = BlockchainRequestArgs & {
 /**
  * Accounts and timestamp range to get the signatures for.
  */
-export type FetchAccountTransactionsByDateRequestArgs = BlockchainRequestArgs &
+export type FetchAccountEntitiesByDateRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs & {
     startDate: number
     endDate: number
@@ -222,23 +222,19 @@ export interface BlockchainFetcherI<C = any> {
    * Requests a new signature fetcher, which will fetch all txn signatures including a given account.
    * @param args Arguments for the fetcher.
    */
-  addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
-  ): Promise<void>
+  addAccountTransactionFetcher(args: AddAccountEntityRequestArgs): Promise<void>
   /**
    * Requests to remove a signature fetcher.
    * @param args The account to remove the fetcher from.
    */
-  delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
-  ): Promise<void>
+  delAccountTransactionFetcher(args: DelAccountEntityRequestArgs): Promise<void>
   /**
    * Returns a signature fetcher's state.
    * @param args The account to get the fetcher's state from.
    */
   getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<C> | undefined>
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<C> | undefined>
 
   /**
    * Requests a new account info fetcher, which will fetch current account info.
@@ -263,7 +259,7 @@ export interface BlockchainFetcherI<C = any> {
    * @param args Account and timestamp range to get the signatures for.
    */
   fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>>
   /**
    * Adds new signatures to the fetcher loop to fetch their related transactions.

@@ -4,12 +4,12 @@ import {
 } from '../types.js'
 import {
   AddAccountStateRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
-  AddAccountTransactionRequestArgs,
-  DelAccountTransactionRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  AccountTransactionHistoryState,
+  AddAccountEntityRequestArgs,
+  DelAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  AccountEntityHistoryState,
   DelAccountStateRequestArgs,
   GetAccountStateStateRequestArgs,
   AccountStateState,
@@ -28,23 +28,19 @@ export interface FetcherMsI {
    * Requests a new signature fetcher, which will fetch all txn signatures including a given account.
    * @param args Arguments for the fetcher.
    */
-  addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
-  ): Promise<void>
+  addAccountTransactionFetcher(args: AddAccountEntityRequestArgs): Promise<void>
   /**
    * Requests to remove a signature fetcher.
    * @param args The account to remove the fetcher from.
    */
-  delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
-  ): Promise<void>
+  delAccountTransactionFetcher(args: DelAccountEntityRequestArgs): Promise<void>
   /**
    * Returns a signature fetcher's state.
    * @param args The account to get the fetcher's state from.
    */
   getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined>
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined>
   /**
    * Requests a new account info fetcher, which will fetch current account info.
    * @param args Arguments for the fetcher.
@@ -67,7 +63,7 @@ export interface FetcherMsI {
    * @param args Account and timestamp range to get the signatures for.
    */
   fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>>
   /**
    * Adds new signatures to the fetcher loop to fetch their related transactions.
@@ -107,17 +103,14 @@ export interface FetcherMsI {
 
 export interface FetcherClientI {
   addAccountTransactionFetcher(
-    args: Omit<AddAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<AddAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   delAccountTransactionFetcher(
-    args: Omit<DelAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<DelAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   getAccountTransactionFetcherState(
-    args: Omit<
-      GetAccountTransactionStateRequestArgs,
-      keyof BlockchainRequestArgs
-    >,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined>
+    args: Omit<GetAccountEntityStateRequestArgs, keyof BlockchainRequestArgs>,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined>
   addAccountStateFetcher(
     args: Omit<AddAccountStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
@@ -129,7 +122,7 @@ export interface FetcherClientI {
   ): Promise<AccountStateState<unknown> | undefined>
   fetchAccountTransactionsByDate(
     args: Omit<
-      FetchAccountTransactionsByDateRequestArgs,
+      FetchAccountEntitiesByDateRequestArgs,
       keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>>

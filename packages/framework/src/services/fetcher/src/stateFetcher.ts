@@ -1,7 +1,7 @@
 import { PendingWorkPool, PendingWork, Utils } from '@aleph-indexer/core'
 import {
   AddAccountStateRequestArgs,
-  DelAccountTransactionRequestArgs,
+  DelAccountEntityRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
 import { Blockchain } from '../../../types.js'
@@ -30,7 +30,7 @@ export abstract class BaseStateFetcher {
     protected accountDAL: PendingAccountStorage,
   ) {
     this.pendingAccounts = new PendingWorkPool({
-      id: 'state-accounts',
+      id: `${blockchainId}:state-accounts`,
       interval: MAX_TIMER_INTEGER, // @note: Run once
       chunkSize: 100,
       concurrency: 1,
@@ -64,7 +64,7 @@ export abstract class BaseStateFetcher {
     await this.pendingAccounts.addWork(work)
   }
 
-  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+  async delAccount(args: DelAccountEntityRequestArgs): Promise<void> {
     const { account, indexerId } = args
 
     if (!indexerId) return

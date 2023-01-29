@@ -4,6 +4,7 @@ import {
   BaseFetcherPaginationCursors,
   BaseFetcherState,
   BaseHistoryFetcher,
+  Blockchain,
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
@@ -40,7 +41,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   ) {
     super(
       {
-        id: `ethereum:account-signature-history:${account}`,
+        id: `${Blockchain.Ethereum}:account-transaction-history:${account}`,
         jobs: {
           forward: {
             times,

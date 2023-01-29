@@ -19,7 +19,7 @@ import {
   getIntervalFromDateRange,
   mergeDateRangesFromIterable,
 } from '../../../utils/time.js'
-import { AccountTransactionHistoryState } from '../../fetcher/src/types.js'
+import { AccountEntityHistoryState } from '../../fetcher/src/types.js'
 import { ParsedTransaction } from '../../../types.js'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
@@ -425,7 +425,7 @@ export class BaseAccountTransactionIndexer<
   }
 
   protected getAvailableRangesToFetch(
-    state: AccountTransactionHistoryState<unknown> | undefined,
+    state: AccountEntityHistoryState<unknown> | undefined,
   ): AccountDateRange | undefined {
     if (
       !state ||

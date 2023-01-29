@@ -3,6 +3,7 @@ import {
   BaseFetcherJobState,
   BaseFetcherState,
   BaseHistoryFetcher,
+  Blockchain,
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
@@ -31,7 +32,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
 
     super(
       {
-        id: `ethereum:block-history`,
+        id: `${Blockchain.Ethereum}:block-history`,
         jobs: {
           forward: {
             interval: 1000 * blockTime,

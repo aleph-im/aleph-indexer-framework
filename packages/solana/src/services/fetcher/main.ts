@@ -3,13 +3,13 @@ import {
   Blockchain,
   BlockchainFetcherI,
   FetcherMsClient,
-  GetAccountTransactionStateRequestArgs,
+  GetAccountEntityStateRequestArgs,
 } from '@aleph-indexer/framework'
 import { SolanaTransactionFetcher } from './src/transactionFetcher.js'
 import { SolanaTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
 import {
   FetchAccountTransactionsBySlotRequestArgs,
-  SolanaAccountTransactionHistoryState,
+  SolanaAccountEntityHistoryState,
 } from './src/types.js'
 import { SolanaStateFetcher } from './src/stateFetcher.js'
 
@@ -30,8 +30,8 @@ export class SolanaFetcher extends BaseFetcher implements BlockchainFetcherI {
   }
 
   getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<SolanaAccountTransactionHistoryState | undefined> {
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<SolanaAccountEntityHistoryState | undefined> {
     return super.getAccountTransactionFetcherState(args)
   }
 

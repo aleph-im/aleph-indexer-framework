@@ -1,7 +1,7 @@
 import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import {
   AccountStateStorage,
-  AccountTransactionHistoryState,
+  AccountEntityHistoryState,
   BaseFetcherJobRunnerOptions,
   BaseFetcherPaginationResponse,
   BlockchainRequestArgs,
@@ -83,8 +83,8 @@ export type SolanaAccountStateStorage = AccountStateStorage<SolanaAccountState>
 
 // -------------------------------------------------------------------
 
-export type SolanaAccountTransactionHistoryState =
-  AccountTransactionHistoryState<SolanaAccountTransactionHistoryPaginationCursor> & {
+export type SolanaAccountEntityHistoryState =
+  AccountEntityHistoryState<SolanaAccountTransactionHistoryPaginationCursor> & {
     firstSlot?: number
     lastSlot?: number
   }

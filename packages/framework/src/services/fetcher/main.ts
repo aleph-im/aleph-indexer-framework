@@ -1,14 +1,14 @@
 import { FetcherMsI } from './interface.js'
 import {
-  AddAccountTransactionRequestArgs,
+  AddAccountEntityRequestArgs,
   AddAccountStateRequestArgs,
   BlockchainFetcherI,
-  DelAccountTransactionRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  DelAccountEntityRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetcherState,
   FetchTransactionsBySignatureRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  AccountTransactionHistoryState,
+  GetAccountEntityStateRequestArgs,
+  AccountEntityHistoryState,
   DelAccountStateRequestArgs,
   GetAccountStateStateRequestArgs,
   AccountStateState,
@@ -82,22 +82,22 @@ export class FetcherMsMain implements FetcherMsI {
   // Account transaction
 
   async addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
+    args: AddAccountEntityRequestArgs,
   ): Promise<void> {
     const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.addAccountTransactionFetcher(args)
   }
 
   async delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
+    args: DelAccountEntityRequestArgs,
   ): Promise<void> {
     const fetcher = this.getBlockchainInstance(args.blockchainId)
     await fetcher.delAccountTransactionFetcher(args)
   }
 
   async getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined> {
     const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.getAccountTransactionFetcherState(args)
   }
@@ -128,7 +128,7 @@ export class FetcherMsMain implements FetcherMsI {
   // Transactions
 
   fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
     const fetcher = this.getBlockchainInstance(args.blockchainId)
     return fetcher.fetchAccountTransactionsByDate(args)

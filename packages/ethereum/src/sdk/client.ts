@@ -246,6 +246,8 @@ export class EthereumClient {
         'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
       )
 
+    console.log(JSON.stringify(blocks, null, 2))
+
     const signatures = blocks.flatMap((block) =>
       block.transactions.map((tx) => {
         const accounts = [tx.from]

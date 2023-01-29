@@ -1,14 +1,16 @@
-import { EntityStorage } from '@aleph-indexer/core'
+import {
+  AccountEntityHistoryDALIndex,
+  AccountEntityHistoryStorage,
+  AccountEntityHistoryStorageEntity,
+} from './accountEntityHistory.js'
 
-export type AccountTransactionHistoryStorageEntity = {
-  signature: string
-  accounts: string[]
-}
+export type AccountTransactionHistoryStorageEntity =
+  AccountEntityHistoryStorageEntity & {
+    signature: string
+  }
 
 export type AccountTransactionHistoryStorage<
   T extends AccountTransactionHistoryStorageEntity,
-> = EntityStorage<T>
+> = AccountEntityHistoryStorage<T>
 
-export enum AccountTransactionHistoryDALIndex {
-  AccountTimestampIndex = 'account_timestamp_index',
-}
+export const AccountTransactionHistoryDALIndex = AccountEntityHistoryDALIndex

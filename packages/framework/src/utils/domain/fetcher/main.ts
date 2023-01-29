@@ -1,7 +1,7 @@
 import { Utils } from '@aleph-indexer/core'
 import {
   FetcherMainDomainContext,
-  AccountTransactionHistoryState,
+  AccountEntityHistoryState,
   FetcherState,
   TransactionState,
 } from '../../../services/fetcher/src/types.js'
@@ -46,7 +46,7 @@ export class FetcherMainDomain {
   async getAccountTransactionFetcherState<T>(
     blockchainId: Blockchain,
     accounts: string[] = [],
-  ): Promise<AccountTransactionHistoryState<T>[]> {
+  ): Promise<AccountEntityHistoryState<T>[]> {
     return (
       await Promise.all(
         accounts.map((account) =>
@@ -55,7 +55,7 @@ export class FetcherMainDomain {
             .getAccountTransactionFetcherState({ account }),
         ),
       )
-    ).filter((info): info is AccountTransactionHistoryState<T> => !!info)
+    ).filter((info): info is AccountEntityHistoryState<T> => !!info)
   }
 
   /**

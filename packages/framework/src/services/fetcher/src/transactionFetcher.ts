@@ -46,7 +46,7 @@ export abstract class BaseTransactionFetcher<
     protected transactionCacheDAL: RawTransactionStorage<T>,
   ) {
     this.pendingTransactionsCache = new PendingWorkPool({
-      id: 'pending-transactions-cache',
+      id: `${blockchainId}:pending-transactions-cache`,
       interval: 0,
       chunkSize: 10,
       concurrency: 1,
@@ -56,7 +56,7 @@ export abstract class BaseTransactionFetcher<
     })
 
     this.pendingTransactionsFetch = new PendingWorkPool({
-      id: 'pending-transactions-fetch',
+      id: `${blockchainId}:pending-transactions-fetch`,
       interval: 0,
       chunkSize: 200,
       concurrency: 5,
@@ -67,7 +67,7 @@ export abstract class BaseTransactionFetcher<
     })
 
     this.pendingTransactions = new PendingWorkPool({
-      id: 'pending-transactions',
+      id: `${blockchainId}:pending-transactions`,
       interval: 0,
       chunkSize: 1000,
       concurrency: 1,

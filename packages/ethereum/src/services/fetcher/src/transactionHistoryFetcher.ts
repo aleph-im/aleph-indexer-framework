@@ -1,12 +1,12 @@
 import {
-  AddAccountTransactionRequestArgs,
   BaseTransactionHistoryFetcher,
   Blockchain,
-  DelAccountTransactionRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  AddAccountEntityRequestArgs,
+  DelAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetcherMsClient,
   FetcherStateLevelStorage,
-  GetAccountTransactionStateRequestArgs,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
 import {
@@ -41,18 +41,18 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
     super(Blockchain.Ethereum, ...args)
   }
 
-  async addAccount(args: AddAccountTransactionRequestArgs): Promise<void> {
+  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     args.account = args.account.toLowerCase()
     return super.addAccount(args)
   }
 
-  async delAccount(args: DelAccountTransactionRequestArgs): Promise<void> {
+  async delAccount(args: DelAccountEntityRequestArgs): Promise<void> {
     args.account = args.account.toLowerCase()
     return super.delAccount(args)
   }
 
   async fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
     args.account = args.account.toLowerCase()
     return super.fetchAccountTransactionsByDate(args)
@@ -63,7 +63,7 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
    * @param args The account address to get its fetch status.
    */
   async getAccountState(
-    args: GetAccountTransactionStateRequestArgs,
+    args: GetAccountEntityStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
     args.account = args.account.toLowerCase()
 

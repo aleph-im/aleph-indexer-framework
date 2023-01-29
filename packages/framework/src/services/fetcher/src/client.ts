@@ -9,17 +9,17 @@ import { FetcherClientI } from '../interface.js'
 import {
   FetcherAccountPartitionRequestArgs,
   AddAccountStateRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
   FetchTransactionsBySignatureRequestArgs,
   FetcherStateRequestArgs,
   FetcherState,
   TransactionState,
   CheckTransactionsRequestArgs,
   DelTransactionsRequestArgs,
-  AddAccountTransactionRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  DelAccountTransactionRequestArgs,
-  AccountTransactionHistoryState,
+  AddAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  DelAccountEntityRequestArgs,
+  AccountEntityHistoryState,
   GetAccountStateStateRequestArgs,
 } from './types.js'
 
@@ -39,7 +39,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   ) {}
 
   addAccountTransactionFetcher(
-    args: Omit<AddAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<AddAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.addAccountTransactionFetcher`, {
       partitionKey: args.account,
@@ -50,7 +50,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   delAccountTransactionFetcher(
-    args: Omit<DelAccountTransactionRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<DelAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
     return this.broker.call(`${this.msId}.delAccountTransactionFetcher`, {
       partitionKey: args.account,
@@ -61,11 +61,8 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   getAccountTransactionFetcherState(
-    args: Omit<
-      GetAccountTransactionStateRequestArgs,
-      keyof BlockchainRequestArgs
-    >,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
+    args: Omit<GetAccountEntityStateRequestArgs, keyof BlockchainRequestArgs>,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined> {
     return this.broker.call(`${this.msId}.getAccountTransactionFetcherState`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
@@ -108,7 +105,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
 
   fetchAccountTransactionsByDate(
     args: Omit<
-      FetchAccountTransactionsByDateRequestArgs,
+      FetchAccountEntitiesByDateRequestArgs,
       keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>> {

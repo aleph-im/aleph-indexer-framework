@@ -2,7 +2,7 @@
 
 import {
   AccountStateStorage,
-  AccountTransactionHistoryState,
+  AccountEntityHistoryState,
   BaseFetcherJobRunnerOptions,
   BaseFetcherPaginationCursors,
   BaseFetcherPaginationResponse,
@@ -114,7 +114,7 @@ export type EthereumAccountStateStorage =
   AccountStateStorage<EthereumAccountState>
 
 export type EthereumAccountTransactionHistoryState =
-  AccountTransactionHistoryState<EthereumAccountTransactionHistoryPaginationCursor> & {
+  AccountEntityHistoryState<EthereumAccountTransactionHistoryPaginationCursor> & {
     firstHeight?: number
     lastHeight?: number
     firstSignature?: string

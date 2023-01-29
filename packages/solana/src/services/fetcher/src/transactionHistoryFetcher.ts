@@ -5,7 +5,7 @@ import {
   Blockchain,
   FetcherMsClient,
   FetcherStateLevelStorage,
-  GetAccountTransactionStateRequestArgs,
+  GetAccountEntityStateRequestArgs,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
 import {
@@ -15,7 +15,7 @@ import {
 import {
   FetchAccountTransactionsBySlotRequestArgs,
   SolanaAccountTransactionHistoryPaginationCursor,
-  SolanaAccountTransactionHistoryState,
+  SolanaAccountEntityHistoryState,
   SolanaSignature,
   SolanaSignatureInfo,
 } from './types.js'
@@ -98,9 +98,9 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
    * @param args The account address to get its fetch status.
    */
   async getAccountState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<SolanaAccountTransactionHistoryState | undefined> {
-    const state: SolanaAccountTransactionHistoryState | undefined =
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<SolanaAccountEntityHistoryState | undefined> {
+    const state: SolanaAccountEntityHistoryState | undefined =
       await this.getPartialAccountState(args)
 
     if (!state) return

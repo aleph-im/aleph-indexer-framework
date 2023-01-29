@@ -38,6 +38,8 @@
     "@aleph-indexer/layout": "^1.0.14",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
+    "cacheable-lookup": "^6.0.4",
+    "node-cache": "^5.1.2",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
     "buffer-layout": "^1.2.2",
