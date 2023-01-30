@@ -3,17 +3,19 @@ import {
   PendingWork,
   PendingWorkStorage,
 } from '@aleph-indexer/core'
+import { IndexableEntityType } from '../../../../types.js'
 
-export type PendingTransactionStorage = PendingWorkStorage<string[]>
+export type PendingEntityStorage = PendingWorkStorage<string[]>
 
 /**
  * Creates a new pending transaction storage for the fetcher.
  * @param path Path to the database.
  */
-export function createPendingTransactionDAL(
+export function createPendingEntityDAL(
   path: string,
-  name = 'fetcher_pending_transaction',
-): PendingTransactionStorage {
+  type: IndexableEntityType,
+  name = `fetcher_pending_${type}`,
+): PendingEntityStorage {
   return new PendingWorkStorage({
     name,
     path,
@@ -37,14 +39,16 @@ export function createPendingTransactionDAL(
   })
 }
 
-export function createPendingTransactionCacheDAL(
+export function createPendingEntityCacheDAL(
   path: string,
-): PendingTransactionStorage {
-  return createPendingTransactionDAL(path, 'fetcher_pending_transaction_cache')
+  type: IndexableEntityType,
+): PendingEntityStorage {
+  return createPendingEntityDAL(path, type, `fetcher_pending_${type}_cache`)
 }
 
-export function createPendingTransactionFetchDAL(
+export function createPendingEntityFetchDAL(
   path: string,
-): PendingTransactionStorage {
-  return createPendingTransactionDAL(path, 'fetcher_pending_transaction_fetch')
+  type: IndexableEntityType,
+): PendingEntityStorage {
+  return createPendingEntityDAL(path, type, `fetcher_pending_${type}_fetch`)
 }

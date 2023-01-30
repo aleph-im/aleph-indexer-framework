@@ -1,4 +1,4 @@
-import { config, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   BaseFetcherJobState,
   BaseFetcherState,
@@ -25,8 +25,8 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
 
   constructor(
     protected ethereumClient: EthereumClient,
-    protected blockDAL: EthereumBlockStorage,
     protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected blockDAL?: EthereumBlockStorage,
   ) {
     const blockTime = 10 + 2
 
@@ -169,11 +169,13 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   ): Promise<void> {
     if (!blocks.length) return
 
-    // @todo: Refactor config vars
-    if (config.ETHEREUM_INDEX_BLOCKS === 'true') {
+    if (this.blockDAL) {
       await this.blockDAL.save(blocks)
     }
 
-    await this.ethereumClient.indexBlockSignatures(blocks)
+    await Promise.all([
+      this.ethereumClient.indexBlockSignatures(blocks),
+      this.ethereumClient.indexBlockLogBloom(blocks),
+    ])
   }
 }

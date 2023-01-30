@@ -1,17 +1,17 @@
 import { StorageValueStream, Utils } from '@aleph-indexer/core'
-import { BaseIndexerTransactionFetcher } from './transactionFetcher.js'
+import { BaseIndexerEntityFetcher } from './entityFetcher.js'
 import { FetcherMsClient } from '../../fetcher/client.js'
 import {
-  TransactionIndexerState,
-  TransactionIndexerStateDALIndex,
-  TransactionIndexerStateCode,
-  TransactionIndexerStateStorage,
-} from './dal/transactionIndexerState.js'
+  EntityIndexerState,
+  EntityIndexerStateDALIndex,
+  EntityIndexerStateCode,
+  EntityIndexerStateStorage,
+} from './dal/entityIndexerState.js'
 import {
-  AccountIndexerState,
-  AccountIndexerTransactionRequestArgs,
+  AccountIndexerEntityRequestArgs,
   AccountDateRange,
-  TransactionIndexerHandler,
+  EntityIndexerHandler,
+  AccountEntityIndexerState,
 } from './types.js'
 import {
   clipDateRangesFromIterable,
@@ -20,61 +20,55 @@ import {
   mergeDateRangesFromIterable,
 } from '../../../utils/time.js'
 import { AccountEntityHistoryState } from '../../fetcher/src/types.js'
-import { ParsedTransaction } from '../../../types.js'
+import { ParsedEntity } from '../../../types.js'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
-export class BaseAccountTransactionIndexer<
-  T extends ParsedTransaction<unknown>,
-> {
+export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
   protected fetchAllJob!: Utils.JobRunner
   protected compactionJob!: Utils.JobRunner
   protected processorJob!: Utils.JobRunner
-  protected txResponseHandler: (requestNonce: number) => Promise<void>
+  protected entityResponseHandler: (requestNonce: number) => Promise<void>
 
   constructor(
-    protected config: AccountIndexerTransactionRequestArgs,
-    protected handler: TransactionIndexerHandler<T>,
+    protected config: AccountIndexerEntityRequestArgs,
+    protected handler: EntityIndexerHandler<T>,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionFetcher: BaseIndexerTransactionFetcher<T>,
-    protected transactionIndexerStateDAL: TransactionIndexerStateStorage,
+    protected entityFetcher: BaseIndexerEntityFetcher<T>,
+    protected entityIndexerStateDAL: EntityIndexerStateStorage,
   ) {
-    const { account } = config
+    const { type, account } = config
 
     this.fetchAllJob = new JobRunner({
-      name: `transaction-indexer-fetcher ${account}`,
+      name: `${type}-indexer-fetcher ${account}`,
       interval: this.config.chunkDelay,
       intervalMax: 1000 * 60 * 5, // 5min
       intervalFn: this.fetchAllRanges.bind(this),
     })
 
     this.compactionJob = new JobRunner({
-      name: `transaction-indexer-compactor ${account}`,
+      name: `${type}-indexer-compactor ${account}`,
       interval: 1000 * 60 * 5, // 5min
       intervalFn: this.compactStates.bind(this),
     })
 
     this.processorJob = new JobRunner({
-      name: `transaction-indexer-processor ${account}`,
+      name: `${type}-indexer-processor ${account}`,
       interval: Math.max(this.config.chunkDelay, 1000 * 5),
       intervalMax: 1000 * 60 * 5, // 5min
       intervalFn: this.processRanges.bind(this),
     })
 
-    this.txResponseHandler = this.onTransactionResponse.bind(this)
+    this.entityResponseHandler = this.onEntityResponse.bind(this)
   }
 
   async start(): Promise<void> {
-    const { blockchainId, account } = this.config
-
     await this.initPendingRanges()
 
     // @note: Subscribe to range request responses
-    this.transactionFetcher.onResponse(this.txResponseHandler)
+    this.entityFetcher.onResponse(this.entityResponseHandler)
 
-    await this.fetcherMsClient
-      .useBlockchain(blockchainId)
-      .addAccountTransactionFetcher({ account })
+    await this.addAccountEntityFetcher()
 
     this.fetchAllJob.start().catch(() => 'ignore')
     this.compactionJob.start().catch(() => 'ignore')
@@ -82,26 +76,20 @@ export class BaseAccountTransactionIndexer<
   }
 
   async stop(): Promise<void> {
-    const { blockchainId, account } = this.config
-
     // @note: Unsubscribe from range request responses
-    this.transactionFetcher.offResponse(this.txResponseHandler)
+    this.entityFetcher.offResponse(this.entityResponseHandler)
 
-    await this.fetcherMsClient
-      .useBlockchain(blockchainId)
-      .delAccountTransactionFetcher({ account })
+    await this.delAccountEntityFetcher()
 
     this.fetchAllJob.stop().catch(() => 'ignore')
     this.compactionJob.stop().catch(() => 'ignore')
     this.processorJob.stop().catch(() => 'ignore')
   }
 
-  async getIndexingState(): Promise<AccountIndexerState | undefined> {
-    const { blockchainId, account } = this.config
+  async getIndexingState(): Promise<AccountEntityIndexerState | undefined> {
+    const { account } = this.config
 
-    const state = await this.fetcherMsClient
-      .useBlockchain(blockchainId)
-      .getAccountTransactionFetcherState({ account })
+    const state = await this.getAccountEntityFetcherState()
 
     const availableToFetch = this.getAvailableRangesToFetch(state)
     if (!availableToFetch) return
@@ -138,6 +126,9 @@ export class BaseAccountTransactionIndexer<
     )
 
     return {
+      blockchain: this.config.blockchainId,
+      type: this.config.type,
+      indexer: 'unknown',
       account,
       accurate,
       progress,
@@ -147,11 +138,9 @@ export class BaseAccountTransactionIndexer<
   }
 
   protected async getPendingRanges(): Promise<DateRange[]> {
-    const { blockchainId, account } = this.config
+    const { account } = this.config
 
-    const state = await this.fetcherMsClient
-      .useBlockchain(blockchainId)
-      .getAccountTransactionFetcherState({ account })
+    const state = await this.getAccountEntityFetcherState()
 
     const availableToFetch = this.getAvailableRangesToFetch(state)
     if (!availableToFetch) return []
@@ -163,23 +152,13 @@ export class BaseAccountTransactionIndexer<
     return ranges
   }
 
-  // async fetchRange(dateRange: DateRange): Promise<void> {
-  //   const ranges = await this.calculateRangesToFetch(dateRange)
-  //   console.log('get events ranges', ranges)
-
-  //   // @note: Do not return anything, and fetch missed ranges
-  //   if (ranges.length) return
-
-  //   await this.fetchRangeByDate(dateRange)
-  // }
-
   protected async initPendingRanges(): Promise<void> {
     const { account } = this.config
-    const { Ready, Pending } = TransactionIndexerStateCode
+    const { Ready, Pending } = EntityIndexerStateCode
 
     // @note: Check the current pending ranges
-    const pendingRanges = await this.transactionIndexerStateDAL
-      .useIndex(TransactionIndexerStateDALIndex.AccountState)
+    const pendingRanges = await this.entityIndexerStateDAL
+      .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Pending], [account, Pending], {
         reverse: false,
         atomic: true,
@@ -188,14 +167,14 @@ export class BaseAccountTransactionIndexer<
     for await (const range of pendingRanges) {
       const requestNonce = range.requestNonce as number
 
-      const isComplete = await this.transactionFetcher.isRequestComplete(
+      const isComplete = await this.entityFetcher.isRequestComplete(
         requestNonce,
       )
 
       if (!isComplete) continue
 
       // @note: Update the state of the request to ready (mark for processing)
-      await this.transactionIndexerStateDAL.save({
+      await this.entityIndexerStateDAL.save({
         ...range,
         requestNonce,
         state: Ready,
@@ -203,11 +182,11 @@ export class BaseAccountTransactionIndexer<
     }
   }
 
-  protected async onTransactionResponse(requestNonce: number): Promise<void> {
-    const { Ready, Pending } = TransactionIndexerStateCode
+  protected async onEntityResponse(requestNonce: number): Promise<void> {
+    const { Ready, Pending } = EntityIndexerStateCode
 
-    const range = await this.transactionIndexerStateDAL
-      .useIndex(TransactionIndexerStateDALIndex.RequestState)
+    const range = await this.entityIndexerStateDAL
+      .useIndex(EntityIndexerStateDALIndex.RequestState)
       .getFirstValueFromTo([requestNonce, Pending], [requestNonce, Pending], {
         atomic: true,
       })
@@ -215,7 +194,7 @@ export class BaseAccountTransactionIndexer<
     if (!range) return
 
     // @note: Update the state of the request to ready (mark for processing)
-    await this.transactionIndexerStateDAL.save({
+    await this.entityIndexerStateDAL.save({
       ...range,
       requestNonce,
       state: Ready,
@@ -267,10 +246,10 @@ export class BaseAccountTransactionIndexer<
 
   protected async mergeStates(): Promise<DateRange[]> {
     const { account } = this.config
-    const { Processed } = TransactionIndexerStateCode
+    const { Processed } = EntityIndexerStateCode
 
-    const fetchedRanges = await this.transactionIndexerStateDAL
-      .useIndex(TransactionIndexerStateDALIndex.AccountState)
+    const fetchedRanges = await this.entityIndexerStateDAL
+      .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
         atomic: true,
@@ -282,7 +261,7 @@ export class BaseAccountTransactionIndexer<
     if (!newRanges.length) return mergedRanges
 
     const newStates = newRanges.map((range) => {
-      const newState = range as TransactionIndexerState
+      const newState = range as EntityIndexerState
       newState.account = account
       newState.state = Processed
       newState.requestNonce = undefined
@@ -290,7 +269,7 @@ export class BaseAccountTransactionIndexer<
     })
 
     const oldStates = oldRanges.map((range) => {
-      const oldState = range as TransactionIndexerState
+      const oldState = range as EntityIndexerState
       oldState.account = account
       oldState.state = Processed
       oldState.requestNonce = undefined
@@ -322,8 +301,8 @@ export class BaseAccountTransactionIndexer<
     // @note: Ordering is important for not causing
     // race conditions issues on pending ranges calculation due
     // to empty processed entries in db
-    await this.transactionIndexerStateDAL.save(newStates)
-    await this.transactionIndexerStateDAL.remove(oldStates)
+    await this.entityIndexerStateDAL.save(newStates)
+    await this.entityIndexerStateDAL.remove(oldStates)
 
     return mergedRanges
   }
@@ -334,10 +313,10 @@ export class BaseAccountTransactionIndexer<
     interval: number
   }): Promise<number | void> {
     const { blockchainId, account } = this.config
-    const { Ready, Processed } = TransactionIndexerStateCode
+    const { Ready, Processed } = EntityIndexerStateCode
 
-    const completeRanges = await this.transactionIndexerStateDAL
-      .useIndex(TransactionIndexerStateDALIndex.AccountState)
+    const completeRanges = await this.entityIndexerStateDAL
+      .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Ready], [account, Ready], {
         reverse: false,
         atomic: true,
@@ -349,26 +328,27 @@ export class BaseAccountTransactionIndexer<
       const nonce = range.requestNonce as number
 
       // @note: Obtain the response of the ready ranges
-      const reqResponse = await this.transactionFetcher.getResponse(nonce)
+      const reqResponse = await this.entityFetcher.getResponse(nonce)
       const { response, remove } = reqResponse
 
       // @note: Process the response (delegated to the domain layer)
-      await this.handler.onTxDateRange({
+      await this.handler.onEntityDateRange({
         blockchainId,
         account,
         startDate: range.startDate,
         endDate: range.endDate,
-        txs: response,
+        type: this.config.type,
+        entities: response,
       })
 
       // @note: Update the state of the request to processed (mark for compaction)
-      await this.transactionIndexerStateDAL.save({
+      await this.entityIndexerStateDAL.save({
         ...range,
         requestNonce: undefined,
         state: Processed,
       })
 
-      // @note: Remove the request state on the transaction fetcher
+      // @note: Remove the request state on the entity fetcher
       await remove()
 
       count++
@@ -380,26 +360,24 @@ export class BaseAccountTransactionIndexer<
   }
 
   protected async fetchRangeByDate(dateRange: AccountDateRange): Promise<void> {
-    const { Pending, Ready } = TransactionIndexerStateCode
+    const { Pending, Ready } = EntityIndexerStateCode
 
     // @note: Do the request and get the nonce
-    const nonce = await this.transactionFetcher.fetchAccountTransactionsByDate(
-      dateRange,
-    )
+    const nonce = await this.entityFetcher.fetchAccountEntitiesByDate(dateRange)
 
     // @note: Save the pending state of the request
-    await this.transactionIndexerStateDAL.save({
+    await this.entityIndexerStateDAL.save({
       ...dateRange,
       requestNonce: nonce,
       state: Pending,
     })
 
     // @note: Wait till the request is complete
-    await this.transactionFetcher.awaitRequestComplete(nonce)
+    await this.entityFetcher.awaitRequestComplete(nonce)
 
     // @note: Update the state to ready
     // (in some cases, the response comes before saving the pending state, so we must always check it here too)
-    await this.transactionIndexerStateDAL.save({
+    await this.entityIndexerStateDAL.save({
       ...dateRange,
       requestNonce: nonce,
       state: Ready,
@@ -409,13 +387,13 @@ export class BaseAccountTransactionIndexer<
   protected async calculateRangesToFetch(
     account: string,
     totalDateRange: DateRange,
-    clipRanges?: StorageValueStream<TransactionIndexerState>,
+    clipRanges?: StorageValueStream<EntityIndexerState>,
   ): Promise<DateRange[]> {
     const { endDate } = totalDateRange
 
     clipRanges =
       clipRanges ||
-      (await this.transactionIndexerStateDAL.getAllValuesFromTo(
+      (await this.entityIndexerStateDAL.getAllValuesFromTo(
         [account, undefined],
         [account, endDate],
         { reverse: false, atomic: true },
@@ -440,5 +418,31 @@ export class BaseAccountTransactionIndexer<
       startDate: state.firstTimestamp,
       endDate: state.lastTimestamp,
     }
+  }
+
+  protected async addAccountEntityFetcher(): Promise<void> {
+    const { type, blockchainId, account } = this.config
+
+    await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .addAccountEntityFetcher({ type, account })
+  }
+
+  protected async delAccountEntityFetcher(): Promise<void> {
+    const { type, blockchainId, account } = this.config
+
+    await this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .delAccountEntityFetcher({ type, account })
+  }
+
+  protected async getAccountEntityFetcherState(): Promise<
+    AccountEntityHistoryState<unknown> | undefined
+  > {
+    const { type, blockchainId, account } = this.config
+
+    return this.fetcherMsClient
+      .useBlockchain(blockchainId)
+      .getAccountEntityFetcherState({ type, account })
   }
 }

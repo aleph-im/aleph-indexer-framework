@@ -4,7 +4,8 @@ import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainIndexerWorkerI,
   IndexerDomainContext,
-  TransactionDateRangeResponse,
+  EntityDateRangeResponse,
+  IndexableEntityType,
 } from '@aleph-indexer/framework'
 import {
   EthereumParsedTransaction,
@@ -35,10 +36,20 @@ export class EthereumIndexerWorkerDomain {
     }
   }
 
-  async onTxDateRange(
-    response: TransactionDateRangeResponse<EthereumParsedTransaction>,
+  async onEntityDateRange(
+    response: EntityDateRangeResponse<any>,
   ): Promise<void> {
-    const { txs } = response
+    const { type } = response
+
+    if (type === IndexableEntityType.Transaction) {
+      return this.onTransactionDateRange(response)
+    }
+  }
+
+  protected async onTransactionDateRange(
+    response: EntityDateRangeResponse<EthereumParsedTransaction>,
+  ): Promise<void> {
+    const { entities } = response
 
     const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
       this.hooks,
@@ -48,7 +59,7 @@ export class EthereumIndexerWorkerDomain {
     )
 
     return promisify(pipeline)(
-      txs as any,
+      entities as any,
       new StreamMap(this.mapTransactionContext.bind(this, response)),
       new StreamFilter(filterTransaction),
       new StreamBuffer(1000),
@@ -57,7 +68,7 @@ export class EthereumIndexerWorkerDomain {
   }
 
   protected mapTransactionContext(
-    args: TransactionDateRangeResponse<EthereumParsedTransaction>,
+    args: EntityDateRangeResponse<EthereumParsedTransaction>,
     tx: EthereumParsedTransaction,
   ): EthereumParsedTransactionContext {
     const { account, startDate, endDate } = args

@@ -1,5 +1,5 @@
 import {
-  BaseTransactionHistoryFetcher,
+  BaseEntityHistoryFetcher,
   Blockchain,
   AddAccountEntityRequestArgs,
   DelAccountEntityRequestArgs,
@@ -8,6 +8,7 @@ import {
   FetcherMsClient,
   FetcherStateLevelStorage,
   PendingAccountStorage,
+  IndexableEntityType,
 } from '@aleph-indexer/framework'
 import {
   EthereumAccountTransactionHistoryPaginationCursor,
@@ -19,7 +20,7 @@ import { EthereumSignature } from '../../../types.js'
 import { EthereumClient } from '../../../sdk/client.js'
 import { EthereumAccountTransactionHistoryStorage } from '../../../sdk/dal.js'
 
-export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFetcher<
+export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
   EthereumAccountTransactionHistoryPaginationCursor,
   EthereumSignature
 > {
@@ -34,11 +35,11 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
     ...args: [
       FetcherMsClient,
-      EthereumAccountTransactionHistoryStorage,
       PendingAccountStorage,
+      EthereumAccountTransactionHistoryStorage,
     ]
   ) {
-    super(Blockchain.Ethereum, ...args)
+    super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
   }
 
   async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
@@ -51,11 +52,11 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
     return super.delAccount(args)
   }
 
-  async fetchAccountTransactionsByDate(
+  async fetchAccountEntitiesByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
     args.account = args.account.toLowerCase()
-    return super.fetchAccountTransactionsByDate(args)
+    return super.fetchAccountEntitiesByDate(args)
   }
 
   /**
@@ -98,9 +99,5 @@ export class EthereumTransactionHistoryFetcher extends BaseTransactionHistoryFet
       this.ethereumClient,
       this.blockHistoryFetcher,
     )
-  }
-
-  protected checkTransactionHistory(): void {
-    this.pendingAccounts.skipNextSleep()
   }
 }

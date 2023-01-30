@@ -3,33 +3,26 @@ import {
   Blockchain,
   BlockchainFetcherI,
   FetcherMsClient,
-  FetcherStateRequestArgs,
   GetAccountEntityStateRequestArgs,
+  IndexableEntityType,
+  BaseEntityFetcherMain,
+  FetcherStateRequestArgs,
 } from '@aleph-indexer/framework'
-import { EthereumTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
-import { EthereumTransactionFetcher } from './src/transactionFetcher.js'
+import { EthereumBlockHistoryFetcher } from './src/blockHistoryFetcher.js'
 import {
   EthereumAccountTransactionHistoryState,
   EthereumFetcherState,
 } from './src/types.js'
-import { EthereumStateFetcher } from './src/stateFetcher.js'
-import { EthereumBlockHistoryFetcher } from './src/blockHistoryFetcher.js'
 
 export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
     protected fetcherClient: FetcherMsClient,
-    protected transactionHistoryFetcher: EthereumTransactionHistoryFetcher,
-    protected transactionFetcher: EthereumTransactionFetcher,
-    protected accountStateFetcher: EthereumStateFetcher,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
+    protected entityFetchers: Partial<
+      Record<IndexableEntityType, BaseEntityFetcherMain<any, any, any>>
+    >,
   ) {
-    super(
-      Blockchain.Ethereum,
-      fetcherClient,
-      transactionHistoryFetcher,
-      transactionFetcher,
-      accountStateFetcher,
-    )
+    super(Blockchain.Ethereum, fetcherClient, entityFetchers)
   }
 
   async start(): Promise<void> {
@@ -45,10 +38,10 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
     await super.stop()
   }
 
-  getAccountTransactionFetcherState(
+  getAccountEntityFetcherState(
     args: GetAccountEntityStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
-    return super.getAccountTransactionFetcherState(args)
+    return super.getAccountEntityFetcherState(args)
   }
 
   async getFetcherState(
@@ -60,12 +53,14 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
     const firstBlock = blockState.cursors?.backward
     const lastBlock = blockState.cursors?.forward
 
-    return {
-      ...state,
-      data: {
+    // @todo: Improve this
+    return state.map((state) => {
+      state.data = {
         firstBlock,
         lastBlock,
-      },
-    }
+      }
+
+      return state
+    })
   }
 }

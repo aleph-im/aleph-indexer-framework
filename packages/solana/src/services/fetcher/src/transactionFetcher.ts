@@ -1,44 +1,42 @@
 import { ServiceBroker } from 'moleculer'
 import {
-  BaseTransactionFetcher,
+  BaseEntityFetcher,
   Blockchain,
-  PendingTransactionStorage,
-  RawTransactionStorage,
+  IndexableEntityType,
+  PendingEntityStorage,
+  RawEntityStorage,
 } from '@aleph-indexer/framework'
 import { SolanaRawTransaction } from '../../../types.js'
 import { SolanaRPC } from '../../../sdk/client.js'
 
-/**
- * The main class of the fetcher service.
- */
-export class SolanaTransactionFetcher extends BaseTransactionFetcher<SolanaRawTransaction> {
+export class SolanaTransactionFetcher extends BaseEntityFetcher<SolanaRawTransaction> {
   constructor(
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     ...args: [
       ServiceBroker,
-      PendingTransactionStorage,
-      PendingTransactionStorage,
-      PendingTransactionStorage,
-      RawTransactionStorage<SolanaRawTransaction>,
+      PendingEntityStorage,
+      PendingEntityStorage,
+      PendingEntityStorage,
+      RawEntityStorage<SolanaRawTransaction>,
     ]
   ) {
-    super(Blockchain.Solana, ...args)
+    super(IndexableEntityType.Transaction, Blockchain.Solana, ...args)
   }
 
-  protected isSignature(signature: string): boolean {
-    const isSignature = signature.length >= 64 && signature.length <= 88
-    if (!isSignature) console.log(`Fetcher Invalid signature ${signature}`)
+  protected filterEntityId(id: string): boolean {
+    const isSignature = id.length >= 64 && id.length <= 88
+    if (!isSignature) console.log(`Fetcher Invalid signature ${id}`)
     return isSignature
   }
 
-  protected remoteFetch(
-    signatures: string[],
+  protected remoteFetchIds(
+    ids: string[],
     isRetry: boolean,
   ): Promise<(SolanaRawTransaction | null | undefined)[]> {
     const rpc = isRetry ? this.solanaMainPublicRpc : this.solanaRpc
 
-    return rpc.getConfirmedTransactions(signatures, {
+    return rpc.getConfirmedTransactions(ids, {
       swallowErrors: true,
     })
   }

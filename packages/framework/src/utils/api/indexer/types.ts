@@ -16,16 +16,18 @@ import {
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
 import { TimeFrame as TF } from '../../time.js'
-import { Blockchain, TimeInfo } from '../types.js'
-import { TransactionRequestType as TRT } from '../../../services/indexer/src/dal/transactionRequest.js'
+import { Blockchain, TimeInfo, EntityType } from '../types.js'
+import { EntityRequestType as TRT } from '../../../services/indexer/src/dal/entityRequest.js'
 
 export * from '../types.js'
 
 // State
 
-export const AccountState = new GraphQLObjectType({
-  name: 'AccountState',
+export const AccountEntityIndexerState = new GraphQLObjectType({
+  name: 'AccountEntityState',
   fields: {
+    blockchain: { type: new GraphQLNonNull(Blockchain) },
+    type: { type: new GraphQLNonNull(EntityType) },
     indexer: { type: new GraphQLNonNull(GraphQLString) },
     account: { type: new GraphQLNonNull(GraphQLString) },
     accurate: { type: new GraphQLNonNull(GraphQLBoolean) },
@@ -35,32 +37,33 @@ export const AccountState = new GraphQLObjectType({
   },
 })
 
-export const AccountStateList = new GraphQLList(AccountState)
+export const AccountEntityIndexerStateList = new GraphQLList(
+  AccountEntityIndexerState,
+)
 
 // Private API
 
-export const TransactionRequestType = new GraphQLEnumType({
-  name: 'TransactionRequestType',
+export const EntityRequestType = new GraphQLEnumType({
+  name: 'EntityRequestType',
   values: {
     ByDateRange: { value: TRT.ByDateRange },
-    BySlotRange: { value: TRT.BySlotRange },
-    BySignatures: { value: TRT.BySignatures },
+    BySignatures: { value: TRT.ById },
   },
 })
 
-export const TransactionRequest = new GraphQLObjectType({
-  name: 'TransactionRequest',
+export const EntityPendingRequest = new GraphQLObjectType({
+  name: 'EntityPendingRequest',
   fields: {
     indexer: { type: new GraphQLNonNull(GraphQLString) },
     nonce: { type: new GraphQLNonNull(GraphQLFloat) },
-    type: { type: new GraphQLNonNull(TransactionRequestType) },
+    type: { type: new GraphQLNonNull(EntityRequestType) },
     count: { type: GraphQLInt },
     complete: { type: GraphQLBoolean },
     params: { type: GraphQLJSONObject },
   },
 })
 
-export const TransactionRequestList = new GraphQLList(TransactionRequest)
+export const EntityPendingRequestList = new GraphQLList(EntityPendingRequest)
 
 // Stats
 
@@ -146,8 +149,8 @@ export { TimeInfo } from '../types.js'
 export const types: GraphQLNamedType[] = [
   Blockchain,
   TimeInfo,
-  AccountState,
+  AccountEntityIndexerState,
   TimeFrame,
-  TransactionRequestType,
-  TransactionRequest,
+  EntityRequestType,
+  EntityPendingRequest,
 ]

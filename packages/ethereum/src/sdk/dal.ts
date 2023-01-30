@@ -1,5 +1,7 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { EthereumSignature } from '../types.js'
+import { EthereumLogBloom, EthereumSignature } from '../types.js'
+
+// Transaction
 
 export type EthereumAccountTransactionHistoryEntity = EthereumSignature
 
@@ -9,4 +11,14 @@ export type EthereumAccountTransactionHistoryStorage =
 export enum EthereumAccountTransactionHistoryDALIndex {
   AccountTimestampIndex = 'account_timestamp_index',
   AccountHeightIndex = 'account_height_index',
+}
+
+// Logs
+
+export type EthereumLogBloomEntity = EthereumLogBloom
+
+export type EthereumLogBloomStorage = EntityStorage<EthereumLogBloom>
+
+export enum EthereumLogBloomDALIndex {
+  Timestamp = 'timestamp',
 }

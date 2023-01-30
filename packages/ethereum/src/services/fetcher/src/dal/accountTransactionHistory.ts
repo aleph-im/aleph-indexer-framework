@@ -1,5 +1,5 @@
 import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
-import { AccountTransactionHistoryDALIndex } from '@aleph-indexer/framework'
+import { AccountEntityHistoryDALIndex } from '@aleph-indexer/framework'
 import {
   EthereumAccountTransactionHistoryDALIndex,
   EthereumAccountTransactionHistoryEntity,
@@ -48,7 +48,7 @@ export function createEthereumAccountTransactionHistoryDAL(
     key: [signatureKey],
     indexes: [
       {
-        name: AccountTransactionHistoryDALIndex.AccountTimestampIndex,
+        name: AccountEntityHistoryDALIndex.AccountTimestampIndex,
         key: [accountKey, timestampKey, indexKey],
       },
       {

@@ -1,14 +1,16 @@
 /* eslint-disable prettier/prettier */
 import { Utils } from '@aleph-indexer/core'
 import {
+  BaseEntityIndexer,
   Blockchain,
   BlockchainIndexerI,
-  createTransactionIndexerStateDAL,
-  createTransactionRequestDAL,
-  createTransactionRequestIncomingTransactionDAL,
-  createTransactionRequestPendingSignatureDAL,
-  createTransactionRequestResponseDAL,
+  createEntityIndexerStateDAL,
+  createEntityRequestDAL,
+  createEntityRequestIncomingEntityDAL,
+  createEntityRequestPendingEntityDAL,
+  createEntityRequestResponseDAL,
   FetcherMsClient,
+  IndexableEntityType,
   IndexerMsClient,
   IndexerWorkerDomainI,
   ParserMsClient,
@@ -17,7 +19,7 @@ import { EthereumParsedTransaction } from '../parser/src/types.js'
 import { EthereumIndexer } from './main.js'
 import { EthereumIndexerTransactionFetcher } from './src/transactionFetcher.js'
 
-export async function ethereumIndexerFactory (
+export async function ethereumIndexerFactory(
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
@@ -27,11 +29,11 @@ export async function ethereumIndexerFactory (
   await Utils.ensurePath(basePath)
 
   // DALs
-  const transactionRequestDAL = createTransactionRequestDAL(basePath)
-  const transactionRequestIncomingTransactionDAL = createTransactionRequestIncomingTransactionDAL<EthereumParsedTransaction>(basePath)
-  const transactionRequestPendingSignatureDAL = createTransactionRequestPendingSignatureDAL(basePath)
-  const transactionRequestResponseDAL = createTransactionRequestResponseDAL(basePath)
-  const transactionIndexerStateDAL = createTransactionIndexerStateDAL(basePath)
+  const transactionRequestDAL = createEntityRequestDAL(basePath, IndexableEntityType.Transaction)
+  const transactionRequestIncomingTransactionDAL = createEntityRequestIncomingEntityDAL<EthereumParsedTransaction>(basePath, IndexableEntityType.Transaction)
+  const transactionRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Transaction)
+  const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
+  const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
   const transactionFetcher = new EthereumIndexerTransactionFetcher(
     Blockchain.Ethereum,
@@ -42,12 +44,23 @@ export async function ethereumIndexerFactory (
     transactionRequestResponseDAL,
   )
 
-  return new EthereumIndexer(
-    domain,
+
+  const transactionFetcherMain = new BaseEntityIndexer(
+    IndexableEntityType.Transaction,
+    Blockchain.Ethereum,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
     transactionIndexerStateDAL,
     transactionFetcher,
+  )
+
+  const entityIndexers = {
+    [IndexableEntityType.Transaction]: transactionFetcherMain
+  }
+
+  return new EthereumIndexer(
+    domain,
+    entityIndexers,
   )
 }

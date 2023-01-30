@@ -21,7 +21,7 @@ export class AbiFactory {
     let abi = await this.getAbiFromCache(address)
     if (abi) return abi
 
-    const isContract = await this.checkContractAddress(address)
+    const isContract = await this.ethereumClient.isContractAddress(address)
     if (!isContract) return
 
     abi = await this.getAbiFromRemote(address)
@@ -82,14 +82,5 @@ export class AbiFactory {
       throw new Error(body.result)
 
     return body.result as Abi
-  }
-
-  protected async checkContractAddress(address: string): Promise<boolean> {
-    const code = await this.ethereumClient.getContractCode(address)
-    console.log('---- check code ---->', address, code)
-
-    if (code.length <= 2) return false
-
-    return true
   }
 }

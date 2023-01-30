@@ -22,10 +22,6 @@ const { JobRunnerReturnCode } = Utils
  * Handles the fetching and processing of signatures on an account.
  */
 export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher<EthereumAccountTransactionHistoryPaginationCursor> {
-  protected forwardAutoInterval = false
-  protected forwardRatio = 0
-  protected forwardRatioThreshold = 0
-
   /**
    * Initializes the signature fetcher.
    * @param account The account account to fetch related signatures for.

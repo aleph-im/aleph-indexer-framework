@@ -1,12 +1,12 @@
 import { Utils } from '@aleph-indexer/core'
-import { TransactionRequest } from '../../../services/indexer/src/dal/transactionRequest.js'
+import { EntityRequest } from '../../../services/indexer/src/dal/entityRequest.js'
 import {
   AccountIndexerRequestArgs,
   AccountIndexerState,
-  GetTransactionPendingRequestsRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -150,6 +150,7 @@ export abstract class IndexerMainDomain {
    */
   async getAccountState(
     blockchainId: Blockchain,
+    type: IndexableEntityType,
     accounts: string[] = [],
   ): Promise<AccountIndexerState[]> {
     return (
@@ -157,7 +158,7 @@ export abstract class IndexerMainDomain {
         this.getBlockchainAccounts(blockchainId, accounts).map((account) =>
           this.context.apiClient
             .useBlockchain(blockchainId)
-            .getAccountState({ account }),
+            .getAccountState({ type, account }),
         ),
       )
     ).filter((info): info is AccountIndexerState => !!info)
@@ -323,9 +324,9 @@ export abstract class IndexerMainDomain {
 
   // Private API
 
-  async getTransactionRequests(
-    args: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]> {
+  async getEntityPendingRequests(
+    args: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]> {
     const indexer = (args.indexer as unknown as string[]) || []
 
     const indexers = indexer.length
@@ -337,7 +338,7 @@ export abstract class IndexerMainDomain {
         indexers.map((indexer) =>
           this.context.apiClient
             .useBlockchain(args.blockchainId)
-            .getTransactionRequests({ ...args, indexer }),
+            .getEntityPendingRequests({ ...args, indexer }),
         ),
       )
     ).flatMap((requests) => requests)

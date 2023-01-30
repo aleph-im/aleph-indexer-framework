@@ -3,41 +3,26 @@ import {
   Blockchain,
   BlockchainFetcherI,
   FetcherMsClient,
-  GetAccountEntityStateRequestArgs,
+  IndexableEntityType,
+  BaseEntityFetcherMain,
 } from '@aleph-indexer/framework'
-import { SolanaTransactionFetcher } from './src/transactionFetcher.js'
-import { SolanaTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
-import {
-  FetchAccountTransactionsBySlotRequestArgs,
-  SolanaAccountEntityHistoryState,
-} from './src/types.js'
-import { SolanaStateFetcher } from './src/stateFetcher.js'
 
 export class SolanaFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
-    protected fetcherClient: FetcherMsClient,
-    protected transactionHistoryFetcher: SolanaTransactionHistoryFetcher,
-    protected transactionFetcher: SolanaTransactionFetcher,
-    protected accountStateFetcher: SolanaStateFetcher,
+    fetcherClient: FetcherMsClient,
+    entityFetchers: Partial<
+      Record<IndexableEntityType, BaseEntityFetcherMain<any, any, any>>
+    >,
   ) {
-    super(
-      Blockchain.Solana,
-      fetcherClient,
-      transactionHistoryFetcher,
-      transactionFetcher,
-      accountStateFetcher,
-    )
+    super(Blockchain.Solana, fetcherClient, entityFetchers)
   }
 
-  getAccountTransactionFetcherState(
-    args: GetAccountEntityStateRequestArgs,
-  ): Promise<SolanaAccountEntityHistoryState | undefined> {
-    return super.getAccountTransactionFetcherState(args)
-  }
-
-  fetchAccountTransactionsBySlot(
-    args: FetchAccountTransactionsBySlotRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    return this.transactionHistoryFetcher.fetchAccountTransactionsBySlot(args)
-  }
+  // fetchAccountTransactionsBySlot(
+  //   args: FetchAccountTransactionsBySlotRequestArgs,
+  // ): Promise<void | AsyncIterable<string[]>> {
+  //   const entityFetcher = this.getEntityFetcherInstance(
+  //     IndexableEntityType.Transaction,
+  //   )
+  //   return entityFetcher.fetchAccountTransactionsBySlot(args)
+  // }
 }

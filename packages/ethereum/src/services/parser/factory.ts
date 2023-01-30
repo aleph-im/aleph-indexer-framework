@@ -3,12 +3,12 @@ import path from 'path'
 import { config, Utils } from '@aleph-indexer/core'
 import { BlockchainParserI } from '@aleph-indexer/framework'
 import { createEthereumClient } from '../../sdk/index.js'
-import { EthereumRawTransaction, EthereumRawAccountState } from '../../types.js'
+import { EthereumRawTransaction } from '../../types.js'
 import { EthereumParser } from './main.js'
 import { AbiFactory } from './src/abiFactory.js'
 import { EthereumAccountStateParser } from './src/accountStateParser.js'
 import { EthereumTransactionParser } from './src/transactionParser.js'
-import { EthereumParsedTransaction, EthereumParsedAccountState } from './src/types.js'
+import { EthereumParsedTransaction } from './src/types.js'
 
 export async function ethereumParserFactory(
   basePath: string,
@@ -16,9 +16,7 @@ export async function ethereumParserFactory(
 ): Promise<
   BlockchainParserI<
     EthereumRawTransaction,
-    EthereumParsedTransaction,
-    EthereumRawAccountState,
-    EthereumParsedAccountState
+    EthereumParsedTransaction
   >
 > {
   const url = config.ETHEREUM_RPC

@@ -4,13 +4,15 @@ import { config, Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   createPendingAccountDAL,
-  createRawTransactionDAL,
+  createRawEntityDAL,
   createAccountStateDAL,
   createFetcherStateDAL,
-  createPendingTransactionCacheDAL,
-  createPendingTransactionDAL,
-  createPendingTransactionFetchDAL,
-  FetcherMsClient
+  createPendingEntityCacheDAL,
+  createPendingEntityDAL,
+  createPendingEntityFetchDAL,
+  FetcherMsClient,
+  IndexableEntityType,
+  BaseEntityFetcherMain
 } from '@aleph-indexer/framework'
 import { EthereumFetcher } from './main.js'
 import { createEthereumBlockDAL as createEthereumRawBlockDAL } from './src/dal/block.js'
@@ -22,6 +24,9 @@ import { EthereumAccountState } from './src/types.js'
 import { EthereumTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from './src/transactionFetcher.js'
 import { EthereumStateFetcher } from './src/stateFetcher.js'
+import { createEthereumLogBloomDAL } from './src/dal/logBloom.js'
+import { EthereumLogHistoryFetcher } from './src/logHistoryFetcher.js'
+import { createEthereumAccountLogHistoryDAL } from './src/dal/accountLogHistory.js'
 
 export async function ethereumFetcherFactory(
   basePath: string,
@@ -34,24 +39,27 @@ export async function ethereumFetcherFactory(
   if (basePath) await Utils.ensurePath(basePath)
 
   // DALs
-  const rawBlockDAL = createEthereumRawBlockDAL(basePath)
   const accountSignatureDAL = createEthereumAccountTransactionHistoryDAL(basePath)
+  const accountLogDAL = createEthereumAccountLogHistoryDAL(basePath)
   const accountStateDAL = createAccountStateDAL<EthereumAccountState>(basePath, false)
   const blockFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_block')
   const transactionHistoryFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
+  const logHistoryFetcherHistoryStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_log_history')
   const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
   const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
-  const pendingTransactionDAL = createPendingTransactionDAL(basePath)
-  const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
-  const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
-  const rawTransactionDAL = createRawTransactionDAL<EthereumRawTransaction>(basePath, false)
+  const pendingTransactionDAL = createPendingEntityDAL(basePath, IndexableEntityType.Transaction)
+  const pendingTransactionCacheDAL = createPendingEntityCacheDAL(basePath, IndexableEntityType.Transaction)
+  const pendingTransactionFetchDAL = createPendingEntityFetchDAL(basePath, IndexableEntityType.Transaction)
+  const rawTransactionDAL = createRawEntityDAL<EthereumRawTransaction>(basePath, IndexableEntityType.Transaction, false)
+  const logBloomDAL = createEthereumLogBloomDAL(basePath)
+  const rawBlockDAL = config.ETHEREUM_INDEX_BLOCKS === 'true' ? createEthereumRawBlockDAL(basePath) : undefined
 
-  const ethereumClient = createEthereumClient(url, accountSignatureDAL)
+  const ethereumClient = createEthereumClient(url, accountSignatureDAL, logBloomDAL)
 
   const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
     ethereumClient,
-    rawBlockDAL,
     blockFetcherHistoryStateDAL,
+    rawBlockDAL,
   )
 
   const transactionHistoryFetcher = new EthereumTransactionHistoryFetcher(
@@ -59,8 +67,8 @@ export async function ethereumFetcherFactory(
     transactionHistoryFetcherHistoryStateDAL,
     blockHistoryFetcher,
     fetcherClient,
-    accountSignatureDAL,
     transactionHistoryPendingAccountDAL,
+    accountSignatureDAL,
   )
 
   const transactionFetcher = new EthereumTransactionFetcher(
@@ -72,17 +80,34 @@ export async function ethereumFetcherFactory(
     rawTransactionDAL,
   )
 
-  const accountStateFetcher = new EthereumStateFetcher(
+  const logHistoryFetcher = new EthereumLogHistoryFetcher(
     ethereumClient,
-    accountStateDAL,
-    accountStatePendingAccountDAL,
+    logHistoryFetcherHistoryStateDAL,
+    blockHistoryFetcher,
+    fetcherClient,
+    transactionHistoryPendingAccountDAL,
+    accountLogDAL,
   )
+
+  // const accountStateFetcher = new EthereumStateFetcher(
+  //   ethereumClient,
+  //   accountStateDAL,
+  //   accountStatePendingAccountDAL,
+  // )
+
+  const transactionFetcherMain = new BaseEntityFetcherMain(
+    IndexableEntityType.Transaction,
+    transactionFetcher,
+    transactionHistoryFetcher,
+  )
+
+  const entityFetchers = {
+    [IndexableEntityType.Transaction]: transactionFetcherMain,
+  }
 
   return new EthereumFetcher(
     fetcherClient,
-    transactionHistoryFetcher,
-    transactionFetcher,
-    accountStateFetcher,
     blockHistoryFetcher,
+    entityFetchers
   )
 }

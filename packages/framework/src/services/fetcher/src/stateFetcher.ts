@@ -1,6 +1,6 @@
 import { PendingWorkPool, PendingWork, Utils } from '@aleph-indexer/core'
 import {
-  AddAccountStateRequestArgs,
+  AddAccountEntityRequestArgs,
   DelAccountEntityRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
@@ -52,7 +52,7 @@ export abstract class BaseStateFetcher {
     }
   }
 
-  async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
+  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     const { account, indexerId } = args
 
     const work = {

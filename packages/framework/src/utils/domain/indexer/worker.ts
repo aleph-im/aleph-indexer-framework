@@ -1,10 +1,10 @@
 import {
   AccountIndexerRequestArgs,
+  EntityDateRangeResponse,
   IndexerDomainContext,
   IndexerWorkerDomainI,
-  TransactionDateRangeResponse,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain, ParsedTransaction } from '../../../types.js'
+import { Blockchain, ParsedEntity } from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -27,16 +27,16 @@ export type IndexerWorkerDomainWithStats = {
 }
 
 export interface BlockchainIndexerWorkerI<
-  T extends ParsedTransaction<unknown>,
+  T extends ParsedEntity<unknown>,
 > {
-  onTxDateRange(response: TransactionDateRangeResponse<T>): Promise<void>
+  onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void>
 }
 
 /**
  * Describes an indexer worker domain, implements some common methods for any instance
  */
 export abstract class IndexerWorkerDomain<
-  T extends ParsedTransaction<unknown> = ParsedTransaction<unknown>,
+  T extends ParsedEntity<unknown> = ParsedEntity<unknown>,
 > implements IndexerWorkerDomainI
 {
   protected instance!: number
@@ -61,14 +61,12 @@ export abstract class IndexerWorkerDomain<
 
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
 
-  async onTxDateRange(
-    response: TransactionDateRangeResponse<T>,
-  ): Promise<void> {
+  async onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void> {
     const { blockchainId, account, startDate, endDate } = response
 
     console.log('Processing', blockchainId, account, startDate, endDate)
 
     const worker = this.blockchainInstances[blockchainId]
-    await worker.onTxDateRange(response)
+    await worker.onEntityDateRange(response)
   }
 }

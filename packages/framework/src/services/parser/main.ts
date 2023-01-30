@@ -3,45 +3,52 @@ import { ParserMsI } from './interface.js'
 import { MsIds, MsMainWithEvents } from '../common.js'
 import {
   BlockchainParserI,
-  ParseAccountStateRequestArgs,
-  ParsedTransactionMsg,
-  ParseTransactionRequestArgs,
-  RawTransactionMsg,
+  ParsedEntityMsg,
+  ParseEntityRequestArgs,
+  RawEntityMsg,
 } from './src/types.js'
-import { Blockchain, ParsedTransaction, RawTransaction } from '../../types.js'
+import {
+  Blockchain,
+  IndexableEntityType,
+  ParsedEntity,
+  RawEntity,
+} from '../../types.js'
 
 export class ParserMsMain<
-    T extends RawTransaction = RawTransaction,
-    PT extends ParsedTransaction<unknown> = ParsedTransaction<unknown>,
-    S = unknown,
-    PS = unknown,
+    RE extends RawEntity = RawEntity,
+    PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
   >
   extends MsMainWithEvents
-  implements ParserMsI<T, PT, S, PS>
+  implements ParserMsI<RE, PE>
 {
   constructor(
     protected broker: ServiceBroker,
-    protected blockchains: Record<Blockchain, BlockchainParserI<T, PT, S, PS>>,
+    protected blockchains: Record<Blockchain, BlockchainParserI<RE, PE>>,
   ) {
     super(broker, MsIds.Parser)
   }
 
-  async onTxs(
+  async onEntities(
+    type: IndexableEntityType,
     blockchainId: Blockchain,
-    chunk: RawTransactionMsg<T>[],
+    chunk: RawEntityMsg<RE>[],
   ): Promise<void> {
     console.log(`📩 ${chunk.length} txs received by the parser...`)
 
-    const parsedMsgs: ParsedTransactionMsg<T | PT>[] = []
+    const parsedMsgs: ParsedEntityMsg<RE | PE>[] = []
 
     for (const msg of chunk) {
       try {
-        const [tx, peers] =
-          'peers' in msg ? [msg.tx, msg.peers] : [msg, undefined]
-
         const fetcher = this.getBlockchainInstance(blockchainId)
-        const parsedTx = await fetcher.parseTransaction({ blockchainId, tx })
-        const parsedMsg = { peers, tx: parsedTx }
+        const { entity, peers } = msg
+
+        const parsedEntity = await fetcher.parseEntity({
+          blockchainId,
+          type,
+          entity,
+        })
+
+        const parsedMsg = { peers, type, entity: parsedEntity }
 
         parsedMsgs.push(parsedMsg)
       } catch (e) {
@@ -50,75 +57,83 @@ export class ParserMsMain<
       }
     }
 
-    await this.emitTransactions(blockchainId, parsedMsgs)
+    await this.emitParsedEntities(type, blockchainId, parsedMsgs)
   }
 
-  async parseTransaction(
-    args: ParseTransactionRequestArgs<T>,
-  ): Promise<T | PT> {
+  async parseEntity(args: ParseEntityRequestArgs<RE>): Promise<RE | PE> {
+    const { type } = args
+
+    if (type === IndexableEntityType.Transaction)
+      return this.parseTransaction(args)
+    else if (type === IndexableEntityType.State)
+      return this.parseAccountState(args)
+
+    return args.entity
+  }
+
+  async parseTransaction(args: ParseEntityRequestArgs<RE>): Promise<RE | PE> {
     const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.parseTransaction(args)
+    return fetcher.parseEntity(args)
   }
 
-  async parseAccountState(
-    args: ParseAccountStateRequestArgs<S>,
-  ): Promise<S | PS> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.parseAccountState(args)
+  async parseAccountState(args: any): Promise<RE | PE> {
+    // @todo
+    return args.entity
   }
 
-  protected async emitTransactions(
+  protected async emitParsedEntities(
+    type: IndexableEntityType,
     blockchainId: Blockchain,
-    msgs: ParsedTransactionMsg<T | PT>[],
+    msgs: ParsedEntityMsg<RE | PE>[],
   ): Promise<void> {
     if (!msgs.length) return
 
     console.log(`✉️  ${msgs.length} txs sent by the parser...`)
 
-    const [groups, broadcast] = this.groupTransactions(msgs)
+    const [groups, broadcast] = this.groupEntities(msgs)
     const txGroups = Object.entries(groups)
 
     if (txGroups.length > 0) {
       await Promise.all(
         txGroups.map(([group, txs]) =>
-          this.emitToClients(`parser.txs.${blockchainId}`, txs, { group }),
+          this.emitToClients(`parser.${blockchainId}.${type}`, txs, { group }),
         ),
       )
     }
 
     if (broadcast.length > 0) {
-      return this.broadcastToClients(`parser.txs.${blockchainId}`, broadcast)
+      return this.broadcastToClients(
+        `parser.${blockchainId}.${type}`,
+        broadcast,
+      )
     }
-
-    // return this.broadcastToClients('txs', txs)
-    // return this.broker.broadcast('parser.txs', txs, [MsIds.Indexer])
   }
 
-  protected groupTransactions(
-    msgs: ParsedTransactionMsg<T | PT>[],
-  ): [Record<string, (T | PT)[]>, (T | PT)[]] {
-    const broadcastGroup: (T | PT)[] = []
+  protected groupEntities(
+    msgs: ParsedEntityMsg<RE | PE>[],
+  ): [Record<string, (RE | PE)[]>, (RE | PE)[]] {
+    const broadcastGroup: (RE | PE)[] = []
 
-    const groups = msgs.reduce((acc, { tx, peers }) => {
+    const groups = msgs.reduce((acc, { entity, peers }) => {
       if (!peers || peers.length === 0) {
-        broadcastGroup.push(tx)
+        broadcastGroup.push(entity)
         return acc
       }
 
       peers.forEach((peer) => {
         const byPeer = acc[peer] || (acc[peer] = [])
-        byPeer.push(tx)
+        byPeer.push(entity)
       })
 
       return acc
-    }, {} as Record<string, (T | PT)[]>)
+    }, {} as Record<string, (RE | PE)[]>)
 
     return [groups, broadcastGroup]
   }
 
   protected getBlockchainInstance(
     blockchainId: Blockchain,
-  ): BlockchainParserI<T, PT, S, PS> {
+  ): BlockchainParserI<RE, PE> {
     const instance = this.blockchains[blockchainId]
 
     if (!instance) {

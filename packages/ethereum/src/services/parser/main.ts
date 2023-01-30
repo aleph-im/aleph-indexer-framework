@@ -1,21 +1,16 @@
 import {
   BaseParser,
-  ParseAccountStateRequestArgs,
-  ParseTransactionRequestArgs,
+  IndexableEntityType,
+  ParseEntityRequestArgs,
 } from '@aleph-indexer/framework'
-import { EthereumRawTransaction, EthereumRawAccountState } from '../../types.js'
+import { EthereumRawTransaction, EthereumRawLog } from '../../types.js'
 import { EthereumAccountStateParser } from './src/accountStateParser.js'
 import { EthereumTransactionParser } from './src/transactionParser.js'
-import {
-  EthereumParsedTransaction,
-  EthereumParsedAccountState,
-} from './src/types.js'
+import { EthereumParsedLog, EthereumParsedTransaction } from './src/types.js'
 
 export class EthereumParser extends BaseParser<
   EthereumRawTransaction,
-  EthereumParsedTransaction,
-  EthereumRawAccountState,
-  EthereumParsedAccountState
+  EthereumParsedTransaction
 > {
   constructor(
     protected transactionParser: EthereumTransactionParser,
@@ -24,15 +19,34 @@ export class EthereumParser extends BaseParser<
     super()
   }
 
-  async parseTransaction(
-    args: ParseTransactionRequestArgs<EthereumRawTransaction>,
-  ): Promise<EthereumRawTransaction | EthereumParsedTransaction> {
-    return this.transactionParser.parse(args.tx)
+  async parseEntity(
+    args: ParseEntityRequestArgs<EthereumRawTransaction>,
+  ): Promise<any> {
+    if (args.type === IndexableEntityType.Transaction)
+      return this.parseTransaction(args)
+
+    if (args.type !== IndexableEntityType.Log)
+      return this.parseTransaction(args)
+
+    return args.entity
   }
 
-  async parseAccountState(
-    args: ParseAccountStateRequestArgs<EthereumRawAccountState>,
-  ): Promise<EthereumRawAccountState | EthereumParsedAccountState> {
-    return this.accountStateParser.parse(args.state, args.account)
+  async parseTransaction(
+    args: ParseEntityRequestArgs<EthereumRawTransaction>,
+  ): Promise<EthereumRawTransaction | EthereumParsedTransaction> {
+    return this.transactionParser.parse(args.entity)
   }
+
+  async parseLog(
+    args: ParseEntityRequestArgs<EthereumRawLog>,
+  ): Promise<EthereumRawLog | EthereumParsedLog> {
+    // @todo: Implemente
+    return args.entity
+  }
+
+  // async parseAccountState(
+  //   args: ParseEntityRequestArgs<EthereumRawAccountState>,
+  // ): Promise<EthereumRawAccountState | EthereumParsedAccountState> {
+  //   return this.accountStateParser.parse(args.state, args.account)
+  // }
 }

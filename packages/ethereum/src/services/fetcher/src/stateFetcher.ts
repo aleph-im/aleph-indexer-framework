@@ -1,9 +1,9 @@
 import {
-  AddAccountStateRequestArgs,
+  AddAccountEntityRequestArgs,
   BaseStateFetcher,
   BaseStateFetcherI,
   Blockchain,
-  DelAccountStateRequestArgs,
+  DelAccountEntityRequestArgs,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/client.js'
@@ -27,12 +27,12 @@ export class EthereumStateFetcher extends BaseStateFetcher {
     super(Blockchain.Ethereum, ...args)
   }
 
-  async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
+  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     args.account = args.account.toLowerCase()
     return super.addAccount(args)
   }
 
-  async delAccount(args: DelAccountStateRequestArgs): Promise<void> {
+  async delAccount(args: DelAccountEntityRequestArgs): Promise<void> {
     args.account = args.account.toLowerCase()
     return super.delAccount(args)
   }

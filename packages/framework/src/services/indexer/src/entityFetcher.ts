@@ -8,30 +8,33 @@ import {
 import { FetcherMsClient } from '../../fetcher/client.js'
 import { NonceTimestamp } from './nonce.js'
 import {
-  TransactionRequest,
-  TransactionRequestParams,
-  TransactionRequestStorage,
-  TransactionRequestType,
-} from './dal/transactionRequest.js'
+  EntityRequest,
+  EntityRequestParams,
+  EntityRequestStorage,
+  EntityRequestType,
+} from './dal/entityRequest.js'
 import {
-  TransactionRequestPendingSignature,
-  TransactionRequestPendingSignatureStorage,
-  TransactionRequestPendingSignatureDALIndex,
-} from './dal/transactionRequestPendingSignature.js'
+  EntityRequestPendingEntity,
+  EntityRequestPendingEntityStorage,
+  EntityRequestPendingEntityDALIndex,
+} from './dal/entityRequestPendingEntity.js'
 import {
-  TransactionRequestResponse,
-  TransactionRequestResponseStorage,
-  TransactionRequestResponseDALIndex,
-  TransactionParsedResponse,
-} from './dal/transactionRequestResponse.js'
-import { TransactionRequestIncomingTransactionStorage } from './dal/transactionRequestIncomingTransaction.js'
+  EntityRequestResponse,
+  EntityRequestResponseStorage,
+  EntityRequestResponseDALIndex,
+  EntityParsedResponse,
+} from './dal/entityRequestResponse.js'
+import { EntityRequestIncomingEntityStorage } from './dal/entityRequestIncomingEntity.js'
 import {
   AccountDateRange,
-  AccountSlotRange,
-  GetTransactionPendingRequestsRequestArgs,
-  SignatureRange,
+  GetEntityPendingRequestsRequestArgs,
+  IdRange,
 } from './types.js'
-import { Blockchain, ParsedTransaction } from '../../../types.js'
+import {
+  Blockchain,
+  IndexableEntityType,
+  ParsedEntity,
+} from '../../../types.js'
 
 const {
   Future,
@@ -43,44 +46,45 @@ const {
 } = Utils
 
 export interface TransactionResponse<T> {
-  request: TransactionRequest
+  request: EntityRequest
   response: StorageValueStream<T>
   remove: () => Promise<void>
 }
 
-export abstract class BaseIndexerTransactionFetcher<
-  T extends ParsedTransaction<unknown>,
+export abstract class BaseIndexerEntityFetcher<
+  T extends ParsedEntity<unknown>,
 > {
   protected checkPendingRetriesJob!: Utils.JobRunner
   protected checkCompletionJob!: Utils.DebouncedJob<void>
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
-  protected incomingTransactions: PendingWorkPool<T>
-  protected toRetryBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
-  protected toRemoveBuffer: Utils.BufferExec<TransactionRequestPendingSignature>
+  protected incomingEntities: PendingWorkPool<T>
+  protected toRetryBuffer: Utils.BufferExec<EntityRequestPendingEntity>
+  protected toRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
 
   constructor(
+    protected type: IndexableEntityType,
     protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionRequestDAL: TransactionRequestStorage,
-    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage<T>,
-    protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
-    protected transactionRequestResponseDAL: TransactionRequestResponseStorage<T>,
+    protected entityRequestDAL: EntityRequestStorage,
+    protected entityRequestIncomingEntityDAL: EntityRequestIncomingEntityStorage<T>,
+    protected entityRequestPendingEntityDAL: EntityRequestPendingEntityStorage,
+    protected entityRequestResponseDAL: EntityRequestResponseStorage<T>,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
-    this.incomingTransactions = new PendingWorkPool({
-      id: 'incoming-transactions',
+    this.incomingEntities = new PendingWorkPool({
+      id: `${type}-indexer-incoming-entities`,
       interval: 0,
       chunkSize: 1000,
       concurrency: 1,
-      dal: this.transactionRequestIncomingTransactionDAL,
-      handleWork: this.handleIncomingTransactions.bind(this),
+      dal: this.entityRequestIncomingEntityDAL,
+      handleWork: this.handleIncomingEntities.bind(this),
       checkComplete: async (): Promise<boolean> => true,
     })
 
     this.checkPendingRetriesJob = new JobRunner({
-      name: `indexer-transaction-pending-retries`,
+      name: `${type}-indexer-pending-retries`,
       interval: 1000 * 60 * 10,
       intervalFn: this.handlePendingRetries.bind(this),
     })
@@ -89,49 +93,37 @@ export abstract class BaseIndexerTransactionFetcher<
       this.checkAllRequestCompletion.bind(this),
     )
 
-    this.toRetryBuffer = new BufferExec<TransactionRequestPendingSignature>(
-      this.handleRetryPendingTransactions.bind(this),
+    this.toRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
+      this.handleRetryPendingEntities.bind(this),
       1000,
     )
 
-    this.toRemoveBuffer = new BufferExec<TransactionRequestPendingSignature>(
+    this.toRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRemovePendingTransactions.bind(this),
       1000,
     )
   }
 
   async start(): Promise<void> {
-    await this.incomingTransactions.start()
+    await this.incomingEntities.start()
     this.checkPendingRetriesJob.start().catch(() => 'ignore')
   }
 
   async stop(): Promise<void> {
-    await this.incomingTransactions.stop()
+    await this.incomingEntities.stop()
     this.checkPendingRetriesJob.stop().catch(() => 'ignore')
   }
 
-  async fetchTransactionsBySignature(params: SignatureRange): Promise<number> {
-    return this.handleTransactionRequest({
-      type: TransactionRequestType.BySignatures,
+  async fetchEntitiesById(params: IdRange): Promise<number> {
+    return this.handleEntityRequest({
+      type: EntityRequestType.ById,
       params,
     })
   }
 
-  async fetchAccountTransactionsByDate(
-    params: AccountDateRange,
-  ): Promise<number> {
-    return this.handleTransactionRequest({
-      type: TransactionRequestType.ByDateRange,
-      params,
-    })
-  }
-
-  // @todo: WIP
-  async fetchAccountTransactionsBySlot(
-    params: AccountSlotRange,
-  ): Promise<number> {
-    return this.handleTransactionRequest({
-      type: TransactionRequestType.BySlotRange,
+  async fetchAccountEntitiesByDate(params: AccountDateRange): Promise<number> {
+    return this.handleEntityRequest({
+      type: EntityRequestType.ByDateRange,
       params,
     })
   }
@@ -145,20 +137,20 @@ export abstract class BaseIndexerTransactionFetcher<
   }
 
   async getRequests(
-    filters?: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]> {
-    let requests: TransactionRequest[] = []
+    filters?: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]> {
+    let requests: EntityRequest[] = []
 
     if (filters?.nonce !== undefined) {
-      const req = await this.transactionRequestDAL.get(filters.nonce.toString())
+      const req = await this.entityRequestDAL.get(filters.nonce.toString())
       requests = req ? [req] : requests
     } else {
-      const requestsIt = await this.transactionRequestDAL.getAllValues()
+      const requestsIt = await this.entityRequestDAL.getAllValues()
       requests = await arrayFromAsyncIterator(requestsIt)
     }
 
-    if (filters?.type !== undefined) {
-      requests = requests.filter((item) => item.type === filters.type)
+    if (filters?.requestType !== undefined) {
+      requests = requests.filter((item) => item.type === filters.requestType)
     }
 
     if (filters?.complete !== undefined) {
@@ -174,36 +166,36 @@ export abstract class BaseIndexerTransactionFetcher<
     if (filterAcc !== undefined) {
       requests = requests.filter(
         (item) =>
-          item.type !== TransactionRequestType.BySignatures &&
+          item.type !== EntityRequestType.ById &&
           item.params?.account === filterAcc,
       )
     }
 
-    const filterSig = filters?.signature
+    const filterSig = filters?.id
     if (filterSig !== undefined) {
       requests = requests.filter(
         (item) =>
-          item.type === TransactionRequestType.BySignatures &&
-          item.params.signatures.includes(filterSig),
+          item.type === EntityRequestType.ById &&
+          item.params.ids.includes(filterSig),
       )
     }
 
     return requests
   }
 
-  async onTxs(chunk: T[]): Promise<void> {
-    return this.storeIncomingTransactions(chunk)
+  async onEntities(chunk: T[]): Promise<void> {
+    return this.storeIncomingEntities(chunk)
   }
 
   async isRequestComplete(nonce: number): Promise<boolean> {
-    const request = await this.transactionRequestDAL.get(nonce.toString())
+    const request = await this.entityRequestDAL.get(nonce.toString())
     if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
 
     return !!request.complete
   }
 
   async awaitRequestComplete(nonce: number): Promise<void> {
-    const request = await this.transactionRequestDAL.get(nonce.toString())
+    const request = await this.entityRequestDAL.get(nonce.toString())
     if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
 
     if (!request.complete) {
@@ -212,48 +204,41 @@ export abstract class BaseIndexerTransactionFetcher<
   }
 
   async getResponse(nonce: number): Promise<TransactionResponse<T>> {
-    const request = await this.transactionRequestDAL.get(nonce.toString())
+    const request = await this.entityRequestDAL.get(nonce.toString())
     if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
 
     if (!request.complete) {
       await this.getFuture(nonce).promise
     }
 
-    const response = (await this.transactionRequestResponseDAL
-      .useIndex(TransactionRequestResponseDALIndex.NonceIndex)
+    const response = (await this.entityRequestResponseDAL
+      .useIndex(EntityRequestResponseDALIndex.NonceIndex)
       .getAllValuesFromTo([nonce], [nonce], {
         reverse: false,
-      })) as StorageValueStream<TransactionParsedResponse<T>>
+      })) as StorageValueStream<EntityParsedResponse<T>>
 
     return {
       request,
       response,
       remove: async () => {
         console.log('----> REMOVE REQ 🎈', request.nonce)
-        await this.transactionRequestDAL.remove(request)
-        // @todo: Update nonceIndexes / Remove from transactionRequestResponseDAL
+        await this.entityRequestDAL.remove(request)
+        // @todo: Update nonceIndexes / Remove from entityRequestResponseDAL
       },
     }
   }
 
-  // async deleteResponse(nonce: number): Promise<void> {
-  //   const request = await this.transactionRequestDAL.get(nonce.toString())
-  //   if (!request || !request.complete) return
-
-  //   await this.transactionRequestDAL.remove(request)
-  // }
-
-  protected async storeIncomingTransactions(chunk: T[]): Promise<void> {
-    const works = chunk.map((tx) => ({
-      id: tx.signature,
+  protected async storeIncomingEntities(chunk: T[]): Promise<void> {
+    const works = chunk.map((entity) => ({
+      id: entity.id,
       time: Date.now(),
-      payload: tx,
+      payload: entity,
     }))
 
-    return this.incomingTransactions.addWork(works)
+    return this.incomingEntities.addWork(works)
   }
 
-  protected async handleIncomingTransactions(
+  protected async handleIncomingEntities(
     works: PendingWork<T>[],
   ): Promise<number | void> {
     const chunk = works.map((work) => work.payload)
@@ -263,7 +248,7 @@ export abstract class BaseIndexerTransactionFetcher<
     const now2 = Date.now()
 
     try {
-      const requests = await this.transactionRequestDAL.getAllValues()
+      const requests = await this.entityRequestDAL.getAllValues()
 
       const requestsNonces = []
       let lastFilteredTxs = 0
@@ -277,13 +262,13 @@ export abstract class BaseIndexerTransactionFetcher<
         const { nonce, complete } = request
         if (complete) continue
 
-        const result = this.filterIncomingTransactionsByRequest(
+        const result = this.filterIncomingEntitiesByRequest(
           remainingTxs,
           request,
         )
 
-        filteredTxs = filteredTxs.concat(result.filteredTxs)
-        remainingTxs = result.remainingTxs
+        filteredTxs = filteredTxs.concat(result.filteredEntities)
+        remainingTxs = result.remainingEntities
         requestCount++
         requestCountId.push(nonce)
 
@@ -298,15 +283,12 @@ export abstract class BaseIndexerTransactionFetcher<
       if (filteredTxs.length === 0) return
 
       const requestResponse =
-        filteredTxs as unknown as TransactionRequestResponse<T>[]
+        filteredTxs as unknown as EntityRequestResponse<T>[]
 
-      const pendingSignatures =
-        filteredTxs as unknown as TransactionRequestPendingSignature[]
+      const pendingIds = filteredTxs as unknown as EntityRequestPendingEntity[]
 
-      console.log('_____REMOVE FILTERED__', requestsNonces)
-
-      await this.transactionRequestResponseDAL.save(requestResponse)
-      await this.transactionRequestPendingSignatureDAL.remove(pendingSignatures)
+      await this.entityRequestResponseDAL.save(requestResponse)
+      await this.entityRequestPendingEntityDAL.remove(pendingIds)
 
       this.checkCompletionJob.run().catch(() => 'ignore')
     } finally {
@@ -316,43 +298,46 @@ export abstract class BaseIndexerTransactionFetcher<
     const elapsed1 = Date.now() - now1
     const elapsed2 = Date.now() - now2
 
-    console.log(`onTxs time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
+    console.log(`onEntities time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
   }
 
-  protected filterIncomingTransactionsByRequest(
-    txs: T[],
-    request: TransactionRequest,
+  protected filterIncomingEntitiesByRequest(
+    entities: T[],
+    request: EntityRequest,
   ): {
-    filteredTxs: T[]
-    remainingTxs: T[]
+    filteredEntities: T[]
+    remainingEntities: T[]
   } {
-    const filteredTxs: T[] = []
-    const remainingTxs: T[] = []
+    const filteredEntities: T[] = []
+    const remainingEntities: T[] = []
 
     switch (request.type) {
-      case TransactionRequestType.BySignatures: {
-        const { signatures } = request.params
-        const sigSet = new Set(signatures)
+      case EntityRequestType.ById: {
+        const { ids } = request.params
+        const idSet = new Set(ids)
 
-        for (const tx of txs) {
-          const valid = sigSet.has(tx.signature)
+        for (const entity of entities) {
+          const valid = idSet.has(entity.id)
 
-          valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
+          valid ? filteredEntities.push(entity) : remainingEntities.push(entity)
         }
 
         break
       }
       default: {
-        remainingTxs.push(...txs)
+        remainingEntities.push(...entities)
         break
       }
     }
 
-    return { filteredTxs, remainingTxs }
+    return {
+      filteredEntities,
+      remainingEntities,
+    }
   }
 
-  protected async handleTransactionRequest(
-    requestParams: TransactionRequestParams,
+  protected async handleEntityRequest(
+    requestParams: EntityRequestParams,
     waitForResponse = false,
   ): Promise<number> {
     const nonce = this.nonce.get()
@@ -366,34 +351,32 @@ export abstract class BaseIndexerTransactionFetcher<
     const now2 = Date.now()
 
     try {
-      const signaturesStream = await this.fetchTransactionSignatures(
-        requestParams,
-      )
+      const idsStream = await this.fetchEntityIds(requestParams)
 
-      if (!signaturesStream)
+      if (!idsStream)
         throw new Error(
           `Error fetching transactions by ${
-            TransactionRequestType[requestParams.type]
+            EntityRequestType[requestParams.type]
           }`,
         )
 
       const blockchainId = this.blockchainId
 
-      for await (const signatures of signaturesStream) {
-        const pendingSignatures = signatures.map((signature) => {
-          return { blockchainId, signature, nonces: [nonce] }
+      for await (const ids of idsStream) {
+        const pendingIds = ids.map((id) => {
+          return { blockchainId, id, nonces: [nonce] }
         })
 
-        const requestResponse = signatures.map((signature, index) => {
-          return { signature, nonceIndexes: { [nonce]: index } }
+        const requestResponse = ids.map((id, index) => {
+          return { id, nonceIndexes: { [nonce]: index } }
         })
 
-        await this.transactionRequestResponseDAL.save(requestResponse)
-        await this.transactionRequestPendingSignatureDAL.save(pendingSignatures)
+        await this.entityRequestResponseDAL.save(requestResponse)
+        await this.entityRequestPendingEntityDAL.save(pendingIds)
 
-        console.log('_____SAVE FILTERED__', nonce, pendingSignatures.length)
+        console.log('_____SAVE FILTERED__', nonce, pendingIds.length)
 
-        count += signatures.length
+        count += ids.length
       }
 
       const request = {
@@ -404,7 +387,7 @@ export abstract class BaseIndexerTransactionFetcher<
         ...requestParams,
       }
 
-      await this.transactionRequestDAL.save(request)
+      await this.entityRequestDAL.save(request)
     } finally {
       release()
     }
@@ -428,22 +411,22 @@ export abstract class BaseIndexerTransactionFetcher<
     return nonce
   }
 
-  protected async fetchTransactionSignatures(
-    requestParams: TransactionRequestParams,
+  protected async fetchEntityIds(
+    requestParams: EntityRequestParams,
   ): Promise<void | string[][] | AsyncIterable<string[]>> {
     const { type, params } = requestParams
 
     switch (type) {
-      case TransactionRequestType.BySignatures: {
+      case EntityRequestType.ById: {
         await this.fetcherMsClient
           .useBlockchain(this.blockchainId)
-          .fetchTransactionsBySignature(params)
-        return [params.signatures]
+          .fetchEntitiesById({ type: this.type, ...params })
+        return [params.ids]
       }
-      case TransactionRequestType.ByDateRange: {
+      case EntityRequestType.ByDateRange: {
         return this.fetcherMsClient
           .useBlockchain(this.blockchainId)
-          .fetchAccountTransactionsByDate(params)
+          .fetchAccountEntitiesByDate({ type: this.type, ...params })
       }
       default: {
         return []
@@ -452,7 +435,7 @@ export abstract class BaseIndexerTransactionFetcher<
   }
 
   protected async checkAllRequestCompletion(): Promise<void> {
-    const requests = await this.transactionRequestDAL.getAllValues()
+    const requests = await this.entityRequestDAL.getAllValues()
 
     for await (const request of requests) {
       await this.checkRequestCompletion(request)
@@ -460,21 +443,21 @@ export abstract class BaseIndexerTransactionFetcher<
   }
 
   protected async checkRequestCompletion(
-    request: TransactionRequest,
+    request: EntityRequest,
   ): Promise<void> {
     const { nonce, complete } = request
     if (complete) return
 
-    let pending = !!(await this.transactionRequestPendingSignatureDAL
-      .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+    let pending = !!(await this.entityRequestPendingEntityDAL
+      .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
       .getFirstKeyFromTo([nonce], [nonce], { atomic: true }))
 
     // @note: Debug false positives completing request when there are pending txs
     if (!pending) {
       console.log('pending enter =>', pending)
 
-      const pendings = await this.transactionRequestPendingSignatureDAL
-        .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+      const pendings = await this.entityRequestPendingEntityDAL
+        .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
         .getAllFromTo([nonce], [nonce], { atomic: true })
 
       let pending2 = false
@@ -494,14 +477,14 @@ export abstract class BaseIndexerTransactionFetcher<
       return
     }
 
-    await this.transactionRequestDAL.save({ ...request, complete: true })
+    await this.entityRequestDAL.save({ ...request, complete: true })
     console.log(`🟢 Request ${nonce} complete`)
 
     this.resolveFuture(nonce)
   }
 
   protected async checkAllPendingSignatures(): Promise<void> {
-    const requests = await this.transactionRequestDAL.getAllValues()
+    const requests = await this.entityRequestDAL.getAllValues()
 
     for await (const request of requests) {
       await this.checkPendingSignatures(request, false)
@@ -511,22 +494,22 @@ export abstract class BaseIndexerTransactionFetcher<
   }
 
   protected async checkPendingSignatures(
-    request: TransactionRequest,
+    request: EntityRequest,
     drain = true,
   ): Promise<void> {
     const { nonce } = request
 
-    const pendings = await this.transactionRequestPendingSignatureDAL
-      .useIndex(TransactionRequestPendingSignatureDALIndex.NonceSignature)
+    const pendings = await this.entityRequestPendingEntityDAL
+      .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
       .getAllValuesFromTo([nonce], [nonce], { atomic: true })
 
     for await (const pending of pendings) {
-      const { signature } = pending
+      const { id: signature } = pending
 
-      const tx = await this.transactionRequestResponseDAL.get(signature)
+      const tx = await this.entityRequestResponseDAL.get(signature)
 
       console.log(
-        `[Retry] Check ${tx?.signature}`,
+        `[Retry] Check ${tx?.id}`,
         !!tx,
         tx && 'parsed' in (tx || {}),
         tx && tx.nonceIndexes[nonce] >= 0,
@@ -575,25 +558,22 @@ export abstract class BaseIndexerTransactionFetcher<
     })
   }
 
-  protected async handleRetryPendingTransactions(
-    pendings: TransactionRequestPendingSignature[],
+  protected async handleRetryPendingEntities(
+    pendings: EntityRequestPendingEntity[],
   ): Promise<void> {
-    const signatures = pendings.map(({ signature }) => signature)
+    const ids = pendings.map(({ id }) => id)
 
-    console.log(
-      `Retrying ${signatures.length} ${this.blockchainId} signatures`,
-      pendings,
-    )
+    console.log(`Retrying ${ids.length} ${this.blockchainId} ids`, pendings)
 
     return this.fetcherMsClient
       .useBlockchain(this.blockchainId as Blockchain)
-      .fetchTransactionsBySignature({ signatures })
+      .fetchEntitiesById({ type: this.type, ids })
   }
 
   protected async handleRemovePendingTransactions(
-    pendings: TransactionRequestPendingSignature[],
+    pendings: EntityRequestPendingEntity[],
   ): Promise<void> {
     console.log(`Removing ${pendings.length} pending signatures`)
-    return this.transactionRequestPendingSignatureDAL.remove(pendings)
+    return this.entityRequestPendingEntityDAL.remove(pendings)
   }
 }

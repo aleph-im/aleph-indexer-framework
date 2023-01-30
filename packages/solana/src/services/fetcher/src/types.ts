@@ -21,6 +21,7 @@ export type SolanaSignature = Omit<
   ConfirmedSignatureInfo,
   'memo' | 'confirmationStatus'
 > & {
+  id: string
   accountSlotIndex: Record<string, number>
   accounts: string[]
 }

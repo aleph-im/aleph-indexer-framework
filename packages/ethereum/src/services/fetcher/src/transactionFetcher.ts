@@ -1,12 +1,13 @@
 import {
-  BaseTransactionFetcher,
+  BaseEntityFetcher,
   Blockchain,
-  CheckTransactionsRequestArgs,
-  DelTransactionsRequestArgs,
-  FetchTransactionsBySignatureRequestArgs,
-  PendingTransactionStorage,
-  RawTransactionStorage,
-  TransactionState,
+  CheckEntityRequestArgs,
+  DelEntityRequestArgs,
+  EntityState,
+  FetchEntitiesByIdRequestArgs,
+  IndexableEntityType,
+  PendingEntityStorage,
+  RawEntityStorage,
 } from '@aleph-indexer/framework'
 import { ServiceBroker } from 'moleculer'
 import { EthereumClient } from '../../../sdk/client.js'
@@ -15,50 +16,45 @@ import { EthereumRawTransaction } from '../../../types.js'
 /**
  * The main class of the fetcher service.
  */
-export class EthereumTransactionFetcher extends BaseTransactionFetcher<EthereumRawTransaction> {
+export class EthereumTransactionFetcher extends BaseEntityFetcher<EthereumRawTransaction> {
   constructor(
     protected ethereumClient: EthereumClient,
     ...args: [
       ServiceBroker,
-      PendingTransactionStorage,
-      PendingTransactionStorage,
-      PendingTransactionStorage,
-      RawTransactionStorage<EthereumRawTransaction>,
+      PendingEntityStorage,
+      PendingEntityStorage,
+      PendingEntityStorage,
+      RawEntityStorage<EthereumRawTransaction>,
     ]
   ) {
-    super(Blockchain.Ethereum, ...args)
+    super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
   }
 
-  async getTransactionState(
-    args: CheckTransactionsRequestArgs,
-  ): Promise<TransactionState[]> {
-    args.signatures = args.signatures.map((sig) => sig.toLowerCase())
-    return super.getTransactionState(args)
+  async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+    args.ids = args.ids.map((id) => id.toLowerCase())
+    return super.getEntityState(args)
   }
 
-  async delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    args.signatures = args.signatures.map((sig) => sig.toLowerCase())
-    return super.delTransactionCache(args)
+  async delEntityCache(args: DelEntityRequestArgs): Promise<void> {
+    args.ids = args.ids.map((id) => id.toLowerCase())
+    return super.delEntityCache(args)
   }
 
-  async fetchTransactionsBySignature(
-    args: FetchTransactionsBySignatureRequestArgs,
-  ): Promise<void> {
-    args.signatures = args.signatures.map((sig) => sig.toLowerCase())
-    return super.fetchTransactionsBySignature(args)
+  async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
+    args.ids = args.ids.map((id) => id.toLowerCase())
+    return super.fetchEntitiesById(args)
   }
 
-  protected isSignature(signature: string): boolean {
-    const isSignature = signature.length >= 64 && signature.length <= 88
-    if (!isSignature) console.log(`Fetcher Invalid signature ${signature}`)
-    return isSignature
+  protected filterEntityId(id: string): boolean {
+    // @todo: Filter valid ethereum signatures
+    return id.toLocaleLowerCase() === id
   }
 
-  protected remoteFetch(
-    signatures: string[],
+  protected remoteFetchIds(
+    ids: string[],
     isRetry: boolean,
   ): Promise<(EthereumRawTransaction | null | undefined)[]> {
-    return this.ethereumClient.getTransactions(signatures, {
+    return this.ethereumClient.getTransactions(ids, {
       swallowErrors: true,
     })
   }

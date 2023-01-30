@@ -2,13 +2,13 @@ import { Blockchain } from '../../types.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 import { IndexerMsClient } from './client.js'
 import { IndexerMsI } from './interface.js'
-import { TransactionRequest } from './src/dal/transactionRequest.js'
+import { EntityRequest } from './src/dal/entityRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
-  GetAccountIndexingStateRequestArgs,
+  GetAccountIndexingEntityStateRequestArgs,
   InvokeMethodRequestArgs,
-  GetTransactionPendingRequestsRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
   BlockchainIndexerI,
 } from './src/types.js'
 
@@ -65,7 +65,7 @@ export class IndexerMsMain implements IndexerMsI {
   }
 
   async getAccountState(
-    args: GetAccountIndexingStateRequestArgs,
+    args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined> {
     const indexer = this.getBlockchainInstance(args.blockchainId)
     return indexer.getAccountState(args)
@@ -78,11 +78,11 @@ export class IndexerMsMain implements IndexerMsI {
 
   // Private API
 
-  async getTransactionRequests(
-    args: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]> {
+  async getEntityPendingRequests(
+    args: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]> {
     const indexer = this.getBlockchainInstance(args.blockchainId)
-    return indexer.getTransactionRequests(args)
+    return indexer.getEntityPendingRequests(args)
   }
 
   // Extended methods

@@ -308,6 +308,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       const offset = runOffset * 1000000 + (999999 - (index + sigOffset))
 
       const sig = signature as any
+      sig.id = sig.signature
 
       delete sig.memo
       delete sig.confirmationStatus

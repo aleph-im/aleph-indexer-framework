@@ -3,21 +3,24 @@ import {
   PendingWork,
   PendingWorkStorage,
 } from '@aleph-indexer/core'
-import { ParsedTransaction } from '../../../../types.js'
+import { IndexableEntityType, ParsedEntity } from '../../../../types.js'
 
-export type TransactionRequestIncomingTransactionStorage<
-  T extends ParsedTransaction<unknown>,
+export type EntityRequestIncomingEntityStorage<
+  T extends ParsedEntity<unknown>,
 > = PendingWorkStorage<T>
 
 /**
  * Creates a new pending transaction storage for the fetcher.
  * @param path Path to the database.
  */
-export function createTransactionRequestIncomingTransactionDAL<
-  T extends ParsedTransaction<unknown>,
->(path: string): TransactionRequestIncomingTransactionStorage<T> {
+export function createEntityRequestIncomingEntityDAL<
+  T extends ParsedEntity<unknown>,
+>(
+  path: string,
+  type: IndexableEntityType,
+): EntityRequestIncomingEntityStorage<T> {
   return new PendingWorkStorage({
-    name: 'transaction_request_incoming_transaction',
+    name: `${type}_request_incoming_entities`,
     path,
     count: true,
     async updateCheckFn(

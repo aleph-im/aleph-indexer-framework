@@ -3,12 +3,12 @@ import { MsIds, MainFactory, shardBalancingStrategy } from '../common.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
-  GetAccountIndexingStateRequestArgs,
+  GetAccountIndexingEntityStateRequestArgs,
   InvokeMethodRequestArgs,
-  GetTransactionPendingRequestsRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
 } from './src/types.js'
 import { IndexerMsMain } from './main.js'
-import { TransactionRequest } from './src/dal/transactionRequest.js'
+import { EntityRequest } from './src/dal/entityRequest.js'
 
 /**
  * A wrapper of the Molueculer service to expose the main indexer service through the broker.
@@ -42,9 +42,9 @@ export class IndexerMs extends Service {
           ...shardBalancingStrategy,
           handler: this.invokeDomainMethod,
         },
-        getTransactionRequests: {
+        getEntityPendingRequests: {
           ...shardBalancingStrategy,
-          handler: this.getTransactionRequests,
+          handler: this.getEntityPendingRequests,
         },
       },
       started: this.start,
@@ -69,7 +69,7 @@ export class IndexerMs extends Service {
   }
 
   getAccountState(
-    ctx: Context<GetAccountIndexingStateRequestArgs>,
+    ctx: Context<GetAccountIndexingEntityStateRequestArgs>,
   ): Promise<AccountIndexerState | undefined> {
     return this.main.getAccountState(ctx.params)
   }
@@ -78,9 +78,9 @@ export class IndexerMs extends Service {
     return this.main.invokeDomainMethod(ctx.params)
   }
 
-  getTransactionRequests(
-    ctx: Context<GetTransactionPendingRequestsRequestArgs>,
-  ): Promise<TransactionRequest[]> {
-    return this.main.getTransactionRequests(ctx.params)
+  getEntityPendingRequests(
+    ctx: Context<GetEntityPendingRequestsRequestArgs>,
+  ): Promise<EntityRequest[]> {
+    return this.main.getEntityPendingRequests(ctx.params)
   }
 }

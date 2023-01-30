@@ -1,6 +1,7 @@
 import { EntityStorage } from '@aleph-indexer/core'
 
 export type AccountEntityHistoryStorageEntity = {
+  id: string
   accounts: string[]
 }
 

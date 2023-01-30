@@ -1,13 +1,13 @@
 import { ServiceBroker } from 'moleculer'
 import { MsIds } from '../../common.js'
 import { IndexerClientI } from '../interface.js'
-import { TransactionRequest } from './dal/transactionRequest.js'
+import { EntityRequest } from './dal/entityRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
   InvokeMethodRequestArgs,
-  GetAccountIndexingStateRequestArgs,
-  GetTransactionPendingRequestsRequestArgs,
+  GetAccountIndexingEntityStateRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
 } from './types.js'
 import { BlockchainRequestArgs } from '../../types.js'
 import { Blockchain } from '../../../types.js'
@@ -90,7 +90,10 @@ export abstract class BaseIndexerClient implements IndexerClientI {
   }
 
   getAccountState(
-    args: Omit<GetAccountIndexingStateRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<
+      GetAccountIndexingEntityStateRequestArgs,
+      keyof BlockchainRequestArgs
+    >,
   ): Promise<AccountIndexerState | undefined> {
     return this.broker.call(`${this.msId}.getAccountState`, {
       partitionKey: args.partitionKey || args.account,
@@ -115,14 +118,14 @@ export abstract class BaseIndexerClient implements IndexerClientI {
 
   // Private API
 
-  getTransactionRequests(
+  getEntityPendingRequests(
     args: Omit<
-      GetTransactionPendingRequestsRequestArgs,
+      GetEntityPendingRequestsRequestArgs,
       keyof BlockchainRequestArgs
     >,
-  ): Promise<TransactionRequest[]> {
+  ): Promise<EntityRequest[]> {
     return this.broker.call(
-      `${this.msId}.getTransactionRequests`,
+      `${this.msId}.getEntityPendingRequests`,
       {
         blockchainId: this.blockchainId,
         ...args,

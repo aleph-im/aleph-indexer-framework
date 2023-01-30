@@ -33,12 +33,11 @@ export type EventBase<EventType> = {
   account?: string
 }
 
-export type RawTransaction = {
-  signature: string
+export type RawEntity = {
+  id: string
 }
 
-export type ParsedTransaction<P> = {
-  signature: string
+export type ParsedEntity<P> = RawEntity & {
   parsed: P
 }
 
@@ -49,6 +48,12 @@ export enum Blockchain {
   Solana = 'solana',
 }
 
+export enum IndexableEntityType {
+  Transaction = 'transaction',
+  Log = 'log',
+  State = 'state',
+}
+
 export type BlockchainFetcherClientFactory = (
   blockchainId: Blockchain,
   broker: ServiceBroker,
@@ -57,9 +62,7 @@ export type BlockchainFetcherClientFactory = (
 export type BlockchainParserClientFactory = (
   blockchainId: Blockchain,
   broker: ServiceBroker,
-) => Promise<
-  ParserClientI<RawTransaction, ParsedTransaction<unknown>, unknown, unknown>
->
+) => Promise<ParserClientI>
 
 export type BlockchainIndexerClientFactory = (
   blockchainId: Blockchain,
@@ -75,14 +78,7 @@ export type BlockchainFetcherFactory = (
 export type BlockchainParserFactory = (
   basePath: string,
   layoutPath?: string,
-) => Promise<
-  BlockchainParserI<
-    RawTransaction,
-    ParsedTransaction<unknown>,
-    unknown,
-    unknown
-  >
->
+) => Promise<BlockchainParserI>
 
 export type BlockchainIndexerFactory = (
   basePath: string,
@@ -95,7 +91,7 @@ export type BlockchainIndexerFactory = (
 export type BlockchainWorkerDomainFactory = (
   context: IndexerDomainContext,
   hooks: unknown,
-) => Promise<BlockchainIndexerWorkerI<ParsedTransaction<unknown>>>
+) => Promise<BlockchainIndexerWorkerI<ParsedEntity<unknown>>>
 
 // @todo
 export type BlockchainMainDomainFactory = (

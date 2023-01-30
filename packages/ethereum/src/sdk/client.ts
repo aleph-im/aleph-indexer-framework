@@ -3,20 +3,32 @@ import ethers from 'ethers'
 import Web3 from 'web3'
 import { Transaction, Eth } from 'web3-eth'
 import { errors } from 'web3-core-helpers'
+import { Log, PastLogsOptions } from 'web3-core'
+import {
+  isUserEthereumAddressInBloom,
+  isContractAddressInBloom,
+} from 'ethereum-bloom-filters'
+import { Keccak } from 'sha3'
 import {
   EthereumBlock,
+  EthereumRawLog,
+  EthereumLogBloom,
   EthereumRawTransaction,
   EthereumSignature,
 } from '../types.js'
 import {
   EthereumAccountTransactionHistoryDALIndex,
   EthereumAccountTransactionHistoryStorage,
+  EthereumLogBloomDALIndex,
+  EthereumLogBloomStorage,
 } from './dal.js'
 import { EthereumParsedTransaction } from '../services/parser/src/types.js'
 import {
   EthereumBlockPaginationResponse,
   EthereumFetchBlocksOptions,
+  EthereumFetchLogsOptions,
   EthereumFetchSignaturesOptions,
+  EthereumLogHistoryPaginationResponse,
   EthereumTransactionHistoryPaginationResponse,
 } from '../services/fetcher/src/types.js'
 
@@ -26,6 +38,7 @@ export interface EthereumClientOptions {
   url: string
   rateLimit?: boolean
   indexBlockSignatures?: boolean
+  indexBlockLogBloom?: boolean
 }
 
 // Blocks
@@ -44,7 +57,7 @@ export type EthereumBlocksChunkResponse = {
   count: number
 }
 
-// Signatures
+// Transaction Signatures
 
 export type EthereumSignaturesChunkOptions = {
   account: string
@@ -60,6 +73,23 @@ export type EthereumSignaturesChunkResponse = {
   count: number
 }
 
+// Logs
+
+export type EthereumLogsChunkOptions = {
+  account: string
+  limit: number
+  before: number
+  until: number
+  isContractAccount?: boolean
+}
+
+export type EthereumLogsChunkResponse = {
+  chunk: EthereumRawLog[]
+  firstItem?: { height: number; timestamp: number }
+  lastItem?: { height: number; timestamp: number }
+  count: number
+}
+
 // @note: Refactor to only use "ethers" and remove web3 deps
 export class EthereumClient {
   protected sdk: Web3
@@ -67,6 +97,7 @@ export class EthereumClient {
   constructor(
     protected options: EthereumClientOptions,
     protected accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
+    protected logBloomDAL?: EthereumLogBloomStorage,
   ) {
     this.sdk = new Web3(options.url)
   }
@@ -99,8 +130,11 @@ export class EthereumClient {
     )
   }
 
-  getContractCode(account: string): Promise<string> {
-    return this.sdk.eth.getCode(account)
+  async isContractAddress(address: string): Promise<boolean> {
+    const code = await this.sdk.eth.getCode(address)
+    if (code.length <= 2) return false
+
+    return true
   }
 
   parseTransaction(
@@ -240,13 +274,69 @@ export class EthereumClient {
     }
   }
 
+  async *fetchLogs(
+    args: EthereumFetchLogsOptions,
+  ): AsyncGenerator<EthereumLogHistoryPaginationResponse> {
+    let firstKey
+    let lastKey
+
+    const { account, until = -1, pageLimit = 1000, isContractAccount } = args
+
+    let {
+      before = (await this.sdk.eth.getBlockNumber()) + 1,
+      iterationLimit = 1000,
+    } = args
+
+    while (iterationLimit > 0) {
+      const limit = Math.min(iterationLimit, pageLimit)
+      iterationLimit = iterationLimit - limit
+
+      console.log(`
+        fetch logs { 
+          account: ${account}
+          before: ${before}
+          until: ${until}
+          iterationLimit: ${iterationLimit}
+        }
+      `)
+
+      const { chunk, count, firstItem, lastItem } = await this.getLogsChunk({
+        account,
+        limit,
+        before,
+        until,
+        isContractAccount,
+      })
+
+      if (count === 0) break
+
+      if (!lastKey && lastItem) {
+        lastKey = {
+          height: lastItem.height,
+          timestamp: Number(lastItem.timestamp) * 1000,
+        }
+      }
+
+      if (firstItem) {
+        firstKey = {
+          height: firstItem.height,
+          timestamp: Number(firstItem.timestamp) * 1000,
+        }
+      }
+
+      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+
+      if (count < limit) break
+
+      before = firstKey?.height as number
+    }
+  }
+
   async indexBlockSignatures(blocks: EthereumBlock[]): Promise<void> {
     if (!this.accountSignatureDAL)
       throw new Error(
         'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
       )
-
-    console.log(JSON.stringify(blocks, null, 2))
 
     const signatures = blocks.flatMap((block) =>
       block.transactions.map((tx) => {
@@ -254,6 +344,7 @@ export class EthereumClient {
         if (tx.to) accounts.push(tx.to)
 
         const sig: EthereumSignature = {
+          id: tx.hash,
           signature: tx.hash,
           height: block.number,
           timestamp: Number(block.timestamp),
@@ -266,6 +357,21 @@ export class EthereumClient {
     )
 
     await this.accountSignatureDAL.save(signatures)
+  }
+
+  async indexBlockLogBloom(blocks: EthereumBlock[]): Promise<void> {
+    if (!this.logBloomDAL)
+      throw new Error('EthereumLogBloomStorage not provided to EthereumClient')
+
+    const logBlooms = blocks.map((block) => {
+      return {
+        logsBloom: block.logsBloom,
+        height: block.number,
+        timestamp: Number(block.timestamp),
+      }
+    })
+
+    await this.logBloomDAL.save(logBlooms)
   }
 
   protected async getBlocksChunk({
@@ -299,6 +405,10 @@ export class EthereumClient {
       await this.indexBlockSignatures(chunk)
     }
 
+    if (this.options.indexBlockLogBloom) {
+      await this.indexBlockLogBloom(chunk)
+    }
+
     return {
       chunk,
       count,
@@ -321,6 +431,21 @@ export class EthereumClient {
     })
 
     return blocks
+  }
+
+  protected async getLogs(
+    blockHashOrBlockNumber: (number | string)[],
+    address?: string,
+  ): Promise<(EthereumRawLog | null)[]> {
+    const args: PastLogsOptions[][] = blockHashOrBlockNumber.map(
+      (blockOrNum) => [{ fromBlock: blockOrNum, toBlock: blockOrNum, address }],
+    )
+
+    const logs: Log[] = await this.batchRequest('getPastLogs', args, {
+      swallowErrors: false,
+    })
+
+    return Promise.all(logs.map((log) => this.completeLogsWithBlockInfo(log)))
   }
 
   // @todo: Deprecated
@@ -449,7 +574,7 @@ export class EthereumClient {
     before = before - 1
     until = until + 1
 
-    const chunk = []
+    const chunk: EthereumSignature[] = []
 
     const signatures = await this.accountSignatureDAL
       .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
@@ -480,28 +605,135 @@ export class EthereumClient {
     }
   }
 
+  protected async getLogsChunk({
+    account,
+    before,
+    until,
+    limit,
+    isContractAccount,
+  }: EthereumLogsChunkOptions): Promise<EthereumLogsChunkResponse> {
+    if (!this.logBloomDAL)
+      throw new Error('EthereumLogBloomStorage not provided to EthereumClient')
+
+    if (before <= 0 || until >= before)
+      throw new Error('Invalid log chunk range')
+
+    before = before - 1
+    until = until + 1
+
+    const chunk: EthereumLogBloom[] = []
+
+    const logBlooms = await this.logBloomDAL
+      .useIndex(EthereumLogBloomDALIndex.Timestamp)
+      .getAllValuesFromTo([until], [before], {
+        limit,
+        atomic: true,
+      })
+
+    for await (const bloom of logBlooms) chunk.push(bloom)
+
+    const count = chunk.length
+    const firstItem = chunk[0]
+    const lastItem = chunk[chunk.length - 1]
+
+    if (chunk.length > 0)
+      console.log('logs chunk => ', count, firstItem.height, lastItem.height)
+
+    const checkFn = isContractAccount
+      ? isContractAddressInBloom
+      : isUserEthereumAddressInBloom
+
+    const filteredChunk = chunk.filter(({ logsBloom }) =>
+      checkFn(logsBloom, account),
+    )
+
+    if (filteredChunk.length > 0)
+      console.log('filtered logs chunk => ', filteredChunk.length)
+
+    const blocksHeights = filteredChunk.map((item) => item.height)
+    const logs = (await this.getLogs(
+      blocksHeights,
+      isContractAccount ? account : undefined,
+    )) as EthereumRawLog[]
+
+    console.log('logs', logs)
+
+    let filteredLogs = logs
+
+    if (!isContractAccount) {
+      const accountHash = this.keccak256(account)
+      console.log('accountHash', accountHash)
+      filteredLogs = logs.filter((log) => log.topics.includes(accountHash))
+    }
+
+    return {
+      chunk: filteredLogs,
+      count,
+      firstItem,
+      lastItem,
+    }
+  }
+
   protected async completeTransactionsWithBlockInfo(
     tx: Transaction | null,
   ): Promise<EthereumRawTransaction | null> {
     if (!tx) return tx
 
     const newTx = tx as EthereumRawTransaction
+    newTx.id = tx.hash
     newTx.signature = tx.hash
 
     let timestamp: number | undefined
 
     if (this.accountSignatureDAL) {
-      const sigInfo = await this.accountSignatureDAL.get(newTx.signature)
+      const sigInfo = await this.accountSignatureDAL.get([newTx.signature])
       timestamp = sigInfo?.timestamp
-    } else if (newTx.blockNumber) {
+    }
+
+    if (timestamp === undefined && newTx.blockNumber) {
       const [block] = await this.getBlocks([newTx.blockNumber], false)
       timestamp = Number(block.timestamp)
     }
 
     if (!timestamp) return null
-
     newTx.timestamp = timestamp
 
     return newTx
+  }
+
+  protected async completeLogsWithBlockInfo(
+    log: Log,
+    logsBloom?: EthereumLogBloom,
+  ): Promise<EthereumRawLog | null> {
+    if (!log) return log
+
+    const newLog = log as EthereumRawLog
+    newLog.height = log.blockNumber
+    newLog.id = `${newLog.height}_${newLog.logIndex}`
+
+    let timestamp: number | undefined
+
+    if (logsBloom) {
+      timestamp = logsBloom.timestamp
+    }
+
+    if (timestamp === undefined && this.logBloomDAL) {
+      const logsBloomInfo = await this.logBloomDAL.get([newLog.height])
+      timestamp = logsBloomInfo?.timestamp
+    }
+
+    if (timestamp === undefined && newLog.blockNumber) {
+      const [block] = await this.getBlocks([newLog.blockNumber], false)
+      timestamp = Number(block.timestamp)
+    }
+
+    if (!timestamp) return null
+    newLog.timestamp = timestamp
+
+    return newLog
+  }
+
+  protected keccak256(data: string): string {
+    return new Keccak(256).update(data).digest('hex')
   }
 }

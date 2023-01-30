@@ -4,7 +4,8 @@ import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainIndexerWorkerI,
   IndexerDomainContext,
-  TransactionDateRangeResponse,
+  EntityDateRangeResponse,
+  IndexableEntityType,
 } from '@aleph-indexer/framework'
 import {
   SolanaParsedTransaction,
@@ -46,10 +47,20 @@ export default class SolanaIndexerWorkerDomain {
     }
   }
 
-  async onTxDateRange(
-    response: TransactionDateRangeResponse<SolanaParsedTransaction>,
+  async onEntityDateRange(
+    response: EntityDateRangeResponse<SolanaParsedTransaction>,
   ): Promise<void> {
-    const { txs } = response
+    const { type } = response
+
+    if (type === IndexableEntityType.Transaction) {
+      return this.onTransactionDateRange(response)
+    }
+  }
+
+  protected async onTransactionDateRange(
+    response: EntityDateRangeResponse<SolanaParsedTransaction>,
+  ): Promise<void> {
+    const { entities } = response
 
     const filterTransaction =
       this.hooks.solanaFilterTransaction?.bind(this.hooks) ||
@@ -65,7 +76,7 @@ export default class SolanaIndexerWorkerDomain {
     )
 
     return promisify(pipeline)(
-      txs as any,
+      entities as any,
       new StreamMap(this.mapTransactionContext.bind(this, response)),
       new StreamFilter(filterTransaction),
       new StreamMap(indexTransaction),
@@ -77,7 +88,7 @@ export default class SolanaIndexerWorkerDomain {
   }
 
   protected mapTransactionContext(
-    args: TransactionDateRangeResponse<SolanaParsedTransaction>,
+    args: EntityDateRangeResponse<SolanaParsedTransaction>,
     tx: SolanaParsedTransaction,
   ): SolanaParsedTransactionContext {
     const { account, startDate, endDate } = args
