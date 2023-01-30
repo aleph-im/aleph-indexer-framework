@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  spl-token-indexer:
+    build: ../..
+    volumes:
+      - ~/indexer.data:/app/data:rw
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ../../.env
+      - ./.env
+    environment:
+      - INDEXER=token-snapshot
+      - SPL_TOKEN_MINTS=mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So
+      - SOLANA_RPC=http://solrpc1.aleph.cloud:7725/
+      - INDEXER_INSTANCES=1
+    network_mode: bridge
