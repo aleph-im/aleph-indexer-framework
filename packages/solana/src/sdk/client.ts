@@ -26,6 +26,7 @@ import { config } from '@aleph-indexer/core'
 import { Connection } from './connection.js'
 import {
   AlephParsedTransaction,
+  RawParsedTransactionWithMeta,
   SolanaRawTransaction,
   VoteAccountInfo,
 } from '../types.js'
@@ -233,24 +234,39 @@ export class SolanaRPC {
     // @note: Drop the response of getBlockHeight
     unsafeRes.shift()
 
-    return unsafeRes.map(({ error, result }: any) => {
-      if (error) {
-        const message = `failed to get confirmed transactions: ${error.message}`
+    const out = unsafeRes.map(
+      ({
+        error,
+        result,
+      }: {
+        error: any
+        result: RawParsedTransactionWithMeta
+      }): SolanaRawTransaction | null => {
+        if (error) {
+          const message = `failed to get confirmed transactions: ${error.message}`
 
-        if (options?.swallowErrors) {
-          console.log(message)
-          return null
+          if (options?.swallowErrors) {
+            console.log(message)
+            return null
+          }
+
+          throw new SolanaJSONRPCError(error, message)
         }
 
-        throw new SolanaJSONRPCError(error, message)
-      }
+        if (config.STRICT_CHECK_RPC) {
+          assert(result, GetParsedTransactionRpcResult)
+        }
 
-      if (config.STRICT_CHECK_RPC) {
-        assert(result, GetParsedTransactionRpcResult)
-      }
+        if (result === null) return result
 
-      return result
-    })
+        const outputResult = result as SolanaRawTransaction
+        outputResult.id = result.transaction.signatures[0]
+
+        return outputResult
+      },
+    )
+
+    return out
   }
 
   async *fetchTransactionHistory({
