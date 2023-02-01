@@ -3,7 +3,7 @@ import {
   SPL_TOKEN_LENDING_IX_METHOD_CODE,
   LendingEventType,
 } from './_lending.js'
-import { struct, u8, blob, u64 } from '@aleph-indexer/layout'
+import { struct, u8, blob, u64 } from './_default.js'
 import { LayoutImplementation } from '../types.js'
 import { PORT_PROGRAM_ID } from '../layoutHub.js'
 

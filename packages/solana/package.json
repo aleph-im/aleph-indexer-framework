@@ -35,7 +35,6 @@
   "dependencies": {
     "@aleph-indexer/core": "^1.0.30",
     "@aleph-indexer/framework": "^1.0.30",
-    "@aleph-indexer/layout": "^1.0.14",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
     "bn.js": "^5.2.0",

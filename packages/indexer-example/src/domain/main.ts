@@ -24,6 +24,35 @@ export default class MainDomain
     return [
       {
         blockchainId: Blockchain.Ethereum,
+        account: alephTokenEth,
+        meta: undefined,
+        index: {
+          transactions: {
+            chunkDelay: 0,
+            chunkTimeframe: 1000 * 60 * 60 * 24,
+          },
+          state: false,
+          logs: {
+            chunkDelay: 0,
+            chunkTimeframe: 1000 * 60 * 60 * 24,
+          },
+        },
+      },
+      {
+        blockchainId: Blockchain.Solana,
+        account: alephTokenSol,
+        meta: undefined,
+        index: {
+          transactions: {
+            chunkDelay: 0,
+            chunkTimeframe: 1000 * 60 * 60 * 24,
+          },
+          state: false,
+          logs: false,
+        },
+      },
+      {
+        blockchainId: Blockchain.Ethereum,
         account: alephMessages,
         meta: undefined,
         index: {
@@ -36,50 +65,5 @@ export default class MainDomain
         },
       },
     ]
-
-    // return [
-    //   {
-    //     blockchainId: Blockchain.Ethereum,
-    //     account: alephTokenEth,
-    //     meta: undefined,
-    //     index: {
-    //       transactions: {
-    //         chunkDelay: 0,
-    //         chunkTimeframe: 1000 * 60 * 60 * 24,
-    //       },
-    //       state: false,
-    //       logs: {
-    //         chunkDelay: 0,
-    //         chunkTimeframe: 1000 * 60 * 60 * 24,
-    //       },
-    //     },
-    //   },
-    //   {
-    //     blockchainId: Blockchain.Solana,
-    //     account: alephTokenSol,
-    //     meta: undefined,
-    //     index: {
-    //       transactions: {
-    //         chunkDelay: 0,
-    //         chunkTimeframe: 1000 * 60 * 60 * 24,
-    //       },
-    //       state: false,
-    //       logs: false,
-    //     },
-    //   },
-    //   {
-    //     blockchainId: Blockchain.Ethereum,
-    //     account: alephMessages,
-    //     meta: undefined,
-    //     index: {
-    //       transactions: false,
-    //       state: false,
-    //       logs: {
-    //         chunkDelay: 0,
-    //         chunkTimeframe: 1000 * 60 * 60 * 24,
-    //       },
-    //     },
-    //   },
-    // ]
   }
 }
