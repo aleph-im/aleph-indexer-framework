@@ -67,6 +67,7 @@ export default class WorkerDomain
   }
 
   async ethereumFilterLog(ctx: EthereumParsedLogContext): Promise<boolean> {
+    console.log(ctx.entity.parsed?.signature)
     return true
   }
 

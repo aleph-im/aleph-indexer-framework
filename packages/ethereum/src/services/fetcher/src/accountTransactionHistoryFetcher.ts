@@ -147,7 +147,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     `)
 
     try {
-      const signatures = this.ethereumClient.fetchSignatures(options)
+      const signatures = this.ethereumClient.fetchTransactionHistory(options)
 
       for await (const step of signatures) {
         const { chunk } = step

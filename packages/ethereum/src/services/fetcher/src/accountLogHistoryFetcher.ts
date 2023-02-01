@@ -163,7 +163,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     `)
 
     try {
-      const items = this.ethereumClient.fetchLogs(options)
+      const items = this.ethereumClient.fetchLogHistory(options)
 
       for await (const step of items) {
         const { chunk } = step
@@ -215,7 +215,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
 
     await Promise.all([
       this.accountLogHistoryDAL.save(logsWithAccounts),
-      this.rawLogDAL.save(logs),
+      this.rawLogDAL.save(logs), // @note: This is not necessary (just a  performance hack)
     ])
   }
 }

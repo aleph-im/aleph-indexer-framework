@@ -41,24 +41,27 @@ export class EthereumLogFetcher extends BaseEntityFetcher<EthereumRawLog> {
     ids: string[],
     isRetry: boolean,
   ): Promise<(EthereumRawLog | null | undefined)[]> {
-    // @note: Right now we are caching all logs in level
-    // @todo: Implement getLogsByIds method on ethereum client
-    const logs = await Promise.all(
-      ids.map(async (id) => {
-        try {
-          const log = await this.rawLogDAL.get([id])
-          return log || null
-        } catch (e) {
-          console.log('ethereum remoteFetchIds error', e)
-          return null
-        }
-      }),
-    )
-
-    // return this.ethereumClient.getLogsByIds(ids, {
-    //   swallowErrors: true,
-    // })
-
-    return logs
+    // @note: Look for them on the cache the first time.
+    // In case they are not there do a fallback request to rpc
+    if (!isRetry) {
+      // @note: Right now we are caching all logs in level
+      // @note: This is not necessary (just a  performance hack)
+      return Promise.all(
+        ids.map(async (id) => {
+          try {
+            const log = await this.rawLogDAL.get([id])
+            return log || null
+          } catch (e) {
+            this.log('remoteFetchIds error', e)
+            return null
+          }
+        }),
+      )
+    } else {
+      this.log('fetching logs from RPC')
+      return this.ethereumClient.getLogs(ids, {
+        swallowErrors: true,
+      })
+    }
   }
 }

@@ -111,7 +111,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     )
 
     try {
-      const blocks = this.ethereumClient.fetchBlocks(options)
+      const blocks = this.ethereumClient.fetchBlockHistory(options)
 
       for await (const step of blocks) {
         const { chunk } = step

@@ -111,9 +111,6 @@ export class EthereumClient {
     return this.sdk.eth.getBalance(account)
   }
 
-  // @note: Take a look at:
-  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
-  // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
   async getTransactions(
     signatures: string[],
     options?: { swallowErrors: boolean },
@@ -131,6 +128,51 @@ export class EthereumClient {
         this.completeTransactionsWithBlockInfo(tx, options?.swallowErrors),
       ),
     )
+  }
+
+  async getLogs(
+    ids: string[],
+    options?: { swallowErrors: boolean },
+  ): Promise<(EthereumRawLog | null)[]> {
+    const results: Record<string, null | EthereumRawLog> = {}
+
+    const blockHeightLogs = ids.reduce((blockMap, id) => {
+      // log.id = `${log.height}_${log.address}_${log.logIndex}`
+      const parts = id.split('_')
+      const height = Number(parts[0])
+      const address = parts[1]
+      const logIndex = Number(parts[2])
+
+      const contractMap = (blockMap[height] = blockMap[height] || {})
+      const logSet = (contractMap[address] = contractMap[address] || new Set())
+
+      logSet.add(logIndex)
+      results[id] = null
+
+      return blockMap
+    }, {} as Record<number, Record<string, Set<number>>>)
+
+    for (const [height, contractMap] of Object.entries(blockHeightLogs)) {
+      for (const [address, logSet] of Object.entries(contractMap)) {
+        const logs = await this.getBlockLogs(
+          [height],
+          options?.swallowErrors,
+          address,
+        )
+
+        for (const log of logs) {
+          if (!log) continue
+          const logIndex = log.logIndex
+
+          if (!logSet.has(logIndex)) continue
+
+          results[log.id] = log
+        }
+      }
+    }
+
+    const response = ids.map((id) => results[id])
+    return response
   }
 
   async isContractAddress(address: string): Promise<boolean> {
@@ -166,7 +208,7 @@ export class EthereumClient {
     return parsedLog
   }
 
-  async *fetchBlocks(
+  async *fetchBlockHistory(
     args: EthereumFetchBlocksOptions,
   ): AsyncGenerator<EthereumBlockPaginationResponse> {
     let firstKey
@@ -178,8 +220,6 @@ export class EthereumClient {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
       iterationLimit = 1000,
     } = args
-
-    // before = 16429404 + 1
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -226,7 +266,7 @@ export class EthereumClient {
     }
   }
 
-  async *fetchSignatures(
+  async *fetchTransactionHistory(
     args: EthereumFetchSignaturesOptions,
   ): AsyncGenerator<EthereumTransactionHistoryPaginationResponse> {
     let firstKey
@@ -238,8 +278,6 @@ export class EthereumClient {
       before = (await this.sdk.eth.getBlockNumber()) + 1,
       iterationLimit = 1000,
     } = args
-
-    // before = 16429404 + 1
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -288,7 +326,7 @@ export class EthereumClient {
     }
   }
 
-  async *fetchLogs(
+  async *fetchLogHistory(
     args: EthereumFetchLogsOptions,
   ): AsyncGenerator<EthereumLogHistoryPaginationResponse> {
     let firstKey
@@ -410,20 +448,26 @@ export class EthereumClient {
   // @note: Check log id: https://github.com/web3/web3.js/blob/1.x/packages/web3-core-helpers/src/formatters.js#L399
   // var shaId = utils.sha3(log.blockHash.replace('0x', '') + log.transactionHash.replace('0x', '') + log.logIndex.replace('0x', ''));
   // log.id = 'log_' + shaId.replace('0x', '').slice(0, 8);
-  protected async getLogs(
+  protected async getBlockLogs<
+    S extends boolean,
+    R = S extends false ? EthereumRawLog : EthereumRawLog | null,
+  >(
     blockHashOrBlockNumber: (number | string)[],
+    swallowErrors?: S,
     address?: string,
-  ): Promise<EthereumRawLog[]> {
+  ): Promise<R[]> {
     const args: PastLogsOptions[][] = blockHashOrBlockNumber.map(
       (blockOrNum) => [{ fromBlock: blockOrNum, toBlock: blockOrNum, address }],
     )
 
     const logs: Log[] = await this.batchRequest('getPastLogs', args, {
-      swallowErrors: false,
+      swallowErrors,
     })
 
     return Promise.all(
-      logs.map((log) => this.completeLogsWithBlockInfo(log, false)),
+      logs.map((log) =>
+        this.completeLogsWithBlockInfo<S, R>(log, swallowErrors),
+      ),
     )
   }
 
@@ -435,7 +479,7 @@ export class EthereumClient {
     A extends Array<unknown>,
     S extends boolean,
     R = S extends false ? T[] : (T | null)[],
-  >(method: keyof Eth, args: A[], options?: { swallowErrors: S }): Promise<R> {
+  >(method: keyof Eth, args: A[], options?: { swallowErrors?: S }): Promise<R> {
     const methodInstance = this.sdk.eth[method].method
     const payload = args.map((arg) => methodInstance.toPayload(arg))
 
@@ -634,8 +678,9 @@ export class EthereumClient {
       if (filteredLogBloomChunk.length > 0) {
         const blocksHeights = filteredLogBloomChunk.map((item) => item.height)
 
-        const logs = (await this.getLogs(
+        const logs = (await this.getBlockLogs(
           blocksHeights,
+          false,
           isContractAccount ? account : undefined,
         )) as EthereumRawLog[]
 
@@ -732,7 +777,8 @@ export class EthereumClient {
 
     const newLog = log as EthereumRawLog
     newLog.height = log.blockNumber
-    newLog.id = `${newLog.height}_${newLog.logIndex}`
+    newLog.id =
+      `${newLog.height}_${newLog.address}_${newLog.logIndex}`.toLowerCase()
 
     let timestamp: number | undefined
 

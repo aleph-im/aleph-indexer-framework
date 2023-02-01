@@ -166,6 +166,10 @@ export type FetchAccountEntitiesByDateRequestArgs = BlockchainRequestArgs &
   FetcherAccountEntityTypeRequestArgs & {
     startDate: number
     endDate: number
+    /**
+     * Metadata for extending functionality if needed
+     */
+    meta?: any
   }
 
 export type FetchEntitiesByIdRequestArgs = BlockchainRequestArgs &
@@ -179,6 +183,10 @@ export type FetchEntitiesByIdRequestArgs = BlockchainRequestArgs &
      * Signatures to fetch.
      */
     ids: string[]
+    /**
+     * Metadata for extending functionality if needed
+     */
+    meta?: any
   }
 
 // ------------------ Other ----------------------

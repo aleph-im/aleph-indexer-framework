@@ -133,14 +133,22 @@ export abstract class BaseEntityHistoryFetcher<
       new StreamMap(({ value }: StorageEntry<string, HE>) => value.id),
       new StreamBuffer(1000),
       new StreamMap(async (ids: string[]) => {
-        // @note: Use the client here for load balancing ids through all fetcher instances
-        await this.fetcherClient
-          .useBlockchain(this.blockchainId)
-          .fetchEntitiesById({ type: this.type, ids, indexerId })
-
+        await this.fetchAccountEntitiesByIdFromDateRange(ids, args)
         return ids
       }),
     )
+  }
+
+  protected async fetchAccountEntitiesByIdFromDateRange(
+    ids: string[],
+    byDateArgs: FetchAccountEntitiesByDateRequestArgs,
+  ): Promise<void> {
+    const { indexerId } = byDateArgs
+
+    // @note: Use the client here for load balancing ids through all fetcher instances
+    await this.fetcherClient
+      .useBlockchain(this.blockchainId)
+      .fetchEntitiesById({ type: this.type, ids, indexerId, meta: byDateArgs })
   }
 
   protected async getPartialAccountState(
@@ -162,10 +170,6 @@ export abstract class BaseEntityHistoryFetcher<
     }
   }
 
-  abstract getAccountState(
-    args: GetAccountEntityStateRequestArgs,
-  ): Promise<AccountEntityHistoryState<CU> | undefined>
-
   protected queryEntitiesByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<StorageStream<string, HE>> {
@@ -177,6 +181,10 @@ export abstract class BaseEntityHistoryFetcher<
         reverse: false,
       })
   }
+
+  abstract getAccountState(
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<CU> | undefined>
 
   protected abstract getAccountFetcher(account: string): BaseHistoryFetcher<CU>
 }

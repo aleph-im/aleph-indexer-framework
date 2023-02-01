@@ -85,7 +85,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   async fetchEntitiesById(
     args: Omit<FetchEntitiesByIdRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
-    const groups = this.getTransactionPartitionGroups(args)
+    const groups = this.getEntityPartitionGroups(args)
 
     await Promise.all(
       Object.entries(groups).map(([partitionKey, signatures]) => {
@@ -111,7 +111,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   async getEntityState({
     ids,
   }: CheckEntityRequestArgs): Promise<EntityState[]> {
-    const groups = this.getTransactionPartitionGroups({ ids })
+    const groups = this.getEntityPartitionGroups({ ids })
 
     const states = (await Promise.all(
       Object.entries(groups).map(([partitionKey, ids]) => {
@@ -126,7 +126,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
   }
 
   async delEntityCache({ ids }: DelEntityRequestArgs): Promise<void> {
-    const groups = this.getTransactionPartitionGroups({ ids })
+    const groups = this.getEntityPartitionGroups({ ids })
 
     await Promise.all(
       Object.entries(groups).map(([partitionKey, ids]) => {
@@ -150,7 +150,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  protected getTransactionPartitionGroups(args: {
+  protected getEntityPartitionGroups(args: {
     ids: string[]
     partitionKey?: string
   }): Record<string, string[]> {
