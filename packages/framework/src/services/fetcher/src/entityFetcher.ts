@@ -110,7 +110,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
     const { ids, indexerId } = args
 
-    console.log(
+    this.log(
       `🔗 ${ids.length} new ids added to the ${this.type} fetcher queue... [${indexerId}]`,
     )
 
@@ -130,9 +130,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   protected async handlePendingEntities(
     works: PendingWork<string[]>[],
   ): Promise<void> {
-    console.log(
-      `${this.type} pending | Start handling entities ${works.length}`,
-    )
+    this.log(`${this.type} pending | Start handling entities ${works.length}`)
 
     const toFetchWorks: PendingWork<string[]>[] = []
     const inCacheWorks: PendingWork<string[]>[] = []
@@ -148,7 +146,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
       }
     }
 
-    console.log(
+    this.log(
       `${this.type} pending | Response ${toFetchWorks.length}/${inCacheWorks.length} toFetch/inCache`,
     )
 
@@ -164,7 +162,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   protected async handlePendingEntitiesCache(
     works: PendingWork<string[]>[],
   ): Promise<void> {
-    console.log(`${this.type} cache | Start getting entities ${works.length}`)
+    this.log(`${this.type} cache | Start getting entities ${works.length}`)
 
     const entities = await this.entityCacheDAL.getMany(
       works.map((work) => work.id),
@@ -178,15 +176,13 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
 
     await this.emitEntities(msgs)
 
-    console.log(`${this.type} cache | Response ${msgs.length} found in cache`)
+    this.log(`${this.type} cache | Response ${msgs.length} found in cache`)
   }
 
   protected async handlePendingEntitiesFetch(
     works: PendingWork<string[]>[],
   ): Promise<number | void> {
-    console.log(
-      `${this.type} fetching | Start fetching entities ${works.length}`,
-    )
+    this.log(`${this.type} fetching | Start fetching entities ${works.length}`)
 
     let totalPendings = 0
 
@@ -196,7 +192,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
     while (pending.length > 0 && retries-- > 0) {
       await sleep(1000)
 
-      console.log(
+      this.log(
         `⚠️ retrying ${pending.length} ${this.type}  entities [${retries}]`,
       )
 
@@ -209,7 +205,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
     }
 
     if (pending.length) {
-      console.log(
+      this.log(
         `‼️ ${pending.length} ${this.type} entities not found after 3 retries`,
       )
       totalPendings += pending.length
@@ -225,7 +221,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
 
     await this.pendingEntitiesCache.addWork(cacheWorks)
 
-    console.log(
+    this.log(
       `${this.type} fetching | Response ${entities.length} requests${
         totalPendings > 0 ? `, ${totalPendings} errors` : ''
       }`,
@@ -291,7 +287,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   protected async emitEntities(entities: RawEntityMsg<RE>[]): Promise<void> {
     if (!entities.length) return
 
-    console.log(
+    this.log(
       `✉️  ${entities.length} ${this.type} entities sent by the fetcher...`,
     )
 
@@ -353,6 +349,10 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
     }) as RE[]
 
     await this.entityCacheDAL.remove(entities)
+  }
+
+  protected log(...msgs: any[]): void {
+    console.log(`${this.blockchainId} ${this.type} | ${msgs.join(' ')}`)
   }
 
   /**

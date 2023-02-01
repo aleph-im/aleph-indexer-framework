@@ -7,8 +7,8 @@ export type ParserContext = {
   endDate: number
 }
 
-export type ParsedTransactionContext<T> = {
-  tx: T
+export type ParsedEntityContext<T> = {
+  entity: T
   parserContext: ParserContext
 }
 

@@ -6,20 +6,32 @@ import {
   IndexerDomainContext,
   EntityDateRangeResponse,
   IndexableEntityType,
+  ParsedEntity,
+  ParsedEntityContext,
 } from '@aleph-indexer/framework'
 import {
+  EthereumParsedLog,
+  EthereumParsedLogContext,
   EthereumParsedTransaction,
   EthereumParsedTransactionContext,
 } from '../services/parser/src/types.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
-export type EthereumIndexerWorkerDomainI = {
+export type EthereumTransactionIndexerWorkerDomainI = {
   ethereumFilterTransaction(
     ctx: EthereumParsedTransactionContext,
   ): Promise<boolean>
   ethereumIndexTransaction(ctx: EthereumParsedTransactionContext): Promise<void>
 }
+
+export type EthereumLogIndexerWorkerDomainI = {
+  ethereumFilterLog(ctx: EthereumParsedLogContext): Promise<boolean>
+  ethereumIndexLog(ctx: EthereumParsedLogContext): Promise<void>
+}
+
+export type EthereumIndexerWorkerDomainI =
+  EthereumTransactionIndexerWorkerDomainI & EthereumLogIndexerWorkerDomainI
 
 export class EthereumIndexerWorkerDomain {
   constructor(
@@ -44,6 +56,10 @@ export class EthereumIndexerWorkerDomain {
     if (type === IndexableEntityType.Transaction) {
       return this.onTransactionDateRange(response)
     }
+
+    if (type === IndexableEntityType.Log) {
+      return this.onLogDateRange(response)
+    }
   }
 
   protected async onTransactionDateRange(
@@ -60,21 +76,38 @@ export class EthereumIndexerWorkerDomain {
 
     return promisify(pipeline)(
       entities as any,
-      new StreamMap(this.mapTransactionContext.bind(this, response)),
+      new StreamMap(this.mapEntityContext.bind(this, response)),
       new StreamFilter(filterTransaction),
       new StreamBuffer(1000),
       new StreamMap(indexTransaction),
     )
   }
 
-  protected mapTransactionContext(
-    args: EntityDateRangeResponse<EthereumParsedTransaction>,
-    tx: EthereumParsedTransaction,
-  ): EthereumParsedTransactionContext {
+  protected async onLogDateRange(
+    response: EntityDateRangeResponse<EthereumParsedLog>,
+  ): Promise<void> {
+    const { entities } = response
+
+    const filterLog = this.hooks.ethereumFilterLog.bind(this.hooks)
+    const indexLog = this.hooks.ethereumIndexLog.bind(this.hooks)
+
+    return promisify(pipeline)(
+      entities as any,
+      new StreamMap(this.mapEntityContext.bind(this, response)),
+      new StreamFilter(filterLog),
+      new StreamBuffer(1000),
+      new StreamMap(indexLog),
+    )
+  }
+
+  protected mapEntityContext<T extends ParsedEntity<unknown>>(
+    args: EntityDateRangeResponse<T>,
+    entity: T,
+  ): ParsedEntityContext<T> {
     const { account, startDate, endDate } = args
 
     return {
-      tx,
+      entity,
       parserContext: {
         account,
         startDate,

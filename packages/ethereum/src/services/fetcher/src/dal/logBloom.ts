@@ -1,9 +1,13 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import {
-  EthereumLogBloomDALIndex,
-  EthereumLogBloomEntity,
-  EthereumLogBloomStorage,
-} from '../../../../sdk/dal.js'
+import { EthereumLogBloom } from '../../../../types.js'
+
+export type EthereumLogBloomEntity = EthereumLogBloom
+
+export type EthereumLogBloomStorage = EntityStorage<EthereumLogBloom>
+
+export enum EthereumLogBloomDALIndex {
+  Timestamp = 'timestamp',
+}
 
 const timestampKey = {
   get: (e: EthereumLogBloomEntity) => e.timestamp,

@@ -49,6 +49,7 @@ export enum Blockchain {
 }
 
 export enum IndexableEntityType {
+  Block = 'block',
   Transaction = 'transaction',
   Log = 'log',
   State = 'state',

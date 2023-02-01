@@ -118,7 +118,9 @@ export abstract class BaseStateFetcher {
   protected async _handleAccounts(
     works: PendingWork<string[]>[],
   ): Promise<void> {
-    console.log(`Accounts State | Start handling ${works.length} accounts`)
+    console.log(
+      `ethereum Accounts State | Start handling ${works.length} accounts`,
+    )
 
     const accounts = works.map((work) => work.id)
 

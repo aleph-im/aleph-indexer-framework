@@ -1,38 +1,27 @@
-import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
-import { AccountEntityHistoryDALIndex } from '@aleph-indexer/framework'
+import { EntityStorage } from '@aleph-indexer/core'
 import {
-  EthereumAccountTransactionHistoryDALIndex,
-  EthereumAccountTransactionHistoryEntity,
-  EthereumAccountTransactionHistoryStorage,
-} from '../../../../sdk/dal.js'
+  AccountEntityHistoryDALKeys,
+  createAccountEntityHistoryDAL,
+  IndexableEntityType,
+} from '@aleph-indexer/framework'
+import { EthereumAccountTransactionHistoryStorageEntity } from '../../../../types.js'
 
-const signatureKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) =>
-    e.signature.toLowerCase(),
-  length: EntityStorage.VariableLength,
-}
+export type EthereumAccountTransactionHistoryEntity =
+  EthereumAccountTransactionHistoryStorageEntity
 
-const accountKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) =>
-    e.accounts.map((acc) => acc.toLowerCase()),
-  length: EntityStorage.EthereumAddressLength,
-}
+export type EthereumAccountTransactionHistoryStorage =
+  EntityStorage<EthereumAccountTransactionHistoryStorageEntity>
 
-const timestampKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) => e.timestamp * 1000,
-  length: EntityStorage.TimestampLength,
+export enum EthereumAccountTransactionHistoryDALIndex {
+  AccountTimestampIndex = 'account_timestamp_index',
+  AccountHeightIndex = 'account_height_index',
 }
+const { accountKey, indexKey } = AccountEntityHistoryDALKeys
 
 const heightKey = {
   get: (e: EthereumAccountTransactionHistoryEntity) => e.height,
   // @note: up to 10**9 [9 digits] enough for 300 years
   length: 8,
-}
-
-const indexKey = {
-  get: (e: EthereumAccountTransactionHistoryEntity) => e.index,
-  // @note: up to 999 txs per block
-  length: 3,
 }
 
 /**
@@ -42,34 +31,17 @@ const indexKey = {
 export function createEthereumAccountTransactionHistoryDAL(
   path: string,
 ): EthereumAccountTransactionHistoryStorage {
-  return new EntityStorage<EthereumAccountTransactionHistoryEntity>({
-    name: 'fetcher_account_transaction_history',
+  return createAccountEntityHistoryDAL<EthereumAccountTransactionHistoryEntity>(
     path,
-    key: [signatureKey],
-    indexes: [
-      {
-        name: AccountEntityHistoryDALIndex.AccountTimestampIndex,
-        key: [accountKey, timestampKey, indexKey],
-      },
-      {
-        name: EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex,
-        key: [accountKey, heightKey, indexKey],
-      },
-    ],
-
-    async updateCheckFn(
-      oldEntity: EthereumAccountTransactionHistoryEntity | undefined,
-      newEntity: EthereumAccountTransactionHistoryEntity,
-    ): Promise<EntityUpdateOp> {
-      if (oldEntity) {
-        const accounts = new Set([
-          ...(oldEntity.accounts || []),
-          ...(newEntity.accounts || []),
-        ])
-        newEntity.accounts = [...accounts]
-      }
-
-      return EntityUpdateOp.Update
+    IndexableEntityType.Transaction,
+    false,
+    {
+      indexes: [
+        {
+          name: EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex,
+          key: [accountKey, heightKey, indexKey],
+        },
+      ],
     },
-  })
+  )
 }

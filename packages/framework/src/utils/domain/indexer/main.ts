@@ -242,7 +242,7 @@ export abstract class IndexerMainDomain {
       const blockchainAccounts = this.accounts[blockchainId]
       if (!blockchainAccounts)
         throw new Error(
-          `Accounts that belongs to "${blockchainId}" blockchain are supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
+          `Accounts that belongs to "${blockchainId}" blockchain are NOT supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
         )
 
       return !this.accounts[blockchainId].has(account)

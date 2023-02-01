@@ -9,6 +9,7 @@ import { AbiFactory } from './src/abiFactory.js'
 import { EthereumAccountStateParser } from './src/accountStateParser.js'
 import { EthereumTransactionParser } from './src/transactionParser.js'
 import { EthereumParsedTransaction } from './src/types.js'
+import { EthereumLogParser } from './src/logParser.js'
 
 export async function ethereumParserFactory(
   basePath: string,
@@ -26,12 +27,16 @@ export async function ethereumParserFactory(
   await Utils.ensurePath(abiBasePath)
 
   const ethereumClient = createEthereumClient(url)
+  
   const abiFactory = new AbiFactory(abiBasePath, ethereumClient)
+  
   const ethereumAccountStateParser = new EthereumAccountStateParser()
   const ethereumTransactionParser = new EthereumTransactionParser(abiFactory, ethereumClient)
+  const ethereumLogParser = new EthereumLogParser(abiFactory, ethereumClient)
 
   return new EthereumParser(
     ethereumTransactionParser,
+    ethereumLogParser,
     ethereumAccountStateParser,
   )
 }

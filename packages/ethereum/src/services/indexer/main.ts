@@ -47,11 +47,11 @@ export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
     if (args.account) args.account = args.account.toLowerCase()
     if (args.id) args.id = args.id.toLowerCase()
 
-    return this.getEntityPendingRequests(args)
+    return super.getEntityPendingRequests(args)
   }
 
   async invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown> {
     args.account = args.account.toLowerCase()
-    return this.invokeDomainMethod(args)
+    return super.invokeDomainMethod(args)
   }
 }

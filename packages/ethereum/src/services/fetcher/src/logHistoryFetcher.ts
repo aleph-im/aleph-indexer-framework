@@ -1,9 +1,6 @@
 import {
   Blockchain,
-  AddAccountEntityRequestArgs,
-  DelAccountEntityRequestArgs,
   GetAccountEntityStateRequestArgs,
-  FetchAccountEntitiesByDateRequestArgs,
   FetcherMsClient,
   FetcherStateLevelStorage,
   PendingAccountStorage,
@@ -12,17 +9,20 @@ import {
 } from '@aleph-indexer/framework'
 import { EthereumAccountLogHistoryFetcher } from './accountLogHistoryFetcher.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
-import { EthereumRawLog } from '../../../types.js'
 import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumAccountLogHistoryStorage } from './dal/accountLogHistory.js'
+import {
+  EthereumAccountLogHistoryEntity,
+  EthereumAccountLogHistoryStorage,
+} from './dal/accountLogHistory.js'
 import {
   EthereumAccountLogHistoryPaginationCursor,
   EthereumAccountLogHistoryState,
 } from './types.js'
+import { EthereumRawLogStorage } from './dal/rawLog.js'
 
 export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
   EthereumAccountLogHistoryPaginationCursor,
-  EthereumRawLog
+  EthereumAccountLogHistoryEntity
 > {
   /**
    * Initialize the fetcher service.
@@ -33,30 +33,18 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
-    ...args: [
-      FetcherMsClient,
-      PendingAccountStorage,
-      EthereumAccountLogHistoryStorage,
-    ]
+    protected rawLogDAL: EthereumRawLogStorage,
+    protected fetcherClient: FetcherMsClient,
+    protected accountDAL: PendingAccountStorage,
+    protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
   ) {
-    super(IndexableEntityType.Log, Blockchain.Ethereum, ...args)
-  }
-
-  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.addAccount(args)
-  }
-
-  async delAccount(args: DelAccountEntityRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.delAccount(args)
-  }
-
-  async fetchAccountEntitiesByDate(
-    args: FetchAccountEntitiesByDateRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    args.account = args.account.toLowerCase()
-    return super.fetchAccountEntitiesByDate(args)
+    super(
+      IndexableEntityType.Log,
+      Blockchain.Ethereum,
+      fetcherClient,
+      accountDAL,
+      accountLogHistoryDAL,
+    )
   }
 
   /**
@@ -66,8 +54,6 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
   async getAccountState(
     args: GetAccountEntityStateRequestArgs,
   ): Promise<EthereumAccountLogHistoryState | undefined> {
-    args.account = args.account.toLowerCase()
-
     const state: EthereumAccountLogHistoryState | undefined =
       await this.getPartialAccountState(args)
 
@@ -93,6 +79,8 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
   ): EthereumAccountLogHistoryFetcher {
     return new EthereumAccountLogHistoryFetcher(
       account,
+      this.accountLogHistoryDAL,
+      this.rawLogDAL,
       this.fetcherStateDAL,
       this.ethereumClient,
       this.blockHistoryFetcher,

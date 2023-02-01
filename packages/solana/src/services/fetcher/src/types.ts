@@ -22,6 +22,7 @@ export type SolanaSignature = Omit<
   'memo' | 'confirmationStatus'
 > & {
   id: string
+  timestamp: number
   accountSlotIndex: Record<string, number>
   accounts: string[]
 }

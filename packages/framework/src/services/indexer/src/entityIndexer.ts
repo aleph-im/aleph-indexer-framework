@@ -124,7 +124,9 @@ export class BaseEntityIndexer<
   }
 
   protected async onEntities(chunk: PE[]): Promise<void> {
-    console.log(`💌 ${chunk.length} txs received by the indexer...`)
+    console.log(
+      `${this.blockchainId} ${this.type} | 💌 ${chunk.length} entities received by the indexer...`,
+    )
     await this.entityFetcher.onEntities(chunk)
   }
 

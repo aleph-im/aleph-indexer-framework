@@ -1,3 +1,4 @@
+import { Keccak } from 'sha3'
 import {
   BaseIndexerEntityFetcher,
   Blockchain,
@@ -11,39 +12,39 @@ import {
   EntityRequestType,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
-import { EthereumParsedTransaction } from '../../parser/src/types.js'
+import { EthereumParsedLog } from '../../parser/src/types.js'
 
-export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<EthereumParsedTransaction> {
+export class EthereumIndexerLogFetcher extends BaseIndexerEntityFetcher<EthereumParsedLog> {
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionRequestDAL: EntityRequestStorage,
-    protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<EthereumParsedTransaction>,
-    protected transactionRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
-    protected transactionRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedTransaction>,
+    protected logRequestDAL: EntityRequestStorage,
+    protected logRequestIncomingLogDAL: EntityRequestIncomingEntityStorage<EthereumParsedLog>,
+    protected logRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
+    protected logRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedLog>,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
     super(
-      IndexableEntityType.Transaction,
+      IndexableEntityType.Log,
       blockchainId,
       fetcherMsClient,
-      transactionRequestDAL,
-      transactionRequestIncomingTransactionDAL,
-      transactionRequestPendingSignatureDAL,
-      transactionRequestResponseDAL,
+      logRequestDAL,
+      logRequestIncomingLogDAL,
+      logRequestPendingSignatureDAL,
+      logRequestResponseDAL,
       nonce,
     )
   }
 
   protected filterIncomingEntitiesByRequest(
-    entities: EthereumParsedTransaction[],
+    entities: EthereumParsedLog[],
     request: EntityRequest,
   ): {
-    filteredEntities: EthereumParsedTransaction[]
-    remainingEntities: EthereumParsedTransaction[]
+    filteredEntities: EthereumParsedLog[]
+    remainingEntities: EthereumParsedLog[]
   } {
-    const filteredEntities: EthereumParsedTransaction[] = []
-    const remainingEntities: EthereumParsedTransaction[] = []
+    const filteredEntities: EthereumParsedLog[] = []
+    const remainingEntities: EthereumParsedLog[] = []
 
     switch (request.type) {
       case EntityRequestType.ByDateRange: {
@@ -52,7 +53,7 @@ export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<
         for (const entity of entities) {
           if (typeof entity.parsed !== 'object') {
             console.log(
-              'ethereum transaction | 👺 error incoming tx without parsed field',
+              'ethereum log | 👺 error incoming log without parsed field',
               request.nonce,
               entity,
             )
@@ -62,11 +63,14 @@ export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<
           const timestamp = entity.timestamp
           let valid = timestamp >= startDate && timestamp <= endDate
 
-          valid =
-            valid &&
-            [entity.from, entity.to].some(
-              (address) => address?.toLowerCase() === account,
-            )
+          if (valid) {
+            valid = entity.address.toLowerCase() === account
+
+            if (!valid) {
+              const accountTopic = `0x${account.substring(2).padStart(64, '0')}`
+              valid = entity.topics.some((topic) => topic === accountTopic)
+            }
+          }
 
           valid ? filteredEntities.push(entity) : remainingEntities.push(entity)
         }
@@ -79,5 +83,9 @@ export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<
     }
 
     return { filteredEntities, remainingEntities }
+  }
+
+  protected keccak256(data: string): string {
+    return new Keccak(256).update(data).digest('hex')
   }
 }

@@ -1,6 +1,6 @@
 import {
   BlockchainRequestArgs,
-  ParsedTransactionContext,
+  ParsedEntityContext,
 } from '@aleph-indexer/framework'
 import {
   SolanaParsedInnerInstruction,
@@ -9,9 +9,9 @@ import {
 } from '../../../types.js'
 
 export type SolanaParsedTransactionContext =
-  ParsedTransactionContext<SolanaParsedTransaction>
+  ParsedEntityContext<SolanaParsedTransaction>
 
-export type SolanaInstructionContext = {
+export type SolanaParsedInstructionContext = {
   txContext: SolanaParsedTransactionContext
   parentIx?: SolanaParsedInstruction
   ix: SolanaParsedInstruction | SolanaParsedInnerInstruction

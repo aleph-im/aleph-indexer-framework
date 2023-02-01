@@ -12,9 +12,9 @@ import {
   EthereumBlockHistoryPaginationCursors,
   EthereumFetchBlocksOptions,
 } from './types.js'
-import { EthereumBlockStorage } from './dal/block.js'
+import { EthereumRawBlockStorage } from './dal/rawBlock.js'
 import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumBlock } from '../../../types.js'
+import { EthereumRawBlock } from '../../../types.js'
 
 const { JobRunnerReturnCode } = Utils
 
@@ -26,7 +26,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   constructor(
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
-    protected blockDAL?: EthereumBlockStorage,
+    protected blockDAL?: EthereumRawBlockStorage,
   ) {
     const blockTime = 10 + 2
 
@@ -106,7 +106,9 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     let error: undefined | Error
     let lastCursors: EthereumBlockHistoryPaginationCursors = {}
 
-    console.log(`fetchBlocks [${goingForward ? 'forward' : 'backward'}]`)
+    console.log(
+      `ethereum fetchBlocks [${goingForward ? 'forward' : 'backward'}]`,
+    )
 
     try {
       const blocks = this.ethereumClient.fetchBlocks(options)
@@ -164,7 +166,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   }
 
   protected async indexBlocks(
-    blocks: EthereumBlock[],
+    blocks: EthereumRawBlock[],
     goingForward: boolean,
   ): Promise<void> {
     if (!blocks.length) return

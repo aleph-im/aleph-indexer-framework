@@ -7,11 +7,12 @@ import {
 } from '@aleph-indexer/framework'
 import {
   EthereumIndexerWorkerDomainI,
+  EthereumParsedLogContext,
   EthereumParsedTransactionContext,
 } from '@aleph-indexer/ethereum'
 import {
   SolanaIndexerWorkerDomainI,
-  SolanaInstructionContext,
+  SolanaParsedInstructionContext,
 } from '@aleph-indexer/solana'
 
 export default class WorkerDomain
@@ -40,15 +41,15 @@ export default class WorkerDomain
   // Solana mandatory hooks implemented
 
   async solanaFilterInstructions(
-    ixsContext: SolanaInstructionContext[],
-  ): Promise<SolanaInstructionContext[]> {
+    ixsContext: SolanaParsedInstructionContext[],
+  ): Promise<SolanaParsedInstructionContext[]> {
     return ixsContext
   }
 
   async solanaIndexInstructions(
-    ixsContext: SolanaInstructionContext[],
+    ixsContext: SolanaParsedInstructionContext[],
   ): Promise<void> {
-    console.log('Index SOL transaction', JSON.stringify(ixsContext, null, 2))
+    console.log('Index solana transaction', JSON.stringify(ixsContext, null, 2))
   }
 
   // Ethereum mandatory hooks implemented
@@ -62,6 +63,14 @@ export default class WorkerDomain
   async ethereumIndexTransaction(
     ctx: EthereumParsedTransactionContext,
   ): Promise<void> {
-    console.log('Index ETH transaction', JSON.stringify(ctx, null, 2))
+    console.log('Index ethereum transaction', JSON.stringify(ctx, null, 2))
+  }
+
+  async ethereumFilterLog(ctx: EthereumParsedLogContext): Promise<boolean> {
+    return true
+  }
+
+  async ethereumIndexLog(ctx: EthereumParsedLogContext): Promise<void> {
+    console.log('Index ethereum log', JSON.stringify(ctx, null, 2))
   }
 }

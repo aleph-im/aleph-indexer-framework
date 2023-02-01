@@ -13,7 +13,7 @@ import {
   SolanaParsedInnerInstruction,
 } from '../types.js'
 import {
-  SolanaInstructionContext,
+  SolanaParsedInstructionContext,
   SolanaParsedTransactionContext,
 } from '../services/parser/src/types.js'
 
@@ -27,9 +27,11 @@ export type SolanaIndexerWorkerDomainI = {
     ctx: SolanaParsedTransactionContext,
   ): Promise<SolanaParsedTransactionContext>
   solanaFilterInstructions(
-    ixsContext: SolanaInstructionContext[],
-  ): Promise<SolanaInstructionContext[]>
-  solanaIndexInstructions(ixsContext: SolanaInstructionContext[]): Promise<void>
+    ixsContext: SolanaParsedInstructionContext[],
+  ): Promise<SolanaParsedInstructionContext[]>
+  solanaIndexInstructions(
+    ixsContext: SolanaParsedInstructionContext[],
+  ): Promise<void>
 }
 
 export default class SolanaIndexerWorkerDomain {
@@ -89,12 +91,12 @@ export default class SolanaIndexerWorkerDomain {
 
   protected mapTransactionContext(
     args: EntityDateRangeResponse<SolanaParsedTransaction>,
-    tx: SolanaParsedTransaction,
+    entity: SolanaParsedTransaction,
   ): SolanaParsedTransactionContext {
     const { account, startDate, endDate } = args
 
     return {
-      tx,
+      entity,
       parserContext: {
         account,
         startDate,
@@ -107,8 +109,8 @@ export default class SolanaIndexerWorkerDomain {
     ixs: (SolanaParsedInstruction | SolanaParsedInnerInstruction)[],
     ctx: SolanaParsedTransactionContext,
     parentIx?: SolanaParsedInstruction,
-    ixsCtx: SolanaInstructionContext[] = [],
-  ): SolanaInstructionContext[] {
+    ixsCtx: SolanaParsedInstructionContext[] = [],
+  ): SolanaParsedInstructionContext[] {
     for (const ix of ixs) {
       // @note: index inner ixs before
       if ('innerInstructions' in ix && ix.innerInstructions) {
@@ -135,13 +137,13 @@ export default class SolanaIndexerWorkerDomain {
 
   protected async mapTransaction(
     ctx: SolanaParsedTransactionContext,
-  ): Promise<SolanaInstructionContext[]> {
-    if (ctx.tx.parsed === undefined) {
+  ): Promise<SolanaParsedInstructionContext[]> {
+    if (ctx.entity.parsed === undefined) {
       console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
       return this.groupInstructions([], ctx)
     }
 
-    const instructions = ctx.tx.parsed.message.instructions
+    const instructions = ctx.entity.parsed.message.instructions
     return this.groupInstructions(instructions, ctx)
   }
 }

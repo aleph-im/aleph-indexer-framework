@@ -1,10 +1,6 @@
 import {
   BaseEntityFetcher,
   Blockchain,
-  CheckEntityRequestArgs,
-  DelEntityRequestArgs,
-  EntityState,
-  FetchEntitiesByIdRequestArgs,
   IndexableEntityType,
   PendingEntityStorage,
   RawEntityStorage,
@@ -28,21 +24,6 @@ export class EthereumTransactionFetcher extends BaseEntityFetcher<EthereumRawTra
     ]
   ) {
     super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
-  }
-
-  async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
-    args.ids = args.ids.map((id) => id.toLowerCase())
-    return super.getEntityState(args)
-  }
-
-  async delEntityCache(args: DelEntityRequestArgs): Promise<void> {
-    args.ids = args.ids.map((id) => id.toLowerCase())
-    return super.delEntityCache(args)
-  }
-
-  async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
-    args.ids = args.ids.map((id) => id.toLowerCase())
-    return super.fetchEntitiesById(args)
   }
 
   protected filterEntityId(id: string): boolean {

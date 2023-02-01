@@ -143,9 +143,9 @@ export abstract class BaseEntityHistoryFetcher<
     )
   }
 
-  protected async getPartialAccountState<
-    T extends AccountEntityHistoryState<CU>,
-  >(args: GetAccountEntityStateRequestArgs): Promise<T | undefined> {
+  protected async getPartialAccountState(
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<CU> | undefined> {
     const { account } = args
 
     const fetcher = this.getAccountFetcher(args.account)
@@ -154,11 +154,12 @@ export abstract class BaseEntityHistoryFetcher<
 
     return {
       fetcher: this.fetcherClient.getNodeId() || 'unknown',
+      type: this.type,
       blockchain: this.blockchainId,
       account,
       cursors: fetcherState.cursors,
       completeHistory: fetcher.isComplete('backward'),
-    } as T
+    }
   }
 
   abstract getAccountState(

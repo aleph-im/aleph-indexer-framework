@@ -26,9 +26,7 @@ export type IndexerWorkerDomainWithStats = {
   getStats(account: string): Promise<AccountStats>
 }
 
-export interface BlockchainIndexerWorkerI<
-  T extends ParsedEntity<unknown>,
-> {
+export interface BlockchainIndexerWorkerI<T extends ParsedEntity<unknown>> {
   onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void>
 }
 
@@ -62,9 +60,14 @@ export abstract class IndexerWorkerDomain<
   abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
 
   async onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void> {
-    const { blockchainId, account, startDate, endDate } = response
+    const { blockchainId, type, account, startDate, endDate } = response
 
-    console.log('Processing', blockchainId, account, startDate, endDate)
+    console.log(
+      `${blockchainId} ${type} | processing entities`,
+      account,
+      startDate,
+      endDate,
+    )
 
     const worker = this.blockchainInstances[blockchainId]
     await worker.onEntityDateRange(response)

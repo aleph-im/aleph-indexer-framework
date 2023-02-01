@@ -9,7 +9,7 @@ import {
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumSignature } from '../../../types.js'
+import { EthereumAccountTransactionHistoryStorageEntity } from '../../../types.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
 import {
   EthereumAccountTransactionHistoryPaginationCursor,
@@ -141,7 +141,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       {}
 
     console.log(`
-      fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
+      ethereum fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
         account: ${account}
       }
     `)
@@ -188,7 +188,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   }
 
   protected async indexSignatures(
-    signatures: EthereumSignature[],
+    signatures: EthereumAccountTransactionHistoryStorageEntity[],
     goingForward: boolean,
   ): Promise<void> {
     // @note: Already indexed on the ethereumClient

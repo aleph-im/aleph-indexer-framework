@@ -253,7 +253,7 @@ export class SolanaRPC {
     })
   }
 
-  async *fetchSignatures({
+  async *fetchTransactionHistory({
     address,
     before,
     until,
@@ -271,7 +271,7 @@ export class SolanaRPC {
       maxLimit = maxLimit - limit
 
       console.log(`
-        fetch signatures [${address}] { 
+        solana fetch signatures [${address}] { 
           address: ${address}
           before: ${before}
           until: ${until}

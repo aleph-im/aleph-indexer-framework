@@ -32,6 +32,10 @@ export default class MainDomain
             chunkTimeframe: 1000 * 60 * 60 * 24,
           },
           state: false,
+          logs: {
+            chunkDelay: 0,
+            chunkTimeframe: 1000 * 60 * 60 * 24,
+          },
         },
       },
       {
@@ -44,6 +48,7 @@ export default class MainDomain
             chunkTimeframe: 1000 * 60 * 60 * 24,
           },
           state: false,
+          logs: false,
         },
       },
       {
@@ -51,11 +56,12 @@ export default class MainDomain
         account: alephMessages,
         meta: undefined,
         index: {
-          transactions: {
+          transactions: false,
+          state: false,
+          logs: {
             chunkDelay: 0,
             chunkTimeframe: 1000 * 60 * 60 * 24,
           },
-          state: false,
         },
       },
     ]

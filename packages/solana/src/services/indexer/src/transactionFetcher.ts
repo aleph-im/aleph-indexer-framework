@@ -52,7 +52,7 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<So
         for (const tx of entities) {
           if (!tx.parsed) {
             console.log(
-              '👺 error incoming tx without parsed field',
+              'solana transaction | 👺 error incoming tx without parsed field',
               request.nonce,
               tx,
             )

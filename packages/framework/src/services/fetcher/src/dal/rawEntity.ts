@@ -1,4 +1,4 @@
-import { EntityStorage } from '@aleph-indexer/core'
+import { EntityStorage, EntityStorageOptions } from '@aleph-indexer/core'
 import { IndexableEntityType, RawEntity } from '../../../../types.js'
 
 export type RawEntityStorage<T extends RawEntity> = EntityStorage<T>
@@ -21,11 +21,13 @@ export function createRawEntityDAL<T extends RawEntity>(
   path: string,
   type: IndexableEntityType,
   caseSensitive = true,
-  name = `fetcher_raw_${type}`,
+  options?: Partial<EntityStorageOptions<T>>,
+  name = `fetcher_raw_${type}_entity`,
 ): RawEntityStorage<T> {
   return new EntityStorage<T>({
     name,
     path,
     key: [caseSensitive ? idCaseSensitiveKey : idKey],
+    ...options,
   })
 }

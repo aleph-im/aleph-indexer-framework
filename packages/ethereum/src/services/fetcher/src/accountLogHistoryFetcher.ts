@@ -11,6 +11,8 @@ import {
 import { EthereumClient } from '../../../sdk/client.js'
 import { EthereumRawLog } from '../../../types.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
+import { EthereumAccountLogHistoryStorage } from './dal/accountLogHistory.js'
+import { EthereumRawLogStorage } from './dal/rawLog.js'
 import {
   EthereumAccountLogHistoryPaginationCursor,
   EthereumFetchLogsOptions,
@@ -23,6 +25,8 @@ const { JobRunnerReturnCode } = Utils
  */
 export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<EthereumAccountLogHistoryPaginationCursor> {
   protected isContract = false
+  protected iterationLimit = 100
+  protected pageLimit = 10
 
   /**
    * Initializes the signature fetcher.
@@ -32,6 +36,8 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
    */
   constructor(
     protected account: string,
+    protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
+    protected rawLogDAL: EthereumRawLogStorage,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountLogHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
@@ -77,17 +83,20 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   protected async fetchForward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountLogHistoryPaginationCursor>
   > {
-    const { account } = this
+    const { account, pageLimit } = this
 
     // @note: not "before" (autodetected by the client (last block height))
     const until = this.fetcherState.cursors?.forward?.height
-    const iterationLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
+    const iterationLimit = !until
+      ? this.iterationLimit
+      : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchLogsOptions = {
       before: undefined,
       account,
       until,
       iterationLimit,
+      pageLimit,
       isContractAccount: this.isContract,
     }
 
@@ -103,7 +112,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   }): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountLogHistoryPaginationCursor>
   > {
-    const { account } = this
+    const { account, pageLimit } = this
 
     // @note: until is autodetected by the client (height 0 / first block)
     let before = this.fetcherState.cursors?.backward?.height
@@ -113,13 +122,14 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       before = blockState.cursors?.forward?.height
     }
 
-    const iterationLimit = 1000
+    const iterationLimit = this.iterationLimit
 
     const options: EthereumFetchLogsOptions = {
       until: undefined,
       before,
       account,
       iterationLimit,
+      pageLimit,
       isContractAccount: this.isContract,
     }
 
@@ -147,15 +157,15 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       {}
 
     console.log(`
-      fetchLogs [${goingForward ? 'forward' : 'backward'}] { 
+      ethereum fetchLogs [${goingForward ? 'forward' : 'backward'}] { 
         account: ${account}
       }
     `)
 
     try {
-      const signatures = this.ethereumClient.fetchLogs(options)
+      const items = this.ethereumClient.fetchLogs(options)
 
-      for await (const step of signatures) {
+      for await (const step of items) {
         const { chunk } = step
 
         await this.indexLogs(chunk, goingForward)
@@ -197,8 +207,15 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     logs: EthereumRawLog[],
     goingForward: boolean,
   ): Promise<void> {
-    console.log('🌈🌈🌈', logs.length)
+    // @note: If other account also fetchs the same log, accounts property will be merged in the database
+    const logsWithAccounts = logs.map((log) => ({
+      ...log,
+      accounts: [this.account],
+    }))
 
-    return
+    await Promise.all([
+      this.accountLogHistoryDAL.save(logsWithAccounts),
+      this.rawLogDAL.save(logs),
+    ])
   }
 }

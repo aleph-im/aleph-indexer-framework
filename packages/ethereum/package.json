@@ -36,7 +36,6 @@
     "ethers": "^5.7.2",
     "moleculer": "^0.14.24",
     "node-fetch": "^3.3.0",
-    "sha3": "^2.1.4",
     "web3": "^1.8.1"
   },
   "typedoc": {

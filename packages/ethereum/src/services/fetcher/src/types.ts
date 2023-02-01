@@ -9,9 +9,9 @@ import {
   FetcherState,
 } from '@aleph-indexer/framework'
 import {
-  EthereumBlock,
+  EthereumRawBlock,
   EthereumRawLog,
-  EthereumSignature,
+  EthereumAccountTransactionHistoryStorageEntity,
 } from '../../../types.js'
 
 export type EthereumFetcherJobRunnerOptions<C> = Omit<
@@ -34,7 +34,7 @@ export type EthereumBlockHistoryPaginationCursors =
   BaseFetcherPaginationCursors<EthereumBlockHistoryPaginationCursor>
 
 export type EthereumBlockPaginationResponse = BaseFetcherPaginationResponse<
-  EthereumBlock,
+  EthereumRawBlock,
   EthereumBlockHistoryPaginationCursor
 >
 
@@ -58,7 +58,7 @@ export type EthereumTransactionHistoryPaginationCursors =
 
 export type EthereumTransactionHistoryPaginationResponse =
   BaseFetcherPaginationResponse<
-    EthereumSignature,
+    EthereumAccountTransactionHistoryStorageEntity,
     EthereumAccountTransactionHistoryPaginationCursor
   >
 

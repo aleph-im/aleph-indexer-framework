@@ -1,8 +1,6 @@
+import { EthereumAccountTransactionHistoryStorage } from '../services/fetcher/src/dal/accountTransactionHistory.js'
+import { EthereumLogBloomStorage } from '../services/fetcher/src/dal/logBloom.js'
 import { EthereumClient } from './client.js'
-import {
-  EthereumAccountTransactionHistoryStorage,
-  EthereumLogBloomStorage,
-} from './dal.js'
 
 export function createEthereumClient(
   url: string,

@@ -26,7 +26,8 @@ export class SolanaTransactionFetcher extends BaseEntityFetcher<SolanaRawTransac
 
   protected filterEntityId(id: string): boolean {
     const isSignature = id.length >= 64 && id.length <= 88
-    if (!isSignature) console.log(`Fetcher Invalid signature ${id}`)
+    if (!isSignature)
+      console.log(`solana transaction | Fetcher Invalid signature ${id}`)
     return isSignature
   }
 

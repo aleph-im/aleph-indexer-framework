@@ -1,10 +1,7 @@
 import {
   BaseEntityHistoryFetcher,
   Blockchain,
-  AddAccountEntityRequestArgs,
-  DelAccountEntityRequestArgs,
   GetAccountEntityStateRequestArgs,
-  FetchAccountEntitiesByDateRequestArgs,
   FetcherMsClient,
   FetcherStateLevelStorage,
   PendingAccountStorage,
@@ -16,13 +13,15 @@ import {
 } from './types.js'
 import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
-import { EthereumSignature } from '../../../types.js'
 import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumAccountTransactionHistoryStorage } from '../../../sdk/dal.js'
+import {
+  EthereumAccountTransactionHistoryEntity,
+  EthereumAccountTransactionHistoryStorage,
+} from './dal/accountTransactionHistory.js'
 
 export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
   EthereumAccountTransactionHistoryPaginationCursor,
-  EthereumSignature
+  EthereumAccountTransactionHistoryEntity
 > {
   /**
    * Initialize the fetcher service.
@@ -42,23 +41,6 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
     super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
   }
 
-  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.addAccount(args)
-  }
-
-  async delAccount(args: DelAccountEntityRequestArgs): Promise<void> {
-    args.account = args.account.toLowerCase()
-    return super.delAccount(args)
-  }
-
-  async fetchAccountEntitiesByDate(
-    args: FetchAccountEntitiesByDateRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    args.account = args.account.toLowerCase()
-    return super.fetchAccountEntitiesByDate(args)
-  }
-
   /**
    * Returns the state of the transaction fetch process of a given account.
    * @param args The account address to get its fetch status.
@@ -66,8 +48,6 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
   async getAccountState(
     args: GetAccountEntityStateRequestArgs,
   ): Promise<EthereumAccountTransactionHistoryState | undefined> {
-    args.account = args.account.toLowerCase()
-
     const state: EthereumAccountTransactionHistoryState | undefined =
       await this.getPartialAccountState(args)
 

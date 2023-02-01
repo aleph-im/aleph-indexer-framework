@@ -146,9 +146,6 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     if (!availableToFetch) return []
 
     const ranges = await this.calculateRangesToFetch(account, availableToFetch)
-
-    console.log(state, ranges)
-
     return ranges
   }
 
@@ -276,14 +273,14 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       return oldState
     })
 
-    // console.log(
+    // this.log(
     //   `💿 compact fetching states
     //     newStates: ${newStates.length},
     //     oldStates: ${oldStates.length}
     //   `,
     // )
 
-    console.log(
+    this.log(
       `💿 compact fetching states *
         newStates: [
           ${newStates
@@ -354,7 +351,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       count++
     }
 
-    console.log(`📦 ${count} ranges processed`)
+    this.log(`📦 ${count} ranges processed`)
 
     return count > 0 ? JobRunnerReturnCode.Reset : interval + 1000 // @note: Delay 1 sec
   }
@@ -444,5 +441,10 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     return this.fetcherMsClient
       .useBlockchain(blockchainId)
       .getAccountEntityFetcherState({ type, account })
+  }
+
+  protected log(...msgs: any[]): void {
+    const { blockchainId, type } = this.config
+    console.log(`${blockchainId} ${type} | ${msgs.join(' ')}`)
   }
 }

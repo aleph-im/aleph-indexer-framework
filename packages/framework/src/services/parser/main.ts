@@ -33,7 +33,9 @@ export class ParserMsMain<
     blockchainId: Blockchain,
     chunk: RawEntityMsg<RE>[],
   ): Promise<void> {
-    console.log(`📩 ${chunk.length} txs received by the parser...`)
+    console.log(
+      `${blockchainId} ${type} | 📩 ${chunk.length} entities received by the parser...`,
+    )
 
     const parsedMsgs: ParsedEntityMsg<RE | PE>[] = []
 
@@ -88,7 +90,9 @@ export class ParserMsMain<
   ): Promise<void> {
     if (!msgs.length) return
 
-    console.log(`✉️  ${msgs.length} txs sent by the parser...`)
+    console.log(
+      `${blockchainId} ${type} | ✉️  ${msgs.length} entities sent by the parser...`,
+    )
 
     const [groups, broadcast] = this.groupEntities(msgs)
     const txGroups = Object.entries(groups)

@@ -29,33 +29,33 @@ export class AbiFactory {
 
     await this.saveAbiInCache(address, abi)
 
-    console.log(`ABI ${address}`, abi)
+    this.log(`ABI ${address}`, abi)
     return abi
   }
 
   protected async getAbiFromCache(address: string): Promise<Abi | void> {
     try {
       const cachePath = path.join(this.basePath, `${address}.json`)
-      console.log('load abi from cache => ', cachePath)
+      this.log('load abi from cache => ', cachePath)
 
       const file = await readFile(cachePath, 'utf8')
       const abi = JSON.parse(file)
 
-      console.log('cached abi => ', abi)
+      this.log('cached abi => ', abi)
 
       return abi
     } catch (e) {
       // @note: module not found
       if ((e as any)?.code === 'ENOENT') return undefined
 
-      console.log('cached abi error', e)
+      this.log('cached abi error', e)
       throw e
     }
   }
 
   protected async saveAbiInCache(address: string, abi: Abi): Promise<void> {
     const cachePath = path.join(this.basePath, `${address}.json`)
-    console.log('save abi in cache => ', cachePath)
+    this.log('save abi in cache => ', cachePath)
     await writeFile(cachePath, JSON.stringify(abi))
   }
 
@@ -70,7 +70,6 @@ export class AbiFactory {
     if (response.status !== 200) throw new Error(await response.text())
 
     const body: any = await response.json()
-    console.log(body)
 
     // @note: Rate limit error sent with status 200 OK...
     // {
@@ -82,5 +81,9 @@ export class AbiFactory {
       throw new Error(body.result)
 
     return body.result as Abi
+  }
+
+  protected log(...msgs: any[]): void {
+    console.log(`ethereum ${msgs.join(' ')}`)
   }
 }

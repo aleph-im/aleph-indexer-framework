@@ -221,7 +221,7 @@ export abstract class BaseIndexerEntityFetcher<
       request,
       response,
       remove: async () => {
-        console.log('----> REMOVE REQ 🎈', request.nonce)
+        this.log('----> REMOVE REQ 🎈', request.nonce)
         await this.entityRequestDAL.remove(request)
         // @todo: Update nonceIndexes / Remove from entityRequestResponseDAL
       },
@@ -276,7 +276,7 @@ export abstract class BaseIndexerEntityFetcher<
         requestsNonces.push([nonce, lastFilteredTxs])
       }
 
-      console.log(
+      this.log(
         `Filtering txs ${filteredTxs.length} of ${chunk.length} by ${requestCount} pending requests`,
       )
 
@@ -286,6 +286,8 @@ export abstract class BaseIndexerEntityFetcher<
         filteredTxs as unknown as EntityRequestResponse<T>[]
 
       const pendingIds = filteredTxs as unknown as EntityRequestPendingEntity[]
+
+      this.log(`Removing pendingIds`, pendingIds.map((p) => p.id).join('\n'))
 
       await this.entityRequestResponseDAL.save(requestResponse)
       await this.entityRequestPendingEntityDAL.remove(pendingIds)
@@ -298,7 +300,7 @@ export abstract class BaseIndexerEntityFetcher<
     const elapsed1 = Date.now() - now1
     const elapsed2 = Date.now() - now2
 
-    console.log(`onEntities time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
+    this.log(`onEntities time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
   }
 
   protected filterIncomingEntitiesByRequest(
@@ -325,8 +327,9 @@ export abstract class BaseIndexerEntityFetcher<
         break
       }
       default: {
-        remainingEntities.push(...entities)
-        break
+        throw new Error(
+          `"filterIncomingEntitiesByRequest" is NOT implemented on ${this.blockchainId} ${this.type} entity fetcher for ${request.type} request type`,
+        )
       }
     }
 
@@ -374,8 +377,6 @@ export abstract class BaseIndexerEntityFetcher<
         await this.entityRequestResponseDAL.save(requestResponse)
         await this.entityRequestPendingEntityDAL.save(pendingIds)
 
-        console.log('_____SAVE FILTERED__', nonce, pendingIds.length)
-
         count += ids.length
       }
 
@@ -394,12 +395,12 @@ export abstract class BaseIndexerEntityFetcher<
 
     const elapsed1 = Date.now() - now1
     const elapsed2 = Date.now() - now2
-    console.log(`onRequest time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
+    this.log(`onRequest time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
 
-    console.log(`🟡 Request ${nonce} inited`)
+    this.log(`🟡 Request ${nonce} inited`)
 
     if (!count) {
-      console.log(`🟢 Request ${nonce} complete`)
+      this.log(`🟢 Request ${nonce} complete`)
       this.resolveFuture(nonce)
     }
 
@@ -454,7 +455,7 @@ export abstract class BaseIndexerEntityFetcher<
 
     // @note: Debug false positives completing request when there are pending txs
     if (!pending) {
-      console.log('pending enter =>', pending)
+      this.log('pending enter =>', pending)
 
       const pendings = await this.entityRequestPendingEntityDAL
         .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
@@ -468,17 +469,17 @@ export abstract class BaseIndexerEntityFetcher<
 
       if (pending !== pending2) {
         pending = pending2
-        console.log('👺👺👺 ERROR checkRequestCompletion => ', nonce)
+        this.log('👺👺👺 ERROR checkRequestCompletion => ', nonce)
       }
     }
 
     if (pending) {
-      console.log(`🔴 Request ${nonce} pending`)
+      this.log(`🔴 Request ${nonce} pending`)
       return
     }
 
     await this.entityRequestDAL.save({ ...request, complete: true })
-    console.log(`🟢 Request ${nonce} complete`)
+    this.log(`🟢 Request ${nonce} complete`)
 
     this.resolveFuture(nonce)
   }
@@ -508,7 +509,7 @@ export abstract class BaseIndexerEntityFetcher<
 
       const tx = await this.entityRequestResponseDAL.get(signature)
 
-      console.log(
+      this.log(
         `[Retry] Check ${tx?.id}`,
         !!tx,
         tx && 'parsed' in (tx || {}),
@@ -563,7 +564,7 @@ export abstract class BaseIndexerEntityFetcher<
   ): Promise<void> {
     const ids = pendings.map(({ id }) => id)
 
-    console.log(`Retrying ${ids.length} ${this.blockchainId} ids`, pendings)
+    this.log(`Retrying ${ids.length} ${this.blockchainId} ids`, ids)
 
     return this.fetcherMsClient
       .useBlockchain(this.blockchainId as Blockchain)
@@ -573,7 +574,11 @@ export abstract class BaseIndexerEntityFetcher<
   protected async handleRemovePendingTransactions(
     pendings: EntityRequestPendingEntity[],
   ): Promise<void> {
-    console.log(`Removing ${pendings.length} pending signatures`)
+    this.log(`Removing ${pendings.length} pending signatures`)
     return this.entityRequestPendingEntityDAL.remove(pendings)
+  }
+
+  protected log(...msgs: any[]): void {
+    console.log(`${this.blockchainId} ${this.type} | ${msgs.join(' ')}`)
   }
 }

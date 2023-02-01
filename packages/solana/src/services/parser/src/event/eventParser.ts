@@ -1,6 +1,6 @@
 import { EventBase } from '@aleph-indexer/framework'
 import { SolanaParsedEvent } from '../../../../types.js'
-import { SolanaInstructionContext } from '../types.js'
+import { SolanaParsedInstructionContext } from '../types.js'
 
 /**
  * Handles the parsing process of an instruction.
@@ -14,11 +14,11 @@ export abstract class EventParser<
    * Processes the instruction to obtain an event.
    * @param ixCtx Stores ixns and txn info.
    */
-  abstract parse(ixCtx: SolanaInstructionContext): Event
+  abstract parse(ixCtx: SolanaParsedInstructionContext): Event
 
-  parseBase(ixCtx: SolanaInstructionContext): EventBase<EventType> {
+  parseBase(ixCtx: SolanaParsedInstructionContext): EventBase<EventType> {
     const { ix, parentIx, txContext } = ixCtx
-    const parentTx = txContext.tx
+    const parentTx = txContext.entity
 
     const parsed = (ix as SolanaParsedEvent<EventType, Info>).parsed
 
