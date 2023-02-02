@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/solana",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -23,7 +23,6 @@
     "luxon": "^3.0.4"
   },
   "devDependencies": {
-    "@project-serum/borsh": "0.2.5",
     "@types/bn.js": "^5.1.0",
     "@types/bs58": "^4.0.1",
     "@types/luxon": "^3.0.1",
@@ -37,6 +36,7 @@
     "@aleph-indexer/framework": "^1.0.33",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
+    "@project-serum/borsh": "0.2.5",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
     "buffer-layout": "^1.2.2",

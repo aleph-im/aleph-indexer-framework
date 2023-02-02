@@ -88,7 +88,7 @@ export default class SolanaIndexerWorkerDomain {
       new StreamMap(indexTransactions),
       new StreamUnBuffer(),
       new StreamMap(this.mapTransaction.bind(this)),
-      new StreamFilter(filterInstruction),
+      new StreamMap(this.mapInstructions.bind(this, filterInstruction)),
       new StreamBuffer(this.hooks.solanaInstructionBufferLength || 1000),
       new StreamMap(indexInstructions),
     )
@@ -114,6 +114,16 @@ export default class SolanaIndexerWorkerDomain {
     if (entity.parsed === undefined)
       console.log('🟥⚠️ WRONG PARSED TX ⚠️🟥', JSON.stringify(entity, null, 2))
     return this.groupInstructions(entity)
+  }
+
+  protected async mapInstructions(
+    filterInstruction: (ix: SolanaParsedInstructionContext) => Promise<boolean>,
+    entities: SolanaParsedInstructionContext[],
+  ): Promise<SolanaParsedInstructionContext[]> {
+    const promises = await Promise.all(
+      entities.map(async (ix) => await filterInstruction(ix)),
+    )
+    return entities.filter((ix, index) => promises[index])
   }
 
   protected groupInstructions(
@@ -148,8 +158,8 @@ export default class SolanaIndexerWorkerDomain {
 
   protected checkSolanaTransactionIndexerHooks(): void {
     if (
-      this.hooks.solanaFilterTransaction === undefined ||
-      this.hooks.solanaIndexTransactions === undefined
+      this.hooks.solanaFilterInstruction === undefined ||
+      this.hooks.solanaIndexInstructions === undefined
     ) {
       throw new Error(
         'SolanaTransactionIndexerWorkerDomainI or SolanaIndexerWorkerDomainI must be implemented on WorkerDomain class',
