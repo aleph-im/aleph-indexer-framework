@@ -6,47 +6,46 @@ import {
   IndexerDomainContext,
   EntityDateRangeResponse,
   IndexableEntityType,
+  ParserContext,
 } from '@aleph-indexer/framework'
 import {
   SolanaParsedTransaction,
   SolanaParsedInstruction,
   SolanaParsedInnerInstruction,
 } from '../types.js'
-import {
-  SolanaParsedInstructionContext,
-  SolanaParsedTransactionContext,
-} from '../services/parser/src/types.js'
+import { SolanaParsedInstructionContext } from '../services/parser/src/types.js'
 
-const { StreamFilter, StreamMap, StreamBuffer } = Utils
+const { StreamFilter, StreamMap, StreamBuffer, StreamUnBuffer } = Utils
 
-export type SolanaIndexerWorkerDomainI = {
+export type SolanaTransactionIndexerWorkerDomainI = {
+  solanaTransactionBufferLength?: number // default 1000
+  solanaInstructionBufferLength?: number // default 1000
   solanaFilterTransaction?(
-    ctx: SolanaParsedTransactionContext,
+    context: ParserContext,
+    entity: SolanaParsedTransaction,
   ): Promise<boolean>
-  solanaIndexTransaction?(
-    ctx: SolanaParsedTransactionContext,
-  ): Promise<SolanaParsedTransactionContext>
-  solanaFilterInstructions(
-    ixsContext: SolanaParsedInstructionContext[],
-  ): Promise<SolanaParsedInstructionContext[]>
+  solanaIndexTransactions?(
+    context: ParserContext,
+    entities: SolanaParsedTransaction[],
+  ): Promise<SolanaParsedTransaction[]>
+  solanaFilterInstruction(
+    context: ParserContext,
+    entity: SolanaParsedInstructionContext,
+  ): Promise<boolean>
   solanaIndexInstructions(
-    ixsContext: SolanaParsedInstructionContext[],
+    context: ParserContext,
+    entities: SolanaParsedInstructionContext[],
   ): Promise<void>
 }
+
+export type SolanaIndexerWorkerDomainI = SolanaTransactionIndexerWorkerDomainI
 
 export default class SolanaIndexerWorkerDomain {
   constructor(
     protected context: IndexerDomainContext,
     protected hooks: SolanaIndexerWorkerDomainI,
   ) {
-    if (
-      this.hooks.solanaFilterInstructions === undefined ||
-      this.hooks.solanaIndexInstructions === undefined
-    ) {
-      throw new Error(
-        'SolanaIndexerWorkerDomainI must be implemented on WorkerDomain class',
-      )
-    }
+    this.checkSolanaIndexerHooks()
   }
 
   async onEntityDateRange(
@@ -62,89 +61,100 @@ export default class SolanaIndexerWorkerDomain {
   protected async onTransactionDateRange(
     response: EntityDateRangeResponse<SolanaParsedTransaction>,
   ): Promise<void> {
-    const { entities } = response
+    const { entities, ...context } = response
 
     const filterTransaction =
-      this.hooks.solanaFilterTransaction?.bind(this.hooks) ||
-      this.filterTransaction.bind(this)
-    const indexTransaction =
-      this.hooks.solanaIndexTransaction?.bind(this.hooks) ||
-      this.indexTransaction.bind(this)
-    const filterInstructions = this.hooks.solanaFilterInstructions.bind(
+      this.hooks.solanaFilterTransaction?.bind(this.hooks, context) ||
+      this.filterTransaction.bind(this, context)
+
+    const indexTransactions =
+      this.hooks.solanaIndexTransactions?.bind(this.hooks, context) ||
+      this.indexTransactions.bind(this, context)
+
+    const filterInstruction = this.hooks.solanaFilterInstruction.bind(
       this.hooks,
+      context,
     )
+
     const indexInstructions = this.hooks.solanaIndexInstructions.bind(
       this.hooks,
+      context,
     )
 
     return promisify(pipeline)(
       entities as any,
-      new StreamMap(this.mapTransactionContext.bind(this, response)),
       new StreamFilter(filterTransaction),
-      new StreamMap(indexTransaction),
+      new StreamBuffer(this.hooks.solanaTransactionBufferLength || 1000),
+      new StreamMap(indexTransactions),
+      new StreamUnBuffer(),
       new StreamMap(this.mapTransaction.bind(this)),
-      new StreamMap(filterInstructions),
-      new StreamBuffer(1000),
+      new StreamFilter(filterInstruction),
+      new StreamBuffer(this.hooks.solanaInstructionBufferLength || 1000),
       new StreamMap(indexInstructions),
     )
   }
 
-  protected mapTransactionContext(
-    args: EntityDateRangeResponse<SolanaParsedTransaction>,
-    entity: SolanaParsedTransaction,
-  ): SolanaParsedTransactionContext {
-    const { account, startDate, endDate } = args
-
-    return {
-      entity,
-      parserContext: {
-        account,
-        startDate,
-        endDate,
-      },
-    }
-  }
-
-  protected groupInstructions(
-    ixs: (SolanaParsedInstruction | SolanaParsedInnerInstruction)[],
-    ctx: SolanaParsedTransactionContext,
-    parentIx?: SolanaParsedInstruction,
-    ixsCtx: SolanaParsedInstructionContext[] = [],
-  ): SolanaParsedInstructionContext[] {
-    for (const ix of ixs) {
-      // @note: index inner ixs before
-      if ('innerInstructions' in ix && ix.innerInstructions) {
-        this.groupInstructions(ix.innerInstructions, ctx, ix, ixsCtx)
-      }
-
-      ixsCtx.push({ ix, txContext: ctx, parentIx })
-    }
-
-    return ixsCtx
-  }
-
   protected async filterTransaction(
-    ctx: SolanaParsedTransactionContext,
+    context: ParserContext,
+    entity: SolanaParsedTransaction,
   ): Promise<boolean> {
     return true
   }
 
-  protected async indexTransaction(
-    ctx: SolanaParsedTransactionContext,
-  ): Promise<SolanaParsedTransactionContext> {
-    return ctx
+  protected async indexTransactions(
+    context: ParserContext,
+    entities: SolanaParsedTransaction[],
+  ): Promise<SolanaParsedTransaction[]> {
+    return entities
   }
 
   protected async mapTransaction(
-    ctx: SolanaParsedTransactionContext,
+    entity: SolanaParsedTransaction,
   ): Promise<SolanaParsedInstructionContext[]> {
-    if (ctx.entity.parsed === undefined) {
-      console.log('wrong parsed tx --->', JSON.stringify(ctx, null, 2))
-      return this.groupInstructions([], ctx)
+    if (entity.parsed === undefined)
+      console.log('🟥⚠️ WRONG PARSED TX ⚠️🟥', JSON.stringify(entity, null, 2))
+    return this.groupInstructions(entity)
+  }
+
+  protected groupInstructions(
+    parentTransaction: SolanaParsedTransaction,
+    parentInstruction?: SolanaParsedInstruction,
+    instructions: (
+      | SolanaParsedInstruction
+      | SolanaParsedInnerInstruction
+    )[] = parentTransaction.parsed?.message?.instructions || [],
+    output: SolanaParsedInstructionContext[] = [],
+  ): SolanaParsedInstructionContext[] {
+    for (const instruction of instructions) {
+      // @note: index inner instructions before
+      if ('innerInstructions' in instruction && instruction.innerInstructions) {
+        this.groupInstructions(
+          parentTransaction,
+          instruction,
+          instruction.innerInstructions,
+          output,
+        )
+      }
+
+      output.push({ parentTransaction, parentInstruction, instruction })
     }
 
-    const instructions = ctx.entity.parsed.message.instructions
-    return this.groupInstructions(instructions, ctx)
+    return output
+  }
+
+  protected checkSolanaIndexerHooks(): void {
+    return this.checkSolanaTransactionIndexerHooks()
+  }
+
+  protected checkSolanaTransactionIndexerHooks(): void {
+    if (
+      this.hooks.solanaFilterTransaction === undefined ||
+      this.hooks.solanaIndexTransactions === undefined
+    ) {
+      throw new Error(
+        'SolanaTransactionIndexerWorkerDomainI or SolanaIndexerWorkerDomainI must be implemented on WorkerDomain class',
+      )
+    }
   }
 }
 

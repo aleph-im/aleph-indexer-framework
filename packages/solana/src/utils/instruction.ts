@@ -110,11 +110,11 @@ export function getCollateralAmount(
 export function getSubInstructions(
   ixCtx: SolanaParsedInstructionContext,
 ): (AlephParsedInstruction | AlephParsedInnerInstruction)[] {
-  const { ix, parentIx } = ixCtx
+  const { instruction, parentInstruction } = ixCtx
 
-  return parentIx
+  return parentInstruction
     ? // Sibling ixs
-      (parentIx.innerInstructions || []).slice(ix.index + 1)
+      (parentInstruction.innerInstructions || []).slice(instruction.index + 1)
     : // ix inner ixs
-      (ix as AlephParsedInstruction).innerInstructions || []
+      (instruction as AlephParsedInstruction).innerInstructions || []
 }

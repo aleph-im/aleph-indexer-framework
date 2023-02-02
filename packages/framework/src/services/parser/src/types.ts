@@ -1,16 +1,15 @@
 import { IndexableEntityType, ParsedEntity, RawEntity } from '../../../types.js'
 import { BlockchainRequestArgs } from '../../types.js'
 
-export type ParserContext = {
-  account: string
-  startDate: number
-  endDate: number
-}
-
-export type ParsedEntityContext<T> = {
-  entity: T
-  parserContext: ParserContext
-}
+export type ParserContext =
+  | {
+      account: string
+      startDate: number
+      endDate: number
+    }
+  | {
+      ids: string[]
+    }
 
 /**
  * Contains the original and parsed data, as well as the context of the parsing.

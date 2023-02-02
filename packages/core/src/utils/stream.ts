@@ -186,3 +186,30 @@ export class StreamBuffer<I> extends Transform {
     return next()
   }
 }
+
+export class StreamUnBuffer<I> extends Transform {
+  constructor() {
+    super({
+      readableObjectMode: true,
+      writableObjectMode: true,
+    })
+  }
+
+  _transform(
+    input: I | I[],
+    encoding: BufferEncoding,
+    next: TransformCallback,
+  ): void {
+    try {
+      if (Array.isArray(input)) {
+        for (const i of input) this.push(i)
+      } else {
+        this.push(input)
+      }
+    } catch (e) {
+      return next(e as Error)
+    }
+
+    return next()
+  }
+}

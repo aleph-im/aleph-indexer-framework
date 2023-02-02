@@ -248,8 +248,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
 
         await this.processSignatures(chunk, goingForward, runOffset, count)
 
-        count += chunk.length
-
+        count += step.count
         lastCursors = step.cursors
       }
     } catch (e) {

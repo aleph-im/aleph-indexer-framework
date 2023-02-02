@@ -17,18 +17,18 @@ export abstract class EventParser<
   abstract parse(ixCtx: SolanaParsedInstructionContext): Event
 
   parseBase(ixCtx: SolanaParsedInstructionContext): EventBase<EventType> {
-    const { ix, parentIx, txContext } = ixCtx
-    const parentTx = txContext.entity
+    const { instruction, parentInstruction, parentTransaction } = ixCtx
+    const parsed = (instruction as SolanaParsedEvent<EventType, Info>).parsed
 
-    const parsed = (ix as SolanaParsedEvent<EventType, Info>).parsed
+    const id = `${parentTransaction.signature}${
+      parentInstruction
+        ? `:${parentInstruction.index.toString().padStart(2, '0')}`
+        : ''
+    }:${instruction.index.toString().padStart(2, '0')}`
 
-    const id = `${parentTx.signature}${
-      parentIx ? `:${parentIx.index.toString().padStart(2, '0')}` : ''
-    }:${ix.index.toString().padStart(2, '0')}`
-
-    const timestamp = parentTx.blockTime
-      ? parentTx.blockTime * 1000
-      : parentTx.slot
+    const timestamp = parentTransaction.blockTime
+      ? parentTransaction.blockTime * 1000
+      : parentTransaction.slot
 
     return {
       ...parsed.info,

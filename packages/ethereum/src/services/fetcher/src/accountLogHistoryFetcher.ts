@@ -71,10 +71,14 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     this.isContract = await this.ethereumClient.isContractAddress(this.account)
   }
 
-  getNextRun(fetcherType?: 'forward' | 'backward'): number {
+  async getNextRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
     // @note: If the block store is not completely synced, ignore backward job and focus on forward job times
-    if (!this.blockHistoryFetcher.isComplete('backward')) {
-      return super.getNextRun('forward')
+    if (fetcherType === 'backward') {
+      const isComplete = await this.blockHistoryFetcher.isComplete('backward')
+      if (!isComplete) {
+        const continueFetching = await this.continueFetchingBackward()
+        if (!continueFetching) return Date.now() + 1000 * 10
+      }
     }
 
     return super.getNextRun(fetcherType)
@@ -170,7 +174,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
 
         await this.indexLogs(chunk, goingForward)
 
-        count += chunk.length
+        count += step.count
         lastCursors = step.cursors
       }
     } catch (e) {
@@ -191,11 +195,11 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     error?: Error
   }): Promise<boolean> {
     const { newItems, error, fetcherState } = ctx
-    const isBlockComplete = this.blockHistoryFetcher.isComplete('backward')
     const fetcherBackward = fetcherState.cursors?.backward?.height
+    const isComplete = await this.blockHistoryFetcher.isComplete('backward')
 
     return (
-      isBlockComplete &&
+      isComplete &&
       !newItems &&
       !error &&
       fetcherBackward !== undefined &&
@@ -217,5 +221,21 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       this.accountLogHistoryDAL.save(logsWithAccounts),
       this.rawLogDAL.save(logs), // @note: This is not necessary (just a  performance hack)
     ])
+  }
+
+  protected async continueFetchingBackward(): Promise<boolean> {
+    const lastBackwardBlockHeight = await this.getLastBackwardBlockHeight()
+    const lastBackwardLogHeight = await this.getLastBackwardLogHeight()
+    return lastBackwardBlockHeight < lastBackwardLogHeight
+  }
+
+  protected async getLastBackwardBlockHeight(): Promise<number> {
+    const blockState = await this.blockHistoryFetcher.getState()
+    return blockState?.cursors?.backward?.height || Number.MAX_SAFE_INTEGER
+  }
+
+  protected async getLastBackwardLogHeight(): Promise<number> {
+    const state = await this.getState()
+    return state?.cursors?.backward?.height || Number.MAX_SAFE_INTEGER
   }
 }

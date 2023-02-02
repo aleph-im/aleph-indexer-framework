@@ -13,6 +13,7 @@ export interface BaseFetcherPaginationCursors<C> {
 export type BaseFetcherPaginationResponse<D, C> = {
   cursors: BaseFetcherPaginationCursors<C>
   chunk: D[]
+  count: number
 }
 
 // ------------------------ Options ---------------------

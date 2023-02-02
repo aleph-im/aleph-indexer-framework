@@ -1,4 +1,5 @@
 import {
+  AccountIndexerConfigWithMeta,
   AccountIndexerRequestArgs,
   EntityDateRangeResponse,
   IndexerDomainContext,
@@ -57,7 +58,9 @@ export abstract class IndexerWorkerDomain<
     )
   }
 
-  abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
+  abstract onNewAccount(
+    config: AccountIndexerConfigWithMeta<unknown> | AccountIndexerRequestArgs,
+  ): Promise<void>
 
   async onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void> {
     const { blockchainId, type, account, startDate, endDate } = response

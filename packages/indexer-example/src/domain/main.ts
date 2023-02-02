@@ -16,7 +16,7 @@ export default class MainDomain
     })
   }
 
-  async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<undefined>[]> {
+  async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<number>[]> {
     const alephTokenEth = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
     const alephMessages = '0x166fd4299364B21c7567e163d85D78d2fb2f8Ad5'
@@ -25,7 +25,7 @@ export default class MainDomain
       {
         blockchainId: Blockchain.Ethereum,
         account: alephTokenEth,
-        meta: undefined,
+        meta: 1,
         index: {
           transactions: {
             chunkDelay: 0,
@@ -41,7 +41,7 @@ export default class MainDomain
       {
         blockchainId: Blockchain.Solana,
         account: alephTokenSol,
-        meta: undefined,
+        meta: 2,
         index: {
           transactions: {
             chunkDelay: 0,
@@ -54,7 +54,7 @@ export default class MainDomain
       {
         blockchainId: Blockchain.Ethereum,
         account: alephMessages,
-        meta: undefined,
+        meta: 3,
         index: {
           transactions: false,
           state: false,

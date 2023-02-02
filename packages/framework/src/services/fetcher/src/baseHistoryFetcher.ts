@@ -32,11 +32,11 @@ export class BaseHistoryFetcher<C> {
   }
 
   async init(): Promise<void> {
-    await this.loadFetcherState()
+    const fetcherState = await this.getFetcherState()
 
     if (this.options.jobs?.backward) {
       const { frequency: intervalInit, complete } =
-        this.fetcherState.jobs?.backward || {}
+        fetcherState.jobs?.backward || {}
 
       if (!complete) {
         this.backwardJob = new Utils.JobRunner({
@@ -50,7 +50,7 @@ export class BaseHistoryFetcher<C> {
 
     if (this.options.jobs?.forward) {
       const { frequency: intervalInit, complete } =
-        this.fetcherState.jobs?.forward || {}
+        fetcherState.jobs?.forward || {}
 
       if (!complete) {
         this.forwardJob = new Utils.JobRunner({
@@ -95,61 +95,59 @@ export class BaseHistoryFetcher<C> {
   }
 
   async getState(): Promise<BaseFetcherState<C>> {
-    await this.loadFetcherState()
+    await this.getFetcherState()
     return this.fetcherState
   }
 
   async complete(fetcherType: 'forward' | 'backward'): Promise<void> {
+    const fetcherState = await this.getFetcherState()
+
     const job = fetcherType === 'backward' ? this.backwardJob : this.forwardJob
     job?.stop()
 
-    this.fetcherState.jobs[fetcherType].complete = true
+    fetcherState.jobs[fetcherType].complete = true
     await this.saveFetcherState()
   }
 
-  isComplete(fetcherType?: 'forward' | 'backward'): boolean {
+  async isComplete(fetcherType?: 'forward' | 'backward'): Promise<boolean> {
+    const fetcherState = await this.getFetcherState()
+
     return fetcherType
-      ? this.fetcherState.jobs[fetcherType].complete
-      : this.fetcherState.jobs.forward.complete &&
-          this.fetcherState.jobs.backward.complete
+      ? fetcherState.jobs[fetcherType].complete
+      : fetcherState.jobs.forward.complete &&
+          fetcherState.jobs.backward.complete
   }
 
-  getLastRun(fetcherType?: 'forward' | 'backward'): number {
+  async getLastRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
+    const fetcherState = await this.getFetcherState()
+
     return fetcherType
-      ? this.fetcherState.jobs[fetcherType].lastRun
+      ? fetcherState.jobs[fetcherType].lastRun
       : Math.max(
-          this.fetcherState.jobs.forward.lastRun,
-          this.fetcherState.jobs.backward.lastRun,
+          fetcherState.jobs.forward.lastRun,
+          fetcherState.jobs.backward.lastRun,
         )
   }
 
-  getNextRun(fetcherType?: 'forward' | 'backward'): number {
+  async getNextRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
+    const fetcherState = await this.getFetcherState()
+
     if (fetcherType) {
-      return this.isComplete(fetcherType)
+      return (await this.isComplete(fetcherType))
         ? Number.POSITIVE_INFINITY
-        : this.getLastRun(fetcherType) +
-            (this.fetcherState.jobs[fetcherType].frequency ||
+        : (await this.getLastRun(fetcherType)) +
+            (fetcherState.jobs[fetcherType].frequency ||
               this.options.jobs?.[fetcherType]?.interval ||
               0)
     }
 
     return Math.min(
-      this.isComplete('forward')
-        ? Number.POSITIVE_INFINITY
-        : this.getLastRun('forward') +
-            (this.fetcherState.jobs['forward'].frequency ||
-              this.options.jobs?.['forward']?.interval ||
-              0),
-      this.isComplete('backward')
-        ? Number.POSITIVE_INFINITY
-        : this.getLastRun('backward') +
-            (this.fetcherState.jobs['backward'].frequency ||
-              this.options.jobs?.['backward']?.interval ||
-              0),
+      await this.getNextRun('forward'),
+      await this.getNextRun('backward'),
     )
   }
 
-  getPendingRuns(fetcherType?: 'forward' | 'backward'): number {
+  async getPendingRuns(fetcherType?: 'forward' | 'backward'): Promise<number> {
     if (fetcherType) {
       return (
         (fetcherType === 'forward'
@@ -169,8 +167,8 @@ export class BaseHistoryFetcher<C> {
    * Initialises the fetcherState class property of the Fetcher instance, could get
    * the data from the data access layer when the fetching progress is restarted.
    */
-  protected async loadFetcherState(): Promise<void> {
-    if (this.fetcherState) return
+  protected async getFetcherState(): Promise<BaseFetcherState<C>> {
+    if (this.fetcherState) return this.fetcherState
 
     const id = this.options.id
     this.fetcherState = (await this.fetcherStateDAL.get(id)) || {
@@ -193,6 +191,8 @@ export class BaseHistoryFetcher<C> {
         },
       },
     }
+
+    return this.fetcherState
   }
 
   /**
@@ -216,7 +216,9 @@ export class BaseHistoryFetcher<C> {
         : this.options.jobs?.forward
     ) as BaseFetcherJobRunnerOptions<C>
 
-    const jobState = this.fetcherState.jobs[fetcherType]
+    const fetcherState = await this.getFetcherState()
+
+    const jobState = fetcherState.jobs[fetcherType]
 
     if (jobState.complete) return Utils.JobRunnerReturnCode.Stop
     jobState.lastRun = Date.now()
@@ -236,12 +238,12 @@ export class BaseHistoryFetcher<C> {
         opts.updateCursors || this._updateCursors.bind(this, fetcherType)
 
       const result = await updateFn({
-        prevCursors: this.fetcherState.cursors,
+        prevCursors: fetcherState.cursors,
         lastCursors: lastCursor,
       })
 
       newTxs = newTxs || result.newItems
-      this.fetcherState.cursors = result.newCursors
+      fetcherState.cursors = result.newCursors
       jobState.numRuns++
     }
 
@@ -255,7 +257,7 @@ export class BaseHistoryFetcher<C> {
       opts.checkComplete || this._checkComplete.bind(this, fetcherType)
 
     jobState.complete = await checkCompleteFn({
-      fetcherState: this.fetcherState,
+      fetcherState,
       jobState,
       newItems: newTxs,
       error,

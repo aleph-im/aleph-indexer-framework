@@ -325,7 +325,7 @@ export class SolanaRPC {
 
       if (count === 0) break
 
-      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+      yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 

@@ -1,6 +1,7 @@
 import { Utils } from '@aleph-indexer/core'
 import { EntityRequest } from '../../../services/indexer/src/dal/entityRequest.js'
 import {
+  AccountIndexerConfigWithMeta,
   AccountIndexerRequestArgs,
   AccountIndexerState,
   GetEntityPendingRequestsRequestArgs,
@@ -47,8 +48,10 @@ export type IndexerMainDomainWithStats = {
 /**
  * Describes the main indexer domain class capable of account discovery.
  */
-export type IndexerMainDomainWithDiscovery = {
-  discoverAccounts(): Promise<AccountIndexerRequestArgs[]>
+export type IndexerMainDomainWithDiscovery<M = unknown> = {
+  discoverAccounts(): Promise<
+    (AccountIndexerConfigWithMeta<M> | AccountIndexerRequestArgs)[]
+  >
 }
 
 export type IndexerMainDomainConfig = {
@@ -248,7 +251,7 @@ export abstract class IndexerMainDomain {
       return !this.accounts[blockchainId].has(account)
     })
 
-    await this.onDiscover(newOptions)
+    await this.indexAccounts(newOptions)
   }
 
   /**
@@ -256,8 +259,11 @@ export abstract class IndexerMainDomain {
    * @param options The indexer options to use for the new account.
    * @protected
    */
-  protected async onDiscover(
-    options: AccountIndexerRequestArgs[],
+  protected async indexAccounts(
+    options: (
+      | AccountIndexerConfigWithMeta<unknown>
+      | AccountIndexerRequestArgs
+    )[],
   ): Promise<void> {
     await Promise.all(
       options.map(async (option) => {

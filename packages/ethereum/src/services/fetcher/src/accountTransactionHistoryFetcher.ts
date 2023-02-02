@@ -22,6 +22,8 @@ const { JobRunnerReturnCode } = Utils
  * Handles the fetching and processing of signatures on an account.
  */
 export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher<EthereumAccountTransactionHistoryPaginationCursor> {
+  protected previousBackwardBlockCursor = Number.MAX_SAFE_INTEGER
+
   /**
    * Initializes the signature fetcher.
    * @param account The account account to fetch related signatures for.
@@ -58,10 +60,20 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     )
   }
 
-  getNextRun(fetcherType?: 'forward' | 'backward'): number {
+  async init(): Promise<void> {
+    await super.init()
+    this.previousBackwardBlockCursor = await this.getLastBackwardBlockHeight()
+  }
+
+  async getNextRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
+    const blockHistoryComplete = await this.blockHistoryFetcher.isComplete(
+      'backward',
+    )
+
     // @note: If the block store is not completely synced, ignore backward job and focus on forward job times
-    if (!this.blockHistoryFetcher.isComplete('backward')) {
-      return super.getNextRun('forward')
+    if (!blockHistoryComplete) {
+      const newBlocks = await this.areThereNewBlocks()
+      if (!newBlocks) return super.getNextRun('forward')
     }
 
     return super.getNextRun(fetcherType)
@@ -83,7 +95,10 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       iterationLimit,
     }
 
-    const { lastCursors, error } = await this.fetchSignatures(options, true)
+    const { lastCursors, error } = await this.fetchTransactionHistory(
+      options,
+      true,
+    )
     return { lastCursors, error }
   }
 
@@ -114,7 +129,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       iterationLimit,
     }
 
-    const { lastCursors, error, count } = await this.fetchSignatures(
+    const { lastCursors, error, count } = await this.fetchTransactionHistory(
       options,
       false,
     )
@@ -125,7 +140,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     return { lastCursors, error, newInterval }
   }
 
-  protected async fetchSignatures(
+  protected async fetchTransactionHistory(
     options: EthereumFetchSignaturesOptions,
     goingForward: boolean,
   ): Promise<{
@@ -154,7 +169,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
 
         await this.indexSignatures(chunk, goingForward)
 
-        count += chunk.length
+        count += step.count
         lastCursors = step.cursors
       }
     } catch (e) {
@@ -175,8 +190,10 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     error?: Error
   }): Promise<boolean> {
     const { newItems, error, fetcherState } = ctx
-    const isBlockComplete = this.blockHistoryFetcher.isComplete('backward')
     const fetcherBackward = fetcherState.cursors?.backward?.height
+    const isBlockComplete = await this.blockHistoryFetcher.isComplete(
+      'backward',
+    )
 
     return (
       isBlockComplete &&
@@ -194,5 +211,19 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     // @note: Already indexed on the ethereumClient
     // @note: This is used just to track the sync state of each account independently
     return
+  }
+
+  protected async areThereNewBlocks(): Promise<boolean> {
+    const lastBackwardBlockCursor = await this.getLastBackwardBlockHeight()
+
+    const nexBlocks = lastBackwardBlockCursor < this.previousBackwardBlockCursor
+    this.previousBackwardBlockCursor = lastBackwardBlockCursor
+
+    return nexBlocks
+  }
+
+  protected async getLastBackwardBlockHeight(): Promise<number> {
+    const blockState = await this.blockHistoryFetcher.getState()
+    return blockState?.cursors?.backward?.height || Number.MAX_SAFE_INTEGER
   }
 }

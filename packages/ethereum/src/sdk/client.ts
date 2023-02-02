@@ -258,7 +258,7 @@ export class EthereumClient {
         }
       }
 
-      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+      yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 
@@ -318,7 +318,7 @@ export class EthereumClient {
         }
       }
 
-      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+      yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 
@@ -378,7 +378,7 @@ export class EthereumClient {
         }
       }
 
-      yield { chunk, cursors: { backward: firstKey, forward: lastKey } }
+      yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
 

@@ -160,13 +160,15 @@ export abstract class BaseEntityHistoryFetcher<
     const fetcherState = await fetcher.getState()
     if (!fetcherState) return
 
+    const completeHistory = await fetcher.isComplete('backward')
+
     return {
       fetcher: this.fetcherClient.getNodeId() || 'unknown',
       type: this.type,
       blockchain: this.blockchainId,
       account,
       cursors: fetcherState.cursors,
-      completeHistory: fetcher.isComplete('backward'),
+      completeHistory,
     }
   }
 
