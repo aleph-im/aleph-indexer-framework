@@ -1,4 +1,3 @@
-import { Keccak } from 'sha3'
 import {
   BaseIndexerEntityFetcher,
   Blockchain,
@@ -83,9 +82,5 @@ export class EthereumIndexerLogFetcher extends BaseIndexerEntityFetcher<Ethereum
     }
 
     return { filteredEntities, remainingEntities }
-  }
-
-  protected keccak256(data: string): string {
-    return new Keccak(256).update(data).digest('hex')
   }
 }
