@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/indexer-example",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -17,9 +17,9 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.30",
-    "@aleph-indexer/framework": "^1.0.30",
-    "@aleph-indexer/ethereum": "^1.0.30",
-    "@aleph-indexer/solana": "^1.0.30"
+    "@aleph-indexer/core": "^1.0.31",
+    "@aleph-indexer/ethereum": "^1.0.31",
+    "@aleph-indexer/framework": "^1.0.31",
+    "@aleph-indexer/solana": "^1.0.31"
   }
 }
