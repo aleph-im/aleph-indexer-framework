@@ -81,13 +81,16 @@ export default class SolanaIndexerWorkerDomain {
       context,
     )
 
+    const mapTransactions = this.mapTransaction.bind(this)
+
     return promisify(pipeline)(
       entities as any,
       new StreamFilter(filterTransaction),
       new StreamBuffer(this.hooks.solanaTransactionBufferLength || 1000),
       new StreamMap(indexTransactions),
       new StreamUnBuffer(),
-      new StreamMap(this.mapTransaction.bind(this)),
+      new StreamMap(mapTransactions),
+      new StreamUnBuffer(),
       new StreamFilter(filterInstruction),
       new StreamBuffer(this.hooks.solanaInstructionBufferLength || 1000),
       new StreamMap(indexInstructions),
@@ -148,8 +151,8 @@ export default class SolanaIndexerWorkerDomain {
 
   protected checkSolanaTransactionIndexerHooks(): void {
     if (
-      this.hooks.solanaFilterTransaction === undefined ||
-      this.hooks.solanaIndexTransactions === undefined
+      this.hooks.solanaFilterInstruction === undefined ||
+      this.hooks.solanaIndexInstructions === undefined
     ) {
       throw new Error(
         'SolanaTransactionIndexerWorkerDomainI or SolanaIndexerWorkerDomainI must be implemented on WorkerDomain class',
