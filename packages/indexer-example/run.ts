@@ -18,7 +18,7 @@ async function main() {
 
   const projectId = config.INDEXER_NAMESPACE || 'example'
   const supportedBlockchains = (
-    config.INDEXER_FRAMEWORK_BLOCKCHAINS || 'ethereum'
+    config.INDEXER_FRAMEWORK_BLOCKCHAINS || 'ethereum,solana'
   ).split(',') as Blockchain[]
   const dataPath = config.INDEXER_DATA_PATH || undefined // 'data'
   const transport =
