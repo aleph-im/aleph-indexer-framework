@@ -1,28 +1,27 @@
 import {
+  BaseEntityHistoryFetcher,
   Blockchain,
   GetAccountEntityStateRequestArgs,
   FetcherMsClient,
   FetcherStateLevelStorage,
   PendingAccountStorage,
-  BaseEntityHistoryFetcher,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
-import { EthereumAccountLogHistoryFetcher } from './accountLogHistoryFetcher.js'
-import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
-import { EthereumClient } from '../../../sdk/client.js'
 import {
-  EthereumAccountLogHistoryEntity,
-  EthereumAccountLogHistoryStorage,
-} from './dal/accountLogHistory.js'
+  EthereumAccountTransactionHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryState,
+} from '../types.js'
+import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
+import { EthereumBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
+import { EthereumClient } from '../../../../sdk/client.js'
 import {
-  EthereumAccountLogHistoryPaginationCursor,
-  EthereumAccountLogHistoryState,
-} from './types.js'
-import { EthereumRawLogStorage } from './dal/rawLog.js'
+  EthereumAccountTransactionHistoryEntity,
+  EthereumAccountTransactionHistoryStorage,
+} from './dal/accountTransactionHistory.js'
 
-export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
-  EthereumAccountLogHistoryPaginationCursor,
-  EthereumAccountLogHistoryEntity
+export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
+  EthereumAccountTransactionHistoryPaginationCursor,
+  EthereumAccountTransactionHistoryEntity
 > {
   /**
    * Initialize the fetcher service.
@@ -33,18 +32,13 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
-    protected rawLogDAL: EthereumRawLogStorage,
-    protected fetcherClient: FetcherMsClient,
-    protected accountDAL: PendingAccountStorage,
-    protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
+    ...args: [
+      FetcherMsClient,
+      PendingAccountStorage,
+      EthereumAccountTransactionHistoryStorage,
+    ]
   ) {
-    super(
-      IndexableEntityType.Log,
-      Blockchain.Ethereum,
-      fetcherClient,
-      accountDAL,
-      accountLogHistoryDAL,
-    )
+    super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
   }
 
   /**
@@ -53,8 +47,8 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
    */
   async getAccountState(
     args: GetAccountEntityStateRequestArgs,
-  ): Promise<EthereumAccountLogHistoryState | undefined> {
-    const state: EthereumAccountLogHistoryState | undefined =
+  ): Promise<EthereumAccountTransactionHistoryState | undefined> {
+    const state: EthereumAccountTransactionHistoryState | undefined =
       await this.getPartialAccountState(args)
 
     if (!state) return
@@ -63,12 +57,14 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     if (forward) {
       state.lastTimestamp = forward.timestamp
       state.lastHeight = forward.height
+      state.lastSignature = forward.signature
     }
 
     const backward = state.cursors?.backward
     if (backward) {
       state.firstTimestamp = backward.timestamp
       state.firstHeight = backward.height
+      state.firstSignature = backward.signature
     }
 
     return state
@@ -76,11 +72,9 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
 
   protected getAccountFetcher(
     account: string,
-  ): EthereumAccountLogHistoryFetcher {
-    return new EthereumAccountLogHistoryFetcher(
+  ): EthereumAccountTransactionHistoryFetcher {
+    return new EthereumAccountTransactionHistoryFetcher(
       account,
-      this.accountLogHistoryDAL,
-      this.rawLogDAL,
       this.fetcherStateDAL,
       this.ethereumClient,
       this.blockHistoryFetcher,

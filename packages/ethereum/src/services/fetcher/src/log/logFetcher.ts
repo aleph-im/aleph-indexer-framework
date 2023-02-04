@@ -5,8 +5,8 @@ import {
   PendingEntityStorage,
 } from '@aleph-indexer/framework'
 import { ServiceBroker } from 'moleculer'
-import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumRawLog } from '../../../types.js'
+import { EthereumClient } from '../../../../sdk/client.js'
+import { EthereumRawLog } from '../../../../types.js'
 import { EthereumRawLogStorage } from './dal/rawLog.js'
 
 /**

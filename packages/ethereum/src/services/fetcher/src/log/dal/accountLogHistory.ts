@@ -4,7 +4,7 @@ import {
   createAccountEntityHistoryDAL,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
-import { EthereumAccountLogHistoryStorageEntity } from '../../../../types.js'
+import { EthereumAccountLogHistoryStorageEntity } from '../../../../../types.js'
 
 export type EthereumAccountLogHistoryEntity =
   EthereumAccountLogHistoryStorageEntity

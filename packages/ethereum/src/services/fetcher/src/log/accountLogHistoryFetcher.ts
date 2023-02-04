@@ -8,15 +8,15 @@ import {
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
-import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumRawLog } from '../../../types.js'
-import { EthereumBlockHistoryFetcher } from './blockHistoryFetcher.js'
+import { EthereumClient } from '../../../../sdk/client.js'
+import { EthereumRawLog } from '../../../../types.js'
+import { EthereumBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
 import { EthereumAccountLogHistoryStorage } from './dal/accountLogHistory.js'
 import { EthereumRawLogStorage } from './dal/rawLog.js'
 import {
   EthereumAccountLogHistoryPaginationCursor,
   EthereumFetchLogsOptions,
-} from './types.js'
+} from '../types.js'
 
 const { JobRunnerReturnCode } = Utils
 

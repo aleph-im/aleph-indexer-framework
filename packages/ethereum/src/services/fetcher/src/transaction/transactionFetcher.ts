@@ -6,8 +6,8 @@ import {
   RawEntityStorage,
 } from '@aleph-indexer/framework'
 import { ServiceBroker } from 'moleculer'
-import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumRawTransaction } from '../../../types.js'
+import { EthereumClient } from '../../../../sdk/client.js'
+import { EthereumRawTransaction } from '../../../../types.js'
 
 /**
  * The main class of the fetcher service.

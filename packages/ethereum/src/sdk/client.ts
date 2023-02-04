@@ -30,8 +30,8 @@ import {
 import {
   EthereumAccountTransactionHistoryDALIndex,
   EthereumAccountTransactionHistoryStorage,
-} from '../services/fetcher/src/dal/accountTransactionHistory.js'
-import { EthereumLogBloomStorage } from '../services/fetcher/src/dal/logBloom.js'
+} from '../services/fetcher/src/transaction/dal/accountTransactionHistory.js'
+import { EthereumLogBloomStorage } from '../services/fetcher/src/log/dal/logBloom.js'
 
 // Common
 

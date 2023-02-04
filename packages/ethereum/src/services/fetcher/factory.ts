@@ -14,17 +14,18 @@ import {
   BaseEntityFetcherMain
 } from '@aleph-indexer/framework'
 import { EthereumFetcher } from './main.js'
-import { createEthereumRawBlockDAL as createEthereumRawBlockDAL } from './src/dal/rawBlock.js'
-import { createEthereumAccountTransactionHistoryDAL } from './src/dal/accountTransactionHistory.js'
-import { EthereumBlockHistoryFetcher } from './src/blockHistoryFetcher.js'
-import { EthereumRawLog, EthereumRawTransaction } from '../../types.js'
+import { createEthereumRawBlockDAL as createEthereumRawBlockDAL } from './src/block/dal/rawBlock.js'
+import { createEthereumAccountTransactionHistoryDAL } from './src/transaction/dal/accountTransactionHistory.js'
+import { EthereumBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
 import { createEthereumClient } from '../../sdk/index.js'
-import { EthereumTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
-import { EthereumTransactionFetcher } from './src/transactionFetcher.js'
-import { createEthereumLogBloomDAL } from './src/dal/logBloom.js'
-import { EthereumLogHistoryFetcher } from './src/logHistoryFetcher.js'
-import { createEthereumAccountLogHistoryDAL } from './src/dal/accountLogHistory.js'
-import { EthereumLogFetcher } from './src/logFetcher.js'
+import { EthereumTransactionHistoryFetcher } from './src/transaction/transactionHistoryFetcher.js'
+import { EthereumTransactionFetcher } from './src/transaction/transactionFetcher.js'
+import { createEthereumLogBloomDAL } from './src/log/dal/logBloom.js'
+import { EthereumLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
+import { createEthereumAccountLogHistoryDAL } from './src/log/dal/accountLogHistory.js'
+import { EthereumLogFetcher } from './src/log/logFetcher.js'
+import { createEthereumRawLogDAL } from './src/log/dal/rawLog.js'
+import { createEthereumRawTransactionDAL } from './src/transaction/dal/rawTransaction.js'
 
 export async function ethereumFetcherFactory(
   basePath: string,
@@ -48,7 +49,7 @@ export async function ethereumFetcherFactory(
   const pendingTransactionDAL = createPendingEntityDAL(basePath, IndexableEntityType.Transaction)
   const pendingTransactionCacheDAL = createPendingEntityCacheDAL(basePath, IndexableEntityType.Transaction)
   const pendingTransactionFetchDAL = createPendingEntityFetchDAL(basePath, IndexableEntityType.Transaction)
-  const rawTransactionDAL = createRawEntityDAL<EthereumRawTransaction>(basePath, IndexableEntityType.Transaction, false)
+  const rawTransactionDAL = createEthereumRawTransactionDAL(basePath)
 
   const accountLogHistoryDAL = createEthereumAccountLogHistoryDAL(basePath)
   const logHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_log_history')
@@ -56,7 +57,7 @@ export async function ethereumFetcherFactory(
   const pendingLogDAL = createPendingEntityDAL(basePath, IndexableEntityType.Log)
   const pendingLogCacheDAL = createPendingEntityCacheDAL(basePath, IndexableEntityType.Log)
   const pendingLogFetchDAL = createPendingEntityFetchDAL(basePath, IndexableEntityType.Log)
-  const rawLogDAL = createRawEntityDAL<EthereumRawLog>(basePath, IndexableEntityType.Log, false)
+  const rawLogDAL = createEthereumRawLogDAL(basePath)
 
   // Instances 
 

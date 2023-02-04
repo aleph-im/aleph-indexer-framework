@@ -1,9 +1,9 @@
 import { Blockchain } from '@aleph-indexer/framework'
-import { EthereumClient } from '../../../sdk/client.js'
+import { EthereumClient } from '../../../../sdk/client.js'
 import {
   EthereumAccountStateFetcherOptions,
   EthereumAccountStateStorage,
-} from './types.js'
+} from '../types.js'
 
 /**
  * Fetcher account info class: Component of the fetcher that is in charge of managing the

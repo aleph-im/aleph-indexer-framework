@@ -11,10 +11,10 @@ import {
   EthereumBlockHistoryPaginationCursor,
   EthereumBlockHistoryPaginationCursors,
   EthereumFetchBlocksOptions,
-} from './types.js'
+} from '../types.js'
 import { EthereumRawBlockStorage } from './dal/rawBlock.js'
-import { EthereumClient } from '../../../sdk/client.js'
-import { EthereumRawBlock } from '../../../types.js'
+import { EthereumClient } from '../../../../sdk/client.js'
+import { EthereumRawBlock } from '../../../../types.js'
 
 const { JobRunnerReturnCode } = Utils
 

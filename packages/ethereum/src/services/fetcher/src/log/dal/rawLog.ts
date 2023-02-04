@@ -3,7 +3,7 @@ import {
   createRawEntityDAL,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
-import { EthereumRawLog } from '../../../../types.js'
+import { EthereumRawLog } from '../../../../../types.js'
 
 export type EthereumRawLogStorage = EntityStorage<EthereumRawLog>
 

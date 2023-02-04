@@ -4,9 +4,9 @@ import {
   Blockchain,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
-import { EthereumClient } from '../../../sdk/client.js'
+import { EthereumClient } from '../../../../sdk/client.js'
 import { EthereumAccountStateFetcher } from './accountStateFetcher.js'
-import { EthereumAccountStateStorage } from './types.js'
+import { EthereumAccountStateStorage } from '../types.js'
 
 /**
  * The main class of the fetcher service.

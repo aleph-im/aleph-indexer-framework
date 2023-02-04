@@ -16,7 +16,7 @@ import {
   FetchEntitiesByIdRequestArgs,
   GetAccountEntityStateRequestArgs,
 } from '@aleph-indexer/framework'
-import { EthereumBlockHistoryFetcher } from './src/blockHistoryFetcher.js'
+import { EthereumBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
 import { EthereumFetcherState } from './src/types.js'
 
 export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {

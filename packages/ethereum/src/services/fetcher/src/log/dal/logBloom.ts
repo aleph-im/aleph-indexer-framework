@@ -1,5 +1,5 @@
 import { EntityStorage } from '@aleph-indexer/core'
-import { EthereumLogBloom } from '../../../../types.js'
+import { EthereumLogBloom } from '../../../../../types.js'
 
 export type EthereumLogBloomEntity = EthereumLogBloom
 
