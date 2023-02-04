@@ -43,7 +43,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       },
 
       accountState: {
-        type: Types.AccountEntityIndexerState,
+        type: Types.AccountEntityIndexerStateList,
         args: {
           blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
           type: { type: new GraphQLNonNull(Types.EntityType) },
