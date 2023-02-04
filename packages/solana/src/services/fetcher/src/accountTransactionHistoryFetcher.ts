@@ -52,6 +52,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
           forward: {
             times,
             interval: 0,
+            intervalInit: 0,
             intervalMax: 1000 * 10,
             handleFetch: (ctx) => this.fetchForward(ctx),
           },

@@ -176,14 +176,14 @@ export class BaseHistoryFetcher<C> {
       cursors: undefined,
       jobs: {
         forward: {
-          frequency: this.options.jobs?.forward?.intervalInit,
+          frequency: undefined,
           lastRun: 0,
           numRuns: 0,
           complete: false,
           useHistoricRPC: false,
         },
         backward: {
-          frequency: this.options.jobs?.backward?.intervalInit,
+          frequency: undefined,
           lastRun: 0,
           numRuns: 0,
           complete: false,
@@ -192,7 +192,24 @@ export class BaseHistoryFetcher<C> {
       },
     }
 
+    this.initJobsFrequencyState('forward')
+    this.initJobsFrequencyState('backward')
+
     return this.fetcherState
+  }
+
+  protected initJobsFrequencyState(jobType: 'forward' | 'backward'): void {
+    const job = this.fetcherState.jobs[jobType]
+
+    // @note: Only activate frequency states if "intervalInit" job config was provided
+    const jobIntervalInit = this.options.jobs?.[jobType]?.intervalInit
+
+    job.frequency =
+      jobIntervalInit === undefined
+        ? undefined
+        : job.frequency !== undefined
+        ? job.frequency
+        : jobIntervalInit
   }
 
   /**
