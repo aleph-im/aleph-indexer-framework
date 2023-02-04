@@ -5,7 +5,7 @@ import {
   AccountTimeSeriesStatsManager,
 } from '@aleph-indexer/framework'
 import { PriceDALIndex, PriceStorage } from '../dal/price.js'
-import { PythAccountInfo, PythAccountStats, Price } from '../types.js'
+import { PythAccountInfo, PythAccountStats, Price, Candle } from '../types.js'
 import { StorageStream } from '@aleph-indexer/core'
 
 export class AccountDomain {
@@ -22,7 +22,7 @@ export class AccountDomain {
   async getTimeSeriesStats(
     type: string,
     filters: AccountStatsFilters,
-  ): Promise<AccountTimeSeriesStats> {
+  ): Promise<AccountTimeSeriesStats<Candle>> {
     return this.timeSeriesStats.getTimeSeriesStats(type, filters)
   }
 

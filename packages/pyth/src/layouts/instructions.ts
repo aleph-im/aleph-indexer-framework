@@ -29,6 +29,11 @@ export const IX_DATA_LAYOUT: Partial<Record<PythEventType, Layout>> = {
 
 // ------------------- ACCOUNT LAYOUT -------------------
 export const IX_ACCOUNTS_LAYOUT: Partial<Record<PythEventType, string[]>> = {
+  [PythEventType.UpdPrice]: [
+    'funding_account',
+    'price_account',
+    'clock_account',
+  ],
   [PythEventType.AggPrice]: [
     'funding_account',
     'price_account',

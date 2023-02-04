@@ -31,10 +31,10 @@ const Price = new GraphQLObjectType({
   name: 'Price',
   fields: {
     id: { type: new GraphQLNonNull(GraphQLString) },
-    timestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    timestamp: { type: new GraphQLNonNull(GraphQLDateTime) },
     priceAccount: { type: new GraphQLNonNull(GraphQLString) },
     price: { type: new GraphQLNonNull(GraphQLFloat) },
-    confidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    confidence: { type: new GraphQLNonNull(GraphQLFloat) },
     status: { type: new GraphQLNonNull(GraphQLInt) },
   },
 })

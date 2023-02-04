@@ -130,7 +130,7 @@ export default class MainDomain
         account,
         method: 'getCandles',
         args: [timeFrame, startDate, endDate, opts],
-      })) as AccountTimeSeriesStats
+      })) as AccountTimeSeriesStats<Candle>
 
     console.log('getCandles stats', typeof stats)
     return stats

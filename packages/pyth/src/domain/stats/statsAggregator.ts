@@ -11,7 +11,7 @@ export class StatsAggregator {
     const { now, account, timeSeriesDAL } = args
 
     const stats = this.getEmptyStats()
-    const type = 'access'
+    const type = 'candle'
     const currHour = DateTime.fromMillis(now).startOf('hour')
     const currDay = DateTime.fromMillis(now).startOf('day')
     const currMonth = DateTime.fromMillis(now).startOf('month')

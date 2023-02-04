@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js'
-import { SolanaRPC } from '../solana.js'
-import { config } from '../config.js'
+import { SolanaRPC } from '../sdk/index.js'
+import { config } from '@aleph-indexer/core'
 
 describe('rpc responses validation test', () => {
   const rpc = new SolanaRPC({

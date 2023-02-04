@@ -1,0 +1,810 @@
+[
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675175243000",
+    "timestamp": 1675175243000,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.96445,
+    "confidence": 0.03165,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675222527255",
+    "timestamp": 1675222527255,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.14599378238552,
+    "confidence": 0.9566994148211291,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675284961277",
+    "timestamp": 1675284961277,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.86255421594927,
+    "confidence": 0.3546171488699841,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675293416057",
+    "timestamp": 1675293416057,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.53009547190373,
+    "confidence": 0.907898227952875,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675421980150",
+    "timestamp": 1675421980150,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.56246791012306,
+    "confidence": 0.6894687235068344,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675423089973",
+    "timestamp": 1675423089973,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.65751153258145,
+    "confidence": 0.4464233312344056,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425676999",
+    "timestamp": 1675425676999,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.86733772958476,
+    "confidence": 0.7542080671625817,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425797760",
+    "timestamp": 1675425797760,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.6694882417684,
+    "confidence": 0.537510468309103,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425799692",
+    "timestamp": 1675425799692,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.62442498420573,
+    "confidence": 0.47849263531840075,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425811810",
+    "timestamp": 1675425811810,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.9898743517462,
+    "confidence": 0.35873723006447056,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425825463",
+    "timestamp": 1675425825463,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.55865647883398,
+    "confidence": 0.4002117387431491,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425828842",
+    "timestamp": 1675425828842,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.37963231027973,
+    "confidence": 0.9165247361079338,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425829454",
+    "timestamp": 1675425829454,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.70251203314527,
+    "confidence": 0.62967646794222,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425829508",
+    "timestamp": 1675425829508,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.35662215766803,
+    "confidence": 0.6169811425598475,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830060",
+    "timestamp": 1675425830060,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.20100666189252,
+    "confidence": 0.9605369692905096,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830275",
+    "timestamp": 1675425830275,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.40270414463183,
+    "confidence": 0.7755312306452963,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830441",
+    "timestamp": 1675425830441,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.93290231396827,
+    "confidence": 0.4387724932103509,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830449",
+    "timestamp": 1675425830449,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.27962706716514,
+    "confidence": 0.9280479831660461,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830480",
+    "timestamp": 1675425830480,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.95650730555701,
+    "confidence": 0.2229422654490626,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830491",
+    "timestamp": 1675425830491,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.11949597797309,
+    "confidence": 0.4211982588221362,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830507",
+    "timestamp": 1675425830507,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.55844478912202,
+    "confidence": 0.8912113066766517,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830508",
+    "timestamp": 1675425830508,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.98691691978436,
+    "confidence": 0.7420920161628773,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830512",
+    "timestamp": 1675425830512,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.8647893873954,
+    "confidence": 0.8540901142403643,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830514",
+    "timestamp": 1675425830514,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.05955969578716,
+    "confidence": 0.4455357732679083,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.74275467220865,
+    "confidence": 0.15810475552542858,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.45274285963384,
+    "confidence": 0.5928590948558803,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.17161125166595,
+    "confidence": 0.5376474707728505,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.45449892017037,
+    "confidence": 0.6585845439377949,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.57339932354165,
+    "confidence": 0.378828039453555,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.61541196539598,
+    "confidence": 0.3721935779057085,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.34963977757336,
+    "confidence": 0.8950572392019792,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.07557016644586,
+    "confidence": 0.6357938943497983,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.30949080473177,
+    "confidence": 1.088115160700786,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.5947777154779,
+    "confidence": 0.9087569465421939,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.13662820483839,
+    "confidence": 0.7966350816411907,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.2232411486496,
+    "confidence": 0.6187309540984193,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.99107433851523,
+    "confidence": 0.4237821660594575,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.43131559359392,
+    "confidence": 0.169353194940214,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.17342403928717,
+    "confidence": 0.32358937680743577,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.21485158227502,
+    "confidence": 1.0081187063152277,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.15181403738069,
+    "confidence": 0.8576310828894629,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.28901446819374,
+    "confidence": 0.9690071999358215,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.12657217977852,
+    "confidence": 0.3307131137340602,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.63873381748718,
+    "confidence": 0.12307652315160371,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.14800052747255,
+    "confidence": 1.1109890200520927,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.56963580622364,
+    "confidence": 1.0035121258384643,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.88007365742835,
+    "confidence": 0.05077863320572383,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.81883866461929,
+    "confidence": 0.9185110229354934,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.13144968579871,
+    "confidence": 0.602243460090487,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.99530679352969,
+    "confidence": 0.18971427359171966,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.93256676906422,
+    "confidence": 0.2542343619894492,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.33542518999388,
+    "confidence": 0.0922384734297442,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.95464479179992,
+    "confidence": 0.5136766977952965,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.0189892375858,
+    "confidence": 0.8178283598824996,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.56941400079546,
+    "confidence": 0.7703126169209301,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.53713398597624,
+    "confidence": 0.09323357147777606,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.57091200556015,
+    "confidence": 0.5095652802050985,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.72124901457467,
+    "confidence": 0.9579098286057666,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.089537089304,
+    "confidence": 0.6138791793326376,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.83045870628315,
+    "confidence": 1.0865770381124258,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.57421068852288,
+    "confidence": 0.13761353233826779,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.50614552594223,
+    "confidence": 0.18008316739321584,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.48970962683316,
+    "confidence": 0.3308136811317044,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.79946102670067,
+    "confidence": 0.25333178888995234,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.39630327734504,
+    "confidence": 0.04866581490986238,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.73922717347854,
+    "confidence": 0.3723867774876897,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.76528813568275,
+    "confidence": 0.1809716887585519,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.52675347977346,
+    "confidence": 0.11645761469202072,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.85911200580145,
+    "confidence": 0.7777814161388914,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 78.46758307511053,
+    "confidence": 0.514130189517985,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.57499367761629,
+    "confidence": 0.10796278141105778,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.42451907296136,
+    "confidence": 0.7449013674725451,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.47480935415916,
+    "confidence": 0.15315288413220546,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.85931335192201,
+    "confidence": 0.8648453139854808,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.65481379597435,
+    "confidence": 0.16936889530933819,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.5692400627802,
+    "confidence": 0.9593395794744928,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.2697820645424,
+    "confidence": 0.05851392671009994,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.87146086838366,
+    "confidence": 0.8653177407367608,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.66290920905908,
+    "confidence": 0.35139983078480796,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.29276278191033,
+    "confidence": 0.07130705713113605,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.52868538264603,
+    "confidence": 0.38876160011896194,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.52457447638378,
+    "confidence": 1.058007175379556,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.6759202885193,
+    "confidence": 0.47118684970839664,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.64622378453744,
+    "confidence": 1.0661135425858825,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.55838225446827,
+    "confidence": 0.9874856523169705,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.33527429037014,
+    "confidence": 0.17136884279428088,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 82.38813310335225,
+    "confidence": 0.5482165044211853,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.17427155912912,
+    "confidence": 0.12674056809180895,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.11774308340547,
+    "confidence": 0.3802758907744136,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.6024367164678,
+    "confidence": 0.049313959781748344,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.18273582288042,
+    "confidence": 0.21519333068399743,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.18319387126795,
+    "confidence": 1.0334872068438117,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.50100111290605,
+    "confidence": 0.7723925007060176,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.6319399602384,
+    "confidence": 0.837947381404985,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.27951351037986,
+    "confidence": 0.1392078547948668,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.68482654614132,
+    "confidence": 0.9765717807324611,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 83.79250605252795,
+    "confidence": 0.5909489781399008,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.44043408223722,
+    "confidence": 0.48897212046656185,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 80.70150105447453,
+    "confidence": 1.0648066454357918,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 79.02157035965044,
+    "confidence": 0.9543122365860922,
+    "status": 0
+  },
+  {
+    "id": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW:1675425830515",
+    "timestamp": 1675425830515,
+    "priceAccount": "3wDLxH34Yz8tGjwHszQ2MfzHwRoaQgKA32uq2bRpjJBW",
+    "price": 81.63014299999105,
+    "confidence": 0.18593695088342382,
+    "status": 0
+  }
+]

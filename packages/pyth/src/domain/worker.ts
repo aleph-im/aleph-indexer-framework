@@ -81,7 +81,7 @@ export default class WorkerDomain
     account: string,
     type: string,
     filters: AccountStatsFilters,
-  ): Promise<AccountTimeSeriesStats> {
+  ): Promise<AccountTimeSeriesStats<Candle>> {
     const actual = this.getAccount(account)
     return actual.getTimeSeriesStats(type, filters)
   }

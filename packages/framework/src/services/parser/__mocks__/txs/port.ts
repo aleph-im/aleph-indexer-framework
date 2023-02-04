@@ -1,6 +1,6 @@
-import { RawTransaction } from '@aleph-indexer/core'
+import { SolanaRawTransaction } from '@aleph-indexer/solana'
 
-export const port1: RawTransaction = {
+export const port1: SolanaRawTransaction = {
   blockTime: 1630046289,
   meta: {
     err: null,
