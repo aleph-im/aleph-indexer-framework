@@ -46,7 +46,6 @@ export async function ethereumIndexerFactory(
   // Instances
 
   const transactionFetcher = new EthereumIndexerTransactionFetcher(
-    Blockchain.Ethereum,
     fetcherMsClient,
     transactionRequestDAL,
     transactionRequestIncomingEntityDAL,
@@ -65,7 +64,6 @@ export async function ethereumIndexerFactory(
   )
 
   const logFetcher = new EthereumIndexerLogFetcher(
-    Blockchain.Ethereum,
     fetcherMsClient,
     logRequestDAL,
     logRequestIncomingEntityDAL,

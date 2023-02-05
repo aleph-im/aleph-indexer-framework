@@ -15,15 +15,22 @@ import { EthereumRawTransaction } from '../../../../types.js'
 export class EthereumTransactionFetcher extends BaseEntityFetcher<EthereumRawTransaction> {
   constructor(
     protected ethereumClient: EthereumClient,
-    ...args: [
-      ServiceBroker,
-      PendingEntityStorage,
-      PendingEntityStorage,
-      PendingEntityStorage,
-      RawEntityStorage<EthereumRawTransaction>,
-    ]
+    protected broker: ServiceBroker,
+    protected pendingEntityDAL: PendingEntityStorage,
+    protected pendingEntityCacheDAL: PendingEntityStorage,
+    protected pendingEntityFetchDAL: PendingEntityStorage,
+    protected entityCacheDAL: RawEntityStorage<EthereumRawTransaction>,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
+    super(
+      IndexableEntityType.Transaction,
+      blockchainId,
+      broker,
+      pendingEntityDAL,
+      pendingEntityCacheDAL,
+      pendingEntityFetchDAL,
+      entityCacheDAL,
+    )
   }
 
   protected filterEntityId(id: string): boolean {

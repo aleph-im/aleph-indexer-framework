@@ -15,12 +15,12 @@ import { EthereumParsedTransaction } from '../../parser/src/types.js'
 
 export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<EthereumParsedTransaction> {
   constructor(
-    protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
     protected transactionRequestDAL: EntityRequestStorage,
     protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<EthereumParsedTransaction>,
     protected transactionRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
     protected transactionRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedTransaction>,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
     super(

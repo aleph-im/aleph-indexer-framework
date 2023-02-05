@@ -25,14 +25,15 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
 
   constructor(
     protected ethereumClient: EthereumClient,
-    protected fetcherStateDAL: FetcherStateLevelStorage,
+    protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockHistoryPaginationCursor>,
     protected blockDAL?: EthereumRawBlockStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     const blockTime = 10 + 2
 
     super(
       {
-        id: `${Blockchain.Ethereum}:block-history`,
+        id: `${blockchainId}:block-history`,
         jobs: {
           forward: {
             interval: 1000 * blockTime,

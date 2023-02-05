@@ -45,6 +45,7 @@ export type ParsedEntity<P> = RawEntity & {
 
 export enum Blockchain {
   Ethereum = 'ethereum',
+  Bsc = 'bsc',
   Solana = 'solana',
 }
 

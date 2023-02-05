@@ -26,8 +26,9 @@ export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
     protected entityFetchers: Partial<
       Record<IndexableEntityType, BaseEntityFetcherMain<any, any, any>>
     >,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    super(Blockchain.Ethereum, fetcherClient, entityFetchers)
+    super(blockchainId, fetcherClient, entityFetchers)
   }
 
   async start(): Promise<void> {

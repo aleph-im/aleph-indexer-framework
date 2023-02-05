@@ -21,7 +21,8 @@ export class EthereumAccountStateFetcher {
     protected opts: EthereumAccountStateFetcherOptions,
     protected dal: EthereumAccountStateStorage,
     protected ethereumClient: EthereumClient,
-    protected id = `${Blockchain.Ethereum}:account-state:${opts.account}`,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
+    protected id = `${blockchainId}:account-state:${opts.account}`,
   ) {}
 
   async init(): Promise<void> {

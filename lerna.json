@@ -5,6 +5,7 @@
     "packages/framework",
     "packages/ethereum",
     "packages/solana",
+    "packages/bsc",
     "packages/indexer-example"
   ],
   "version": "1.0.34"

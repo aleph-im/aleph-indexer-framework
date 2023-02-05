@@ -35,11 +35,12 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountTransactionHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected times = 1,
   ) {
     super(
       {
-        id: `${Blockchain.Ethereum}:account-transaction-history:${account}`,
+        id: `${blockchainId}:account-transaction-history:${account}`,
         jobs: {
           forward: {
             times,

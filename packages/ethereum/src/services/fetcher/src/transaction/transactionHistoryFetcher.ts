@@ -32,13 +32,18 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
-    ...args: [
-      FetcherMsClient,
-      PendingAccountStorage,
-      EthereumAccountTransactionHistoryStorage,
-    ]
+    protected fetcherClient: FetcherMsClient,
+    protected accountDAL: PendingAccountStorage,
+    protected accountEntityHistoryDAL: EthereumAccountTransactionHistoryStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    super(IndexableEntityType.Transaction, Blockchain.Ethereum, ...args)
+    super(
+      IndexableEntityType.Transaction,
+      blockchainId,
+      fetcherClient,
+      accountDAL,
+      accountEntityHistoryDAL,
+    )
   }
 
   /**

@@ -20,10 +20,11 @@ export class EthereumLogFetcher extends BaseEntityFetcher<EthereumRawLog> {
     protected pendingLogCacheDAL: PendingEntityStorage,
     protected pendingLogFetchDAL: PendingEntityStorage,
     protected rawLogDAL: EthereumRawLogStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(
       IndexableEntityType.Log,
-      Blockchain.Ethereum,
+      blockchainId,
       broker,
       pendingLogDAL,
       pendingLogCacheDAL,

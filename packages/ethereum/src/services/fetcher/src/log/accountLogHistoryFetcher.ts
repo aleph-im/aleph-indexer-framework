@@ -41,11 +41,12 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountLogHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected times = 1,
   ) {
     super(
       {
-        id: `${Blockchain.Ethereum}:account-log-history:${account}`,
+        id: `${blockchainId}:account-log-history:${account}`,
         jobs: {
           forward: {
             times,

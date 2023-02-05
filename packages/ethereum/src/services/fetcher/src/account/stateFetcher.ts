@@ -20,9 +20,10 @@ export class EthereumStateFetcher extends BaseStateFetcher {
   constructor(
     protected ethereumClient: EthereumClient,
     protected accountStateDAL: EthereumAccountStateStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     ...args: [PendingAccountStorage]
   ) {
-    super(Blockchain.Ethereum, ...args)
+    super(blockchainId, ...args)
   }
 
   protected getAccountFetcher(account: string): BaseStateFetcherI {
@@ -35,6 +36,7 @@ export class EthereumStateFetcher extends BaseStateFetcher {
       opts,
       this.accountStateDAL,
       this.ethereumClient,
+      this.blockchainId,
     )
   }
 }

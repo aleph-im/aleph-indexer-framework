@@ -20,8 +20,9 @@ export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
     protected entityIndexers: Partial<
       Record<IndexableEntityType, BaseEntityIndexer<any>>
     >,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    super(Blockchain.Ethereum, domain, entityIndexers)
+    super(blockchainId, domain, entityIndexers)
   }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {

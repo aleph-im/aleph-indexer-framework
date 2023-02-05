@@ -37,10 +37,11 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     protected fetcherClient: FetcherMsClient,
     protected accountDAL: PendingAccountStorage,
     protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(
       IndexableEntityType.Log,
-      Blockchain.Ethereum,
+      blockchainId,
       fetcherClient,
       accountDAL,
       accountLogHistoryDAL,
