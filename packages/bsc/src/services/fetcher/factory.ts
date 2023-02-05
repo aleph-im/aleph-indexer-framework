@@ -16,8 +16,6 @@ import { BscTransactionFetcher } from './src/transaction/transactionFetcher.js'
 import { BscLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
 import { BscLogFetcher } from './src/log/logFetcher.js'
 
-
-
 export  function bscClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
   const url = config.BSC_RPC
   if (!url) throw new Error('BSC_RPC not configured')
@@ -25,7 +23,7 @@ export  function bscClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFet
   return createBscClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }
 
-export async function ethereumFetcherFactory(
+export async function bscFetcherFactory(
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,

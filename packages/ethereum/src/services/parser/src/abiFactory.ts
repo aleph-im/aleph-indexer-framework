@@ -3,15 +3,17 @@ import path from 'node:path'
 import fetch from 'node-fetch'
 import { AbiItem } from 'web3-utils'
 import { config } from '@aleph-indexer/core'
+import { Blockchain } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/index.js'
 
 export type Abi = [AbiItem]
 
 // @todo: Implement inmemory cache
-export class AbiFactory {
+export class EthereumAbiFactory {
   constructor(
     protected basePath: string,
     protected ethereumClient: EthereumClient,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected apiKey = config.ETHEREUM_SCAN_API_KEY,
   ) {}
 
@@ -60,11 +62,8 @@ export class AbiFactory {
   }
 
   protected async getAbiFromRemote(address: string): Promise<Abi> {
-    const response = await fetch(
-      `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}${
-        this.apiKey ? `&apikey=${this.apiKey}` : ''
-      }`,
-    )
+    const url = this.getRemoteUrl(address)
+    const response = await fetch(url)
 
     // @note: http errors
     if (response.status !== 200) throw new Error(await response.text())
@@ -83,7 +82,13 @@ export class AbiFactory {
     return body.result as Abi
   }
 
+  protected getRemoteUrl(address: string): string {
+    return `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}${
+      this.apiKey ? `&apikey=${this.apiKey}` : ''
+    }`
+  }
+
   protected log(...msgs: any[]): void {
-    console.log(`ethereum ${msgs.join(' ')}`)
+    console.log(`${this.blockchainId} ${msgs.join(' ')}`)
   }
 }

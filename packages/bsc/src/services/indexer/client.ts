@@ -9,7 +9,7 @@ export class EthereumIndexerClient
   extends BaseIndexerClient
   implements IndexerClientI {}
 
-export async function ethereumIndexerClientFactory(
+export async function bscIndexerClientFactory(
   blockchainId: Blockchain,
   broker: ServiceBroker,
 ): Promise<IndexerClientI> {

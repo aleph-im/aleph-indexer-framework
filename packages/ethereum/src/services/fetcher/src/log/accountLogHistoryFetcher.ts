@@ -162,7 +162,9 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       {}
 
     console.log(`
-      ethereum fetchLogs [${goingForward ? 'forward' : 'backward'}] { 
+      ${this.blockchainId} fetchLogs [${
+      goingForward ? 'forward' : 'backward'
+    }] { 
         account: ${account}
       }
     `)

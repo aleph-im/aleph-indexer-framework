@@ -2,14 +2,21 @@
 import path from 'path'
 import { config, Utils } from '@aleph-indexer/core'
 import { BlockchainParserI } from '@aleph-indexer/framework'
-import { AbiFactory } from '@aleph-indexer/ethereum'
-import { createBscClient } from '../../sdk/index.js'
+import { BscClient, createBscClient } from '../../sdk/index.js'
 import { EthereumRawTransaction } from '../../types.js'
 import { BscParser } from './main.js'
 import { BscAccountStateParser } from './src/accountStateParser.js'
 import { BscTransactionParser } from './src/transactionParser.js'
-import { EthereumParsedTransaction } from './src/types.js'
+import { BscParsedTransaction } from './src/types.js'
 import { BscLogParser } from './src/logParser.js'
+import { BscAbiFactory } from './src/abiFactory.js'
+
+export  function bscClientParserFactory(): BscClient {
+  const url = config.BSC_RPC
+  if (!url) throw new Error('BSC_RPC not configured')
+
+  return createBscClient(url)
+}
 
 export async function bscParserFactory(
   basePath: string,
@@ -17,26 +24,23 @@ export async function bscParserFactory(
 ): Promise<
   BlockchainParserI<
     EthereumRawTransaction,
-    EthereumParsedTransaction
+    BscParsedTransaction
   >
 > {
-  const url = config.ETHEREUM_RPC
-  if (!url) throw new Error('ETHEREUM_RPC not configured')
-
   const abiBasePath = layoutPath || path.join(basePath, 'abi')
   await Utils.ensurePath(abiBasePath)
 
-  const bscClient = createBscClient(url)
+  const bscClient = bscClientParserFactory()
   
-  const abiFactory = new AbiFactory(abiBasePath, bscClient)
+  const abiFactory = new BscAbiFactory(abiBasePath, bscClient)
   
-  const ethereumAccountStateParser = new BscAccountStateParser()
-  const ethereumTransactionParser = new BscTransactionParser(abiFactory, bscClient)
-  const ethereumLogParser = new BscLogParser(abiFactory, bscClient)
+  const bscAccountStateParser = new BscAccountStateParser()
+  const bscTransactionParser = new BscTransactionParser(abiFactory, bscClient)
+  const bscLogParser = new BscLogParser(abiFactory, bscClient)
 
   return new BscParser(
-    ethereumTransactionParser,
-    ethereumLogParser,
-    ethereumAccountStateParser,
+    bscTransactionParser,
+    bscLogParser,
+    bscAccountStateParser,
   )
 }

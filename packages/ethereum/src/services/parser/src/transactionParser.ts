@@ -1,7 +1,7 @@
 import { DefinedParser } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/client.js'
 import { EthereumRawTransaction } from '../../../types.js'
-import { AbiFactory } from './abiFactory.js'
+import { EthereumAbiFactory } from './abiFactory.js'
 import { EthereumParsedTransaction } from './types.js'
 
 export class EthereumTransactionParser extends DefinedParser<
@@ -9,7 +9,7 @@ export class EthereumTransactionParser extends DefinedParser<
   EthereumParsedTransaction
 > {
   constructor(
-    protected abiFactory: AbiFactory,
+    protected abiFactory: EthereumAbiFactory,
     protected ethereumClient: EthereumClient,
   ) {
     super()

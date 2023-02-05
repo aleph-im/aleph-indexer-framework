@@ -8,6 +8,7 @@ import {
   isUserEthereumAddressInBloom,
   isContractAddressInBloom,
 } from 'ethereum-bloom-filters'
+import { Blockchain } from '@aleph-indexer/framework'
 import {
   EthereumRawBlock,
   EthereumRawLog,
@@ -99,6 +100,7 @@ export class EthereumClient {
     protected options: EthereumClientOptions,
     protected accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
     protected logBloomDAL?: EthereumLogBloomStorage,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     this.sdk = new Web3(options.url)
   }
@@ -226,7 +228,7 @@ export class EthereumClient {
       iterationLimit = iterationLimit - limit
 
       console.log(`
-        ethereum fetch blocks { 
+        ${this.blockchainId} fetch blocks { 
           before: ${before}
           until: ${until}
           iterationLimit: ${iterationLimit}
@@ -284,7 +286,7 @@ export class EthereumClient {
       iterationLimit = iterationLimit - limit
 
       console.log(`
-        ethereum fetch signatures { 
+        ${this.blockchainId} fetch signatures { 
           account: ${account}
           before: ${before}
           until: ${until}
@@ -345,7 +347,7 @@ export class EthereumClient {
       iterationLimit = iterationLimit - limit
 
       console.log(`
-        ethereum fetch logs { 
+        ${this.blockchainId} fetch logs { 
           account: ${account}
           before: ${before}
           until: ${until}
@@ -560,7 +562,7 @@ export class EthereumClient {
 
     if (chunk.length > 0)
       console.log(
-        'ethereum block chunk => ',
+        `${this.blockchainId} block chunk => `,
         chunk.length,
         firstItem.number,
         lastItem.number,
@@ -619,7 +621,7 @@ export class EthereumClient {
 
     if (chunk.length > 0)
       console.log(
-        'ethereum transaction chunk => ',
+        `${this.blockchainId} transaction chunk => `,
         count,
         firstItem.height,
         lastItem.height,
@@ -697,7 +699,7 @@ export class EthereumClient {
 
     if (chunk.length > 0)
       console.log(
-        'ethereum log chunk => ',
+        `${this.blockchainId} log chunk => `,
         chunk.length,
         firstItem.height,
         lastItem.height,

@@ -18,8 +18,8 @@ export default class MainDomain
 
   async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<number>[]> {
     const alephTokenEth = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
+    const alephTokenBsc = '0x82D2f8E02Afb160Dd5A480a617692e62de9038C4'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
-    const alephMessages = '0x166fd4299364B21c7567e163d85D78d2fb2f8Ad5'
 
     return [
       {
@@ -52,16 +52,13 @@ export default class MainDomain
         },
       },
       {
-        blockchainId: Blockchain.Ethereum,
-        account: alephMessages,
+        blockchainId: Blockchain.Bsc,
+        account: alephTokenBsc,
         meta: 3,
         index: {
           transactions: false,
           state: false,
-          logs: {
-            chunkDelay: 0,
-            chunkTimeframe: 1000 * 60 * 60 * 24,
-          },
+          logs: true,
         },
       },
     ]

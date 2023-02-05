@@ -157,7 +157,9 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       {}
 
     console.log(`
-      ethereum fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
+      ${this.blockchainId} fetchSignatures [${
+      goingForward ? 'forward' : 'backward'
+    }] { 
         account: ${account}
       }
     `)

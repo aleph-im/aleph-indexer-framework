@@ -18,8 +18,9 @@
   "license": "ISC",
   "dependencies": {
     "@aleph-indexer/core": "^1.0.33",
-    "@aleph-indexer/ethereum": "^1.0.34",
     "@aleph-indexer/framework": "^1.0.34",
+    "@aleph-indexer/ethereum": "^1.0.34",
+    "@aleph-indexer/bsc": "^1.0.34",
     "@aleph-indexer/solana": "^1.0.34"
   }
 }

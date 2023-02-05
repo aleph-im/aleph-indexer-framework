@@ -78,7 +78,7 @@ export class EthereumIndexerWorkerDomain {
       context,
     )
 
-    return promisify(pipeline)(
+    await promisify(pipeline)(
       entities,
       new StreamFilter(filterTransaction),
       new StreamBuffer(this.hooks.ethereumTransactionBufferLength || 1000),
@@ -94,7 +94,7 @@ export class EthereumIndexerWorkerDomain {
     const filterLog = this.hooks.ethereumFilterLog.bind(this.hooks, context)
     const indexLogs = this.hooks.ethereumIndexLogs.bind(this.hooks, context)
 
-    return promisify(pipeline)(
+    await promisify(pipeline)(
       entities,
       new StreamFilter(filterLog),
       new StreamBuffer(this.hooks.ethereumLogBufferLength || 1000),

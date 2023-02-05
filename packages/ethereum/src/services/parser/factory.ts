@@ -5,7 +5,7 @@ import { BlockchainParserI } from '@aleph-indexer/framework'
 import { createEthereumClient } from '../../sdk/index.js'
 import { EthereumRawTransaction } from '../../types.js'
 import { EthereumParser } from './main.js'
-import { AbiFactory } from './src/abiFactory.js'
+import { EthereumAbiFactory } from './src/abiFactory.js'
 import { EthereumAccountStateParser } from './src/accountStateParser.js'
 import { EthereumTransactionParser } from './src/transactionParser.js'
 import { EthereumParsedTransaction } from './src/types.js'
@@ -28,7 +28,7 @@ export async function ethereumParserFactory(
 
   const ethereumClient = createEthereumClient(url)
   
-  const abiFactory = new AbiFactory(abiBasePath, ethereumClient)
+  const abiFactory = new EthereumAbiFactory(abiBasePath, ethereumClient)
   
   const ethereumAccountStateParser = new EthereumAccountStateParser()
   const ethereumTransactionParser = new EthereumTransactionParser(abiFactory, ethereumClient)

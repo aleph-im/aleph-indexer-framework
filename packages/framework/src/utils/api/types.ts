@@ -4,19 +4,20 @@ import { Blockchain as BC, IndexableEntityType as IET } from '../../types.js'
 // Time
 export const TimeInfo = GraphQLString
 
+const bcValues = Object.fromEntries(
+  Object.values(BC).map((value) => [value, { value }]),
+)
+
 export const Blockchain = new GraphQLEnumType({
   name: 'Blockchain',
-  values: {
-    [BC.Solana]: { value: BC.Solana },
-    [BC.Ethereum]: { value: BC.Ethereum },
-  },
+  values: bcValues,
 })
+
+const ietValues = Object.fromEntries(
+  Object.values(IET).map((value) => [value, { value }]),
+)
 
 export const EntityType = new GraphQLEnumType({
   name: 'EntityType',
-  values: {
-    [IET.Transaction]: { value: IET.Transaction },
-    [IET.Log]: { value: IET.Log },
-    [IET.State]: { value: IET.State },
-  },
+  values: ietValues,
 })

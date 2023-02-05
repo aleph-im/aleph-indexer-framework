@@ -1,11 +1,11 @@
 import { BlockchainFrameworkImplementation } from '@aleph-indexer/framework'
-import { ethereumFetcherClientFactory } from './src/services/fetcher/client.js'
-import { ethereumIndexerClientFactory } from './src/services/indexer/client.js'
-import { ethereumParserClientFactory } from './src/services/parser/client.js'
-import { ethereumFetcherFactory } from './src/services/fetcher/factory.js'
-import { ethereumIndexerFactory } from './src/services/indexer/factory.js'
+import { bscFetcherClientFactory } from './src/services/fetcher/client.js'
+import { bscIndexerClientFactory } from './src/services/indexer/client.js'
+import { bscParserClientFactory } from './src/services/parser/client.js'
+import { bscFetcherFactory } from './src/services/fetcher/factory.js'
+import { bscIndexerFactory } from './src/services/indexer/factory.js'
 import { bscParserFactory } from './src/services/parser/factory.js'
-import { ethereumWorkerDomainFactory } from './src/domain/worker.js'
+import { bscWorkerDomainFactory } from './src/domain/worker.js'
 
 export * from './src/domain/worker.js'
 export * from './src/types.js'
@@ -16,18 +16,18 @@ export * from './src/services/indexer/index.js'
 
 export default {
   fetcher: {
-    main: ethereumFetcherFactory,
-    client: ethereumFetcherClientFactory,
+    main: bscFetcherFactory,
+    client: bscFetcherClientFactory,
   },
   parser: {
     main: bscParserFactory,
-    client: ethereumParserClientFactory,
+    client: bscParserClientFactory,
   },
   indexer: {
-    main: ethereumIndexerFactory,
-    client: ethereumIndexerClientFactory,
+    main: bscIndexerFactory,
+    client: bscIndexerClientFactory,
     domain: {
-      worker: ethereumWorkerDomainFactory,
+      worker: bscWorkerDomainFactory,
       main: null,
     },
   },

@@ -5,16 +5,16 @@ import {
 } from '@aleph-indexer/framework'
 import { ServiceBroker } from 'moleculer'
 import { EthereumRawTransaction } from '../../types.js'
-import { EthereumParsedTransaction } from './src/types.js'
+import { BscParsedTransaction } from './src/types.js'
 
 export class EthereumParserClient extends BaseParserClient<
   EthereumRawTransaction,
-  EthereumParsedTransaction
+  BscParsedTransaction
 > {}
 
-export async function ethereumParserClientFactory(
+export async function bscParserClientFactory(
   blockchainId: Blockchain,
   broker: ServiceBroker,
-): Promise<ParserClientI<EthereumRawTransaction, EthereumParsedTransaction>> {
+): Promise<ParserClientI<EthereumRawTransaction, BscParsedTransaction>> {
   return new EthereumParserClient(blockchainId, broker)
 }

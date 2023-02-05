@@ -8,15 +8,15 @@ import {
   EntityRequestStorage,
 } from '@aleph-indexer/framework'
 import { EthereumIndexerLogFetcher } from '@aleph-indexer/ethereum'
-import { EthereumParsedLog } from '../../parser/src/types.js'
+import { BscParsedLog } from '../../parser/src/types.js'
 
 export class BscIndexerLogFetcher extends EthereumIndexerLogFetcher {
   constructor(
     protected fetcherMsClient: FetcherMsClient,
     protected logRequestDAL: EntityRequestStorage,
-    protected logRequestIncomingLogDAL: EntityRequestIncomingEntityStorage<EthereumParsedLog>,
+    protected logRequestIncomingLogDAL: EntityRequestIncomingEntityStorage<BscParsedLog>,
     protected logRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
-    protected logRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedLog>,
+    protected logRequestResponseDAL: EntityRequestResponseStorage<BscParsedLog>,
     protected blockchainId: Blockchain = Blockchain.Bsc,
     nonce?: NonceTimestamp,
   ) {

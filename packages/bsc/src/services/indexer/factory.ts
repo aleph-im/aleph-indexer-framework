@@ -15,12 +15,12 @@ import {
   IndexerWorkerDomainI,
   ParserMsClient,
 } from '@aleph-indexer/framework'
-import { EthereumParsedLog, EthereumParsedTransaction } from '../parser/src/types.js'
+import { BscParsedLog, BscParsedTransaction } from '../parser/src/types.js'
 import { BscIndexer } from './main.js'
 import { BscIndexerLogFetcher } from './src/logFetcher.js'
 import { BscIndexerTransactionFetcher } from './src/transactionFetcher.js'
 
-export async function ethereumIndexerFactory(
+export async function bscIndexerFactory(
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
@@ -32,13 +32,13 @@ export async function ethereumIndexerFactory(
   // DALs
 
   const transactionRequestDAL = createEntityRequestDAL(basePath, IndexableEntityType.Transaction)
-  const transactionRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<EthereumParsedTransaction>(basePath, IndexableEntityType.Transaction)
+  const transactionRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<BscParsedTransaction>(basePath, IndexableEntityType.Transaction)
   const transactionRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Transaction)
   const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
   const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
   const logRequestDAL = createEntityRequestDAL(basePath, IndexableEntityType.Log)
-  const logRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<EthereumParsedLog>(basePath, IndexableEntityType.Log)
+  const logRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<BscParsedLog>(basePath, IndexableEntityType.Log)
   const logRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Log)
   const logRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Log)
   const logIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Log)

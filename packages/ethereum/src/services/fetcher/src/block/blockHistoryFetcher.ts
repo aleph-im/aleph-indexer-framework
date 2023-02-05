@@ -108,7 +108,9 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     let lastCursors: EthereumBlockHistoryPaginationCursors = {}
 
     console.log(
-      `ethereum fetchBlocks [${goingForward ? 'forward' : 'backward'}]`,
+      `${this.blockchainId} fetchBlocks [${
+        goingForward ? 'forward' : 'backward'
+      }]`,
     )
 
     try {

@@ -9,45 +9,39 @@ import {
   ParserContext,
 } from '@aleph-indexer/framework'
 import {
-  EthereumParsedLog,
-  EthereumParsedTransaction,
+  BscParsedLog,
+  BscParsedTransaction,
 } from '../services/parser/src/types.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
-export type EthereumTransactionIndexerWorkerDomainI = {
-  ethereumTransactionBufferLength?: number // default 1000
-  ethereumFilterTransaction(
+export type BscTransactionIndexerWorkerDomainI = {
+  bscTransactionBufferLength?: number // default 1000
+  bscFilterTransaction(
     context: ParserContext,
-    entity: EthereumParsedTransaction,
+    entity: BscParsedTransaction,
   ): Promise<boolean>
-  ethereumIndexTransactions(
+  bscIndexTransactions(
     context: ParserContext,
-    entities: EthereumParsedTransaction[],
+    entities: BscParsedTransaction[],
   ): Promise<void>
 }
 
-export type EthereumLogIndexerWorkerDomainI = {
-  ethereumLogBufferLength?: number // default 1000
-  ethereumFilterLog(
-    context: ParserContext,
-    entity: EthereumParsedLog,
-  ): Promise<boolean>
-  ethereumIndexLogs(
-    context: ParserContext,
-    entities: EthereumParsedLog[],
-  ): Promise<void>
+export type BscLogIndexerWorkerDomainI = {
+  bscLogBufferLength?: number // default 1000
+  bscFilterLog(context: ParserContext, entity: BscParsedLog): Promise<boolean>
+  bscIndexLogs(context: ParserContext, entities: BscParsedLog[]): Promise<void>
 }
 
-export type EthereumIndexerWorkerDomainI =
-  EthereumTransactionIndexerWorkerDomainI & EthereumLogIndexerWorkerDomainI
+export type BscIndexerWorkerDomainI = BscTransactionIndexerWorkerDomainI &
+  BscLogIndexerWorkerDomainI
 
-export class EthereumIndexerWorkerDomain {
+export class BscIndexerWorkerDomain {
   constructor(
     protected context: IndexerDomainContext,
-    protected hooks: EthereumIndexerWorkerDomainI,
+    protected hooks: BscIndexerWorkerDomainI,
   ) {
-    this.checkEthereumIndexerHooks()
+    this.checkBscIndexerHooks()
   }
 
   async onEntityDateRange(
@@ -65,82 +59,82 @@ export class EthereumIndexerWorkerDomain {
   }
 
   protected async onTransactionDateRange(
-    response: EntityDateRangeResponse<EthereumParsedTransaction>,
+    response: EntityDateRangeResponse<BscParsedTransaction>,
   ): Promise<void> {
     const { entities, ...context } = response
 
-    const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
+    const filterTransaction = this.hooks.bscFilterTransaction.bind(
       this.hooks,
       context,
     )
-    const indexTransactions = this.hooks.ethereumIndexTransactions.bind(
+    const indexTransactions = this.hooks.bscIndexTransactions.bind(
       this.hooks,
       context,
     )
 
-    return promisify(pipeline)(
+    await promisify(pipeline)(
       entities,
       new StreamFilter(filterTransaction),
-      new StreamBuffer(this.hooks.ethereumTransactionBufferLength || 1000),
+      new StreamBuffer(this.hooks.bscTransactionBufferLength || 1000),
       new StreamMap(indexTransactions),
     )
   }
 
   protected async onLogDateRange(
-    response: EntityDateRangeResponse<EthereumParsedLog>,
+    response: EntityDateRangeResponse<BscParsedLog>,
   ): Promise<void> {
     const { entities, ...context } = response
 
-    const filterLog = this.hooks.ethereumFilterLog.bind(this.hooks, context)
-    const indexLogs = this.hooks.ethereumIndexLogs.bind(this.hooks, context)
+    const filterLog = this.hooks.bscFilterLog.bind(this.hooks, context)
+    const indexLogs = this.hooks.bscIndexLogs.bind(this.hooks, context)
 
-    return promisify(pipeline)(
+    await promisify(pipeline)(
       entities,
       new StreamFilter(filterLog),
-      new StreamBuffer(this.hooks.ethereumLogBufferLength || 1000),
+      new StreamBuffer(this.hooks.bscLogBufferLength || 1000),
       new StreamMap(indexLogs),
     )
   }
 
-  protected checkEthereumIndexerHooks(): void {
+  protected checkBscIndexerHooks(): void {
     if (
-      (this.hooks.ethereumFilterTransaction === undefined ||
-        this.hooks.ethereumIndexTransactions === undefined) &&
-      (this.hooks.ethereumFilterLog === undefined ||
-        this.hooks.ethereumIndexLogs === undefined)
+      (this.hooks.bscFilterTransaction === undefined ||
+        this.hooks.bscIndexTransactions === undefined) &&
+      (this.hooks.bscFilterLog === undefined ||
+        this.hooks.bscIndexLogs === undefined)
     ) {
       throw new Error(
-        'EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+        'BscIndexerWorkerDomainI must be implemented on WorkerDomain class',
       )
     }
   }
 
-  protected checkEthereumTransactionIndexerHooks(): void {
+  protected checkBscTransactionIndexerHooks(): void {
     if (
-      this.hooks.ethereumFilterTransaction === undefined ||
-      this.hooks.ethereumIndexTransactions === undefined
+      this.hooks.bscFilterTransaction === undefined ||
+      this.hooks.bscIndexTransactions === undefined
     ) {
       throw new Error(
-        'EthereumTransactionIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+        'BscTransactionIndexerWorkerDomainI or BscIndexerWorkerDomainI must be implemented on WorkerDomain class',
       )
     }
   }
 
-  protected checkEthereumLogIndexerHooks(): void {
+  protected checkBscLogIndexerHooks(): void {
     if (
-      this.hooks.ethereumFilterLog === undefined ||
-      this.hooks.ethereumIndexLogs === undefined
+      this.hooks.bscFilterLog === undefined ||
+      this.hooks.bscIndexLogs === undefined
     ) {
       throw new Error(
-        'EthereumLogIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+        'BscLogIndexerWorkerDomainI or BscIndexerWorkerDomainI must be implemented on WorkerDomain class',
       )
     }
   }
 }
 
-export async function ethereumWorkerDomainFactory(
+export async function bscWorkerDomainFactory(
   context: IndexerDomainContext,
-  hooks: EthereumIndexerWorkerDomainI,
-): Promise<BlockchainIndexerWorkerI<EthereumParsedTransaction>> {
-  return new EthereumIndexerWorkerDomain(context, hooks)
+  hooks: BscIndexerWorkerDomainI,
+): Promise<BlockchainIndexerWorkerI<BscParsedTransaction>> {
+  return new BscIndexerWorkerDomain(context, hooks)
 }
