@@ -10,7 +10,8 @@ import {
   createPendingEntityFetchDAL,
   FetcherMsClient,
   IndexableEntityType,
-  BaseEntityFetcherMain
+  BaseEntityFetcherMain,
+  Blockchain
 } from '@aleph-indexer/framework'
 import { EthereumFetcher } from './main.js'
 import { createEthereumRawBlockDAL as createEthereumRawBlockDAL } from './src/block/dal/rawBlock.js'
@@ -32,7 +33,7 @@ export function ethereumDalsFetcherFactory(basePath: string) {
   return {
     blockFetcherHistoryStateDAL: createFetcherStateDAL(basePath, 'fetcher_state_block'),
     logBloomDAL: createEthereumLogBloomDAL(basePath),
-    rawBlockDAL: config.ETHEREUM_INDEX_BLOCKS === 'true' ? createEthereumRawBlockDAL(basePath) : undefined,
+    rawBlockDAL: createEthereumRawBlockDAL(basePath),
 
     accountTransactionHistoryDAL: createEthereumAccountTransactionHistoryDAL(basePath),
     transactionHistoryFetcherStateDAL: createFetcherStateDAL(basePath, 'fetcher_state_transaction_history'),
@@ -52,11 +53,23 @@ export function ethereumDalsFetcherFactory(basePath: string) {
   }
 }
 
-export  function ethereumClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): EthereumClient {
+export function ethereumClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): EthereumClient {
   const url = config.ETHEREUM_RPC
   if (!url) throw new Error('ETHEREUM_RPC not configured')
 
   return createEthereumClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
+}
+
+// @todo: Refactor and pass the vars through SDK.init extended config
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function ethereumConfigFactory(blockchainId: Blockchain = Blockchain.Ethereum) {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+
+  return {
+    indexRawBlocks: config[`${BLOCKCHAIN_ID}_INDEX_BLOCKS`] === 'true', // default false
+    indexAccountTransactionHistory: config[`${BLOCKCHAIN_ID}_INDEX_TRANSACTIONS`] !== 'false', // default true
+    indexAccountLogHistory: config[`${BLOCKCHAIN_ID}_INDEX_`] !== 'false', // default true
+  }
 }
 
 export async function ethereumFetcherFactory(
@@ -74,7 +87,10 @@ export async function ethereumFetcherFactory(
 
   const ethereumClient = ethereumClientFetcherFactory(DALs)
 
+  const config = ethereumConfigFactory()
+
   const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
+    config,
     ethereumClient,
     DALs.blockFetcherHistoryStateDAL,
     DALs.rawBlockDAL,

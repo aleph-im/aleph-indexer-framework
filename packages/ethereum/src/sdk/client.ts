@@ -388,7 +388,9 @@ export class EthereumClient {
     }
   }
 
-  async indexBlockSignatures(blocks: EthereumRawBlock[]): Promise<void> {
+  async indexBlockAccountTransactions(
+    blocks: EthereumRawBlock[],
+  ): Promise<void> {
     if (!this.accountSignatureDAL)
       throw new Error(
         'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
@@ -570,7 +572,7 @@ export class EthereumClient {
       )
 
     if (this.options.indexBlockSignatures) {
-      await this.indexBlockSignatures(chunk)
+      await this.indexBlockAccountTransactions(chunk)
     }
 
     if (this.options.indexBlockLogBloom) {

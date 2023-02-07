@@ -18,26 +18,34 @@ import { EthereumRawBlock } from '../../../../types.js'
 
 const { JobRunnerReturnCode } = Utils
 
+export type EthereumBlockHistoryFetcherConfig = {
+  indexRawBlocks?: boolean
+  indexAccountTransactionHistory?: boolean
+  indexAccountLogHistory?: boolean
+  blockTime?: number
+}
+
 export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBlockHistoryPaginationCursor> {
   protected lastCheckCompleteBackward = Date.now()
   protected iterationLimit = 1000
   protected pageLimit = 50
 
   constructor(
+    protected config: EthereumBlockHistoryFetcherConfig,
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockHistoryPaginationCursor>,
-    protected blockDAL?: EthereumRawBlockStorage,
+    protected blockDAL: EthereumRawBlockStorage,
     protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    const blockTime = 10 + 2
+    const blockTime = config.blockTime || (10 + 2) * 1000
 
     super(
       {
         id: `${blockchainId}:block-history`,
         jobs: {
           forward: {
-            interval: 1000 * blockTime,
-            intervalMax: 1000 * blockTime,
+            interval: blockTime,
+            intervalMax: blockTime,
             handleFetch: () => this.runForward(),
             checkComplete: async () => false,
           },
@@ -173,14 +181,20 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     goingForward: boolean,
   ): Promise<void> {
     if (!blocks.length) return
+    const promises = []
 
-    if (this.blockDAL) {
-      await this.blockDAL.save(blocks)
+    if (this.config.indexRawBlocks) {
+      promises.push(this.blockDAL.save(blocks))
     }
 
-    await Promise.all([
-      this.ethereumClient.indexBlockSignatures(blocks),
-      this.ethereumClient.indexBlockLogBloom(blocks),
-    ])
+    if (this.config.indexAccountTransactionHistory) {
+      promises.push(this.ethereumClient.indexBlockAccountTransactions(blocks))
+    }
+
+    if (this.config.indexAccountLogHistory) {
+      promises.push(this.ethereumClient.indexBlockLogBloom(blocks))
+    }
+
+    await Promise.all(promises)
   }
 }

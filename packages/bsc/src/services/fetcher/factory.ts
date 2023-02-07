@@ -5,9 +5,10 @@ import {
   BlockchainFetcherI,
   FetcherMsClient,
   IndexableEntityType,
-  BaseEntityFetcherMain
+  BaseEntityFetcherMain,
+  Blockchain
 } from '@aleph-indexer/framework'
-import { ethereumDalsFetcherFactory } from '@aleph-indexer/ethereum'
+import { ethereumDalsFetcherFactory, ethereumConfigFactory } from '@aleph-indexer/ethereum'
 import { BscFetcher } from './main.js'
 import { BscBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
 import { createBscClient, BscClient } from '../../sdk/index.js'
@@ -16,11 +17,16 @@ import { BscTransactionFetcher } from './src/transaction/transactionFetcher.js'
 import { BscLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
 import { BscLogFetcher } from './src/log/logFetcher.js'
 
-export  function bscClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
+export function bscClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
   const url = config.BSC_RPC
   if (!url) throw new Error('BSC_RPC not configured')
 
   return createBscClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function bscConfigFactory() {
+  return ethereumConfigFactory(Blockchain.Bsc)
 }
 
 export async function bscFetcherFactory(
@@ -38,7 +44,10 @@ export async function bscFetcherFactory(
 
   const bscClient = bscClientFetcherFactory(DALs)
 
+  const config = bscConfigFactory()
+
   const blockHistoryFetcher = new BscBlockHistoryFetcher(
+    config,
     bscClient,
     DALs.blockFetcherHistoryStateDAL,
     DALs.rawBlockDAL,
