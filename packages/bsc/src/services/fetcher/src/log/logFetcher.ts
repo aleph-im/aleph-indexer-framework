@@ -1,12 +1,11 @@
 import { ServiceBroker } from 'moleculer'
 import { Blockchain, PendingEntityStorage } from '@aleph-indexer/framework'
-import { EthereumLogFetcher } from '@aleph-indexer/ethereum'
+import {
+  EthereumLogFetcher,
+  EthereumRawLogStorage,
+} from '@aleph-indexer/ethereum'
 import { BscClient } from '../../../../sdk/client.js'
-import { EthereumRawLogStorage } from './dal/rawLog.js'
 
-/**
- * The main class of the fetcher service.
- */
 export class BscLogFetcher extends EthereumLogFetcher {
   constructor(
     protected bscClient: BscClient,

@@ -1,6 +1,8 @@
 import { Blockchain, FetcherStateLevelStorage } from '@aleph-indexer/framework'
-import { EthereumBlockHistoryFetcher } from '@aleph-indexer/ethereum'
-import { EthereumRawBlockStorage } from './dal/rawBlock.js'
+import {
+  EthereumBlockHistoryFetcher,
+  EthereumRawBlockStorage,
+} from '@aleph-indexer/ethereum'
 import { BscClient } from '../../../../sdk/client.js'
 
 export class BscBlockHistoryFetcher extends EthereumBlockHistoryFetcher {

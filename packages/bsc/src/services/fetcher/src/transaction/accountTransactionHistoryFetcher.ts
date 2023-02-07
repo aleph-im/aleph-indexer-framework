@@ -1,8 +1,10 @@
 import { Blockchain, FetcherStateLevelStorage } from '@aleph-indexer/framework'
-import { EthereumAccountTransactionHistoryFetcher } from '@aleph-indexer/ethereum'
+import {
+  EthereumAccountTransactionHistoryFetcher,
+  EthereumAccountTransactionHistoryPaginationCursor,
+} from '@aleph-indexer/ethereum'
 import { BscClient } from '../../../../sdk/client.js'
 import { BscBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
-import { EthereumAccountTransactionHistoryPaginationCursor } from '../types.js'
 
 export class BscAccountTransactionHistoryFetcher extends EthereumAccountTransactionHistoryFetcher {
   constructor(

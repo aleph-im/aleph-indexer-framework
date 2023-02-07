@@ -8,8 +8,6 @@ import { bscParserFactory } from './src/services/parser/factory.js'
 import { bscWorkerDomainFactory } from './src/domain/worker.js'
 
 export * from './src/domain/worker.js'
-export * from './src/types.js'
-
 export * from './src/services/fetcher/index.js'
 export * from './src/services/parser/index.js'
 export * from './src/services/indexer/index.js'

@@ -1,12 +1,14 @@
+import { ServiceBroker } from 'moleculer'
 import {
   Blockchain,
   PendingEntityStorage,
   RawEntityStorage,
 } from '@aleph-indexer/framework'
-import { ServiceBroker } from 'moleculer'
+import {
+  EthereumRawTransaction,
+  EthereumTransactionFetcher,
+} from '@aleph-indexer/ethereum'
 import { BscClient } from '../../../../sdk/client.js'
-import { EthereumRawTransaction } from '../../../../types.js'
-import { EthereumTransactionFetcher } from '@aleph-indexer/ethereum'
 
 export class BscTransactionFetcher extends EthereumTransactionFetcher {
   constructor(

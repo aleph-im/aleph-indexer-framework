@@ -1,6 +1,8 @@
 import { Blockchain } from '@aleph-indexer/framework'
-import { EthereumAccountTransactionHistoryStorage } from '../services/fetcher/src/transaction/dal/accountTransactionHistory.js'
-import { EthereumLogBloomStorage } from '../services/fetcher/src/log/dal/logBloom.js'
+import {
+  EthereumAccountTransactionHistoryStorage,
+  EthereumLogBloomStorage,
+} from '@aleph-indexer/ethereum'
 import { BscClient } from './client.js'
 
 export function createBscClient(

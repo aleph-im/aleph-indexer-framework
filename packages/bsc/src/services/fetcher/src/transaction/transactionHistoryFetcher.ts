@@ -4,11 +4,13 @@ import {
   FetcherStateLevelStorage,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
-import { EthereumTransactionHistoryFetcher } from '@aleph-indexer/ethereum'
+import {
+  EthereumAccountTransactionHistoryStorage,
+  EthereumTransactionHistoryFetcher,
+} from '@aleph-indexer/ethereum'
 import { BscAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { BscBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
 import { BscClient } from '../../../../sdk/client.js'
-import { EthereumAccountTransactionHistoryStorage } from './dal/accountTransactionHistory.js'
 
 export class BscTransactionHistoryFetcher extends EthereumTransactionHistoryFetcher {
   constructor(
