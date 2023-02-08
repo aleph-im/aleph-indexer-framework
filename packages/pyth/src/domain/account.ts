@@ -43,4 +43,24 @@ export class AccountDomain {
         opts,
       )
   }
+
+  async getPriceByTimestamp(
+    timestamp: number
+  ): Promise<Price> {
+    const price = await this.priceDAL
+      .useIndex(PriceDALIndex.AccountTimestamp)
+      .getLastValueFromTo(
+        [this.info.address, 0],
+        [this.info.address, timestamp],
+      )
+    if (price) return price
+    return {
+      id: '',
+      timestamp: 0,
+      priceAccount: this.info.address,
+      price: 0,
+      confidence: 0,
+      status: 0,
+    }
+  }
 }

@@ -16,10 +16,10 @@ export class CandleAggregator {
 
   protected processPriceData(acc: Candle, curr: Price): Candle {
     if (curr.price && curr.confidence) {
-      if (acc.openPrice === 0) {
-        acc.openPrice = curr.price
-        acc.openConfidence = curr.confidence
-        acc.openTimestamp = curr.timestamp
+      if (acc.closePrice === 0) {
+        acc.closePrice = curr.price
+        acc.closeConfidence = curr.confidence
+        acc.closeTimestamp = curr.timestamp
       }
       if (curr.price > acc.highPrice) {
         acc.highPrice = curr.price
@@ -31,19 +31,19 @@ export class CandleAggregator {
         acc.lowConfidence = curr.confidence
         acc.lowTimestamp = curr.timestamp
       }
-      acc.closePrice = curr.price
-      acc.closeConfidence = curr.confidence
-      acc.closeTimestamp = curr.timestamp
+      acc.openPrice = curr.price
+      acc.openConfidence = curr.confidence
+      acc.openTimestamp = curr.timestamp
     }
 
     return acc
   }
 
   protected processCandle(acc: Candle, curr: Candle): Candle {
-    if (acc.openPrice === 0) {
-      acc.openPrice = curr.openPrice
-      acc.openConfidence = curr.openConfidence
-      acc.openTimestamp = curr.openTimestamp
+    if (acc.closePrice === 0) {
+      acc.closePrice = curr.closePrice
+      acc.closeConfidence = curr.closeConfidence
+      acc.closeTimestamp = curr.closeTimestamp
     }
     if (curr.highPrice > acc.highPrice) {
       acc.highPrice = curr.highPrice
@@ -55,9 +55,9 @@ export class CandleAggregator {
       acc.lowConfidence = curr.lowConfidence
       acc.lowTimestamp = curr.lowTimestamp
     }
-    acc.closePrice = curr.closePrice
-    acc.closeConfidence = curr.closeConfidence
-    acc.closeTimestamp = curr.closeTimestamp
+    acc.openPrice = curr.openPrice
+    acc.openConfidence = curr.openConfidence
+    acc.openTimestamp = curr.openTimestamp
 
     return acc
   }

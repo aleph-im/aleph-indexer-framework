@@ -18,6 +18,11 @@ export type PricesFilters = {
   reverse?: boolean
 }
 
+export type PriceFilters = {
+  address: string
+  timestamp: number
+}
+
 export type AccountsFilters = {
   accounts?: string[]
   includeStats?: boolean
@@ -83,6 +88,13 @@ export class APIResolver {
     }
 
     return result
+  }
+
+  async getPriceByTimestamp({
+    address,
+    timestamp,
+  }: PriceFilters): Promise<Price> {
+    return await this.domain.getPriceByTimestamp(address, timestamp)
   }
 
   async getCandles({

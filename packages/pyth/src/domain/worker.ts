@@ -160,6 +160,14 @@ export default class WorkerDomain
     return await feed.getHistoricalPrices(startDate, endDate, opts)
   }
 
+  async getPriceByTimestamp(
+    accountAddress: string,
+    timestamp: number,
+  ): Promise<Price> {
+    const account = this.getAccount(accountAddress)
+    return await account.getPriceByTimestamp(timestamp)
+  }
+
   // @note: replaces getTimeSeriesStats
   async getCandles(
     account: string,

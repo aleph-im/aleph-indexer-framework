@@ -10,7 +10,6 @@ import {
 } from '@aleph-indexer/framework'
 import {
   Candle,
-  CandleInterval,
   PythAccountData,
   PythAccountStats,
   GlobalPythStats,
@@ -115,6 +114,19 @@ export default class MainDomain
 
     console.log('getHistoricalPrices stream', typeof stream)
     return stream as StorageStream<string, Price>
+  }
+
+  async getPriceByTimestamp(
+    account: string,
+    timestamp: number,
+  ): Promise<Price> {
+    return await this.context.apiClient
+      .useBlockchain(Blockchain.Solana)
+      .invokeDomainMethod({
+        account,
+        method: 'getPriceByTimestamp',
+        args: [timestamp],
+      }) as Price
   }
 
   async getCandles(

@@ -14,6 +14,7 @@ import {
   CandlesFilters,
   PricesFilters,
   AccountsFilters,
+  PriceFilters,
 } from './resolvers.js'
 import MainDomain from '../domain/main.js'
 
@@ -57,6 +58,15 @@ export default class APISchema extends IndexerAPISchema {
               reverse: { type: GraphQLBoolean },
             },
             resolve: (_, ctx) => this.resolver.getPrices(ctx as PricesFilters),
+          },
+
+          price: {
+            type: Types.Price,
+            args: {
+              address: { type: new GraphQLNonNull(GraphQLString) },
+              timestamp: { type: new GraphQLNonNull(GraphQLFloat) },
+            },
+            resolve: (_, ctx) => this.resolver.getPriceByTimestamp(ctx as PriceFilters),
           },
 
           candles: {

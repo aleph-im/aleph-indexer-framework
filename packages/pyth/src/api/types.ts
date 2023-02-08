@@ -27,11 +27,11 @@ export const AssetType = new GraphQLEnumType({
   },
 })
 
-const Price = new GraphQLObjectType({
+export const Price = new GraphQLObjectType({
   name: 'Price',
   fields: {
     id: { type: new GraphQLNonNull(GraphQLString) },
-    timestamp: { type: new GraphQLNonNull(GraphQLDateTime) },
+    timestamp: { type: new GraphQLNonNull(GraphQLFloat) },
     priceAccount: { type: new GraphQLNonNull(GraphQLString) },
     price: { type: new GraphQLNonNull(GraphQLFloat) },
     confidence: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -103,7 +103,7 @@ export const PriceEma = new GraphQLObjectType({
   name: 'PriceEma',
   fields: {
     valueComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    value: { type: new GraphQLNonNull(GraphQLInt) },
+    value: { type: new GraphQLNonNull(GraphQLBigNumber) },
     numerator: { type: new GraphQLNonNull(GraphQLBigNumber) },
     denominator: { type: new GraphQLNonNull(GraphQLBigNumber) },
   },
@@ -113,9 +113,9 @@ export const PriceInfo = new GraphQLObjectType({
   name: 'PriceInfo',
   fields: {
     priceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    price: { type: new GraphQLNonNull(GraphQLInt) },
+    price: { type: GraphQLBigNumber },
     confidenceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    confidence: { type: new GraphQLNonNull(GraphQLInt) },
+    confidence: { type: GraphQLBigNumber },
     status: { type: new GraphQLNonNull(GraphQLInt) },
     corporateAction: { type: new GraphQLNonNull(GraphQLInt) },
     publishSlot: { type: new GraphQLNonNull(GraphQLInt) },
@@ -137,9 +137,9 @@ export const Product = new GraphQLObjectType({
     symbol: { type: new GraphQLNonNull(GraphQLString) },
     asset_type: { type: new GraphQLNonNull(GraphQLString) },
     quote_currency: { type: new GraphQLNonNull(GraphQLString) },
-    tenor: { type: new GraphQLNonNull(GraphQLString) },
+    tenor: { type: GraphQLString },
     price_account: { type: new GraphQLNonNull(GraphQLString) },
-    index: { type: new GraphQLNonNull(GraphQLString) },
+    index: { type: GraphQLString },
   },
 })
 
@@ -166,9 +166,9 @@ export const ParsedAccountsData = new GraphQLObjectType({
     nextPriceAccountKey: { type: GraphQLString },
     previousSlot: { type: new GraphQLNonNull(GraphQLBigNumber) },
     previousPriceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    previousPrice: { type: new GraphQLNonNull(GraphQLInt) },
+    previousPrice: { type: new GraphQLNonNull(GraphQLBigNumber) },
     previousConfidenceComponent: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    previousConfidence: { type: new GraphQLNonNull(GraphQLInt) },
+    previousConfidence: { type: new GraphQLNonNull(GraphQLBigNumber) },
     previousTimestamp: { type: new GraphQLNonNull(GraphQLBigNumber) },
     priceComponents: { type: new GraphQLNonNull(GraphQLList(PriceComponent)) },
     aggregate: { type: new GraphQLNonNull(PriceInfo) },

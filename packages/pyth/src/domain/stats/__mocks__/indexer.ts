@@ -33,7 +33,3 @@ export async function getMockAccountState(eventDAL: PriceStorage) {
         }
     } as IndexerClientI
 }
-
-type AccountState = {
-    getAccountState(args: Omit<GetAccountIndexingStateRequestArgs, "blockchainId">): Promise<AccountIndexerState | undefined>
-}

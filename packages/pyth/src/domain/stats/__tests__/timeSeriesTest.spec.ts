@@ -196,7 +196,7 @@ describe('AccountTimeSeries', () => {
     })
     expect(allStats.series.length).toBeLessThanOrEqual(year1Stats.series.length)
     expect(allStats.series.length).toBeGreaterThan(0)
-    expect(allStats.series[0].value.openTimestamp).toBe(1675175243000)
+    expect(allStats.series[0].value.openTimestamp).toBe(1675174685000)
   })
 
   // assumes sorted events (by timestamp in the vector)
