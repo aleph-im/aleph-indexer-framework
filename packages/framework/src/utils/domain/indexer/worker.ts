@@ -1,11 +1,16 @@
 import {
+  AccountIndexerConfigWithMeta,
   AccountIndexerRequestArgs,
+  EntityDateRangeResponse,
   IndexerDomainContext,
   IndexerWorkerDomainI,
-  TransactionDateRangeResponse,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain, ParsedTransaction } from '../../../types.js'
-import { AccountStats, AccountTimeSeriesStats, TimeSeriesStatsFilters } from '../../stats/index.js'
+import { Blockchain, ParsedEntity } from '../../../types.js'
+import {
+  AccountTimeSeriesStats,
+  TimeSeriesStatsFilters,
+  AccountStats,
+} from '../../stats/index.js'
 import { WorkerKind } from '../../workers.js'
 import { importBlockchainWorkerIndexerDomain } from '../common.js'
 
@@ -22,17 +27,15 @@ export type IndexerWorkerDomainWithStats = {
   getStats(account: string): Promise<AccountStats>
 }
 
-export interface BlockchainIndexerWorkerI<
-  T extends ParsedTransaction<unknown>,
-> {
-  onTxDateRange(response: TransactionDateRangeResponse<T>): Promise<void>
+export interface BlockchainIndexerWorkerI<T extends ParsedEntity<unknown>> {
+  onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void>
 }
 
 /**
  * Describes an indexer worker domain, implements some common methods for any instance
  */
 export abstract class IndexerWorkerDomain<
-  T extends ParsedTransaction<unknown> = ParsedTransaction<unknown>,
+  T extends ParsedEntity<unknown> = ParsedEntity<unknown>,
 > implements IndexerWorkerDomainI
 {
   protected instance!: number
@@ -55,16 +58,21 @@ export abstract class IndexerWorkerDomain<
     )
   }
 
-  abstract onNewAccount(config: AccountIndexerRequestArgs): Promise<void>
+  abstract onNewAccount(
+    config: AccountIndexerConfigWithMeta<unknown> | AccountIndexerRequestArgs,
+  ): Promise<void>
 
-  async onTxDateRange(
-    response: TransactionDateRangeResponse<T>,
-  ): Promise<void> {
-    const { blockchainId, account, startDate, endDate } = response
+  async onEntityDateRange(response: EntityDateRangeResponse<T>): Promise<void> {
+    const { blockchainId, type, account, startDate, endDate } = response
 
-    console.log('Processing', blockchainId, account, startDate, endDate)
+    console.log(
+      `${blockchainId} ${type} | processing entities`,
+      account,
+      startDate,
+      endDate,
+    )
 
     const worker = this.blockchainInstances[blockchainId]
-    await worker.onTxDateRange(response)
+    await worker.onEntityDateRange(response)
   }
 }

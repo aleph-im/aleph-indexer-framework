@@ -6,8 +6,6 @@ import {
   ParserClientI,
 } from '@aleph-indexer/framework'
 import {
-  ParsedAccountInfoV1,
-  RawAccountInfo,
   SolanaParsedInstruction,
   SolanaParsedTransaction,
   SolanaRawInstruction,
@@ -17,9 +15,7 @@ import { ParseInstructionRequestArgs } from './src/types.js'
 
 export default class SolanaParserClient extends BaseParserClient<
   SolanaRawTransaction,
-  SolanaParsedTransaction,
-  RawAccountInfo,
-  ParsedAccountInfoV1
+  SolanaParsedTransaction
 > {
   async parseInstruction(
     args: Omit<
@@ -37,13 +33,6 @@ export default class SolanaParserClient extends BaseParserClient<
 export async function solanaParserClientFactory(
   blockchainId: Blockchain,
   broker: ServiceBroker,
-): Promise<
-  ParserClientI<
-    SolanaRawTransaction,
-    SolanaParsedTransaction,
-    RawAccountInfo,
-    ParsedAccountInfoV1
-  >
-> {
+): Promise<ParserClientI<SolanaRawTransaction, SolanaParsedTransaction>> {
   return new SolanaParserClient(blockchainId, broker)
 }

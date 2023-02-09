@@ -1,12 +1,13 @@
 import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 import {
-  AccountTransactionHistoryDALIndex,
-  AccountTransactionHistoryStorage,
+  AccountEntityHistoryStorage,
+  AccountEntityHistoryDALIndex,
 } from '@aleph-indexer/framework'
+
 import { SolanaSignature } from '../types.js'
 
 export type SolanaAccountTransactionHistoryStorage =
-  AccountTransactionHistoryStorage<SolanaSignature>
+  AccountEntityHistoryStorage<SolanaSignature>
 
 export enum SolanaAccountTransactionHistoryDALIndex {
   AccountTimestampIndex = 'account_timestamp_index',
@@ -54,7 +55,7 @@ export function createSolanaAccountTransactionHistoryDAL(
     key: [signatureKey],
     indexes: [
       {
-        name: AccountTransactionHistoryDALIndex.AccountTimestampIndex,
+        name: AccountEntityHistoryDALIndex.AccountTimestampIndex,
         key: [accountKey, timestampKey, indexKey],
       },
       {

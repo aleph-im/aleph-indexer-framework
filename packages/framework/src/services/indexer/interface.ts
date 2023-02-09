@@ -1,11 +1,11 @@
 import { BlockchainRequestArgs } from '../types.js'
-import { TransactionRequest } from './src/dal/transactionRequest.js'
+import { EntityRequest } from './src/dal/entityRequest.js'
 import {
   AccountIndexerState,
   AccountIndexerRequestArgs,
   InvokeMethodRequestArgs,
-  GetAccountIndexingStateRequestArgs,
-  GetTransactionPendingRequestsRequestArgs,
+  GetAccountIndexingEntityStateRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
 } from './src/types.js'
 
 /**
@@ -22,7 +22,7 @@ export interface IndexerMsI {
    * @param args The account to get the state of.
    */
   getAccountState(
-    args: GetAccountIndexingStateRequestArgs,
+    args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined>
   /**
    * Invokes a domain method with the given account.
@@ -41,9 +41,9 @@ export interface IndexerMsI {
    * Returns all pending and processed transaction requests.
    * @param args
    */
-  getTransactionRequests(
-    args: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]>
+  getEntityPendingRequests(
+    args: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]>
 
   /**
    * Returns all indexer IDs.
@@ -56,7 +56,10 @@ export interface IndexerClientI {
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
   getAccountState(
-    args: Omit<GetAccountIndexingStateRequestArgs, keyof BlockchainRequestArgs>,
+    args: Omit<
+      GetAccountIndexingEntityStateRequestArgs,
+      keyof BlockchainRequestArgs
+    >,
   ): Promise<AccountIndexerState | undefined>
   invokeDomainMethod(
     args: Omit<InvokeMethodRequestArgs, keyof BlockchainRequestArgs>,
@@ -64,10 +67,10 @@ export interface IndexerClientI {
   deleteAccount(
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
-  getTransactionRequests(
+  getEntityPendingRequests(
     args: Omit<
-      GetTransactionPendingRequestsRequestArgs,
+      GetEntityPendingRequestsRequestArgs,
       keyof BlockchainRequestArgs
     >,
-  ): Promise<TransactionRequest[]>
+  ): Promise<EntityRequest[]>
 }

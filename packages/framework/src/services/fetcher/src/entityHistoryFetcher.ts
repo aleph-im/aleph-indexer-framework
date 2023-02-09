@@ -1,5 +1,5 @@
 import { compose } from 'node:stream'
-import { StorageEntry, Utils } from '@aleph-indexer/core'
+import { StorageEntry, StorageStream, Utils } from '@aleph-indexer/core'
 import {
   FetchAccountEntitiesByDateRequestArgs,
   AccountEntityHistoryFetcherState,
@@ -11,7 +11,7 @@ import {
 import { FetcherMsClient } from '../client.js'
 import { PendingAccountStorage } from './dal/account.js'
 import { FetcherPool } from './fetcherPool.js'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { BaseHistoryFetcher } from './baseHistoryFetcher.js'
 import {
   AccountEntityHistoryDALIndex,
@@ -25,9 +25,8 @@ const { StreamBuffer, StreamMap } = Utils
  * The main class of the fetcher service.
  */
 export abstract class BaseEntityHistoryFetcher<
-  C,
-  E extends AccountEntityHistoryStorageEntity,
-  S extends AccountEntityHistoryFetcherState = AccountEntityHistoryFetcherState,
+  CU,
+  HE extends AccountEntityHistoryStorageEntity,
 > {
   protected pendingAccounts: FetcherPool<string[]>
 
@@ -35,15 +34,15 @@ export abstract class BaseEntityHistoryFetcher<
    * Initialize the fetcher service.
    * @param blockchainId The blockchain identifier.
    * @param fetcherClient The Fetcher ms client.
-   * @param accountSignatureDAL The transaction signatures' storage.
    * @param accountDAL The account job storage.
    */
   constructor(
+    protected type: IndexableEntityType,
     protected blockchainId: Blockchain,
     protected fetcherClient: FetcherMsClient,
-    protected accountSignatureDAL: AccountEntityHistoryStorage<E>,
     protected accountDAL: PendingAccountStorage,
-    protected id = `${blockchainId}:entity-history-accounts`,
+    protected accountEntityHistoryDAL: AccountEntityHistoryStorage<HE>,
+    protected id = `${blockchainId}:${type}-history-accounts`,
   ) {
     this.pendingAccounts = new FetcherPool({
       id,
@@ -101,7 +100,7 @@ export abstract class BaseEntityHistoryFetcher<
     }
   }
 
-  async getPartialState(): Promise<AccountEntityHistoryFetcherState> {
+  async getState(): Promise<AccountEntityHistoryFetcherState> {
     const accountFetchers = await this.pendingAccounts.getCount()
     return { accountFetchers }
   }
@@ -112,6 +111,7 @@ export abstract class BaseEntityHistoryFetcher<
     const { account, startDate, endDate, indexerId } = args
 
     const state = await this.getAccountState({
+      type: this.type,
       blockchainId: this.blockchainId,
       account,
     })
@@ -126,55 +126,67 @@ export abstract class BaseEntityHistoryFetcher<
     const inRange = startDate >= firstTimestamp && endDate <= lastTimestamp
     if (!inRange) return
 
-    const signaturesQuery = await this.accountSignatureDAL
-      .useIndex(AccountEntityHistoryDALIndex.AccountTimestampIndex)
-      .getAllFromTo([account, startDate], [account, endDate], {
-        reverse: false,
-      })
+    const entitiesQuery = await this.queryEntitiesByDate(args)
 
     return compose(
-      signaturesQuery,
-      new StreamMap(({ value }: StorageEntry<string, E>) =>
-        this.getEntityId(value),
-      ),
+      entitiesQuery,
+      new StreamMap(({ value }: StorageEntry<string, HE>) => value.id),
       new StreamBuffer(1000),
-      new StreamMap(async (signatures: string[]) => {
-        // @note: Use the client here for load balancing signatures through all fetcher instances
-        await this.fetcherClient
-          .useBlockchain(this.blockchainId)
-          .fetchTransactionsBySignature({
-            signatures,
-            indexerId,
-          })
-        return signatures
+      new StreamMap(async (ids: string[]) => {
+        await this.fetchAccountEntitiesByIdFromDateRange(ids, args)
+        return ids
       }),
     )
   }
 
-  protected async getPartialAccountState<
-    T extends AccountEntityHistoryState<C>,
-  >(args: GetAccountEntityStateRequestArgs): Promise<T | undefined> {
+  protected async fetchAccountEntitiesByIdFromDateRange(
+    ids: string[],
+    byDateArgs: FetchAccountEntitiesByDateRequestArgs,
+  ): Promise<void> {
+    const { indexerId } = byDateArgs
+
+    // @note: Use the client here for load balancing ids through all fetcher instances
+    await this.fetcherClient
+      .useBlockchain(this.blockchainId)
+      .fetchEntitiesById({ type: this.type, ids, indexerId, meta: byDateArgs })
+  }
+
+  protected async getPartialAccountState(
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<CU> | undefined> {
     const { account } = args
 
     const fetcher = this.getAccountFetcher(args.account)
     const fetcherState = await fetcher.getState()
     if (!fetcherState) return
 
+    const completeHistory = await fetcher.isComplete('backward')
+
     return {
       fetcher: this.fetcherClient.getNodeId() || 'unknown',
+      type: this.type,
       blockchain: this.blockchainId,
       account,
       cursors: fetcherState.cursors,
-      completeHistory: fetcher.isComplete('backward'),
-    } as T
+      completeHistory,
+    }
+  }
+
+  protected queryEntitiesByDate(
+    args: FetchAccountEntitiesByDateRequestArgs,
+  ): Promise<StorageStream<string, HE>> {
+    const { account, startDate, endDate } = args
+
+    return this.accountEntityHistoryDAL
+      .useIndex(AccountEntityHistoryDALIndex.AccountTimestampIndex)
+      .getAllFromTo([account, startDate], [account, endDate], {
+        reverse: false,
+      })
   }
 
   abstract getAccountState(
     args: GetAccountEntityStateRequestArgs,
-  ): Promise<AccountEntityHistoryState<C> | undefined>
+  ): Promise<AccountEntityHistoryState<CU> | undefined>
 
-  abstract getState(): Promise<S>
-
-  protected abstract getEntityId(entity: E): unknown
-  protected abstract getAccountFetcher(account: string): BaseHistoryFetcher<C>
+  protected abstract getAccountFetcher(account: string): BaseHistoryFetcher<CU>
 }

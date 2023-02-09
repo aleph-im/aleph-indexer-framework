@@ -3,15 +3,17 @@ import path from 'node:path'
 import fetch from 'node-fetch'
 import { AbiItem } from 'web3-utils'
 import { config } from '@aleph-indexer/core'
+import { Blockchain } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/index.js'
 
 export type Abi = [AbiItem]
 
 // @todo: Implement inmemory cache
-export class AbiFactory {
+export class EthereumAbiFactory {
   constructor(
     protected basePath: string,
     protected ethereumClient: EthereumClient,
+    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected apiKey = config.ETHEREUM_SCAN_API_KEY,
   ) {}
 
@@ -21,7 +23,7 @@ export class AbiFactory {
     let abi = await this.getAbiFromCache(address)
     if (abi) return abi
 
-    const isContract = await this.checkContractAddress(address)
+    const isContract = await this.ethereumClient.isContractAddress(address)
     if (!isContract) return
 
     abi = await this.getAbiFromRemote(address)
@@ -29,48 +31,44 @@ export class AbiFactory {
 
     await this.saveAbiInCache(address, abi)
 
-    console.log(`ABI ${address}`, abi)
+    this.log(`ABI ${address}`, abi)
     return abi
   }
 
   protected async getAbiFromCache(address: string): Promise<Abi | void> {
     try {
       const cachePath = path.join(this.basePath, `${address}.json`)
-      console.log('load abi from cache => ', cachePath)
+      this.log('load abi from cache => ', cachePath)
 
       const file = await readFile(cachePath, 'utf8')
       const abi = JSON.parse(file)
 
-      console.log('cached abi => ', abi)
+      this.log('cached abi => ', abi)
 
       return abi
     } catch (e) {
       // @note: module not found
       if ((e as any)?.code === 'ENOENT') return undefined
 
-      console.log('cached abi error', e)
+      this.log('cached abi error', e)
       throw e
     }
   }
 
   protected async saveAbiInCache(address: string, abi: Abi): Promise<void> {
     const cachePath = path.join(this.basePath, `${address}.json`)
-    console.log('save abi in cache => ', cachePath)
+    this.log('save abi in cache => ', cachePath)
     await writeFile(cachePath, JSON.stringify(abi))
   }
 
   protected async getAbiFromRemote(address: string): Promise<Abi> {
-    const response = await fetch(
-      `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}${
-        this.apiKey ? `&apikey=${this.apiKey}` : ''
-      }`,
-    )
+    const url = this.getRemoteUrl(address)
+    const response = await fetch(url)
 
     // @note: http errors
     if (response.status !== 200) throw new Error(await response.text())
 
     const body: any = await response.json()
-    console.log(body)
 
     // @note: Rate limit error sent with status 200 OK...
     // {
@@ -84,12 +82,13 @@ export class AbiFactory {
     return body.result as Abi
   }
 
-  protected async checkContractAddress(address: string): Promise<boolean> {
-    const code = await this.ethereumClient.getContractCode(address)
-    console.log('---- check code ---->', address, code)
+  protected getRemoteUrl(address: string): string {
+    return `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}${
+      this.apiKey ? `&apikey=${this.apiKey}` : ''
+    }`
+  }
 
-    if (code.length <= 2) return false
-
-    return true
+  protected log(...msgs: any[]): void {
+    console.log(`${this.blockchainId} ${msgs.join(' ')}`)
   }
 }

@@ -1,16 +1,19 @@
+/* eslint-disable prettier/prettier */
 import { Utils } from '@aleph-indexer/core'
 import {
   Blockchain,
   BlockchainIndexerI,
-  createTransactionIndexerStateDAL,
-  createTransactionRequestDAL,
-  createTransactionRequestIncomingTransactionDAL,
-  createTransactionRequestPendingSignatureDAL,
-  createTransactionRequestResponseDAL,
+  createEntityIndexerStateDAL,
+  createEntityRequestDAL,
+  createEntityRequestIncomingEntityDAL,
+  createEntityRequestPendingEntityDAL,
+  createEntityRequestResponseDAL,
   FetcherMsClient,
+  IndexableEntityType,
   IndexerMsClient,
   IndexerWorkerDomainI,
   ParserMsClient,
+  BaseEntityIndexer
 } from '@aleph-indexer/framework'
 import { SolanaParsedTransaction } from '../../types.js'
 import { SolanaIndexer } from './main.js'
@@ -26,17 +29,13 @@ export async function solanaIndexerFactory(
   await Utils.ensurePath(basePath)
 
   // DALs
-  const transactionRequestDAL = createTransactionRequestDAL(basePath)
-  const transactionRequestIncomingTransactionDAL =
-    createTransactionRequestIncomingTransactionDAL<SolanaParsedTransaction>(
-      basePath,
-    )
-  const transactionRequestPendingSignatureDAL =
-    createTransactionRequestPendingSignatureDAL(basePath)
-  const transactionRequestResponseDAL =
-    createTransactionRequestResponseDAL(basePath)
-  const transactionIndexerStateDAL = createTransactionIndexerStateDAL(basePath)
+  const transactionRequestDAL = createEntityRequestDAL(basePath, IndexableEntityType.Transaction)
+  const transactionRequestIncomingTransactionDAL = createEntityRequestIncomingEntityDAL<SolanaParsedTransaction>(basePath, IndexableEntityType.Transaction)
+  const transactionRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Transaction)
+  const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
+  const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
+ 
   const transactionFetcher = new SolanaIndexerTransactionFetcher(
     Blockchain.Solana,
     fetcherMsClient,
@@ -46,12 +45,22 @@ export async function solanaIndexerFactory(
     transactionRequestResponseDAL,
   )
 
-  return new SolanaIndexer(
-    domain,
+  const transactionFetcherMain = new BaseEntityIndexer(
+    IndexableEntityType.Transaction,
+    Blockchain.Solana,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
     transactionIndexerStateDAL,
     transactionFetcher,
+  )
+
+  const entityIndexers = {
+    [IndexableEntityType.Transaction]: transactionFetcherMain
+  }
+
+  return new SolanaIndexer(
+    domain,
+    entityIndexers,
   )
 }

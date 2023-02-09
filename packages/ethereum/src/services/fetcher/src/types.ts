@@ -8,7 +8,11 @@ import {
   BaseFetcherPaginationResponse,
   FetcherState,
 } from '@aleph-indexer/framework'
-import { EthereumBlock, EthereumSignature } from '../../../types.js'
+import {
+  EthereumRawBlock,
+  EthereumRawLog,
+  EthereumAccountTransactionHistoryStorageEntity,
+} from '../../../types.js'
 
 export type EthereumFetcherJobRunnerOptions<C> = Omit<
   BaseFetcherJobRunnerOptions<C>,
@@ -30,18 +34,9 @@ export type EthereumBlockHistoryPaginationCursors =
   BaseFetcherPaginationCursors<EthereumBlockHistoryPaginationCursor>
 
 export type EthereumBlockPaginationResponse = BaseFetcherPaginationResponse<
-  EthereumBlock,
+  EthereumRawBlock,
   EthereumBlockHistoryPaginationCursor
 >
-
-export type EthereumBlockFetcherJobRunnerOptions =
-  EthereumFetcherJobRunnerOptions<EthereumBlockHistoryPaginationCursors>
-
-export type EthereumBlockFetcherOptions = {
-  forward?: boolean | EthereumBlockFetcherJobRunnerOptions
-  backward?: boolean | EthereumBlockFetcherJobRunnerOptions
-  indexBlocks(blocks: EthereumBlock[], goingForward: boolean): Promise<void>
-}
 
 export type EthereumFetchBlocksOptions = {
   before?: number
@@ -50,13 +45,7 @@ export type EthereumFetchBlocksOptions = {
   pageLimit?: number
 }
 
-export type EthereumBlockFetcherClientI = {
-  fetchBlocks(
-    args: EthereumFetchBlocksOptions,
-  ): Promise<AsyncGenerator<EthereumBlockPaginationResponse>>
-}
-
-// Signatures
+// Transaction Signatures
 
 export type EthereumAccountTransactionHistoryPaginationCursor = {
   height: number
@@ -69,22 +58,9 @@ export type EthereumTransactionHistoryPaginationCursors =
 
 export type EthereumTransactionHistoryPaginationResponse =
   BaseFetcherPaginationResponse<
-    EthereumSignature,
+    EthereumAccountTransactionHistoryStorageEntity,
     EthereumAccountTransactionHistoryPaginationCursor
   >
-
-export type EthereumTransactionHistoryFetcherJobRunnerOptions =
-  EthereumFetcherJobRunnerOptions<EthereumTransactionHistoryPaginationCursors>
-
-export type EthereumTransactionHistoryFetcherOptions = {
-  account: string
-  forward?: boolean | EthereumTransactionHistoryFetcherJobRunnerOptions
-  backward?: boolean | EthereumTransactionHistoryFetcherJobRunnerOptions
-  indexSignatures(
-    blocks: EthereumSignature[],
-    goingForward: boolean,
-  ): Promise<void>
-}
 
 export type EthereumFetchSignaturesOptions = {
   account: string
@@ -94,9 +70,47 @@ export type EthereumFetchSignaturesOptions = {
   pageLimit?: number
 }
 
-export type EthereumTransactionHistoryFetcherClientI = {
-  fetchSignatures(args: EthereumFetchSignaturesOptions): Promise<AsyncGenerator>
+export type EthereumAccountTransactionHistoryState =
+  AccountEntityHistoryState<EthereumAccountTransactionHistoryPaginationCursor> & {
+    firstHeight?: number
+    lastHeight?: number
+    firstSignature?: string
+    lastSignature?: string
+  }
+
+// Logs
+
+export type EthereumAccountLogHistoryPaginationCursor = {
+  height: number
+  timestamp: number
 }
+
+export type EthereumLogHistoryPaginationCursors =
+  BaseFetcherPaginationCursors<EthereumAccountLogHistoryPaginationCursor>
+
+export type EthereumLogHistoryPaginationResponse =
+  BaseFetcherPaginationResponse<
+    EthereumRawLog,
+    EthereumAccountLogHistoryPaginationCursor
+  >
+
+export type EthereumLogHistoryFetcherJobRunnerOptions =
+  EthereumFetcherJobRunnerOptions<EthereumLogHistoryPaginationCursors>
+
+export type EthereumFetchLogsOptions = {
+  account: string
+  before?: number
+  until?: number
+  iterationLimit?: number
+  pageLimit?: number
+  isContractAccount?: boolean
+}
+
+export type EthereumAccountLogHistoryState =
+  AccountEntityHistoryState<EthereumAccountLogHistoryPaginationCursor> & {
+    firstHeight?: number
+    lastHeight?: number
+  }
 
 // Account State
 
@@ -112,14 +126,6 @@ export type EthereumAccountState = {
 
 export type EthereumAccountStateStorage =
   AccountStateStorage<EthereumAccountState>
-
-export type EthereumAccountTransactionHistoryState =
-  AccountEntityHistoryState<EthereumAccountTransactionHistoryPaginationCursor> & {
-    firstHeight?: number
-    lastHeight?: number
-    firstSignature?: string
-    lastSignature?: string
-  }
 
 export type EthereumFetcherState = FetcherState<{
   firstBlock?: EthereumAccountTransactionHistoryPaginationCursor

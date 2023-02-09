@@ -1,0 +1,17 @@
+import { ServiceBroker } from 'moleculer'
+import {
+  BaseIndexerClient,
+  Blockchain,
+  IndexerClientI,
+} from '@aleph-indexer/framework'
+
+export class EthereumIndexerClient
+  extends BaseIndexerClient
+  implements IndexerClientI {}
+
+export async function bscIndexerClientFactory(
+  blockchainId: Blockchain,
+  broker: ServiceBroker,
+): Promise<IndexerClientI> {
+  return new EthereumIndexerClient(blockchainId, broker)
+}

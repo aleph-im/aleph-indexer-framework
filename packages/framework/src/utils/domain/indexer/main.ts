@@ -1,12 +1,13 @@
 import { Utils } from '@aleph-indexer/core'
-import { TransactionRequest } from '../../../services/indexer/src/dal/transactionRequest.js'
+import { EntityRequest } from '../../../services/indexer/src/dal/entityRequest.js'
 import {
+  AccountIndexerConfigWithMeta,
   AccountIndexerRequestArgs,
   AccountIndexerState,
-  GetTransactionPendingRequestsRequestArgs,
+  GetEntityPendingRequestsRequestArgs,
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { AccountStats, AccountTimeSeriesStats, TimeSeriesStatsFilters } from '../../stats/types.js'
 
 /**
@@ -45,8 +46,10 @@ export type IndexerMainDomainWithStats = {
 /**
  * Describes the main indexer domain class capable of account discovery.
  */
-export type IndexerMainDomainWithDiscovery = {
-  discoverAccounts(): Promise<AccountIndexerRequestArgs[]>
+export type IndexerMainDomainWithDiscovery<M = unknown> = {
+  discoverAccounts(): Promise<
+    (AccountIndexerConfigWithMeta<M> | AccountIndexerRequestArgs)[]
+  >
 }
 
 export type IndexerMainDomainConfig = {
@@ -149,6 +152,7 @@ export abstract class IndexerMainDomain {
    */
   async getAccountState(
     blockchainId: Blockchain,
+    type: IndexableEntityType,
     accounts: string[] = [],
   ): Promise<AccountIndexerState[]> {
     return (
@@ -156,7 +160,7 @@ export abstract class IndexerMainDomain {
         this.getBlockchainAccounts(blockchainId, accounts).map((account) =>
           this.context.apiClient
             .useBlockchain(blockchainId)
-            .getAccountState({ account }),
+            .getAccountState({ type, account }),
         ),
       )
     ).filter((info): info is AccountIndexerState => !!info)
@@ -242,13 +246,13 @@ export abstract class IndexerMainDomain {
       const blockchainAccounts = this.accounts[blockchainId]
       if (!blockchainAccounts)
         throw new Error(
-          `Accounts that belongs to "${blockchainId}" blockchain are supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
+          `Accounts that belongs to "${blockchainId}" blockchain are NOT supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
         )
 
       return !this.accounts[blockchainId].has(account)
     })
 
-    await this.onDiscover(newOptions)
+    await this.indexAccounts(newOptions)
   }
 
   /**
@@ -256,8 +260,11 @@ export abstract class IndexerMainDomain {
    * @param options The indexer options to use for the new account.
    * @protected
    */
-  protected async onDiscover(
-    options: AccountIndexerRequestArgs[],
+  protected async indexAccounts(
+    options: (
+      | AccountIndexerConfigWithMeta<unknown>
+      | AccountIndexerRequestArgs
+    )[],
   ): Promise<void> {
     await Promise.all(
       options.map(async (option) => {
@@ -324,9 +331,9 @@ export abstract class IndexerMainDomain {
 
   // Private API
 
-  async getTransactionRequests(
-    args: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]> {
+  async getEntityPendingRequests(
+    args: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]> {
     const indexer = (args.indexer as unknown as string[]) || []
 
     const indexers = indexer.length
@@ -338,7 +345,7 @@ export abstract class IndexerMainDomain {
         indexers.map((indexer) =>
           this.context.apiClient
             .useBlockchain(args.blockchainId)
-            .getTransactionRequests({ ...args, indexer }),
+            .getEntityPendingRequests({ ...args, indexer }),
         ),
       )
     ).flatMap((requests) => requests)

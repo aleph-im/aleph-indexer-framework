@@ -1,29 +1,30 @@
 import {
-  BaseIndexerTransactionFetcher,
+  BaseIndexerEntityFetcher,
   Blockchain,
   FetcherMsClient,
   NonceTimestamp,
-  TransactionRequest,
-  TransactionRequestIncomingTransactionStorage,
-  TransactionRequestParams,
-  TransactionRequestPendingSignatureStorage,
-  TransactionRequestResponseStorage,
-  TransactionRequestStorage,
-  TransactionRequestType,
+  EntityRequest,
+  EntityRequestIncomingEntityStorage,
+  EntityRequestPendingEntityStorage,
+  EntityRequestResponseStorage,
+  EntityRequestStorage,
+  EntityRequestType,
+  IndexableEntityType,
 } from '@aleph-indexer/framework'
 import { SolanaParsedTransaction } from '../../../types.js'
 
-export class SolanaIndexerTransactionFetcher extends BaseIndexerTransactionFetcher<SolanaParsedTransaction> {
+export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<SolanaParsedTransaction> {
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
-    protected transactionRequestDAL: TransactionRequestStorage,
-    protected transactionRequestIncomingTransactionDAL: TransactionRequestIncomingTransactionStorage<SolanaParsedTransaction>,
-    protected transactionRequestPendingSignatureDAL: TransactionRequestPendingSignatureStorage,
-    protected transactionRequestResponseDAL: TransactionRequestResponseStorage<SolanaParsedTransaction>,
+    protected transactionRequestDAL: EntityRequestStorage,
+    protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<SolanaParsedTransaction>,
+    protected transactionRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
+    protected transactionRequestResponseDAL: EntityRequestResponseStorage<SolanaParsedTransaction>,
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
     super(
+      IndexableEntityType.Transaction,
       blockchainId,
       fetcherMsClient,
       transactionRequestDAL,
@@ -34,40 +35,24 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerTransactionFetch
     )
   }
 
-  protected async fetchTransactionSignatures(
-    requestParams: TransactionRequestParams,
-  ): Promise<void | string[][] | AsyncIterable<string[]>> {
-    const { type, params } = requestParams
-
-    switch (type) {
-      // @todo: implement it
-      case TransactionRequestType.BySlotRange: {
-        return []
-      }
-      default: {
-        return super.fetchTransactionSignatures(requestParams)
-      }
-    }
-  }
-
-  protected filterIncomingTransactionsByRequest(
-    txs: SolanaParsedTransaction[],
-    request: TransactionRequest,
+  protected filterIncomingEntitiesByRequest(
+    entities: SolanaParsedTransaction[],
+    request: EntityRequest,
   ): {
-    filteredTxs: SolanaParsedTransaction[]
-    remainingTxs: SolanaParsedTransaction[]
+    filteredEntities: SolanaParsedTransaction[]
+    remainingEntities: SolanaParsedTransaction[]
   } {
-    const filteredTxs: SolanaParsedTransaction[] = []
-    const remainingTxs: SolanaParsedTransaction[] = []
+    const filteredEntities: SolanaParsedTransaction[] = []
+    const remainingEntities: SolanaParsedTransaction[] = []
 
     switch (request.type) {
-      case TransactionRequestType.ByDateRange: {
+      case EntityRequestType.ByDateRange: {
         const { account, startDate, endDate } = request.params
 
-        for (const tx of txs) {
+        for (const tx of entities) {
           if (!tx.parsed) {
             console.log(
-              '👺 error incoming tx without parsed field',
+              'solana transaction | 👺 error incoming tx without parsed field',
               request.nonce,
               tx,
             )
@@ -84,28 +69,28 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerTransactionFetch
               ({ pubkey }) => pubkey === account,
             )
 
-          valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
+          valid ? filteredEntities.push(tx) : remainingEntities.push(tx)
         }
 
         break
       }
-      case TransactionRequestType.BySignatures: {
-        const { signatures } = request.params
-        const sigSet = new Set(signatures)
+      case EntityRequestType.ById: {
+        const { ids } = request.params
+        const sigSet = new Set(ids)
 
-        for (const tx of txs) {
+        for (const tx of entities) {
           const valid = sigSet.has(tx.signature)
 
-          valid ? filteredTxs.push(tx) : remainingTxs.push(tx)
+          valid ? filteredEntities.push(tx) : remainingEntities.push(tx)
         }
 
         break
       }
       default: {
-        return super.filterIncomingTransactionsByRequest(txs, request)
+        return super.filterIncomingEntitiesByRequest(entities, request)
       }
     }
 
-    return { filteredTxs, remainingTxs }
+    return { filteredEntities, remainingEntities }
   }
 }

@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { MsIds } from '../../common.js'
 import {
   BlockchainRequestArgs,
@@ -7,20 +7,17 @@ import {
 } from '../../types.js'
 import { FetcherClientI } from '../interface.js'
 import {
-  FetcherAccountPartitionRequestArgs,
-  AddAccountStateRequestArgs,
-  FetchAccountEntitiesByDateRequestArgs,
-  FetchTransactionsBySignatureRequestArgs,
   FetcherStateRequestArgs,
   FetcherState,
-  TransactionState,
-  CheckTransactionsRequestArgs,
-  DelTransactionsRequestArgs,
+  EntityState,
+  CheckEntityRequestArgs,
+  DelEntityRequestArgs,
   AddAccountEntityRequestArgs,
   GetAccountEntityStateRequestArgs,
   DelAccountEntityRequestArgs,
   AccountEntityHistoryState,
-  GetAccountStateStateRequestArgs,
+  FetchAccountEntitiesByDateRequestArgs,
+  FetchEntitiesByIdRequestArgs,
 } from './types.js'
 
 /**
@@ -38,10 +35,10 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     protected msId: MsIds = MsIds.Fetcher,
   ) {}
 
-  addAccountTransactionFetcher(
+  addAccountEntityFetcher(
     args: Omit<AddAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
-    return this.broker.call(`${this.msId}.addAccountTransactionFetcher`, {
+    return this.broker.call(`${this.msId}.addAccountEntityFetcher`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
@@ -49,10 +46,10 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  delAccountTransactionFetcher(
+  delAccountEntityFetcher(
     args: Omit<DelAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
-    return this.broker.call(`${this.msId}.delAccountTransactionFetcher`, {
+    return this.broker.call(`${this.msId}.delAccountEntityFetcher`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
@@ -60,10 +57,10 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  getAccountTransactionFetcherState(
+  getAccountEntityFetcherState(
     args: Omit<GetAccountEntityStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<AccountEntityHistoryState<unknown> | undefined> {
-    return this.broker.call(`${this.msId}.getAccountTransactionFetcherState`, {
+    return this.broker.call(`${this.msId}.getAccountEntityFetcherState`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
@@ -71,45 +68,13 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  addAccountStateFetcher(
-    args: Omit<AddAccountStateRequestArgs, keyof BlockchainRequestArgs>,
-  ): Promise<void> {
-    return this.broker.call(`${this.msId}.addAccountStateFetcher`, {
-      partitionKey: args.account,
-      blockchainId: this.blockchainId,
-      ...args,
-    })
-  }
-
-  delAccountStateFetcher(
-    args: Omit<FetcherAccountPartitionRequestArgs, keyof BlockchainRequestArgs>,
-  ): Promise<void> {
-    return this.broker.call(`${this.msId}.delAccountStateFetcher`, {
-      partitionKey: args.account,
-      indexerId: this.broker.nodeID,
-      blockchainId: this.blockchainId,
-      ...args,
-    })
-  }
-
-  getAccountStateFetcherState(
-    args: Omit<GetAccountStateStateRequestArgs, keyof BlockchainRequestArgs>,
-  ): Promise<any> {
-    return this.broker.call(`${this.msId}.getAccountStateFetcherState`, {
-      partitionKey: args.account,
-      indexerId: this.broker.nodeID,
-      blockchainId: this.blockchainId,
-      ...args,
-    })
-  }
-
-  fetchAccountTransactionsByDate(
+  fetchAccountEntitiesByDate(
     args: Omit<
       FetchAccountEntitiesByDateRequestArgs,
       keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>> {
-    return this.broker.call(`${this.msId}.fetchAccountTransactionsByDate`, {
+    return this.broker.call(`${this.msId}.fetchAccountEntitiesByDate`, {
       partitionKey: args.account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
@@ -117,17 +82,14 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  async fetchTransactionsBySignature(
-    args: Omit<
-      FetchTransactionsBySignatureRequestArgs,
-      keyof BlockchainRequestArgs
-    >,
+  async fetchEntitiesById(
+    args: Omit<FetchEntitiesByIdRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
-    const groups = this.getTransactionPartitionGroups(args)
+    const groups = this.getEntityPartitionGroups(args)
 
     await Promise.all(
       Object.entries(groups).map(([partitionKey, signatures]) => {
-        return this.broker.call(`${this.msId}.fetchTransactionsBySignature`, {
+        return this.broker.call(`${this.msId}.fetchEntitiesById`, {
           indexerId: this.broker.nodeID,
           blockchainId: this.blockchainId,
           ...args,
@@ -138,7 +100,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     )
   }
 
-  getFetcherState(
+  async getFetcherState(
     args: Omit<FetcherStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<FetcherState> {
     return this.broker.call(`${this.msId}.getFetcherState`, args, {
@@ -146,33 +108,31 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  async getTransactionState({
-    signatures,
-  }: CheckTransactionsRequestArgs): Promise<TransactionState[]> {
-    const groups = this.getTransactionPartitionGroups({ signatures })
+  async getEntityState({
+    ids,
+  }: CheckEntityRequestArgs): Promise<EntityState[]> {
+    const groups = this.getEntityPartitionGroups({ ids })
 
     const states = (await Promise.all(
-      Object.entries(groups).map(([partitionKey, signatures]) => {
-        return this.broker.call(`${this.msId}.getTransactionState`, {
+      Object.entries(groups).map(([partitionKey, ids]) => {
+        return this.broker.call(`${this.msId}.getEntityState`, {
           partitionKey,
-          signatures,
+          ids,
         })
       }),
-    )) as TransactionState[][]
+    )) as EntityState[][]
 
     return states.flatMap((state) => state)
   }
 
-  async delTransactionCache({
-    signatures,
-  }: DelTransactionsRequestArgs): Promise<void> {
-    const groups = this.getTransactionPartitionGroups({ signatures })
+  async delEntityCache({ ids }: DelEntityRequestArgs): Promise<void> {
+    const groups = this.getEntityPartitionGroups({ ids })
 
     await Promise.all(
-      Object.entries(groups).map(([partitionKey, signatures]) => {
-        return this.broker.call(`${this.msId}.delTransactionCache`, {
+      Object.entries(groups).map(([partitionKey, ids]) => {
+        return this.broker.call(`${this.msId}.delEntityCache`, {
           partitionKey,
-          signatures,
+          ids,
         })
       }),
     )
@@ -190,13 +150,13 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  protected getTransactionPartitionGroups(args: {
-    signatures: string[]
+  protected getEntityPartitionGroups(args: {
+    ids: string[]
     partitionKey?: string
   }): Record<string, string[]> {
     const partitionGroups = args.partitionKey
-      ? { [args.partitionKey]: args.signatures }
-      : args.signatures.reduce((acc, curr) => {
+      ? { [args.partitionKey]: args.ids }
+      : args.ids.reduce((acc, curr) => {
           const k = curr.charAt(0)
           const group = (acc[k] = acc[k] || [])
           group.push(curr)

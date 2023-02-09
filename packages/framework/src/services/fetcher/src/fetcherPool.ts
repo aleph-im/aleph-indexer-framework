@@ -55,19 +55,21 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
         const [work] = works
         const fetcher = await this.getFetcher(work)
 
-        if (fetcher.getPendingRuns() !== 1)
+        const pendingRuns = await fetcher.getPendingRuns()
+
+        if (pendingRuns !== 1)
           throw new Error(
             'Fetcher should be configured for doing a single run to be used by the fetcherPool',
           )
 
         await fetcher.init()
 
-        const sleepTime = this.getSleepTime(fetcher)
+        const sleepTime = await this.getSleepTime(fetcher)
         if (sleepTime) return sleepTime
 
         await fetcher.run()
 
-        return this.getSleepTime(fetcher) || 1
+        return (await this.getSleepTime(fetcher)) || 1
       },
       preCheckComplete: true,
       chunkSize: 1,
@@ -75,9 +77,13 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     })
   }
 
-  protected getSleepTime(fetcher: BaseHistoryFetcher<any>): number {
+  protected async getSleepTime(
+    fetcher: BaseHistoryFetcher<any>,
+  ): Promise<number> {
+    const nextRun = await fetcher.getNextRun()
+
     const sleepTime = Math.max(
-      Math.min(fetcher.getNextRun() - Date.now(), MAX_TIMER_INTEGER),
+      Math.min(nextRun - Date.now(), MAX_TIMER_INTEGER),
       0,
     )
 
@@ -109,11 +115,11 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     return fetcher
   }
 
-  protected defaultCheckComplete(
+  protected async defaultCheckComplete(
     work: PendingWork<T>,
     fetcher?: BaseHistoryFetcher<any>,
-  ): boolean {
-    if (fetcher) return fetcher.isComplete()
+  ): Promise<boolean> {
+    if (fetcher) return await fetcher.isComplete()
     return false
   }
 }

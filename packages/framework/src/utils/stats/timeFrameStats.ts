@@ -112,7 +112,9 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
-      console.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
+
+      this.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
+
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
         [account, type, timeFrame],
@@ -162,7 +164,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
               firstItem.startDate < pendingRange.startDate &&
               pendingRange.startDate !== minDate
             ) {
-              console.log(
+              this.log(
                 `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
                   firstItem,
                 ).toISO()}`,
@@ -178,7 +180,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
             const lastItem = stateEntries[lastIndex]
 
             if (lastItem.endDate - 1 > pendingRange.endDate) {
-              console.log(
+              this.log(
                 `📊 Recalculate incomplete LAST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
                   lastItem,
                 ).toISO()}`,
@@ -259,7 +261,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
         await processedIntervalsBuffer.drain()
       }
       if (addedEntries) {
-        console.log(
+        this.log(
           `💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${Interval.fromDateTimes(
             DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
             DateTime.fromMillis(
@@ -301,7 +303,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
       return oldState
     })
 
-    console.log(
+    this.log(
       `💿 compact stats states
         newRanges: ${newStates.length},
         toDeleteRanges: ${oldStates.length}
@@ -312,5 +314,9 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
       this.stateDAL.save(newStates),
       this.stateDAL.remove(oldStates),
     ])
+  }
+
+  protected log(...msgs: any[]): void {
+    console.log(`${this.config.type} | ${msgs.join(' ')}`)
   }
 }

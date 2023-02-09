@@ -1,9 +1,18 @@
+import { Blockchain } from '@aleph-indexer/framework'
+import { EthereumAccountTransactionHistoryStorage } from '../services/fetcher/src/transaction/dal/accountTransactionHistory.js'
+import { EthereumLogBloomStorage } from '../services/fetcher/src/log/dal/logBloom.js'
 import { EthereumClient } from './client.js'
-import { EthereumAccountTransactionHistoryStorage } from './dal.js'
 
 export function createEthereumClient(
   url: string,
   accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
+  logBloomDAL?: EthereumLogBloomStorage,
+  blockchainId?: Blockchain,
 ): EthereumClient {
-  return new EthereumClient({ url }, accountSignatureDAL)
+  return new EthereumClient(
+    { url },
+    accountSignatureDAL,
+    logBloomDAL,
+    blockchainId,
+  )
 }

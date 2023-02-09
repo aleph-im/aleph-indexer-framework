@@ -13,7 +13,7 @@ import {
   LoadedAddresses,
   ParsedAddressTableLookup,
 } from '@solana/web3.js'
-import { RawTransaction } from '@aleph-indexer/framework'
+import { RawEntity } from '@aleph-indexer/framework'
 import { ProgramErrorType, TransactionErrorType } from './utils/constants.js'
 
 export { ProgramErrorType, TransactionErrorType } from './utils/constants.js'
@@ -158,7 +158,7 @@ export type SolanaRawTransactionOld = ConfirmedSignatureInfo &
 /**
  * Expected JSON RPC response for the "getTransaction" message
  */
-export type SolanaRawTransaction = RawTransaction & RawParsedTransactionWithMeta
+export type SolanaRawTransaction = RawEntity & RawParsedTransactionWithMeta
 
 export type RawAccountInfo = AccountInfo<Buffer>
 
@@ -219,6 +219,7 @@ export type SolanaParsedTransaction = Omit<
   SolanaRawTransaction,
   'parsed' | 'transaction'
 > & {
+  id: string
   parsed: AlephParsedInnerTransaction
   index: number
   signature: string

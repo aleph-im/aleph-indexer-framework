@@ -1,6 +1,6 @@
 import { PendingWorkPool, PendingWork, Utils } from '@aleph-indexer/core'
 import {
-  AddAccountStateRequestArgs,
+  AddAccountEntityRequestArgs,
   DelAccountEntityRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
@@ -52,7 +52,7 @@ export abstract class BaseStateFetcher {
     }
   }
 
-  async addAccount(args: AddAccountStateRequestArgs): Promise<void> {
+  async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     const { account, indexerId } = args
 
     const work = {
@@ -118,7 +118,9 @@ export abstract class BaseStateFetcher {
   protected async _handleAccounts(
     works: PendingWork<string[]>[],
   ): Promise<void> {
-    console.log(`Accounts State | Start handling ${works.length} accounts`)
+    console.log(
+      `ethereum Accounts State | Start handling ${works.length} accounts`,
+    )
 
     const accounts = works.map((work) => work.id)
 

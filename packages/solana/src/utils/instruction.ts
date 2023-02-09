@@ -6,7 +6,7 @@ import {
   AlephParsedParsedInstruction,
 } from '../types.js'
 import { TOKEN_PROGRAM_ID } from './constants.js'
-import { SolanaInstructionContext } from '../services/parser/index.js'
+import { SolanaParsedInstructionContext } from '../services/parser/index.js'
 
 export function isTokenInstruction(
   ix:
@@ -108,13 +108,13 @@ export function getCollateralAmount(
 }
 
 export function getSubInstructions(
-  ixCtx: SolanaInstructionContext,
+  ixCtx: SolanaParsedInstructionContext,
 ): (AlephParsedInstruction | AlephParsedInnerInstruction)[] {
-  const { ix, parentIx } = ixCtx
+  const { instruction, parentInstruction } = ixCtx
 
-  return parentIx
+  return parentInstruction
     ? // Sibling ixs
-      (parentIx.innerInstructions || []).slice(ix.index + 1)
+      (parentInstruction.innerInstructions || []).slice(instruction.index + 1)
     : // ix inner ixs
-      (ix as AlephParsedInstruction).innerInstructions || []
+      (instruction as AlephParsedInstruction).innerInstructions || []
 }

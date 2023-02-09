@@ -52,6 +52,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
           forward: {
             times,
             interval: 0,
+            intervalInit: 0,
             intervalMax: 1000 * 10,
             handleFetch: (ctx) => this.fetchForward(ctx),
           },
@@ -227,7 +228,9 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       {}
 
     console.log(`
-      fetchSignatures [${goingForward ? 'forward' : 'backward'}] { 
+      solana transaction | fetchSignatures [${
+        goingForward ? 'forward' : 'backward'
+      }] { 
         address: ${address}
         useHistoricRPC: ${rpc === this.solanaMainPublicRpc}
       }
@@ -239,15 +242,14 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const runOffset = goingForward ? runMod : 99 - runMod
 
     try {
-      const signatures = rpc.fetchSignatures(options)
+      const signatures = rpc.fetchTransactionHistory(options)
 
       for await (const step of signatures) {
         const { chunk } = step
 
         await this.processSignatures(chunk, goingForward, runOffset, count)
 
-        count += chunk.length
-
+        count += step.count
         lastCursors = step.cursors
       }
     } catch (e) {
@@ -270,7 +272,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const newDuration = Duration.fromMillis(newInterval).toISOTime() || '+24h'
 
     console.log(
-      `fetchForward ratio: {
+      `solana transaction | fetchForward ratio: {
         target: ${this.forwardRatio}
         current: ${count}
         factor: ${ratioFactor.toFixed(2)}
@@ -293,9 +295,9 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     sigOffset: number,
   ): Promise<void> {
     console.log(
-      `[${this.options.id} ${goingForward ? '⏩' : '⏪'}] signatures received ${
-        signatures.length
-      }`,
+      `solana transaction | [${this.options.id} ${
+        goingForward ? '⏩' : '⏪'
+      }] signatures received ${signatures.length}`,
       `
         runOffset: ${runOffset}
         sigOffset: ${sigOffset}
@@ -308,6 +310,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       const offset = runOffset * 1000000 + (999999 - (index + sigOffset))
 
       const sig = signature as any
+      sig.id = sig.signature
 
       delete sig.memo
       delete sig.confirmationStatus

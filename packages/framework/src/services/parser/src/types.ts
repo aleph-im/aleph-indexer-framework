@@ -1,60 +1,57 @@
-import { ParsedTransaction, RawTransaction } from '../../../types.js'
+import { IndexableEntityType, ParsedEntity, RawEntity } from '../../../types.js'
 import { BlockchainRequestArgs } from '../../types.js'
 
-export type ParserContext = {
-  account: string
-  startDate: number
-  endDate: number
-}
-
-export type ParsedTransactionContext<T> = {
-  tx: T
-  parserContext: ParserContext
-}
+export type ParserContext =
+  | {
+      account: string
+      startDate: number
+      endDate: number
+    }
+  | {
+      ids: string[]
+    }
 
 /**
  * Contains the original and parsed data, as well as the context of the parsing.
  */
-export type ParseElement = {
-  id: string
-  address: string
-  /**
-   * The original data.
-   */
-  payload: unknown
-  /**
-   * The parsed data.
-   */
-  parsed: unknown
-  timestamp: number
-}
+// export type ParseElement = {
+//   id: string
+//   address: string
+//   /**
+//    * The original data.
+//    */
+//   payload: unknown
+//   /**
+//    * The parsed data.
+//    */
+//   parsed: unknown
+//   timestamp: number
+// }
 
-export type Transaction = ParseElement & {
-  type: string
-}
+// export type Transaction = ParseElement & {
+//   type: string
+// }
 
-export type Instruction = ParseElement & {
-  type: string
-}
+// export type Instruction = ParseElement & {
+//   type: string
+// }
 
-export type AccountData = ParseElement & {
-  type: string
-}
+// export type AccountData = ParseElement & {
+//   type: string
+// }
 
-export type ParseResult = Transaction | Instruction | AccountData
+// export type ParseResult = Transaction | Instruction | AccountData
 
-export type RawTransactionWithPeers<T extends RawTransaction> = {
-  peers: string[]
-  tx: T
-}
-
-export type RawTransactionMsg<T extends RawTransaction> =
-  | T
-  | RawTransactionWithPeers<T>
-
-export type ParsedTransactionMsg<T> = {
+export type RawEntityMsg<T> = {
   peers?: string[]
-  tx: T
+  type: IndexableEntityType
+  entity: T
+}
+
+export type ParsedEntityMsg<T> = {
+  peers?: string[]
+  type: IndexableEntityType
+  entity: T
 }
 
 // -----------------------------------
@@ -112,23 +109,17 @@ export abstract class StrictParser<
 
 // ----------------------------------
 
-export type ParseTransactionRequestArgs<T extends RawTransaction> =
+export type ParseEntityRequestArgs<T extends RawEntity> =
   BlockchainRequestArgs & {
-    tx: T
+    type: IndexableEntityType
+    entity: T
   }
-
-export type ParseAccountStateRequestArgs<S> = BlockchainRequestArgs & {
-  account: string
-  state: S
-}
 
 // -------------------------------------------
 
 export interface BlockchainParserI<
-  T extends RawTransaction,
-  PT extends ParsedTransaction<any>,
-  S = unknown,
-  PS = unknown,
+  RE extends RawEntity = RawEntity,
+  PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
 > {
   start(): Promise<void>
   stop(): Promise<void>
@@ -137,12 +128,5 @@ export interface BlockchainParserI<
    * Parses a raw transaction.
    * @param args The raw transaction to parse.
    */
-  parseTransaction(args: ParseTransactionRequestArgs<T>): Promise<T | PT>
-
-  /**
-   * Parses a raw account state.
-   * If the account state is not parsable, the raw state is returned.
-   * @param args The raw account data to parse, usually a buffer.
-   */
-  parseAccountState(args: ParseAccountStateRequestArgs<S>): Promise<S | PS>
+  parseEntity(args: ParseEntityRequestArgs<RE>): Promise<RE | PE>
 }

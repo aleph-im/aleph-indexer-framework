@@ -173,7 +173,7 @@ export const ParsedMessage = new GraphQLObjectType({
 })
 
 export const ParsedTransactionType = new GraphQLObjectType({
-  name: 'ParsedTransaction',
+  name: 'ParsedEntity',
   fields: {
     // Signatures for the transaction
     signatures: { type: new GraphQLList(GraphQLString) },

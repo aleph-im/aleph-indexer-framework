@@ -1,23 +1,14 @@
 import { ServiceBroker } from 'moleculer'
 import { MsIds } from '../../common.js'
 import { ParserClientI } from '../interface.js'
-import {
-  ParseAccountStateRequestArgs,
-  ParseTransactionRequestArgs,
-} from './types.js'
+import { ParseEntityRequestArgs } from './types.js'
 import { BlockchainRequestArgs } from '../../types.js'
-import {
-  Blockchain,
-  ParsedTransaction,
-  RawTransaction,
-} from '../../../types.js'
+import { Blockchain, ParsedEntity, RawEntity } from '../../../types.js'
 
 export abstract class BaseParserClient<
-  T extends RawTransaction,
-  PT extends ParsedTransaction<unknown>,
-  S = unknown,
-  PS = unknown,
-> implements ParserClientI<T, PT, S, PS>
+  RE extends RawEntity = RawEntity,
+  PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
+> implements ParserClientI<RE, PE>
 {
   constructor(
     protected blockchainId: Blockchain,
@@ -25,19 +16,10 @@ export abstract class BaseParserClient<
     protected msId: MsIds = MsIds.Parser,
   ) {}
 
-  async parseTransaction(
-    args: Omit<ParseTransactionRequestArgs<T>, keyof BlockchainRequestArgs>,
-  ): Promise<T | PT> {
-    return this.broker.call(`${this.msId}.parseTransaction`, {
-      blockchainId: this.blockchainId,
-      ...args,
-    })
-  }
-
-  async parseAccountState(
-    args: Omit<ParseAccountStateRequestArgs<S>, keyof BlockchainRequestArgs>,
-  ): Promise<S | PS> {
-    return this.broker.call(`${this.msId}.parseTransaction`, {
+  async parseEntity(
+    args: Omit<ParseEntityRequestArgs<RE>, keyof BlockchainRequestArgs>,
+  ): Promise<RE | PE> {
+    return this.broker.call(`${this.msId}.parseEntity`, {
       blockchainId: this.blockchainId,
       ...args,
     })
