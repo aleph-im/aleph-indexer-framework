@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/solana",
-  "version": "1.0.29",
+  "version": "1.0.34",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -33,15 +33,16 @@
     "luxon": "^3.0.4"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.26",
-    "@aleph-indexer/framework": "^1.0.29",
-    "@aleph-indexer/layout": "^1.0.14",
+    "@aleph-indexer/core": "^1.0.33",
+    "@aleph-indexer/framework": "^1.0.34",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
     "bn.js": "^5.2.0",
     "bs58": "^5.0.0",
     "buffer-layout": "^1.2.2",
-    "moleculer": "^0.14.24"
+    "cacheable-lookup": "^6.0.4",
+    "moleculer": "^0.14.24",
+    "node-cache": "^5.1.2"
   },
   "typedoc": {
     "entryPoint": "./index.ts",

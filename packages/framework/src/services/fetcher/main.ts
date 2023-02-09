@@ -1,21 +1,17 @@
 import { FetcherMsI } from './interface.js'
 import {
-  AddAccountTransactionRequestArgs,
-  AddAccountStateRequestArgs,
+  AddAccountEntityRequestArgs,
   BlockchainFetcherI,
-  DelAccountTransactionRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
-  FetcherState,
-  FetchTransactionsBySignatureRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  AccountTransactionHistoryState,
-  DelAccountStateRequestArgs,
-  GetAccountStateStateRequestArgs,
-  AccountStateState,
-  CheckTransactionsRequestArgs,
-  TransactionState,
-  DelTransactionsRequestArgs,
+  DelAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  AccountEntityHistoryState,
+  CheckEntityRequestArgs,
+  EntityState,
+  DelEntityRequestArgs,
   FetcherStateRequestArgs,
+  FetcherState,
+  FetchAccountEntitiesByDateRequestArgs,
+  FetchEntitiesByIdRequestArgs,
 } from './src/types.js'
 import { FetcherMsClient } from './client.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
@@ -64,6 +60,55 @@ export class FetcherMsMain implements FetcherMsI {
     return this.fetcherClient.getAllFetchers()
   }
 
+  // Account transaction
+
+  async addAccountEntityFetcher(
+    args: AddAccountEntityRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    await fetcher.addAccountEntityFetcher(args)
+  }
+
+  async delAccountEntityFetcher(
+    args: DelAccountEntityRequestArgs,
+  ): Promise<void> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    await fetcher.delAccountEntityFetcher(args)
+  }
+
+  async getAccountEntityFetcherState(
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<unknown> | undefined> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.getAccountEntityFetcherState(args)
+  }
+
+  fetchAccountEntitiesByDate(
+    args: FetchAccountEntitiesByDateRequestArgs,
+  ): Promise<void | AsyncIterable<string[]>> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.fetchAccountEntitiesByDate(args)
+  }
+
+  fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.fetchEntitiesById(args)
+  }
+
+  // Transaction specific methods
+
+  getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.getEntityState(args)
+  }
+
+  delEntityCache(args: DelEntityRequestArgs): Promise<void> {
+    const fetcher = this.getBlockchainInstance(args.blockchainId)
+    return fetcher.delEntityCache(args)
+  }
+
+  // Extended methods
+
   async getFetcherState(
     args: FetcherStateRequestArgs,
   ): Promise<FetcherState[]> {
@@ -78,82 +123,6 @@ export class FetcherMsMain implements FetcherMsI {
       blockchains.map((fetcher) => fetcher.getFetcherState(args)),
     )
   }
-
-  // Account transaction
-
-  async addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
-  ): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    await fetcher.addAccountTransactionFetcher(args)
-  }
-
-  async delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
-  ): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    await fetcher.delAccountTransactionFetcher(args)
-  }
-
-  async getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<unknown> | undefined> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.getAccountTransactionFetcherState(args)
-  }
-
-  // Account state
-
-  async addAccountStateFetcher(
-    args: AddAccountStateRequestArgs,
-  ): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    await fetcher.addAccountTransactionFetcher(args)
-  }
-
-  async delAccountStateFetcher(
-    args: DelAccountStateRequestArgs,
-  ): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    await fetcher.delAccountTransactionFetcher(args)
-  }
-
-  async getAccountStateFetcherState(
-    args: GetAccountStateStateRequestArgs,
-  ): Promise<AccountStateState<unknown> | undefined> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.getAccountStateFetcherState(args)
-  }
-
-  // Transactions
-
-  fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.fetchAccountTransactionsByDate(args)
-  }
-
-  fetchTransactionsBySignature(
-    args: FetchTransactionsBySignatureRequestArgs,
-  ): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.fetchTransactionsBySignature(args)
-  }
-
-  getTransactionState(
-    args: CheckTransactionsRequestArgs,
-  ): Promise<TransactionState[]> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.getTransactionState(args)
-  }
-
-  delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    const fetcher = this.getBlockchainInstance(args.blockchainId)
-    return fetcher.delTransactionCache(args)
-  }
-
-  // Extended methods
 
   async invokeBlockchainMethod<R, A>(
     args: InvokeBlockchainMethodRequestArgs<A>,

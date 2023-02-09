@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/core",
-  "version": "1.0.26",
+  "version": "1.0.33",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -23,8 +23,6 @@
     "luxon": "^3.0.4"
   },
   "devDependencies": {
-    "@types/bn.js": "^5.1.0",
-    "@types/bs58": "^4.0.1",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",
     "@types/dotenv-defaults": "^2.0.1",
@@ -38,24 +36,18 @@
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.4",
-    "bn.js": "^5.2.0",
-    "cacheable-lookup": "^6.0.4",
     "compression": "^1.7.4",
+    "config": "^3.3.9",
     "cors": "^2.8.5",
-    "cross-fetch": "^3.1.5",
     "dotenv": "^16.0.1",
     "dotenv-defaults": "^5.0.0",
-    "ethers": "^5.7.2",
     "express": "^4.18.1",
     "express-graphql": "^0.12.0",
     "express-rate-limit": "^5.5.1",
-    "js-base64": "^3.7.2",
     "level": "^8.0.0",
     "level-read-stream": "^1.1.0",
     "murmurhash": "^2.0.0",
-    "node-cache": "^5.1.2",
-    "superstruct": "^0.16.5",
-    "web3": "^1.8.1"
+    "superstruct": "^0.16.5"
   },
   "typedoc": {
     "entryPoint": "./src/index.ts",

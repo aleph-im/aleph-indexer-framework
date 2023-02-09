@@ -85,11 +85,11 @@ export class AccountTimeSeriesStatsManager<V> {
   }
 
   protected async aggregateTimeSeries(now: number): Promise<void> {
-    const { blockchainId, account } = this.config
+    const { blockchainId, type, account } = this.config
 
     const state = await this.indexerClient
       .useBlockchain(blockchainId)
-      .getAccountState({ account })
+      .getAccountState({ type, account })
 
     if (!state) return
     if (!state.processed.length) return

@@ -1,7 +1,7 @@
 import {
   Blockchain,
   BlockchainIndexerWorkerI,
-  ParsedTransaction,
+  ParsedEntity,
 } from '../../main.js'
 import { WorkerKind } from '../workers.js'
 
@@ -10,7 +10,7 @@ export async function importBlockchainWorkerIndexerDomain(
   supportedBlockchains: Blockchain[],
   ...args: any[]
 ): Promise<
-  Record<Blockchain, BlockchainIndexerWorkerI<ParsedTransaction<unknown>>>
+  Record<Blockchain, BlockchainIndexerWorkerI<ParsedEntity<unknown>>>
 > {
   const blockchainInstances = await Promise.all(
     supportedBlockchains.map(async (blockchainId) => {

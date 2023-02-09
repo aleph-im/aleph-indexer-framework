@@ -1,4 +1,4 @@
-import { struct, u8, blob, u64 } from '@aleph-indexer/layout'
+import { blob, struct, u64, u8 } from './_default.js'
 
 export enum LendingEventType {
   InitLendingMarket = 'initLendingMarket',

@@ -26,56 +26,65 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           fetcherState: {
-            type: Types.FetcherStateList,
+            type: Types.FetcherEntityStateList,
             args: {
               blockchain: { type: new GraphQLList(Types.Blockchain) },
+              type: { type: new GraphQLList(Types.EntityType) },
               fetcher: { type: new GraphQLList(GraphQLString) },
             },
             resolve: (_, ctx) =>
-              this.domain.getFetcherState(ctx.blockchain, ctx.fetcher),
+              this.domain.getFetcherState(
+                ctx.blockchain,
+                ctx.type,
+                ctx.fetcher,
+              ),
           },
 
           accountState: {
-            type: Types.AccountFetcherStateList,
+            type: Types.AccountEntityFetcherStateList,
             args: {
               blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
+              type: { type: new GraphQLNonNull(Types.EntityType) },
               account: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },
             },
             resolve: (_, ctx) =>
-              this.domain.getAccountTransactionFetcherState(
+              this.domain.getAccountEntityFetcherState(
                 ctx.blockchain,
+                ctx.type,
                 ctx.account,
               ),
           },
 
-          transactionState: {
-            type: Types.TransactionStateList,
+          entityState: {
+            type: Types.EntityStateList,
             args: {
               blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-              signature: {
+              type: { type: new GraphQLNonNull(Types.EntityType) },
+              id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },
             },
             resolve: (_, ctx) =>
-              this.domain.getTransactionState(ctx.blockchain, ctx.signature),
+              this.domain.getEntityState(ctx.blockchain, ctx.type, ctx.id),
           },
         },
       }),
       mutation: new GraphQLObjectType({
         name: 'Mutation',
         fields: {
-          deleteTransactionCache: {
+          deleteEntityCache: {
             type: GraphQLBoolean,
             args: {
               blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-              signature: {
+              type: { type: new GraphQLNonNull(Types.EntityType) },
+              id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },
             },
             resolve: (_, ctx) =>
-              this.domain.delTransactionCache(ctx.blockchain, ctx.signature),
+              this.domain.delEntityCache(ctx.blockchain, ctx.type, ctx.id),
           },
         },
       }),

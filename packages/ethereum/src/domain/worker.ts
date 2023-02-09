@@ -4,30 +4,110 @@ import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainIndexerWorkerI,
   IndexerDomainContext,
-  TransactionDateRangeResponse,
+  EntityDateRangeResponse,
+  IndexableEntityType,
+  ParserContext,
 } from '@aleph-indexer/framework'
 import {
+  EthereumParsedLog,
   EthereumParsedTransaction,
-  EthereumParsedTransactionContext,
 } from '../services/parser/src/types.js'
 
 const { StreamFilter, StreamMap, StreamBuffer } = Utils
 
-export type EthereumIndexerWorkerDomainI = {
+export type EthereumTransactionIndexerWorkerDomainI = {
+  ethereumTransactionBufferLength?: number // default 1000
   ethereumFilterTransaction(
-    ctx: EthereumParsedTransactionContext,
+    context: ParserContext,
+    entity: EthereumParsedTransaction,
   ): Promise<boolean>
-  ethereumIndexTransaction(ctx: EthereumParsedTransactionContext): Promise<void>
+  ethereumIndexTransactions(
+    context: ParserContext,
+    entities: EthereumParsedTransaction[],
+  ): Promise<void>
 }
+
+export type EthereumLogIndexerWorkerDomainI = {
+  ethereumLogBufferLength?: number // default 1000
+  ethereumFilterLog(
+    context: ParserContext,
+    entity: EthereumParsedLog,
+  ): Promise<boolean>
+  ethereumIndexLogs(
+    context: ParserContext,
+    entities: EthereumParsedLog[],
+  ): Promise<void>
+}
+
+export type EthereumIndexerWorkerDomainI =
+  EthereumTransactionIndexerWorkerDomainI & EthereumLogIndexerWorkerDomainI
 
 export class EthereumIndexerWorkerDomain {
   constructor(
     protected context: IndexerDomainContext,
     protected hooks: EthereumIndexerWorkerDomainI,
   ) {
+    this.checkEthereumIndexerHooks()
+  }
+
+  async onEntityDateRange(
+    response: EntityDateRangeResponse<any>,
+  ): Promise<void> {
+    const { type } = response
+
+    if (type === IndexableEntityType.Transaction) {
+      return this.onTransactionDateRange(response)
+    }
+
+    if (type === IndexableEntityType.Log) {
+      return this.onLogDateRange(response)
+    }
+  }
+
+  protected async onTransactionDateRange(
+    response: EntityDateRangeResponse<EthereumParsedTransaction>,
+  ): Promise<void> {
+    const { entities, ...context } = response
+
+    const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
+      this.hooks,
+      context,
+    )
+    const indexTransactions = this.hooks.ethereumIndexTransactions.bind(
+      this.hooks,
+      context,
+    )
+
+    await promisify(pipeline)(
+      entities,
+      new StreamFilter(filterTransaction),
+      new StreamBuffer(this.hooks.ethereumTransactionBufferLength || 1000),
+      new StreamMap(indexTransactions),
+    )
+  }
+
+  protected async onLogDateRange(
+    response: EntityDateRangeResponse<EthereumParsedLog>,
+  ): Promise<void> {
+    const { entities, ...context } = response
+
+    const filterLog = this.hooks.ethereumFilterLog.bind(this.hooks, context)
+    const indexLogs = this.hooks.ethereumIndexLogs.bind(this.hooks, context)
+
+    await promisify(pipeline)(
+      entities,
+      new StreamFilter(filterLog),
+      new StreamBuffer(this.hooks.ethereumLogBufferLength || 1000),
+      new StreamMap(indexLogs),
+    )
+  }
+
+  protected checkEthereumIndexerHooks(): void {
     if (
-      this.hooks.ethereumFilterTransaction === undefined ||
-      this.hooks.ethereumIndexTransaction === undefined
+      (this.hooks.ethereumFilterTransaction === undefined ||
+        this.hooks.ethereumIndexTransactions === undefined) &&
+      (this.hooks.ethereumFilterLog === undefined ||
+        this.hooks.ethereumIndexLogs === undefined)
     ) {
       throw new Error(
         'EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
@@ -35,40 +115,25 @@ export class EthereumIndexerWorkerDomain {
     }
   }
 
-  async onTxDateRange(
-    response: TransactionDateRangeResponse<EthereumParsedTransaction>,
-  ): Promise<void> {
-    const { txs } = response
-
-    const filterTransaction = this.hooks.ethereumFilterTransaction.bind(
-      this.hooks,
-    )
-    const indexTransaction = this.hooks.ethereumIndexTransaction.bind(
-      this.hooks,
-    )
-
-    return promisify(pipeline)(
-      txs as any,
-      new StreamMap(this.mapTransactionContext.bind(this, response)),
-      new StreamFilter(filterTransaction),
-      new StreamBuffer(1000),
-      new StreamMap(indexTransaction),
-    )
+  protected checkEthereumTransactionIndexerHooks(): void {
+    if (
+      this.hooks.ethereumFilterTransaction === undefined ||
+      this.hooks.ethereumIndexTransactions === undefined
+    ) {
+      throw new Error(
+        'EthereumTransactionIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+      )
+    }
   }
 
-  protected mapTransactionContext(
-    args: TransactionDateRangeResponse<EthereumParsedTransaction>,
-    tx: EthereumParsedTransaction,
-  ): EthereumParsedTransactionContext {
-    const { account, startDate, endDate } = args
-
-    return {
-      tx,
-      parserContext: {
-        account,
-        startDate,
-        endDate,
-      },
+  protected checkEthereumLogIndexerHooks(): void {
+    if (
+      this.hooks.ethereumFilterLog === undefined ||
+      this.hooks.ethereumIndexLogs === undefined
+    ) {
+      throw new Error(
+        'EthereumLogIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class',
+      )
     }
   }
 }

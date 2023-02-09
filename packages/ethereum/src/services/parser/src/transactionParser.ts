@@ -1,7 +1,7 @@
 import { DefinedParser } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/client.js'
 import { EthereumRawTransaction } from '../../../types.js'
-import { AbiFactory } from './abiFactory.js'
+import { EthereumAbiFactory } from './abiFactory.js'
 import { EthereumParsedTransaction } from './types.js'
 
 export class EthereumTransactionParser extends DefinedParser<
@@ -9,7 +9,7 @@ export class EthereumTransactionParser extends DefinedParser<
   EthereumParsedTransaction
 > {
   constructor(
-    protected abiFactory: AbiFactory,
+    protected abiFactory: EthereumAbiFactory,
     protected ethereumClient: EthereumClient,
   ) {
     super()
@@ -20,12 +20,12 @@ export class EthereumTransactionParser extends DefinedParser<
   ): Promise<EthereumRawTransaction | EthereumParsedTransaction> {
     if (!rawTx.to) return rawTx
 
-    console.log('rawTx', JSON.stringify(rawTx, null, 2))
+    console.log('ethereum rawTx', JSON.stringify(rawTx, null, 2))
 
     const abi = await this.abiFactory.getAbi(rawTx.to)
     const parsedTx = this.ethereumClient.parseTransaction(rawTx, abi)
 
-    console.log('ETH parsed => ', JSON.stringify(parsedTx, null, 2))
+    console.log('ethereum parsed tx => ', JSON.stringify(parsedTx, null, 2))
     return parsedTx
   }
 }

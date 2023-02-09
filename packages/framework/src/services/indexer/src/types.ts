@@ -1,19 +1,20 @@
 import { StorageValueStream } from '@aleph-indexer/core'
-import { Blockchain, ParsedTransaction } from '../../../types.js'
+import {
+  Blockchain,
+  IndexableEntityType,
+  ParsedEntity,
+} from '../../../types.js'
 import { TransportType } from '../../../utils/index.js'
 import { BlockchainRequestArgs } from '../../types.js'
 import { IndexerMsClient } from '../client.js'
-import {
-  TransactionRequest,
-  TransactionRequestType,
-} from './dal/transactionRequest.js'
+import { EntityRequest, EntityRequestType } from './dal/entityRequest.js'
 
 /**
  * Describes a date range associated with an account.
  */
-export type SignatureRange = {
+export type IdRange = {
   blockchainId: Blockchain
-  signatures: string[]
+  ids: string[]
 }
 
 /**
@@ -39,10 +40,10 @@ export type AccountSlotRange = {
 /**
  * {@link AccountDateRange} bundled with fetched transactions.
  */
-export type TransactionDateRangeResponse<T extends ParsedTransaction<unknown>> =
+export type EntityDateRangeResponse<T extends ParsedEntity<unknown>> =
   AccountDateRange & {
-    blockchainId: Blockchain
-    txs: StorageValueStream<T>
+    type: IndexableEntityType
+    entities: StorageValueStream<T>
   }
 
 export type IndexerAccountPartitionRequestArgs = {
@@ -65,8 +66,12 @@ export type IndexerIndexerPartitionRequestArgs = {
 
 // Account  ------------------------------
 
-export type AccountIndexerTransactionRequestArgs = BlockchainRequestArgs &
+export type AccountIndexerEntityRequestArgs = BlockchainRequestArgs &
   IndexerAccountPartitionRequestArgs & {
+    /**
+     * The kind of entity to index
+     */
+    type: IndexableEntityType
     /**
      * How often to fetch a new chunk of transactions. (@todo: what is this helpful for?)
      */
@@ -77,13 +82,10 @@ export type AccountIndexerTransactionRequestArgs = BlockchainRequestArgs &
     chunkTimeframe: number
   }
 
-export type AccountIndexerStateRequestArgs = BlockchainRequestArgs &
-  IndexerAccountPartitionRequestArgs & {
-    /**
-     * How often to fetch a new snapshot of the account's content. (@todo: what is this helpful for? Why not subscribe to the account's content?)
-     */
-    snapshotDelay: number
-  }
+export type AccountIndexerTransactionRequestArgs =
+  AccountIndexerEntityRequestArgs
+export type AccountIndexerLogRequestArgs = AccountIndexerEntityRequestArgs
+export type AccountIndexerStateRequestArgs = AccountIndexerEntityRequestArgs
 
 export type AccountIndexerRequestArgs = BlockchainRequestArgs &
   IndexerAccountPartitionRequestArgs & {
@@ -92,17 +94,51 @@ export type AccountIndexerRequestArgs = BlockchainRequestArgs &
      */
     index: {
       /**
-       * Whether to index transactions or arguments to the transaction indexer.
+       * Whether to index account transactions.
        */
-      transactions:
+      transactions?:
         | boolean
-        | Omit<AccountIndexerTransactionRequestArgs, 'account' | 'blockchainId'>
+        | Omit<
+            AccountIndexerTransactionRequestArgs,
+            'type' | 'account' | 'blockchainId'
+          >
       /**
-       * Whether to index account state or arguments to the account indexer.
+       * Whether to index account logs.
+       */
+      logs?:
+        | boolean
+        | Omit<
+            AccountIndexerLogRequestArgs,
+            'type' | 'account' | 'blockchainId'
+          >
+      /**
+       * Whether to index account state.
        */
       state?:
         | boolean
-        | Omit<AccountIndexerStateRequestArgs, 'account' | 'blockchainId'>
+        | Omit<
+            AccountIndexerStateRequestArgs,
+            'type' | 'account' | 'blockchainId'
+          >
+    }
+  }
+
+export type DelAccountIndexerRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
+    index: {
+      /**
+       * Whether to stop indexing account transactions
+       */
+      transactions?: boolean
+      /**
+       * Whether to stop indexing account logs
+       */
+      logs?: boolean
+
+      /**
+       * Whether to stop indexing account state
+       */
+      state?: boolean
     }
   }
 
@@ -118,8 +154,10 @@ export type AccountIndexerConfigWithMeta<T> = AccountIndexerRequestArgs & {
   meta: T
 }
 
-export type GetAccountIndexingStateRequestArgs = BlockchainRequestArgs &
-  IndexerAccountPartitionRequestArgs
+export type GetAccountIndexingEntityStateRequestArgs = BlockchainRequestArgs &
+  IndexerAccountPartitionRequestArgs & {
+    type: IndexableEntityType
+  }
 
 export type InvokeMethodRequestArgs = BlockchainRequestArgs &
   IndexerAccountPartitionRequestArgs & {
@@ -137,12 +175,13 @@ export type InvokeMethodRequestArgs = BlockchainRequestArgs &
     indexer?: string
   }
 
-export type GetTransactionPendingRequestsRequestArgs = BlockchainRequestArgs &
+export type GetEntityPendingRequestsRequestArgs = BlockchainRequestArgs &
   IndexerIndexerPartitionRequestArgs & {
+    type: IndexableEntityType
     /**
      * Whether to filter by slot, date or signature requests.
      */
-    type?: TransactionRequestType
+    requestType?: EntityRequestType
     /**
      * Optional filter by unique nonce.
      */
@@ -157,9 +196,9 @@ export type GetTransactionPendingRequestsRequestArgs = BlockchainRequestArgs &
      */
     account?: string
     /**
-     * Optional filter by associated signature.
+     * Optional filter by associated id.
      */
-    signature?: string
+    id?: string
   }
 
 export type AccountEventsFilters = AccountDateRange
@@ -167,8 +206,8 @@ export type AccountEventsFilters = AccountDateRange
 /**
  * Describes an object capable of handling transaction streams.
  */
-export type TransactionIndexerHandler<T extends ParsedTransaction<unknown>> = {
-  onTxDateRange(data: TransactionDateRangeResponse<T>): Promise<void>
+export type EntityIndexerHandler<T extends ParsedEntity<unknown>> = {
+  onEntityDateRange(data: EntityDateRangeResponse<T>): Promise<void>
 }
 
 export type IndexerCommonDomainContext = {
@@ -203,8 +242,8 @@ export type IndexerDomainContext = IndexerCommonDomainContext & {
  * Describes an indexer worker domain,
  * capable of indexing transactions and adding new accounts to be indexed.
  */
-export type IndexerWorkerDomainI = TransactionIndexerHandler<
-  ParsedTransaction<unknown>
+export type IndexerWorkerDomainI = EntityIndexerHandler<
+  ParsedEntity<unknown>
 > & {
   init(): Promise<void>
   onNewAccount(args: AccountIndexerRequestArgs): Promise<void>
@@ -219,7 +258,11 @@ export type IndexerMainDomainI = {
 /**
  * Stats about an account indexer's state.
  */
-export type AccountIndexerState = {
+export type AccountEntityIndexerState = {
+  indexer: string
+  type: IndexableEntityType
+  blockchain: Blockchain
+
   /**
    * Which account is being indexed.
    */
@@ -242,6 +285,13 @@ export type AccountIndexerState = {
   processed: string[]
 }
 
+/**
+ * Stats about an account indexer's state.
+ */
+export type AccountIndexerState = AccountEntityIndexerState & {
+  blockchain: Blockchain
+}
+
 export interface BlockchainIndexerI {
   start(): Promise<void>
   stop(): Promise<void>
@@ -253,11 +303,17 @@ export interface BlockchainIndexerI {
   indexAccount(config: AccountIndexerRequestArgs): Promise<void>
 
   /**
+   * Remove the indexer for the given account, either for transactions or content or both.
+   * @param config The indexer configuration.
+   */
+  deleteAccount(config: AccountIndexerRequestArgs): Promise<void>
+
+  /**
    * Returns the indexing state of the given account.
    * @param args The account to get the state of.
    */
   getAccountState(
-    args: GetAccountIndexingStateRequestArgs,
+    args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined>
 
   /**
@@ -268,16 +324,10 @@ export interface BlockchainIndexerI {
   invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown>
 
   /**
-   * Remove the indexer for the given account, either for transactions or content or both.
-   * @param config The indexer configuration.
-   */
-  deleteAccount(config: AccountIndexerRequestArgs): Promise<void>
-
-  /**
    * Returns all pending and processed transaction requests.
    * @param args
    */
-  getTransactionRequests(
-    args: GetTransactionPendingRequestsRequestArgs,
-  ): Promise<TransactionRequest[]>
+  getEntityPendingRequests(
+    args: GetEntityPendingRequestsRequestArgs,
+  ): Promise<EntityRequest[]>
 }

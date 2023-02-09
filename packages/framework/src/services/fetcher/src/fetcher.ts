@@ -1,25 +1,20 @@
 import {
-  AddAccountStateRequestArgs,
   BlockchainFetcherI,
-  CheckTransactionsRequestArgs,
-  DelTransactionsRequestArgs,
-  FetchAccountTransactionsByDateRequestArgs,
+  CheckEntityRequestArgs,
+  DelEntityRequestArgs,
   FetcherState,
   FetcherStateRequestArgs,
-  FetchTransactionsBySignatureRequestArgs,
-  TransactionState,
-  AddAccountTransactionRequestArgs,
-  DelAccountTransactionRequestArgs,
-  GetAccountTransactionStateRequestArgs,
-  DelAccountStateRequestArgs,
-  GetAccountStateStateRequestArgs,
-  AccountTransactionHistoryState,
+  EntityState,
+  AddAccountEntityRequestArgs,
+  DelAccountEntityRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  AccountEntityHistoryState,
+  FetchAccountEntitiesByDateRequestArgs,
+  FetchEntitiesByIdRequestArgs,
 } from './types.js'
-import { BaseTransactionHistoryFetcher } from './transactionHistoryFetcher.js'
-import { BaseTransactionFetcher } from './transactionFetcher.js'
-import { BaseStateFetcher } from './stateFetcher.js'
 import { FetcherMsClient } from '../client.js'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BaseEntityFetcherMain } from './entityFetcherMain.js'
 
 /**
  * The main class of the fetcher service.
@@ -36,96 +31,100 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   constructor(
     protected blockchainId: Blockchain,
     protected fetcherClient: FetcherMsClient,
-    protected transactionHistoryFetcher: BaseTransactionHistoryFetcher<
-      any,
-      any
+    protected entityFetchers: Partial<
+      Record<IndexableEntityType, BaseEntityFetcherMain<unknown>>
     >,
-    protected transactionFetcher: BaseTransactionFetcher<any>,
-    protected accountStateFetcher: BaseStateFetcher,
   ) {}
 
   async start(): Promise<void> {
-    await Promise.all([
-      this.transactionFetcher.start(),
-      this.transactionHistoryFetcher.start(),
-      this.accountStateFetcher.start(),
-    ])
+    const entityFetchers = Object.values(this.entityFetchers)
+
+    await Promise.all(
+      entityFetchers.map((entityFetcher) => entityFetcher.start()),
+    )
   }
 
   async stop(): Promise<void> {
-    await Promise.all([
-      this.transactionFetcher.stop(),
-      this.transactionHistoryFetcher.stop(),
-      this.accountStateFetcher.stop(),
-    ])
+    const entityFetchers = Object.values(this.entityFetchers)
+
+    await Promise.all(
+      entityFetchers.map((entityFetcher) => entityFetcher.stop()),
+    )
   }
 
-  addAccountTransactionFetcher(
-    args: AddAccountTransactionRequestArgs,
+  async addAccountEntityFetcher(
+    args: AddAccountEntityRequestArgs,
   ): Promise<void> {
-    return this.transactionHistoryFetcher.addAccount(args)
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.addAccount(args)
   }
 
-  delAccountTransactionFetcher(
-    args: DelAccountTransactionRequestArgs,
+  async delAccountEntityFetcher(
+    args: DelAccountEntityRequestArgs,
   ): Promise<void> {
-    return this.transactionHistoryFetcher.delAccount(args)
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.delAccount(args)
   }
 
-  getAccountTransactionFetcherState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<AccountTransactionHistoryState<any> | undefined> {
-    return this.transactionHistoryFetcher.getAccountState(args)
-  }
-
-  addAccountStateFetcher(args: AddAccountStateRequestArgs): Promise<void> {
-    return this.accountStateFetcher.addAccount(args)
-  }
-
-  delAccountStateFetcher(args: DelAccountStateRequestArgs): Promise<void> {
-    return this.accountStateFetcher.delAccount(args)
-  }
-
-  // @todo: Implement it
-  getAccountStateFetcherState(
-    args: GetAccountStateStateRequestArgs,
-  ): Promise<any> {
-    throw new Error('Method not implemented.')
+  async getAccountEntityFetcherState(
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<AccountEntityHistoryState<any> | undefined> {
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.getAccountState(args)
   }
 
   async getFetcherState({
     fetcher = this.fetcherClient.getNodeId(),
+    type,
   }: FetcherStateRequestArgs): Promise<FetcherState> {
-    const transactionFetcherState = await this.transactionFetcher.getState()
-    const accountFetchers = await this.transactionHistoryFetcher.getState()
+    const fetchers =
+      type && type.length > 0
+        ? type.map((id) => this.getEntityFetcherInstance(id))
+        : Object.values(this.entityFetchers)
 
-    return {
-      ...transactionFetcherState,
-      ...accountFetchers,
-      blockchain: this.blockchainId,
-      fetcher,
-    }
+    return Promise.all(
+      fetchers.map(async (entityFetcher) => {
+        return {
+          blockchain: this.blockchainId,
+          fetcher,
+          ...(await entityFetcher.getState()),
+        }
+      }),
+    )
   }
 
-  fetchAccountTransactionsByDate(
-    args: FetchAccountTransactionsByDateRequestArgs,
+  async fetchAccountEntitiesByDate(
+    args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    return this.transactionHistoryFetcher.fetchAccountTransactionsByDate(args)
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.fetchAccountEntitiesByDate(args)
   }
 
-  fetchTransactionsBySignature(
-    args: FetchTransactionsBySignatureRequestArgs,
-  ): Promise<void> {
-    return this.transactionFetcher.fetchTransactionsBySignature(args)
+  async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.fetchEntitiesById(args)
   }
 
-  getTransactionState(
-    args: CheckTransactionsRequestArgs,
-  ): Promise<TransactionState[]> {
-    return this.transactionFetcher.getTransactionState(args)
+  async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.getEntityState(args)
   }
 
-  delTransactionCache(args: DelTransactionsRequestArgs): Promise<void> {
-    return this.transactionFetcher.delTransactionCache(args)
+  async delEntityCache(args: DelEntityRequestArgs): Promise<void> {
+    const entityFetcher = this.getEntityFetcherInstance(args.type)
+    return entityFetcher.delEntityCache(args)
+  }
+
+  protected getEntityFetcherInstance(
+    type: IndexableEntityType,
+  ): BaseEntityFetcherMain<unknown> {
+    const entityFetcher = this.entityFetchers[type]
+    if (!entityFetcher) throw new Error('Entity fetcher not implemented.')
+
+    return entityFetcher
+  }
+
+  protected getFetcherId(): string {
+    return this.fetcherClient.getNodeId()
   }
 }

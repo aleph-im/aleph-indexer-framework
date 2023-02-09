@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  example-indexer:
+  indexer-example:
     build: ../..
     volumes:
       - ~/indexer.data:/app/data:rw

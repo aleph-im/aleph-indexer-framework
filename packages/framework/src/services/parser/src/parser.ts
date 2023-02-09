@@ -1,16 +1,10 @@
-import { ParsedTransaction, RawTransaction } from '../../../types.js'
-import {
-  BlockchainParserI,
-  ParseAccountStateRequestArgs,
-  ParseTransactionRequestArgs,
-} from './types.js'
+import { ParsedEntity, RawEntity } from '../../../types.js'
+import { BlockchainParserI, ParseEntityRequestArgs } from './types.js'
 
 export abstract class BaseParser<
-  T extends RawTransaction,
-  PT extends ParsedTransaction<any>,
-  S = unknown,
-  PS = unknown,
-> implements BlockchainParserI<T, PT, S, PS>
+  RE extends RawEntity = RawEntity,
+  PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
+> implements BlockchainParserI<RE, PE>
 {
   constructor() {
     // @note: noop
@@ -24,11 +18,5 @@ export abstract class BaseParser<
     // @note: noop
   }
 
-  abstract parseTransaction(
-    args: ParseTransactionRequestArgs<T>,
-  ): Promise<T | PT>
-
-  abstract parseAccountState(
-    args: ParseAccountStateRequestArgs<S>,
-  ): Promise<S | PS>
+  abstract parseEntity(args: ParseEntityRequestArgs<RE>): Promise<RE | PE>
 }

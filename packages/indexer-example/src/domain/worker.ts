@@ -4,19 +4,25 @@ import {
   IndexerWorkerDomain,
   createStatsStateDAL,
   createStatsTimeSeriesDAL,
+  ParserContext,
 } from '@aleph-indexer/framework'
 import {
   EthereumIndexerWorkerDomainI,
-  EthereumParsedTransactionContext,
+  EthereumParsedLog,
+  EthereumParsedTransaction,
 } from '@aleph-indexer/ethereum'
 import {
   SolanaIndexerWorkerDomainI,
-  SolanaInstructionContext,
+  SolanaParsedInstructionContext,
 } from '@aleph-indexer/solana'
+import { BscIndexerWorkerDomainI } from '@aleph-indexer/bsc'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
-  implements EthereumIndexerWorkerDomainI, SolanaIndexerWorkerDomainI
+  implements
+    EthereumIndexerWorkerDomainI,
+    SolanaIndexerWorkerDomainI,
+    BscIndexerWorkerDomainI
 {
   constructor(
     protected context: IndexerDomainContext,
@@ -31,37 +37,85 @@ export default class WorkerDomain
   async onNewAccount(
     config: AccountIndexerConfigWithMeta<undefined>,
   ): Promise<void> {
-    const { account, meta } = config
-    const { projectId, instanceName, apiClient: indexerApi } = this.context
+    const { account } = config
+    const { instanceName } = this.context
 
     console.log('Account indexing', instanceName, account)
   }
 
-  // Solana mandatory hooks implemented
+  // Solana
 
-  async solanaFilterInstructions(
-    ixsContext: SolanaInstructionContext[],
-  ): Promise<SolanaInstructionContext[]> {
-    return ixsContext
-  }
-
-  async solanaIndexInstructions(
-    ixsContext: SolanaInstructionContext[],
-  ): Promise<void> {
-    console.log('Index SOL transaction', JSON.stringify(ixsContext, null, 2))
-  }
-
-  // Ethereum mandatory hooks implemented
-
-  async ethereumFilterTransaction(
-    ctx: EthereumParsedTransactionContext,
+  async solanaFilterInstruction(
+    context: ParserContext,
+    entity: SolanaParsedInstructionContext,
   ): Promise<boolean> {
     return true
   }
 
-  async ethereumIndexTransaction(
-    ctx: EthereumParsedTransactionContext,
+  async solanaIndexInstructions(
+    context: ParserContext,
+    entities: SolanaParsedInstructionContext[],
   ): Promise<void> {
-    console.log('Index ETH transaction', JSON.stringify(ctx, null, 2))
+    console.log('Index solana transaction', JSON.stringify(entities, null, 2))
+  }
+
+  // Ethereum
+
+  async ethereumFilterTransaction(
+    context: ParserContext,
+    entity: EthereumParsedTransaction,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async ethereumIndexTransactions(
+    context: ParserContext,
+    entities: EthereumParsedTransaction[],
+  ): Promise<void> {
+    console.log('Index ethereum transaction', JSON.stringify(entities, null, 2))
+  }
+
+  async ethereumFilterLog(
+    context: ParserContext,
+    entity: EthereumParsedLog,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async ethereumIndexLogs(
+    context: ParserContext,
+    entities: EthereumParsedLog[],
+  ): Promise<void> {
+    console.log('Index ethereum log', JSON.stringify(entities, null, 2))
+  }
+
+  // Binance Smart Chain
+
+  async bscFilterTransaction(
+    context: ParserContext,
+    entity: EthereumParsedTransaction,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async bscIndexTransactions(
+    context: ParserContext,
+    entities: EthereumParsedTransaction[],
+  ): Promise<void> {
+    console.log('Index bsc transaction', JSON.stringify(entities, null, 2))
+  }
+
+  async bscFilterLog(
+    context: ParserContext,
+    entity: EthereumParsedLog,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async bscIndexLogs(
+    context: ParserContext,
+    entities: EthereumParsedLog[],
+  ): Promise<void> {
+    console.log('Index bsc log', JSON.stringify(entities, null, 2))
   }
 }

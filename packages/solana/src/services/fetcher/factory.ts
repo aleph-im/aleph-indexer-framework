@@ -2,15 +2,17 @@
 import { ServiceBroker } from 'moleculer'
 import { Utils } from '@aleph-indexer/core'
 import {
+  BaseEntityFetcherMain,
   BlockchainFetcherI,
   createAccountStateDAL,
   createFetcherStateDAL,
   createPendingAccountDAL,
-  createPendingTransactionCacheDAL,
-  createPendingTransactionDAL,
-  createPendingTransactionFetchDAL,
-  createRawTransactionDAL,
+  createPendingEntityCacheDAL,
+  createPendingEntityDAL,
+  createPendingEntityFetchDAL,
+  createRawEntityDAL,
   FetcherMsClient,
+  IndexableEntityType,
 } from '@aleph-indexer/framework'
 import {
   solanaMainPublicRPC,
@@ -51,41 +53,49 @@ export async function solanaFetcherFactory(
   const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
   const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
   const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
-  const pendingTransactionDAL = createPendingTransactionDAL(basePath)
-  const pendingTransactionCacheDAL = createPendingTransactionCacheDAL(basePath)
-  const pendingTransactionFetchDAL = createPendingTransactionFetchDAL(basePath)
-  const rawTransactionDAL = createRawTransactionDAL<SolanaRawTransaction>(basePath, true)
+  const pendingEntityDAL = createPendingEntityDAL(basePath, IndexableEntityType.Transaction)
+  const pendingEntityCacheDAL = createPendingEntityCacheDAL(basePath, IndexableEntityType.Transaction)
+  const pendingEntityFetchDAL = createPendingEntityFetchDAL(basePath, IndexableEntityType.Transaction)
+  const rawTransactionDAL = createRawEntityDAL<SolanaRawTransaction>(basePath, IndexableEntityType.Transaction, true)
 
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     solanaPrivateRPC,
     solanaMainPublicRPC,
     transactionHistoryFetcherStateDAL,
     fetcherClient,
-    accountSignatureDAL,
     transactionHistoryPendingAccountDAL,
+    accountSignatureDAL,
   )
 
   const transactionFetcher = new SolanaTransactionFetcher(
     solanaPrivateRPC,
     solanaMainPublicRPC,
     broker,
-    pendingTransactionDAL,
-    pendingTransactionCacheDAL,
-    pendingTransactionFetchDAL,
+    pendingEntityDAL,
+    pendingEntityCacheDAL,
+    pendingEntityFetchDAL,
     rawTransactionDAL,
   )
 
-  const accountStateFetcher = new SolanaStateFetcher(
+  const accountStateFetcherMain = new SolanaStateFetcher(
     solanaPrivateRPC,
     solanaMainPublicRPC,
     accountStateDAL,
     accountStatePendingAccountDAL,
   )
 
+  const transactionFetcherMain = new BaseEntityFetcherMain(
+    IndexableEntityType.Transaction,
+    transactionFetcher,
+    transactionHistoryFetcher,
+  )
+
+  const entityFetchers = {
+    [IndexableEntityType.Transaction]: transactionFetcherMain,
+  }
+
   return new SolanaFetcher(
     fetcherClient,
-    transactionHistoryFetcher,
-    transactionFetcher,
-    accountStateFetcher,
+    entityFetchers
   )
 }

@@ -43,30 +43,32 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       },
 
       accountState: {
-        type: Types.AccountStateList,
+        type: Types.AccountEntityIndexerStateList,
         args: {
           blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
+          type: { type: new GraphQLNonNull(Types.EntityType) },
           account: { type: new GraphQLList(GraphQLString) },
         },
         resolve: (_, ctx) =>
-          this.domain.getAccountState(ctx.blockchain, ctx.account),
+          this.domain.getAccountState(ctx.blockchain, ctx.type, ctx.account),
       },
 
-      transactionRequest: {
-        type: Types.TransactionRequestList,
+      entityPendingRequest: {
+        type: Types.EntityPendingRequestList,
         args: {
           blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
+          type: { type: new GraphQLNonNull(Types.EntityType) },
           indexer: { type: new GraphQLList(GraphQLString) },
-          type: { type: Types.TransactionRequestType },
+          requestType: { type: Types.EntityRequestType },
           nonce: { type: GraphQLFloat },
           complete: { type: GraphQLBoolean },
           account: { type: GraphQLString },
-          signature: { type: GraphQLString },
+          id: { type: GraphQLString },
         },
         resolve: (_, ctx) => {
           ctx.blockchainId = ctx.blockchain
           delete ctx.blockchain
-          return this.domain.getTransactionRequests(ctx as any)
+          return this.domain.getEntityPendingRequests(ctx as any)
         },
       },
     }

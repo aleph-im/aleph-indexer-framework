@@ -185,7 +185,7 @@ export class TimeSeriesStats<I, O> {
               firstItem.startDate < pendingRange.startDate &&
               pendingRange.startDate !== minDate
             ) {
-              console.log(
+              this.log(
                 `📊 Recalculate incomplete FIRST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
                   firstItem,
                 ).toISO()}`,
@@ -201,7 +201,7 @@ export class TimeSeriesStats<I, O> {
             const lastItem = stateEntries[lastIndex]
 
             if (lastItem.endDate - 1 > pendingRange.endDate) {
-              console.log(
+              this.log(
                 `📊 Recalculate incomplete LAST interval ${type} ${timeFrameName} ${getIntervalFromDateRange(
                   lastItem,
                 ).toISO()}`,
@@ -282,7 +282,7 @@ export class TimeSeriesStats<I, O> {
         await processedIntervalsBuffer.drain()
       }
       if (addedEntries) {
-        console.log(
+        this.log(
           `💹 Added ${addedEntries} ${timeFrameName} entries for ${account} in range ${Interval.fromDateTimes(
             DateTime.fromMillis(pendingTimeFrameDateRanges[0].startDate),
             DateTime.fromMillis(
@@ -339,7 +339,7 @@ export class TimeSeriesStats<I, O> {
       return oldState
     })
 
-    console.log(
+    this.log(
       `💿 compact stats states
         newRanges: ${newStates.length},
         toDeleteRanges: ${oldStates.length}
@@ -350,5 +350,9 @@ export class TimeSeriesStats<I, O> {
       this.stateDAL.save(newStates),
       this.stateDAL.remove(oldStates),
     ])
+  }
+
+  protected log(...msgs: any[]): void {
+    console.log(`${this.config.type} | ${msgs.join(' ')}`)
   }
 }

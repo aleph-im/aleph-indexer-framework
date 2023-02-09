@@ -1,8 +1,8 @@
 # Start Here!
 
 There are two crucial repos you should be aware of:
-1. Solana indexer framework: (You're here already!) Consisting of the main building blocks that the indexer library needs to create an indexer. Changes made in the framework will reflect all future indexers. If you want to contribute to the framework, you're in the correct repo. If you want to create your indexer, head to point two of this section.
-2. [Solana indexer library](https://github.com/aleph-im/solana-indexer-library): This is where you need to start if you want to create your own indexer.
+1. Aleph indexer framework: (You're here already!) Consisting of the main building blocks that the indexer library needs to create an indexer. Changes made in the framework will reflect all future indexers. If you want to contribute to the framework, you're in the correct repo. If you want to create your indexer, head to point two of this section.
+2. [Solana indexer library](https://github.com/aleph-im/solana-indexer-library): This is where you need to start if you want to create your own solana indexer.
 
 
 ## Aleph Indexer Framework v1.0
@@ -15,18 +15,6 @@ The Aleph Indexer Framework is a high-level abstraction for building multithread
 - Writing the indexer state to disk
 - Reading the indexer state from disk
 - Exposing the indexer state over a GraphQL API
-
-
-## Running the indexer framework locally
-First, you need to make sure that the framework is running:
-```bash
-npm run start framework
-```
-When the services of the framework are ready, you need to run your custom  indexer implementation with
-```bash
-npm run start your-indexer-name
-```
-
 
 ## Architecture
 The framework provides three services:
@@ -46,14 +34,73 @@ In addition, it knows the fetching state of the transaction history of each acco
 
 In order to use these services you need to code some custom implementations: **TODO**
 
+## Running the indexer framework locally
+
+1. Create a .env file on the root folder for including configuration variables of the framework. Take a look at "Environment Variables" section in this document
+
+2. Depending on the blockchains that you need to index, you may need to install additional peer dependencies packages:
+```bash
+  # In case you want to index ethereum
+  npm i @aleph-indexer/ethereum
+
+  # In case you want to index solana
+  npm i @aleph-indexer/solana
+```
+
+3. After that, you need to make sure that the framework is running:
+```bash
+  npm run start framework
+```
+
+4. When the services of the framework are ready, you need to run your custom  indexer implementation with
+```bash
+  npm run start your-indexer-name
+```
+
 ## Environment Variables
 Here are some of the more important environment variables that you can set to configure the framework:
 ```sh
-# For specifying a custom solana RPC node
-SOLANA_RPC=https://api.mainnet-beta.solana.com
+# Framework specific config
+
+# A namespace for the framework services names (default "global")
+INDEXER_FRAMEWORK_NAMESPACE
+
+# List of blockchains that the framework will support (default "solana,ethereum")
+INDEXER_FRAMEWORK_BLOCKCHAINS
+
+# Path to a folder where all the indexed data will be stored
+INDEXER_FRAMEWORK_DATA_PATH
+
+# Ethereum specific envs
+
+# To specify a custom ethereum RPC node (*mandatory*)
+ETHEREUM_RPC
+
+# Custom etherscan api key for avoiding rate limits
+# This is used as fallback for getting contract ABIs (optional)
+ETHEREUM_SCAN_API_KEY
+
+# Feature flag for storing blocks in cache (default "false") 
+ETHEREUM_INDEX_BLOCKS
+
+# Solana specific envs
+
+# For specifying a custom solana RPC node/cluster without rate limits (*mandatory*)
+SOLANA_RPC
+
+# For specifying a public solana RPC node/cluster rate limited (optional)
+SOLANA_PUBLIC_RPC
+
+# For specifying a main public solana RPC node/cluster rate limited 
+# that guarantees historical data access (default "https://api.mainnet-beta.solana.com")
+SOLANA_MAIN_PUBLIC_RPC
+
+# Other configuration vars
+
 # How much memory to allocate for the indexer
 ALEPH_DEFAULT_VM_MEMORY=512 
 ```
+
 The full list of environment variables can be found in the [.env.defaults](.env.defaults).
 
 ## Linting

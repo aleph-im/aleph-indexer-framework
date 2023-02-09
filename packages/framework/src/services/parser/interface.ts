@@ -1,28 +1,12 @@
-import { ParsedTransaction, RawTransaction } from '../../types.js'
+import { ParsedEntity, RawEntity } from '../../types.js'
 import { BlockchainRequestArgs } from '../types.js'
-import {
-  ParseAccountStateRequestArgs,
-  ParseTransactionRequestArgs,
-} from './src/types.js'
+import { ParseEntityRequestArgs } from './src/types.js'
 
 export interface ParserMsI<
-  T extends RawTransaction,
-  PT extends ParsedTransaction<unknown>,
-  S = unknown,
-  PS = unknown,
+  RE extends RawEntity = RawEntity,
+  PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
 > {
-  /**
-   * Parses a raw transaction.
-   * @param args The raw transaction to parse.
-   */
-  parseTransaction(args: ParseTransactionRequestArgs<T>): Promise<T | PT>
-
-  /**
-   * Parses a raw account state.
-   * If the account state is not parsable, the raw state is returned.
-   * @param args The raw account data to parse, usually a buffer.
-   */
-  parseAccountState(args: ParseAccountStateRequestArgs<S>): Promise<S | PS>
+  parseEntity(args: ParseEntityRequestArgs<RE>): Promise<RE | PE>
 
   // @todo: Specific blockchain methods
   // /**
@@ -36,15 +20,10 @@ export interface ParserMsI<
 }
 
 export interface ParserClientI<
-  T extends RawTransaction,
-  PT extends ParsedTransaction<unknown>,
-  S = unknown,
-  PS = unknown,
+  RE extends RawEntity = RawEntity,
+  PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
 > {
-  parseTransaction(
-    args: Omit<ParseTransactionRequestArgs<T>, keyof BlockchainRequestArgs>,
-  ): Promise<T | PT>
-  parseAccountState(
-    args: Omit<ParseAccountStateRequestArgs<S>, keyof BlockchainRequestArgs>,
-  ): Promise<S | PS>
+  parseEntity(
+    args: Omit<ParseEntityRequestArgs<RE>, keyof BlockchainRequestArgs>,
+  ): Promise<RE | PE>
 }

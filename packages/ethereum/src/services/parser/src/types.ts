@@ -1,17 +1,20 @@
-import {
-  ParsedTransaction,
-  ParsedTransactionContext,
-} from '@aleph-indexer/framework'
+import { ParsedEntity } from '@aleph-indexer/framework'
 import ethers from 'ethers'
 import {
   EthereumRawAccountState,
+  EthereumRawLog,
   EthereumRawTransaction,
 } from '../../../types.js'
 
+// -------------------- Transactions
 export type EthereumParsedTransaction = EthereumRawTransaction &
-  ParsedTransaction<ethers.ethers.utils.TransactionDescription | null>
+  ParsedEntity<ethers.ethers.utils.TransactionDescription | null>
 
-export type EthereumParsedTransactionContext =
-  ParsedTransactionContext<EthereumParsedTransaction>
+// ---------------------- Logs
+
+export type EthereumParsedLog = EthereumRawLog &
+  ParsedEntity<ethers.ethers.utils.LogDescription | null>
+
+// ------------------------ State
 
 export type EthereumParsedAccountState = EthereumRawAccountState

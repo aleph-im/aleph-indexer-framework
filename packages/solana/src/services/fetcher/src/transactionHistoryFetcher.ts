@@ -1,30 +1,22 @@
-import { compose } from 'node:stream'
-import { StorageEntry, Utils } from '@aleph-indexer/core'
 import {
-  BaseTransactionHistoryFetcher,
+  BaseEntityHistoryFetcher,
   Blockchain,
   FetcherMsClient,
   FetcherStateLevelStorage,
-  GetAccountTransactionStateRequestArgs,
+  GetAccountEntityStateRequestArgs,
+  IndexableEntityType,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
+import { SolanaAccountTransactionHistoryStorage } from './dal/accountTransactionHistory.js'
 import {
-  SolanaAccountTransactionHistoryDALIndex,
-  SolanaAccountTransactionHistoryStorage,
-} from './dal/accountTransactionHistory.js'
-import {
-  FetchAccountTransactionsBySlotRequestArgs,
   SolanaAccountTransactionHistoryPaginationCursor,
-  SolanaAccountTransactionHistoryState,
+  SolanaAccountEntityHistoryState,
   SolanaSignature,
-  SolanaSignatureInfo,
 } from './types.js'
 import { SolanaAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
 import { SolanaRPC } from '../../../sdk/client.js'
 
-const { StreamBuffer, StreamMap } = Utils
-
-export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetcher<
+export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
   SolanaAccountTransactionHistoryPaginationCursor,
   SolanaSignature
 > {
@@ -40,67 +32,67 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
     protected fetcherStateDAL: FetcherStateLevelStorage,
     ...args: [
       FetcherMsClient,
-      SolanaAccountTransactionHistoryStorage,
       PendingAccountStorage,
+      SolanaAccountTransactionHistoryStorage,
     ]
   ) {
-    super(Blockchain.Solana, ...args)
+    super(IndexableEntityType.Transaction, Blockchain.Solana, ...args)
   }
 
   /**
    * Fetch transactions from an account by slot.
    * @param args accountAddress, startDate, endDate and indexerId.
    */
-  async fetchAccountTransactionsBySlot(
-    args: FetchAccountTransactionsBySlotRequestArgs,
-  ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startSlot, endSlot, indexerId } = args
+  // async fetchAccountTransactionsBySlot(
+  //   args: FetchAccountTransactionsBySlotRequestArgs,
+  // ): Promise<void | AsyncIterable<string[]>> {
+  //   const { account, startSlot, endSlot, indexerId } = args
 
-    const state = await this.getAccountState({
-      blockchainId: this.blockchainId,
-      account,
-    })
-    if (!state) return
+  //   const state = await this.getAccountState({
+  //     blockchainId: this.blockchainId,
+  //     account,
+  //   })
+  //   if (!state) return
 
-    const { firstSlot = Number.MAX_SAFE_INTEGER, lastSlot = 0 } = state
+  //   const { firstSlot = Number.MAX_SAFE_INTEGER, lastSlot = 0 } = state
 
-    const inRange = startSlot > firstSlot && endSlot <= lastSlot
-    if (!inRange) return
+  //   const inRange = startSlot > firstSlot && endSlot <= lastSlot
+  //   if (!inRange) return
 
-    const signaturesQuery = await this.accountSignatureDAL
-      .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountSlotIndex)
-      .getAllFromTo([account, startSlot], [account, endSlot], {
-        reverse: false,
-      })
+  //   const signaturesQuery = await this.accountSignatureDAL
+  //     .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountSlotIndex)
+  //     .getAllFromTo([account, startSlot], [account, endSlot], {
+  //       reverse: false,
+  //     })
 
-    return compose(
-      signaturesQuery,
-      new StreamMap(
-        ({ value }: StorageEntry<string, SolanaSignatureInfo>) =>
-          value.signature,
-      ),
-      new StreamBuffer(1000),
-      new StreamMap(async (signatures: string[]) => {
-        // @note: Use the client here for load balancing signatures through all fetcher instances
-        await this.fetcherClient
-          .useBlockchain(this.blockchainId)
-          .fetchTransactionsBySignature({
-            signatures,
-            indexerId,
-          })
-        return signatures
-      }),
-    )
-  }
+  //   return compose(
+  //     signaturesQuery,
+  //     new StreamMap(
+  //       ({ value }: StorageEntry<string, SolanaSignatureInfo>) =>
+  //         value.signature,
+  //     ),
+  //     new StreamBuffer(1000),
+  //     new StreamMap(async (signatures: string[]) => {
+  //       // @note: Use the client here for load balancing signatures through all fetcher instances
+  //       await this.fetcherClient
+  //         .useBlockchain(this.blockchainId)
+  //         .fetchTransactionsBySignature({
+  //           signatures,
+  //           indexerId,
+  //         })
+  //       return signatures
+  //     }),
+  //   )
+  // }
 
   /**
    * Returns the state of the transaction fetch process of a given account.
    * @param args The account address to get its fetch status.
    */
   async getAccountState(
-    args: GetAccountTransactionStateRequestArgs,
-  ): Promise<SolanaAccountTransactionHistoryState | undefined> {
-    const state: SolanaAccountTransactionHistoryState | undefined =
+    args: GetAccountEntityStateRequestArgs,
+  ): Promise<SolanaAccountEntityHistoryState | undefined> {
+    const state: SolanaAccountEntityHistoryState | undefined =
       await this.getPartialAccountState(args)
 
     if (!state) return
@@ -130,7 +122,7 @@ export class SolanaTransactionHistoryFetcher extends BaseTransactionHistoryFetch
   ): SolanaAccountTransactionHistoryFetcher {
     return new SolanaAccountTransactionHistoryFetcher(
       account,
-      this.accountSignatureDAL,
+      this.accountEntityHistoryDAL,
       this.solanaRpc,
       this.solanaMainPublicRpc,
       this.fetcherStateDAL,
