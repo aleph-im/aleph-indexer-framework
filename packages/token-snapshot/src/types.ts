@@ -1,6 +1,7 @@
 import { TokenInfo } from '@solana/spl-token-registry'
 import { EventBase, AlephParsedEvent } from '@aleph-indexer/core'
 import BN from 'bn.js'
+import { LendingMarketType } from './constants'
 
 // ----------------------------- COMMON -----------------------------------
 
@@ -836,18 +837,32 @@ export type LiquidateObligation2Event = LendingEventBase &
     repayReserveLiquidityAmount: BN
   }
 
+  export type LendingInfo = {
+  lendingMarket: string
+
+  }
+
 // ----------------------------- HOLDINGS -----------------------------------
 
 export type LendingBalance = {
+  lendingMarketType: LendingMarketType
   deposited: string
   borrowed: string
+  timestamp: number
+}
+
+export type LendingHolding = {
+  account: string
+  tokenMint: string
+  timestamp: number
+  solend: LendingBalance
+  port: LendingBalance
+  larix: LendingBalance
 }
 
 export type Balances = {
   wallet: string
-  solend: LendingBalance
-  port: LendingBalance
-  larix: LendingBalance
+  lending: LendingHolding
   total: string
 }
 
