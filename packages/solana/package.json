@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/solana",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.0.33",
-    "@aleph-indexer/framework": "^1.0.35",
+    "@aleph-indexer/framework": "^1.0.36",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
     "bn.js": "^5.2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/ethereum",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.0.33",
-    "@aleph-indexer/framework": "^1.0.35",
+    "@aleph-indexer/framework": "^1.0.36",
     "ethereum-bloom-filters": "^1.0.10",
     "ethers": "^5.7.2",
     "moleculer": "^0.14.24",
