@@ -22,7 +22,7 @@ export type APISchemaConfig = GraphQLSchemaConfig & {
  */
 export abstract class IndexerAPISchema extends GraphQLSchema {
   constructor(protected domain: IndexerMainDomain, config: APISchemaConfig) {
-    config.types = [...(config.types || []), ...Types.types]
+    config.types = [...(config.types || []), ...Types.indexerGraphQLTypes]
 
     config.query =
       config.query ||
@@ -43,7 +43,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       },
 
       accountState: {
-        type: Types.AccountEntityIndexerStateList,
+        type: Types.GraphQLAccountEntityIndexerStateList,
         args: {
           blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
           type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
@@ -54,12 +54,12 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       },
 
       entityPendingRequest: {
-        type: Types.EntityPendingRequestList,
+        type: Types.GraphQLEntityPendingRequestList,
         args: {
           blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
           type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
           indexer: { type: new GraphQLList(GraphQLString) },
-          requestType: { type: Types.EntityRequestType },
+          requestType: { type: Types.GraphQLEntityRequestType },
           nonce: { type: GraphQLFloat },
           complete: { type: GraphQLBoolean },
           account: { type: GraphQLString },
@@ -88,7 +88,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
           blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
           account: { type: new GraphQLList(GraphQLString) },
           type: { type: new GraphQLNonNull(GraphQLString) },
-          timeFrame: { type: new GraphQLNonNull(Types.TimeFrame) },
+          timeFrame: { type: new GraphQLNonNull(Types.GraphQLTimeFrame) },
           startDate: { type: GraphQLFloat },
           endDate: { type: GraphQLFloat },
           limit: { type: GraphQLInt },

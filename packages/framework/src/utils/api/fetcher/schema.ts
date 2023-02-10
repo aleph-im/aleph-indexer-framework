@@ -15,7 +15,7 @@ import * as Types from './types.js'
 export class FetcherAPISchema extends GraphQLSchema {
   constructor(protected domain: FetcherMainDomain) {
     super({
-      types: Types.types,
+      types: Types.fetcherGrapQLTypes,
       query: new GraphQLObjectType({
         name: 'Query',
         fields: {
@@ -26,7 +26,7 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           fetcherState: {
-            type: Types.FetcherEntityStateList,
+            type: Types.GraphQLFetcherEntityStateList,
             args: {
               blockchain: { type: new GraphQLList(Types.GraphQLBlockchain) },
               type: { type: new GraphQLList(Types.GraphQLEntityType) },
@@ -41,7 +41,7 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           accountState: {
-            type: Types.AccountEntityFetcherStateList,
+            type: Types.GraphQLAccountEntityFetcherStateList,
             args: {
               blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
               type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
@@ -58,7 +58,7 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           entityState: {
-            type: Types.EntityStateList,
+            type: Types.GraphQLEntityStateList,
             args: {
               blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
               type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },

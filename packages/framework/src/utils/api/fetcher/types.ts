@@ -12,11 +12,15 @@ import {
   GraphQLString,
 } from 'graphql'
 import { GraphQLJSONObject } from 'graphql-type-json'
-import { GraphQLBlockchain, GraphQLEntityType, GraphQLTimeInfo } from '../types.js'
+import {
+  GraphQLBlockchain,
+  GraphQLEntityType,
+  GraphQLTimeInfo,
+} from '../types.js'
 
 export * from '../types.js'
 
-export const FetcherEntityState = new GraphQLObjectType({
+export const GraphQLFetcherEntityState = new GraphQLObjectType({
   name: 'FetcherEntityState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
@@ -29,9 +33,11 @@ export const FetcherEntityState = new GraphQLObjectType({
   },
 })
 
-export const FetcherEntityStateList = new GraphQLList(FetcherEntityState)
+export const GraphQLFetcherEntityStateList = new GraphQLList(
+  GraphQLFetcherEntityState,
+)
 
-export const AccountEntityFetcherState = new GraphQLObjectType({
+export const GraphQLAccountEntityFetcherState = new GraphQLObjectType({
   name: 'AccountEntityFetcherState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
@@ -48,11 +54,11 @@ export const AccountEntityFetcherState = new GraphQLObjectType({
   },
 })
 
-export const AccountEntityFetcherStateList = new GraphQLList(
-  AccountEntityFetcherState,
+export const GraphQLAccountEntityFetcherStateList = new GraphQLList(
+  GraphQLAccountEntityFetcherState,
 )
 
-export const EntityState = new GraphQLObjectType({
+export const GraphQLEntityState = new GraphQLObjectType({
   name: 'EntityState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
@@ -67,14 +73,14 @@ export const EntityState = new GraphQLObjectType({
   },
 })
 
-export const EntityStateList = new GraphQLList(EntityState)
+export const GraphQLEntityStateList = new GraphQLList(GraphQLEntityState)
 
 export { GraphQLTimeInfo as TimeInfo } from '../types.js'
 
-export const types: GraphQLNamedType[] = [
+export const fetcherGrapQLTypes: GraphQLNamedType[] = [
   GraphQLBlockchain,
   GraphQLTimeInfo,
-  FetcherEntityState,
-  EntityState,
-  AccountEntityFetcherState,
+  GraphQLFetcherEntityState,
+  GraphQLEntityState,
+  GraphQLAccountEntityFetcherState,
 ]
