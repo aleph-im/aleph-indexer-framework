@@ -23,7 +23,7 @@ export class EthereumIndexerClient
     broadcast = false,
   ): Promise<void> {
     args.account = args.account.toLowerCase()
-    return this.indexAccount(args, broadcast)
+    return super.indexAccount(args, broadcast)
   }
 
   deleteAccount(
