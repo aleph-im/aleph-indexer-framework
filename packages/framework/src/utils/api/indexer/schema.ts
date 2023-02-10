@@ -37,7 +37,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       ...queryConf.fields,
 
       time: {
-        type: Types.TimeInfo,
+        type: Types.GraphQLTimeInfo,
         args: {},
         resolve: () => new Date().toISOString(),
       },
@@ -45,8 +45,8 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       accountState: {
         type: Types.AccountEntityIndexerStateList,
         args: {
-          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-          type: { type: new GraphQLNonNull(Types.EntityType) },
+          blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+          type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
           account: { type: new GraphQLList(GraphQLString) },
         },
         resolve: (_, ctx) =>
@@ -56,8 +56,8 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       entityPendingRequest: {
         type: Types.EntityPendingRequestList,
         args: {
-          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-          type: { type: new GraphQLNonNull(Types.EntityType) },
+          blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+          type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
           indexer: { type: new GraphQLList(GraphQLString) },
           requestType: { type: Types.EntityRequestType },
           nonce: { type: GraphQLFloat },
@@ -85,7 +85,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       queryConf.fields.accountTimeSeriesStats = {
         type: AccountTimeSeriesStatsList,
         args: {
-          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
+          blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
           account: { type: new GraphQLList(GraphQLString) },
           type: { type: new GraphQLNonNull(GraphQLString) },
           timeFrame: { type: new GraphQLNonNull(Types.TimeFrame) },
@@ -112,7 +112,7 @@ export abstract class IndexerAPISchema extends GraphQLSchema {
       queryConf.fields.accountStats = {
         type: AccountStatsList,
         args: {
-          blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
+          blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
           account: { type: new GraphQLList(GraphQLString) },
         },
         resolve: (_, ctx) =>

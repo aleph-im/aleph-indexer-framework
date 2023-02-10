@@ -14,6 +14,6 @@ export class SolanaIndexer extends BaseIndexer implements BlockchainIndexerI {
       Record<IndexableEntityType, BaseEntityIndexer<any>>
     >,
   ) {
-    super(Blockchain.Solana, domain, entityIndexers)
+    super(Blockchain.Solana, entityIndexers, domain)
   }
 }

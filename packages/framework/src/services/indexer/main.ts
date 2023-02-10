@@ -10,6 +10,7 @@ import {
   InvokeMethodRequestArgs,
   GetEntityPendingRequestsRequestArgs,
   BlockchainIndexerI,
+  IndexerWorkerDomainI,
 } from './src/types.js'
 
 /**
@@ -25,6 +26,7 @@ export class IndexerMsMain implements IndexerMsI {
   constructor(
     protected indexerClient: IndexerMsClient,
     protected blockchains: Record<Blockchain, BlockchainIndexerI>,
+    protected domain: IndexerWorkerDomainI,
   ) {}
 
   /**
@@ -71,9 +73,15 @@ export class IndexerMsMain implements IndexerMsI {
     return indexer.getAccountState(args)
   }
 
-  async invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown> {
-    const indexer = this.getBlockchainInstance(args.blockchainId)
-    return indexer.invokeDomainMethod(args)
+  async invokeDomainMethod(argss: InvokeMethodRequestArgs): Promise<unknown> {
+    const { account, method, args = [] } = argss
+
+    const fn = (this.domain as any)[method]
+
+    if (!fn)
+      throw new Error(`Method ${method} does not exists in indexer domain`)
+
+    return fn.call(this.domain, account, ...args)
   }
 
   // Private API

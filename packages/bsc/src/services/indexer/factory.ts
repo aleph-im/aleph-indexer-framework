@@ -56,6 +56,7 @@ export async function bscIndexerFactory(
   const transactionFetcherMain = new BaseEntityIndexer(
     IndexableEntityType.Transaction,
     Blockchain.Bsc,
+    domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
@@ -74,6 +75,7 @@ export async function bscIndexerFactory(
   const logFetcherMain = new BaseEntityIndexer(
     IndexableEntityType.Log,
     Blockchain.Bsc,
+    domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,

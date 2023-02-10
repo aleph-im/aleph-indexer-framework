@@ -138,7 +138,7 @@ export async function createIndexerMsMain(
     parserMsClient,
   )
 
-  return new IndexerMsMain(indexerMsClient, blockchainMains)
+  return new IndexerMsMain(indexerMsClient, blockchainMains, domain)
 }
 
 export async function createParserMsMain(

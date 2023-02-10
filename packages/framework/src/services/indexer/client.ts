@@ -6,6 +6,7 @@ import {
   waitForAllNodesWithService,
 } from '../common.js'
 import { IndexerClientI } from './interface.js'
+import { InvokeMethodRequestArgs } from './src/types.js'
 
 /**
  * Client to access the main indexer service through the broker.
@@ -44,6 +45,17 @@ export class IndexerMsClient {
 
   getNodeId(): string {
     return this.broker.nodeID
+  }
+
+  invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown> {
+    return this.broker.call(
+      `${this.msId}.invokeDomainMethod`,
+      {
+        partitionKey: args.partitionKey || args.account,
+        ...args,
+      },
+      { meta: { $streamObjectMode: true }, nodeID: args.indexer },
+    )
   }
 
   protected getBlockchainClientInstance(

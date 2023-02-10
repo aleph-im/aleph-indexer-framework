@@ -159,7 +159,7 @@ export type GetAccountIndexingEntityStateRequestArgs = BlockchainRequestArgs &
     type: IndexableEntityType
   }
 
-export type InvokeMethodRequestArgs = BlockchainRequestArgs &
+export type InvokeMethodRequestArgs = Partial<BlockchainRequestArgs> &
   IndexerAccountPartitionRequestArgs & {
     /**
      * Method to invoke.
@@ -315,13 +315,6 @@ export interface BlockchainIndexerI {
   getAccountState(
     args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined>
-
-  /**
-   * Invokes a domain method with the given account.
-   * This will be forwarded through the broker to the worker. @todo: Correct?
-   * @param args The account, the method and additional arguments to pass to the method.
-   */
-  invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown>
 
   /**
    * Returns all pending and processed transaction requests.

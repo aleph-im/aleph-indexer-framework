@@ -16,7 +16,7 @@ import {
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
 import { TimeFrame as TF } from '../../time.js'
-import { Blockchain, TimeInfo, EntityType } from '../types.js'
+import { GraphQLBlockchain, GraphQLTimeInfo, GraphQLEntityType } from '../types.js'
 import { EntityRequestType as TRT } from '../../../services/indexer/src/dal/entityRequest.js'
 
 export * from '../types.js'
@@ -26,8 +26,8 @@ export * from '../types.js'
 export const AccountEntityIndexerState = new GraphQLObjectType({
   name: 'AccountEntityState',
   fields: {
-    blockchain: { type: new GraphQLNonNull(Blockchain) },
-    type: { type: new GraphQLNonNull(EntityType) },
+    blockchain: { type: new GraphQLNonNull(GraphQLBlockchain) },
+    type: { type: new GraphQLNonNull(GraphQLEntityType) },
     indexer: { type: new GraphQLNonNull(GraphQLString) },
     account: { type: new GraphQLNonNull(GraphQLString) },
     accurate: { type: new GraphQLNonNull(GraphQLBoolean) },
@@ -144,11 +144,11 @@ export function getAccountTimeSeriesStatsType(
   }
 }
 
-export { TimeInfo } from '../types.js'
+export { GraphQLTimeInfo as TimeInfo } from '../types.js'
 
 export const types: GraphQLNamedType[] = [
-  Blockchain,
-  TimeInfo,
+  GraphQLBlockchain,
+  GraphQLTimeInfo,
   AccountEntityIndexerState,
   TimeFrame,
   EntityRequestType,

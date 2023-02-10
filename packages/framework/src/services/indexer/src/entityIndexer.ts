@@ -35,6 +35,7 @@ export class BaseEntityIndexer<
   constructor(
     protected type: IndexableEntityType,
     protected blockchainId: Blockchain,
+    protected domain: IndexerWorkerDomainI,
     protected indexerClient: IndexerMsClient,
     protected fetcherClient: FetcherMsClient,
     protected parserClient: ParserMsClient,
@@ -70,10 +71,7 @@ export class BaseEntityIndexer<
     await this.entityFetcher.stop().catch(() => 'ignore')
   }
 
-  async addAccount(
-    args: AccountIndexerEntityRequestArgs,
-    domain: IndexerWorkerDomainI,
-  ): Promise<void> {
+  async addAccount(args: AccountIndexerEntityRequestArgs): Promise<void> {
     const { account } = args
 
     let accountIndexer = this.accountIndexers[account]
@@ -81,7 +79,7 @@ export class BaseEntityIndexer<
 
     accountIndexer = new BaseAccountEntityIndexer<PE>(
       args,
-      domain,
+      this.domain,
       this.fetcherClient,
       this.entityFetcher,
       this.entityIndexerStateDAL,
