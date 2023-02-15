@@ -18,7 +18,7 @@ import {
   TimeFrameStateStorage,
 } from './dal/timeFrameState.js'
 import { TimeFrameEntity, TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
-import { TimeFrameStatsConfig, TimeSeries, TimeSeriesStatsFilters } from './types.js'
+import { TimeSeriesStatsConfig, TimeSeries, TimeSeriesStatsFilters } from './types.js'
 import { StatsI } from './interface.js'
 import { EventBase } from '../../types.js'
 
@@ -31,7 +31,7 @@ const { BufferExec } = Utils
  */
 export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O> {
   constructor(
-    public config: TimeFrameStatsConfig<I, O>,
+    public config: TimeSeriesStatsConfig<I, O>,
     protected stateDAL: TimeFrameStateStorage,
     protected timeSeriesDAL: TimeFrameStatsStorage,
   ) {

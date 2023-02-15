@@ -43,11 +43,6 @@ export type TimeSeriesStatsConfig<I extends EventBase<any>, O> = {
   ) => Promise<StorageValueStream<I>>
   aggregate: (args: TimeSeriesAggregatorFnArgs<I, O>) => O
   reverse?: boolean
-  timeFrames?: TimeFrame[]
-}
-export type TickStatsConfig<I extends EventBase<any>, O> = TimeSeriesStatsConfig<I, O>
-
-export type TimeFrameStatsConfig<I extends EventBase<any>, O> = Omit<TimeSeriesStatsConfig<I, O>, 'timeFrames'> & {
   timeFrames: TimeFrame[]
 }
 
@@ -90,7 +85,7 @@ export type AccountStats<V = any> = {
  * Transformations and clipping to apply to the time-series.
  */
 export type TimeSeriesStatsFilters = {
-  timeFrame?: TimeFrame
+  timeFrame: TimeFrame
   startDate?: number
   endDate?: number
   limit?: number

@@ -1,7 +1,7 @@
 import { Utils } from '@aleph-indexer/core'
 import { DateTime } from 'luxon'
 import { DateRange } from '../time.js'
-import { TickStatsConfig, TimeSeries, TimeSeriesStatsFilters } from './types.js'
+import { TimeSeriesStatsConfig, TimeSeries, TimeSeriesStatsFilters } from './types.js'
 import { TickEntity, TickStatsStorage } from './dal/tickEntity.js'
 import { StatsI } from './interface.js'
 import { EventBase } from '../../types.js'
@@ -15,7 +15,7 @@ const { BufferExec } = Utils
  */
 export class TickStats<I extends EventBase<any>, O> implements StatsI<I, O> {
   constructor(
-    public config: TickStatsConfig<I, O>,
+    public config: TimeSeriesStatsConfig<I, O>,
     protected tickDAL: TickStatsStorage,
   ) {
   }
