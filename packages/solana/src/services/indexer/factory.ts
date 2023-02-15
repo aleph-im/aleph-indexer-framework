@@ -48,6 +48,7 @@ export async function solanaIndexerFactory(
   const transactionFetcherMain = new BaseEntityIndexer(
     IndexableEntityType.Transaction,
     Blockchain.Solana,
+    domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,

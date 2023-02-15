@@ -56,6 +56,7 @@ export async function ethereumIndexerFactory(
   const transactionFetcherMain = new BaseEntityIndexer(
     IndexableEntityType.Transaction,
     Blockchain.Ethereum,
+    domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
@@ -74,6 +75,7 @@ export async function ethereumIndexerFactory(
   const logFetcherMain = new BaseEntityIndexer(
     IndexableEntityType.Log,
     Blockchain.Ethereum,
+    domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,

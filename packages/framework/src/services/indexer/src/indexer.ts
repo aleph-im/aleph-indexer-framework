@@ -3,7 +3,6 @@ import {
   AccountIndexerRequestArgs,
   IndexerWorkerDomainI,
   GetAccountIndexingEntityStateRequestArgs,
-  InvokeMethodRequestArgs,
   DelAccountIndexerRequestArgs,
   GetEntityPendingRequestsRequestArgs,
 } from './types.js'
@@ -23,10 +22,10 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
    */
   constructor(
     protected blockchainId: Blockchain,
-    protected domain: IndexerWorkerDomainI,
     protected entityIndexers: Partial<
       Record<IndexableEntityType, BaseEntityIndexer>
     >,
+    protected domain: IndexerWorkerDomainI,
   ) {}
 
   async start(): Promise<void> {
@@ -51,45 +50,36 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     const { Transaction, Log, State } = IndexableEntityType
 
     if (transactions) {
-      await this.getEntityIndexerInstance(Transaction).addAccount(
-        {
-          type: Transaction,
-          blockchainId,
-          account,
-          ...(typeof transactions !== 'boolean'
-            ? transactions
-            : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
-        },
-        this.domain,
-      )
+      await this.getEntityIndexerInstance(Transaction).addAccount({
+        type: Transaction,
+        blockchainId,
+        account,
+        ...(typeof transactions !== 'boolean'
+          ? transactions
+          : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
+      })
     }
 
     if (logs) {
-      await this.getEntityIndexerInstance(Log).addAccount(
-        {
-          type: Log,
-          blockchainId,
-          account,
-          ...(typeof logs !== 'boolean'
-            ? logs
-            : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
-        },
-        this.domain,
-      )
+      await this.getEntityIndexerInstance(Log).addAccount({
+        type: Log,
+        blockchainId,
+        account,
+        ...(typeof logs !== 'boolean'
+          ? logs
+          : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
+      })
     }
 
     if (state) {
-      await this.getEntityIndexerInstance(State).addAccount(
-        {
-          type: Log,
-          blockchainId,
-          account,
-          ...(typeof state !== 'boolean'
-            ? state
-            : { chunkDelay: 1000 * 60 * 60, chunkTimeframe: 1000 * 60 * 60 }),
-        },
-        this.domain,
-      )
+      await this.getEntityIndexerInstance(State).addAccount({
+        type: Log,
+        blockchainId,
+        account,
+        ...(typeof state !== 'boolean'
+          ? state
+          : { chunkDelay: 1000 * 60 * 60, chunkTimeframe: 1000 * 60 * 60 }),
+      })
     }
 
     await this.domain.onNewAccount(args)
@@ -125,17 +115,6 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   ): Promise<EntityRequest[]> {
     const indexer = this.getEntityIndexerInstance(args.type)
     return indexer.getEntityPendingRequests(args)
-  }
-
-  async invokeDomainMethod(argss: InvokeMethodRequestArgs): Promise<unknown> {
-    const { account, method, args = [] } = argss
-
-    const fn = (this.domain as any)[method]
-
-    if (!fn)
-      throw new Error(`Method ${method} does not exists in indexer domain`)
-
-    return fn.call(this.domain, account, ...args)
   }
 
   protected getEntityIndexerInstance(

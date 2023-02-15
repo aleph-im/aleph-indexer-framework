@@ -1,5 +1,5 @@
 import { Utils } from '@aleph-indexer/core'
-import { DateTime, Interval } from 'luxon'
+import { DateTime, Duration, Interval } from 'luxon'
 import {
   clipDateRangesFromIterable,
   DateRange,
@@ -112,8 +112,22 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
     }
     for (const [timeFrameIndex, timeFrame] of sortedTimeFrames.entries()) {
       const timeFrameName = TimeFrame[timeFrame]
+      console.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
 
-      this.log(`📈 processing ${type} ${timeFrameName} for ${account}`)
+      // @note: get the previous time frame, which is able to cleanly divide the current time frame.
+      let trueDivideTimeFrameIndex = timeFrameIndex
+      if (timeFrameIndex > 0) {
+        trueDivideTimeFrameIndex--
+      }
+      if (timeFrame !== TimeFrame.All && trueDivideTimeFrameIndex > 0) {
+        const timeFrameSize = Duration.fromObject({[timeFrameName.toLowerCase()]: 1}).toMillis()
+        while (true) {
+          if (trueDivideTimeFrameIndex <= 0) break
+          const smallerSize = Duration.fromObject({[TimeFrame[sortedTimeFrames[trueDivideTimeFrameIndex]].toLowerCase()]: 1}).toMillis()
+          if (timeFrameSize % smallerSize === 0) break
+          trueDivideTimeFrameIndex--
+        }
+      }
 
       const clipRangesStream = await this.stateDAL.getAllValuesFromTo(
         [account, type, timeFrame],
@@ -215,7 +229,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
           // const key = [account, type, timeFrame, startDate]
           const cache = {}
           const inputs =
-            timeFrameIndex === 0
+            trueDivideTimeFrameIndex === 0
               ? await getInputStream({
                   account,
                   startDate,
@@ -225,13 +239,13 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
                   [
                     account,
                     type,
-                    sortedTimeFrames[timeFrameIndex - 1],
+                    sortedTimeFrames[trueDivideTimeFrameIndex],
                     startDate,
                   ],
                   [
                     account,
                     type,
-                    sortedTimeFrames[timeFrameIndex - 1],
+                    sortedTimeFrames[trueDivideTimeFrameIndex],
                     endDate,
                   ],
                 )
@@ -239,7 +253,7 @@ export class TimeFrameStats<I extends EventBase<any>, O> implements StatsI<I, O>
           let data: O | undefined
           for await (const value of inputs) {
             const input =
-              'data' in value && timeFrameIndex !== 0 ? value.data : value
+              'data' in value && trueDivideTimeFrameIndex !== 0 ? value.data : value
             data = await aggregator({
               input,
               interval,

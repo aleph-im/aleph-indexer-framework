@@ -5,7 +5,6 @@ import {
   Blockchain,
   BlockchainIndexerI,
   IndexerWorkerDomainI,
-  InvokeMethodRequestArgs,
   IndexableEntityType,
   BaseEntityIndexer,
   GetAccountIndexingEntityStateRequestArgs,
@@ -22,7 +21,7 @@ export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
     >,
     protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
-    super(blockchainId, domain, entityIndexers)
+    super(blockchainId, entityIndexers, domain)
   }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {
@@ -49,10 +48,5 @@ export class EthereumIndexer extends BaseIndexer implements BlockchainIndexerI {
     if (args.id) args.id = args.id.toLowerCase()
 
     return super.getEntityPendingRequests(args)
-  }
-
-  async invokeDomainMethod(args: InvokeMethodRequestArgs): Promise<unknown> {
-    args.account = args.account.toLowerCase()
-    return super.invokeDomainMethod(args)
   }
 }

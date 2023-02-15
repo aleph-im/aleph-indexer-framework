@@ -15,21 +15,21 @@ import * as Types from './types.js'
 export class FetcherAPISchema extends GraphQLSchema {
   constructor(protected domain: FetcherMainDomain) {
     super({
-      types: Types.types,
+      types: Types.fetcherGrapQLTypes,
       query: new GraphQLObjectType({
         name: 'Query',
         fields: {
           time: {
-            type: Types.TimeInfo,
+            type: Types.GraphQLTimeInfo,
             args: {},
             resolve: () => new Date().toISOString(),
           },
 
           fetcherState: {
-            type: Types.FetcherEntityStateList,
+            type: Types.GraphQLFetcherEntityStateList,
             args: {
-              blockchain: { type: new GraphQLList(Types.Blockchain) },
-              type: { type: new GraphQLList(Types.EntityType) },
+              blockchain: { type: new GraphQLList(Types.GraphQLBlockchain) },
+              type: { type: new GraphQLList(Types.GraphQLEntityType) },
               fetcher: { type: new GraphQLList(GraphQLString) },
             },
             resolve: (_, ctx) =>
@@ -41,10 +41,10 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           accountState: {
-            type: Types.AccountEntityFetcherStateList,
+            type: Types.GraphQLAccountEntityFetcherStateList,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-              type: { type: new GraphQLNonNull(Types.EntityType) },
+              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               account: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },
@@ -58,10 +58,10 @@ export class FetcherAPISchema extends GraphQLSchema {
           },
 
           entityState: {
-            type: Types.EntityStateList,
+            type: Types.GraphQLEntityStateList,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-              type: { type: new GraphQLNonNull(Types.EntityType) },
+              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },
@@ -77,8 +77,8 @@ export class FetcherAPISchema extends GraphQLSchema {
           deleteEntityCache: {
             type: GraphQLBoolean,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.Blockchain) },
-              type: { type: new GraphQLNonNull(Types.EntityType) },
+              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
               },

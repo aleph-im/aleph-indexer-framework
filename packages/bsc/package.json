@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/bsc",
-  "version": "1.0.34",
+  "version": "1.0.39",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -31,8 +31,8 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.0.33",
-    "@aleph-indexer/ethereum": "^1.0.34",
-    "@aleph-indexer/framework": "^1.0.34",
+    "@aleph-indexer/ethereum": "^1.0.39",
+    "@aleph-indexer/framework": "^1.0.39",
     "ethereum-bloom-filters": "^1.0.10",
     "ethers": "^5.7.2",
     "moleculer": "^0.14.24",

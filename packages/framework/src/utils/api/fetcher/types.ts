@@ -12,16 +12,20 @@ import {
   GraphQLString,
 } from 'graphql'
 import { GraphQLJSONObject } from 'graphql-type-json'
-import { Blockchain, EntityType, TimeInfo } from '../types.js'
+import {
+  GraphQLBlockchain,
+  GraphQLEntityType,
+  GraphQLTimeInfo,
+} from '../types.js'
 
 export * from '../types.js'
 
-export const FetcherEntityState = new GraphQLObjectType({
+export const GraphQLFetcherEntityState = new GraphQLObjectType({
   name: 'FetcherEntityState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
-    blockchain: { type: new GraphQLNonNull(Blockchain) },
-    type: { type: new GraphQLNonNull(EntityType) },
+    blockchain: { type: new GraphQLNonNull(GraphQLBlockchain) },
+    type: { type: new GraphQLNonNull(GraphQLEntityType) },
     pendingTransactions: { type: new GraphQLNonNull(GraphQLInt) },
     accountFetchers: { type: new GraphQLNonNull(GraphQLInt) },
     transactionThroughput: { type: new GraphQLNonNull(GraphQLInt) },
@@ -29,14 +33,16 @@ export const FetcherEntityState = new GraphQLObjectType({
   },
 })
 
-export const FetcherEntityStateList = new GraphQLList(FetcherEntityState)
+export const GraphQLFetcherEntityStateList = new GraphQLList(
+  GraphQLFetcherEntityState,
+)
 
-export const AccountEntityFetcherState = new GraphQLObjectType({
+export const GraphQLAccountEntityFetcherState = new GraphQLObjectType({
   name: 'AccountEntityFetcherState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
-    blockchain: { type: new GraphQLNonNull(Blockchain) },
-    type: { type: new GraphQLNonNull(EntityType) },
+    blockchain: { type: new GraphQLNonNull(GraphQLBlockchain) },
+    type: { type: new GraphQLNonNull(GraphQLEntityType) },
     account: { type: new GraphQLNonNull(GraphQLString) },
     firstTimestamp: { type: GraphQLFloat },
     lastTimestamp: { type: GraphQLFloat },
@@ -48,16 +54,16 @@ export const AccountEntityFetcherState = new GraphQLObjectType({
   },
 })
 
-export const AccountEntityFetcherStateList = new GraphQLList(
-  AccountEntityFetcherState,
+export const GraphQLAccountEntityFetcherStateList = new GraphQLList(
+  GraphQLAccountEntityFetcherState,
 )
 
-export const EntityState = new GraphQLObjectType({
+export const GraphQLEntityState = new GraphQLObjectType({
   name: 'EntityState',
   fields: {
     fetcher: { type: new GraphQLNonNull(GraphQLString) },
-    blockchain: { type: new GraphQLNonNull(Blockchain) },
-    type: { type: new GraphQLNonNull(EntityType) },
+    blockchain: { type: new GraphQLNonNull(GraphQLBlockchain) },
+    type: { type: new GraphQLNonNull(GraphQLEntityType) },
     signature: { type: new GraphQLNonNull(GraphQLString) },
     isCached: { type: new GraphQLNonNull(GraphQLBoolean) },
     isPending: { type: new GraphQLNonNull(GraphQLBoolean) },
@@ -67,14 +73,14 @@ export const EntityState = new GraphQLObjectType({
   },
 })
 
-export const EntityStateList = new GraphQLList(EntityState)
+export const GraphQLEntityStateList = new GraphQLList(GraphQLEntityState)
 
-export { TimeInfo } from '../types.js'
+export { GraphQLTimeInfo as TimeInfo } from '../types.js'
 
-export const types: GraphQLNamedType[] = [
-  Blockchain,
-  TimeInfo,
-  FetcherEntityState,
-  EntityState,
-  AccountEntityFetcherState,
+export const fetcherGrapQLTypes: GraphQLNamedType[] = [
+  GraphQLBlockchain,
+  GraphQLTimeInfo,
+  GraphQLFetcherEntityState,
+  GraphQLEntityState,
+  GraphQLAccountEntityFetcherState,
 ]

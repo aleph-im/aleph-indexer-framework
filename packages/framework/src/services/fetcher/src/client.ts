@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { Blockchain } from '../../../types.js'
 import { MsIds } from '../../common.js'
 import {
   BlockchainRequestArgs,

@@ -48,8 +48,8 @@ export class SolanaInstructionBaseParser<
       type,
       info: {
         ...(rawIx as any).parsed?.info,
-        data,
-        accounts,
+        ...data,
+        ...accounts,
       },
     }
 
