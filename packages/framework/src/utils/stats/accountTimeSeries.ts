@@ -2,12 +2,12 @@ import { Utils } from '@aleph-indexer/core'
 import { IndexerMsClient } from '../../services/indexer/index.js'
 import { DateRange, getDateRangeFromInterval, mergeDateRangesFromIterable, TimeFrame } from '../time.js'
 import {
-  TimeFrameState,
-  TimeFrameStateCode,
-  TimeFrameStateDALIndex,
-  TimeFrameStateStorage,
-} from './dal/timeFrameState.js'
-import { TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
+  TimeSeriesState,
+  TimeSeriesStateCode,
+  TimeSeriesStateDALIndex,
+  TimeSeriesStateStorage,
+} from './dal/timeSeriesState.js'
+import { TimeSeriesStatsStorage } from './dal/timeSeriesEntity.js'
 import { AccountStats, AccountTimeSeriesStats, AccountTimeSeriesStatsConfig, TimeSeriesStatsFilters } from './types.js'
 
 const { JobRunner } = Utils
@@ -22,8 +22,8 @@ export class AccountTimeSeriesStatsManager<V> {
   constructor(
     public config: AccountTimeSeriesStatsConfig<V>,
     protected indexerClient: IndexerMsClient,
-    protected stateDAL: TimeFrameStateStorage,
-    protected timeSeriesDAL: TimeFrameStatsStorage,
+    protected stateDAL: TimeSeriesStateStorage,
+    protected timeSeriesDAL: TimeSeriesStatsStorage,
   ) {
     this.compactionJob = new JobRunner({
       name: `stats-compactor ${config.account}`,
@@ -128,10 +128,10 @@ export class AccountTimeSeriesStatsManager<V> {
 
   protected async compactStates(): Promise<void> {
     const { account } = this.config
-    const { Processed } = TimeFrameStateCode
+    const { Processed } = TimeSeriesStateCode
 
     const fetchedRanges = await this.stateDAL
-      .useIndex(TimeFrameStateDALIndex.AccountTypeState)
+      .useIndex(TimeSeriesStateDALIndex.AccountTypeState)
       .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
       })
@@ -141,14 +141,14 @@ export class AccountTimeSeriesStatsManager<V> {
     )
 
     const newStates = newRanges.map((range) => {
-      const newState = range as TimeFrameState
+      const newState = range as TimeSeriesState
       newState.account = account
       newState.state = Processed
       return newState
     })
 
     const oldStates = oldRanges.map((range) => {
-      const oldState = range as TimeFrameState
+      const oldState = range as TimeSeriesState
       oldState.account = account
       oldState.state = Processed
       return oldState

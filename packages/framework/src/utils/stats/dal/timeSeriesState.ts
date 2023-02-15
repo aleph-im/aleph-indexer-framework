@@ -1,66 +1,66 @@
 import { EntityStorage } from '@aleph-indexer/core'
 import { TimeFrame } from '../../time.js'
 
-export enum TimeFrameStateCode {
+export enum TimeSeriesStateCode {
   Processing = 0,
   Processed = 1,
 }
 
-export type TimeFrameState = {
+export type TimeSeriesState = {
   account: string
   type: string
   timeFrame: TimeFrame
   startDate: number
   endDate: number
-  state: TimeFrameStateCode
+  state: TimeSeriesStateCode
 }
 
 /**
  * Stats Entity Storage.
  */
-export type TimeFrameStateStorage = EntityStorage<TimeFrameState>
+export type TimeSeriesStateStorage = EntityStorage<TimeSeriesState>
 
-export enum TimeFrameStateDALIndex {
+export enum TimeSeriesStateDALIndex {
   AccountTypeState = 'account_type_state',
 }
 
 const accountKey = {
-  get: (e: TimeFrameState) => e.account,
+  get: (e: TimeSeriesState) => e.account,
   length: EntityStorage.AddressLength,
 }
 
 const typeKey = {
-  get: (e: TimeFrameState) => e.type,
+  get: (e: TimeSeriesState) => e.type,
   length: EntityStorage.VariableLength,
 }
 
 const timeFrameKey = {
-  get: (e: TimeFrameState) => e.timeFrame,
+  get: (e: TimeSeriesState) => e.timeFrame,
   length: 2,
 }
 
 // @note: start date in millis of the interval
 const startDateKey = {
-  get: (e: TimeFrameState) => e.startDate,
+  get: (e: TimeSeriesState) => e.startDate,
   length: EntityStorage.TimestampLength,
 }
 
 const stateKey = {
-  get: (e: TimeFrameState) => e.state || TimeFrameStateCode.Processing,
+  get: (e: TimeSeriesState) => e.state || TimeSeriesStateCode.Processing,
   length: 1,
 }
 
 /**
  * Creates a stats Entity Storage.
  */
-export function createTimeFrameStateDAL(path: string): TimeFrameStateStorage {
-  return new EntityStorage<TimeFrameState>({
+export function createTimeSeriesStateDAL(path: string): TimeSeriesStateStorage {
+  return new EntityStorage<TimeSeriesState>({
     name: 'time_frame_state',
     path,
     key: [accountKey, typeKey, timeFrameKey, startDateKey],
     indexes: [
       {
-        name: TimeFrameStateDALIndex.AccountTypeState,
+        name: TimeSeriesStateDALIndex.AccountTypeState,
         key: [accountKey, typeKey, stateKey],
       },
     ],

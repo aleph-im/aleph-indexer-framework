@@ -1,7 +1,7 @@
 import { EntityStorage } from '@aleph-indexer/core'
 import { TimeFrame } from '../../time.js'
 
-export type TimeFrameEntity<T> = {
+export type TimeSeriesEntity<T> = {
   account: string
   type: string
   timeFrame: TimeFrame
@@ -13,34 +13,34 @@ export type TimeFrameEntity<T> = {
 /**
  * Stats Time Series Entity Storage.
  */
-export type TimeFrameStatsStorage = EntityStorage<TimeFrameEntity<any>>
+export type TimeSeriesStatsStorage = EntityStorage<TimeSeriesEntity<any>>
 
 const accountKey = {
-  get: (e: TimeFrameEntity<unknown>) => e.account,
+  get: (e: TimeSeriesEntity<unknown>) => e.account,
   length: EntityStorage.AddressLength,
 }
 
 const typeKey = {
-  get: (e: TimeFrameEntity<unknown>) => e.type,
+  get: (e: TimeSeriesEntity<unknown>) => e.type,
   length: EntityStorage.VariableLength,
 }
 
 const timeFrameKey = {
-  get: (e: TimeFrameEntity<unknown>) => e.timeFrame,
+  get: (e: TimeSeriesEntity<unknown>) => e.timeFrame,
   length: 3,
 }
 
 // @note: start date in millis of the interval
 const startDateKey = {
-  get: (e: TimeFrameEntity<unknown>) => e.startDate,
+  get: (e: TimeSeriesEntity<unknown>) => e.startDate,
   length: EntityStorage.TimestampLength,
 }
 
 /**
  * Creates a stats time series Entity Storage.
  */
-export function createStatsTimeSeriesDAL(path: string): TimeFrameStatsStorage {
-  return new EntityStorage<TimeFrameEntity<any>>({
+export function createStatsTimeSeriesDAL(path: string): TimeSeriesStatsStorage {
+  return new EntityStorage<TimeSeriesEntity<any>>({
     name: 'stats_time_series',
     path,
     key: [accountKey, typeKey, timeFrameKey, startDateKey],

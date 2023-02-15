@@ -1,9 +1,9 @@
 import { Interval } from 'luxon'
 import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
-import { TimeFrameStatsStorage } from './dal/timeFrameEntity.js'
+import { TimeSeriesStatsStorage } from './dal/timeSeriesEntity.js'
 import { Blockchain, EventBase, IndexableEntityType } from '../../types.js'
-import { StatsI } from './interface.js'
+import { TimeSeriesStats } from './timeSeriesStats.js'
 
 export type PrevValueFactoryFnArgs = {
   account: string
@@ -32,7 +32,7 @@ export type TimeSeriesAggregatorFnArgs<I, O> = {
 export type AccountAggregatorFnArgs = {
   now: number
   account: string
-  timeSeriesDAL: TimeFrameStatsStorage
+  timeSeriesDAL: TimeSeriesStatsStorage
 }
 
 export type TimeSeriesStatsConfig<I extends EventBase<any>, O> = {
@@ -42,6 +42,7 @@ export type TimeSeriesStatsConfig<I extends EventBase<any>, O> = {
     args: InputStreamFactoryFnArgs,
   ) => Promise<StorageValueStream<I>>
   aggregate: (args: TimeSeriesAggregatorFnArgs<I, O>) => O
+  tickAggregate?: (args: TimeSeriesAggregatorFnArgs<I, O>) => O
   reverse?: boolean
   timeFrames: TimeFrame[]
 }
@@ -50,7 +51,7 @@ export type AccountTimeSeriesStatsConfig<V> = {
   blockchainId: Blockchain
   type: IndexableEntityType
   account: string
-  series: StatsI<any, any>[]
+  series: TimeSeriesStats<any, any>[]
   aggregate?: (args: AccountAggregatorFnArgs) => Promise<V>
 }
 

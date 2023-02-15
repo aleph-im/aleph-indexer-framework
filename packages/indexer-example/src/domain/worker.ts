@@ -2,7 +2,7 @@ import {
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
   IndexerWorkerDomain,
-  createTimeFrameStateDAL,
+  createTimeSeriesStateDAL,
   createStatsTimeSeriesDAL,
   ParserContext,
 } from '@aleph-indexer/framework'
@@ -26,7 +26,7 @@ export default class WorkerDomain
 {
   constructor(
     protected context: IndexerDomainContext,
-    protected statsStateDAL = createTimeFrameStateDAL(context.dataPath),
+    protected statsStateDAL = createTimeSeriesStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
   ) {
     super(context)
