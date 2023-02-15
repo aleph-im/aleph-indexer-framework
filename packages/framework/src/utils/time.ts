@@ -244,6 +244,7 @@ export function getTimeFrameOptions(
   const duration = TimeFrameDurationUnitsMap[timeFrame]
 
   switch (timeFrame) {
+    case TimeFrame.Tick:
     case TimeFrame.Hour:
     case TimeFrame.Day:
     case TimeFrame.Week:
@@ -251,9 +252,6 @@ export function getTimeFrameOptions(
     case TimeFrame.Year:
     case TimeFrame.All: {
       return [interval.start, interval.end, ...duration]
-    }
-    case TimeFrame.Tick: {
-      throw new Error('TimeFrame.Tick is not usable with Time')
     }
   }
 }
@@ -268,6 +266,9 @@ export function getTimeFrameIntervals(
     return [
       Interval.fromISO('1970-01-01T00:00:00.000Z/2285-01-01T00:00:00.000Z'),
     ]
+  }
+  if (timeFrame === TimeFrame.Tick) {
+    throw new Error('TimeFrame.Tick should not be used with getTimeFrameIntervals()')
   }
 
   const options = getTimeFrameOptions(timeFrame, interval)
