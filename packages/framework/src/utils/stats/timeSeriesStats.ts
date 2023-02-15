@@ -18,7 +18,7 @@ import {
   TimeSeriesStateStorage,
 } from './dal/timeSeriesState.js'
 import { TimeSeriesEntity, TimeSeriesStatsStorage } from './dal/timeSeriesEntity.js'
-import { TimeSeries, TimeSeriesStatsConfig, TimeSeriesStatsFilters } from './types.js'
+import { SnapshotFilters, TimeSeries, TimeSeriesStatsConfig, TimeSeriesStatsFilters } from './types.js'
 import { EventBase } from '../../types.js'
 
 const { BufferExec } = Utils
@@ -77,6 +77,23 @@ export class TimeSeriesStats<I extends EventBase<any>, O> {
     }
 
     return series
+  }
+
+  async getSnapshot(
+    account: string,
+    filters: SnapshotFilters,
+  ): Promise<O | undefined> {
+    const { type } = this.config
+    const { timeFrame, date } = filters
+
+    const value = await this.timeSeriesDAL.getLastValueFromTo(
+      [account, type, timeFrame, 0],
+      [account, type, timeFrame, date],
+    )
+
+    if (!value) return undefined
+
+    return value.data
   }
 
   /**

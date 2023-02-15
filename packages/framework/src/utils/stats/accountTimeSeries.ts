@@ -8,7 +8,14 @@ import {
   TimeSeriesStateStorage,
 } from './dal/timeSeriesState.js'
 import { TimeSeriesStatsStorage } from './dal/timeSeriesEntity.js'
-import { AccountStats, AccountTimeSeriesStats, AccountTimeSeriesStatsConfig, TimeSeriesStatsFilters } from './types.js'
+import {
+  AccountStats,
+  AccountTimeSeriesStats,
+  AccountTimeSeriesStatsConfig,
+  TimeSeries,
+  TimeSeriesStatsFilters,
+  SnapshotFilters,
+} from './types.js'
 
 const { JobRunner } = Utils
 
@@ -38,10 +45,25 @@ export class AccountTimeSeriesStatsManager<V> {
     this.compactionJob.run().catch(() => 'ignore')
   }
 
+  async getSnapshot(
+    type: string,
+    filters: SnapshotFilters,
+  ): Promise<TimeSeries<V>> {
+    const { account } = this.config
+    const timeSeries = this.config.series.find(
+      (serie) => serie.config.type === type,
+    )
+
+    if (!timeSeries)
+      throw new Error(`Stats for ${account} of type "${type}" not found`)
+
+    return timeSeries.getSnapshot(account, filters)
+  }
+
   async getTimeSeriesStats(
     type: string,
     filters: TimeSeriesStatsFilters,
-  ): Promise<AccountTimeSeriesStats> {
+  ): Promise<AccountTimeSeriesStats<V>> {
     const { account } = this.config
 
     const timeSeries = this.config.series.find(
@@ -52,7 +74,7 @@ export class AccountTimeSeriesStatsManager<V> {
       throw new Error(`Stats for ${account} of type "${type}" not found`)
 
     const series = await timeSeries.getStats(account, filters)
-    const timeFrame = filters.timeFrame ?? TimeFrame.Tick
+    const timeFrame = filters.timeFrame
 
     return {
       account,

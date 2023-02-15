@@ -82,6 +82,11 @@ export type AccountStats<V = any> = {
   stats: V
 }
 
+export type SnapshotFilters = {
+    date: number,
+    timeFrame: TimeFrame,
+}
+
 /**
  * Transformations and clipping to apply to the time-series.
  */

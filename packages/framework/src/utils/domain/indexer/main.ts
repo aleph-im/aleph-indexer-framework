@@ -8,7 +8,13 @@ import {
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
 import { Blockchain, IndexableEntityType } from '../../../types.js'
-import { AccountStats, AccountTimeSeriesStats, TimeSeriesStatsFilters } from '../../stats/types.js'
+import {
+  AccountStats,
+  AccountTimeSeriesStats,
+  SnapshotFilters,
+  TimeSeries,
+  TimeSeriesStatsFilters,
+} from '../../stats/types.js'
 
 /**
  * Describes the main indexer domain class capable of calculating stats.
@@ -164,6 +170,38 @@ export abstract class IndexerMainDomain {
         ),
       )
     ).filter((info): info is AccountIndexerState => !!info)
+  }
+
+    /**
+   * Returns the time-series stats at the given time for the given account.
+   * @param blockchainId The blockchain to get the time-series stats from.
+   * @param accounts The accounts to get the time-series stats from.
+   * @param type The type of time-series to get.
+   * @param filters The transformations and clipping to apply to the time-series.
+   */
+  async getAccountSnapshot<V>(
+    blockchainId: Blockchain,
+    accounts: string[] = [],
+    type: string,
+    filters: SnapshotFilters,
+  ): Promise<TimeSeries<V>[]> {
+    this.checkStats()
+
+    return Promise.all(
+      this.getBlockchainAccounts(blockchainId, accounts).map(
+        async (account) => {
+          const stats = (await this.context.apiClient
+            .useBlockchain(blockchainId)
+            .invokeDomainMethod({
+              account,
+              method: 'getSnapshot',
+              args: [type, filters],
+            })) as TimeSeries<V>
+
+          return stats
+        },
+      ),
+    )
   }
 
   /**
