@@ -5,7 +5,8 @@ import {
   LiquidityEvent,
   LendingEvent,
   LendingEventType,
-  FlashLoanEvent, LendingBalance, LendingHolding,
+  FlashLoanEvent,
+  LendingHolding,
 } from '../../types.js'
 import {
   borrowEventsWhitelist,
@@ -32,11 +33,6 @@ export class LendingEventTimeSeriesAggregator {
       if (this.isLiquidationEvent(curr)) {
         const info = this.prepareLiquidationInfo(curr)
         this.processLiquidationInfo(prev, info)
-      }
-
-      if (this.isFlashLoanEvent(curr)) {
-        const info = this.prepareFlashLoanInfo(curr)
-        this.processFlashLoanInfo(prev, info)
       }
     } else {
       const info = this.prepareLendingInfoItem(curr)

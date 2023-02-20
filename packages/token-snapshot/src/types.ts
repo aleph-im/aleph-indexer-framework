@@ -1,5 +1,6 @@
 import { TokenInfo } from '@solana/spl-token-registry'
-import { EventBase, AlephParsedEvent } from '@aleph-indexer/core'
+import { EventBase } from '@aleph-indexer/framework'
+import { SolanaParsedEvent } from '@aleph-indexer/solana'
 import BN from 'bn.js'
 import { LendingMarketType } from './constants'
 
@@ -85,7 +86,7 @@ export type SPLTokenAccount = {
   type: SPLTokenType
 }
 
-export type SPLTokenRawEventBase = AlephParsedEvent<
+export type SPLTokenRawEventBase = SolanaParsedEvent<
   SPLTokenEventType,
   SPLTokenRawEventInfo
 >
@@ -562,7 +563,7 @@ export type LendingEventBase = EventBase<LendingEventType> & {
   owner: string
 }
 
-export type LendingRawEvent = AlephParsedEvent<
+export type LendingRawEvent = SolanaParsedEvent<
   LendingEventType,
   LendingEventInfo
 >

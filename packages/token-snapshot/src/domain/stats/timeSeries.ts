@@ -1,8 +1,10 @@
 import {
   AccountTimeSeriesStatsManager,
-  IndexerMsI,
-  StatsStateStorage,
-  StatsTimeSeriesStorage,
+  Blockchain,
+  IndexableEntityType,
+  IndexerMsClient,
+  TimeSeriesStateStorage,
+  TimeSeriesStatsStorage,
   TimeFrame,
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
@@ -14,10 +16,10 @@ import lendingEventAggregator from './timeSeriesAggregator.js'
 export async function createAccountStats(
   projectId: string,
   account: string,
-  indexerApi: IndexerMsI,
+  indexerApi: IndexerMsClient,
   eventDAL: EventStorage,
-  statsStateDAL: StatsStateStorage,
-  statsTimeSeriesDAL: StatsTimeSeriesStorage,
+  stateDAL: TimeSeriesStateStorage,
+  statsDAL: TimeSeriesStatsStorage,
 ): Promise<AccountTimeSeriesStatsManager<LendingReserveStats>> {
   const reserveStatsAggregator =
     await ReserveStatsAggregatorFactory.getSingleton(projectId)
@@ -25,14 +27,9 @@ export async function createAccountStats(
   const LendingTimeSeries = new TimeSeriesStats<LendingEvent, LendingInfo>(
     {
       type: 'lending',
-      startDate: 0,
+      beginStatsDate: 0,
       timeFrames: [
-        TimeFrame.Hour,
-        TimeFrame.Day,
-        TimeFrame.Week,
-        TimeFrame.Month,
-        TimeFrame.Year,
-        TimeFrame.All,
+        TimeFrame.Tick,
       ],
       getInputStream: ({ account, startDate, endDate }) => {
         return eventDAL
@@ -43,22 +40,24 @@ export async function createAccountStats(
         return lendingEventAggregator.aggregate(input, prevValue)
       },
     },
-    statsStateDAL,
-    statsTimeSeriesDAL,
+    stateDAL,
+    statsDAL,
   )
 
   const accountTimeSeries =
     new AccountTimeSeriesStatsManager<LendingReserveStats>(
       {
         account,
+        blockchainId: Blockchain.Solana,
+        type: IndexableEntityType.Transaction,
         series: [LendingTimeSeries],
         aggregate(args) {
           return reserveStatsAggregator.aggregate(args)
         },
       },
       indexerApi,
-      statsStateDAL,
-      statsTimeSeriesDAL,
+      stateDAL,
+      statsDAL,
     )
 
   return accountTimeSeries

@@ -1,10 +1,11 @@
 import {
   AccountIndexerRequestArgs,
+  Blockchain,
   IndexerMainDomain,
   IndexerMainDomainContext,
   IndexerMainDomainWithDiscovery,
 } from '@aleph-indexer/framework'
-import { Token, solanaPrivateRPCRoundRobin } from '@aleph-indexer/core'
+import { getTokenByAddress, getTokenMintByAccount, solanaPrivateRPCRoundRobin } from '@aleph-indexer/solana'
 import { SPLTokenHolding, SPLTokenInfo, SPLTokenType } from '../types.js'
 import { discoveryFn } from '../utils/discovery.js'
 import { TokenHoldersFilters } from './types.js'
@@ -30,6 +31,7 @@ export default class MainDomain
         },
         content: false,
       },
+      blockchainId: Blockchain.Solana,
     }
     return [init]
   }
@@ -41,7 +43,7 @@ export default class MainDomain
     await Promise.all(
       accounts.map(async (account: string) => {
         const connection = solanaPrivateRPCRoundRobin.getClient()
-        const mint = await Token.getTokenMintByAccount(
+        const mint = await getTokenMintByAccount(
           account,
           connection.getConnection(),
         )
@@ -58,8 +60,8 @@ export default class MainDomain
             content: false,
           },
         }
-        await this.context.apiClient.indexAccount(options)
-        this.accounts.add(account)
+        await this.context.apiClient.useBlockchain(Blockchain.Solana).indexAccount(options)
+        this.accounts[Blockchain.Solana].add(account)
       }),
     )
     await Promise.all(
@@ -76,8 +78,8 @@ export default class MainDomain
             content: false,
           },
         }
-        await this.context.apiClient.indexAccount(options)
-        this.accounts.add(mint)
+        await this.context.apiClient.useBlockchain(Blockchain.Solana).indexAccount(options)
+        this.accounts[Blockchain.Solana].add(mint)
       }),
     )
   }
@@ -99,7 +101,7 @@ export default class MainDomain
 
   protected async addToken(mint: string): Promise<void> {
     const connection = solanaPrivateRPCRoundRobin.getClient()
-    const tokenInfo = await Token.getTokenByAddress(
+    const tokenInfo = await getTokenByAddress(
       mint,
       connection.getConnection(),
     )

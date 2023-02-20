@@ -1,4 +1,4 @@
-import { InstructionContextV1, Utils } from '@aleph-indexer/core'
+import { SolanaParsedInstructionContext, getTokenBalance } from '@aleph-indexer/solana'
 import {
   SPLTokenRawEvent,
   SPLTokenEvent,
@@ -7,16 +7,13 @@ import {
   SPLTokenEventType,
 } from '../types.js'
 
-const { getTokenBalance } = Utils
-
 export class MintParser {
   parse(
-    ixCtx: InstructionContextV1,
+    ixCtx: SolanaParsedInstructionContext,
     mintAddress: string,
   ): SPLTokenEvent | undefined {
-    const { ix, parentIx, txContext } = ixCtx
-    const parentTx = txContext.tx
-    const parsed = (ix as SPLTokenRawEvent).parsed
+    const { instruction, parentInstruction, parentTransaction } = ixCtx
+    const parsed = (instruction as SPLTokenRawEvent).parsed
 
     // @note: Skip unrelated token ixs from being parsed
     if (
@@ -26,13 +23,13 @@ export class MintParser {
     )
       return
 
-    const id = `${parentTx.signature}${
-      parentIx ? `:${parentIx.index.toString().padStart(2, '0')}` : ''
-    }:${ix.index.toString().padStart(2, '0')}`
+    const id = `${parentTransaction.signature}${
+      parentInstruction ? `:${parentInstruction.index.toString().padStart(2, '0')}` : ''
+    }:${instruction.index.toString().padStart(2, '0')}`
 
-    const timestamp = parentTx.blockTime
-      ? parentTx.blockTime * 1000
-      : parentTx.slot
+    const timestamp = parentTransaction.blockTime
+      ? parentTransaction.blockTime * 1000
+      : parentTransaction.slot
     const type = parsed.type
 
     switch (type) {
@@ -40,7 +37,7 @@ export class MintParser {
       case SPLTokenEventType.InitializeAccount2:
       case SPLTokenEventType.InitializeAccount3: {
         const { account, owner, mint } = parsed.info
-        const balance = getTokenBalance(parentTx, account) as string
+        const balance = getTokenBalance(parentTransaction, account) as string
 
         const res: SPLTokenEventInitializeAccount = {
           id,

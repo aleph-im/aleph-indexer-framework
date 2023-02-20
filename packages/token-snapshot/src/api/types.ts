@@ -4,7 +4,8 @@ import {
   GraphQLNonNull,
   GraphQLList,
 } from 'graphql'
-import { TokenType, GraphQLBigNumber } from '@aleph-indexer/core'
+import { GraphQLBigNumber } from '@aleph-indexer/core'
+import { TokenType } from '@aleph-indexer/solana'
 
 // ------------------- TOKENS --------------------------
 

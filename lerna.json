@@ -6,7 +6,8 @@
     "packages/ethereum",
     "packages/solana",
     "packages/bsc",
-    "packages/indexer-example"
+    "packages/indexer-example",
+    "packages/token-snapshot"
   ],
   "version": "1.0.39"
 }

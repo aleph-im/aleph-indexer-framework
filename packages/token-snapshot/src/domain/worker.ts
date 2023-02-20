@@ -1,38 +1,35 @@
 import BN from 'bn.js'
 import {
   AccountIndexerConfigWithMeta,
-  AccountStatsFilters,
-  createStatsStateDAL,
+  Blockchain,
   createStatsTimeSeriesDAL,
+  createTimeSeriesStateDAL,
   IndexerDomainContext,
   IndexerWorkerDomain,
   IndexerWorkerDomainWithStats,
-  InstructionContextV1,
+  TimeSeriesStatsFilters,
 } from '@aleph-indexer/framework'
+import { SolanaParsedInstructionContext } from '@aleph-indexer/solana'
 import { PendingWork, PendingWorkPool } from '@aleph-indexer/core'
-import {
-  createTokenEventParser,
-  TokenEventParser,
-} from '../parsers/tokenEvent.js'
+import { createTokenEventParser, TokenEventParser } from '../parsers/tokenEvent.js'
 import { LendingEventParser } from '../parsers/lendingEvent.js'
 import { mintParser as mParser } from '../parsers/mint.js'
 import { createSPLTokenEventDAL } from '../dal/tokenEvent.js'
 import {
-  Balances,
-  Event,
-  LendingEvent, LendingEventType,
+  LendingEvent,
   SPLTokenAccount,
   SPLTokenEvent,
   SPLTokenEventCloseAccount,
   SPLTokenEventType,
   SPLTokenHolding,
+  SPLTokenRawEvent,
   SPLTokenType,
 } from '../types.js'
 import { Mint } from './mint.js'
-import {getLendingMarketType, LendingMarketType, TOKEN_PROGRAM_ID} from '../constants.js'
+import { TOKEN_PROGRAM_ID } from '../constants.js'
 import {
-  getWalletBalanceFromEvent,
   getSPLTokenEventAccounts,
+  getWalletBalanceFromEvent,
   isParsableInstruction,
   isSPLLendingInstruction,
   isSPLTokenInstruction,
@@ -42,7 +39,7 @@ import { MintAccount, TokenHoldersFilters } from './types.js'
 import { createBalanceHistoryDAL } from '../dal/balanceHistory.js'
 import { createBalanceStateDAL } from '../dal/balanceState.js'
 import { createAccountMintDAL } from '../dal/accountMints.js'
-import { createLendingEventDAL } from "../dal/lendingEvent.js";
+import { createLendingEventDAL } from '../dal/lendingEvent.js'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
@@ -58,7 +55,7 @@ export default class WorkerDomain
     protected mintParser = mParser,
     protected tokenEventDAL = createSPLTokenEventDAL(context.dataPath),
     protected lendingEventDAL = createLendingEventDAL(context.dataPath),
-    protected statsStateDAL = createStatsStateDAL(context.dataPath),
+    protected statsStateDAL = createTimeSeriesStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
     protected fetchMintDAL = createFetchMintDAL(context.dataPath),
     protected balanceHistoryDAL = createBalanceHistoryDAL(context.dataPath),
@@ -114,7 +111,7 @@ export default class WorkerDomain
   async getTimeSeriesStats(
     account: string,
     type: string,
-    filters: AccountStatsFilters,
+    filters: TimeSeriesStatsFilters,
   ): Promise<any> {
     return {}
   }
@@ -137,19 +134,20 @@ export default class WorkerDomain
   }
 
   protected async filterInstructions(
-    ixsContext: InstructionContextV1[],
-  ): Promise<InstructionContextV1[]> {
-    return ixsContext.filter(({ ix }) => isParsableInstruction(ix))
+    ixsContext: SolanaParsedInstructionContext[],
+  ): Promise<SolanaParsedInstructionContext[]> {
+    return ixsContext.filter(({ instruction }) => isParsableInstruction(instruction))
   }
 
   protected async indexInstructions(
-    ixsContext: InstructionContextV1[],
+    ixsContext: SolanaParsedInstructionContext[],
   ): Promise<void> {
     const parsedSPLTokenEvents: SPLTokenEvent[] = []
     const parsedLendingEvents: LendingEvent[] = []
     const works: PendingWork<MintAccount>[] = []
     const promises = ixsContext.map(async (ixCtx) => {
-      const mintAccount = ixCtx.txContext.parserContext.account
+      const parsed = (ixCtx.instruction as SPLTokenRawEvent).parsed
+      const mintAccount = parsed.info.account
       // handle instructions triggered by mint accounts
       if (this.mints[mintAccount]) {
         const work = this._handleMintAccountInstructions(ixCtx, mintAccount)
@@ -157,13 +155,13 @@ export default class WorkerDomain
         return
       }
       // handle instructions triggered by token owners
-      if (isSPLTokenInstruction(ixCtx.ix)) {
+      if (isSPLTokenInstruction(ixCtx.instruction)) {
         const parsedIx = await this._handleSPLTokenInstruction(ixCtx)
         if (parsedIx) parsedSPLTokenEvents.push(parsedIx)
         return
       }
       // handle instructions triggered by lending programs
-      if (isSPLLendingInstruction(ixCtx.ix)) {
+      if (isSPLLendingInstruction(ixCtx.instruction)) {
         const parsedIx = await this.lendingEventParser.parse(ixCtx)
         if (parsedIx) parsedLendingEvents.push(parsedIx)
         return
@@ -195,7 +193,7 @@ export default class WorkerDomain
     }
   }
 
-  private _handleMintAccountInstructions(ixCtx, account) {
+  private _handleMintAccountInstructions(ixCtx: SolanaParsedInstructionContext, account: string) {
     const parsedIx = this.mintParser.parse(ixCtx, account)
     if (!parsedIx) return
     if (parsedIx.type !== SPLTokenEventType.InitializeAccount) return
@@ -214,7 +212,7 @@ export default class WorkerDomain
     }
   }
 
-  private async _handleSPLTokenInstruction(ixCtx: InstructionContextV1) {
+  private async _handleSPLTokenInstruction(ixCtx: SolanaParsedInstructionContext) {
     const parsedIx = await this.tokenEventParser.parse(ixCtx)
     if (parsedIx?.type === SPLTokenEventType.CloseAccount) {
       await this._handleCloseTokenAccount(parsedIx)
@@ -237,7 +235,7 @@ export default class WorkerDomain
           content: true,
         },
       }
-      await this.context.apiClient.deleteAccount(options)
+      await this.context.apiClient.useBlockchain(Blockchain.Solana).deleteAccount(options)
     }
   }
 
@@ -271,7 +269,7 @@ export default class WorkerDomain
           content: false,
         },
       }
-      await this.context.apiClient.indexAccount(options)
+      await this.context.apiClient.useBlockchain(Blockchain.Solana).indexAccount(options)
     }
   }
 
@@ -293,17 +291,19 @@ export default class WorkerDomain
             owner: entity.owner,
             balances: {
               wallet: walletBalance,
-              solend: {
-                deposited: '0',
-                borrowed: '0',
-              },
-              port: {
-                deposited: '0',
-                borrowed: '0',
-              },
-              larix: {
-                deposited: '0',
-                borrowed: '0',
+              lending: {
+                solend: {
+                  deposited: '0',
+                  borrowed: '0',
+                },
+                port: {
+                  deposited: '0',
+                  borrowed: '0',
+                },
+                larix: {
+                  deposited: '0',
+                  borrowed: '0',
+                },
               },
               total: walletBalance,
             },

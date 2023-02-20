@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { config } from '@aleph-indexer/core'
-import SDK, { TransportType } from '@aleph-indexer/framework'
+import SDK, { Blockchain, TransportType } from '@aleph-indexer/framework'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -26,6 +26,7 @@ async function main() {
 
   await SDK.init({
     projectId,
+    supportedBlockchains: [Blockchain.Solana],
     transport,
     transportConfig,
     apiPort,

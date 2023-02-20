@@ -2,8 +2,8 @@ import {
   AlephParsedInnerInstruction,
   AlephParsedInstruction,
   AlephParsedParsedInstruction,
-  RawInstruction,
-} from '@aleph-indexer/core'
+  SolanaRawInstruction,
+} from '@aleph-indexer/solana'
 import { TOKEN_PROGRAM_ID, LENDING_PROGRAM_IDS } from '../constants.js'
 import {
   SPLTokenRawEvent,
@@ -14,38 +14,38 @@ import {
 } from '../types.js'
 
 export function isSPLTokenInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is SPLTokenRawEvent {
   return ix.programId === TOKEN_PROGRAM_ID
 }
 
 export function isSPLLendingInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is LendingRawEvent {
   return LENDING_PROGRAM_IDS.includes(ix.programId)
 }
 
 export function isParsableInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedInstruction {
   return isSPLTokenInstruction(ix) || isSPLLendingInstruction(ix)
 }
 
 export function isParsedIx(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is AlephParsedParsedInstruction {
   return 'parsed' in ix
 }
 
 export function isSPLTokenParsedInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
 ): ix is SPLTokenRawEvent {
   if (!isParsedIx(ix) || !isSPLTokenInstruction(ix)) return false
   return true
 }
 
 export function isSPLTokenMintInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
   mint: string,
 ): ix is SPLTokenRawEvent {
   if (!isSPLTokenParsedInstruction(ix)) return false
@@ -53,7 +53,7 @@ export function isSPLTokenMintInstruction(
 }
 
 export function isSPLTokenAccountInstruction(
-  ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
+  ix: SolanaRawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
   account: string,
 ): ix is SPLTokenRawEvent {
   if (!isSPLTokenParsedInstruction(ix)) return false

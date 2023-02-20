@@ -1,6 +1,6 @@
 import { Utils } from '@aleph-indexer/core'
 import { IndexerMsClient } from '../../services/indexer/index.js'
-import { DateRange, getDateRangeFromInterval, mergeDateRangesFromIterable, TimeFrame } from '../time.js'
+import { DateRange, getDateRangeFromInterval, mergeDateRangesFromIterable } from '../time.js'
 import {
   TimeSeriesState,
   TimeSeriesStateCode,
