@@ -29,7 +29,7 @@ export const HEART_BEATS = 0 // 60 * 60 * 24
 export const defaultBrokerConfig: BrokerOptions = {
   transporter: { type: 'Fake' },
   requestTimeout: 0,
-  serializer: 'JSON',
+  serializer: 'ProtoBuf',
   internalServices: false,
   logLevel: 'warn',
   cacher: 'Memory',
