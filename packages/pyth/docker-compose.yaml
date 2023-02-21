@@ -1,0 +1,24 @@
+version: '2'
+
+services:
+  solana-indexer:
+    build: ../..
+    container_name: pyth-indexer
+    volumes:
+      - ~/indexer.data:/app/data:rw
+      - ~/indexer.discovery:/app/discovery:rw
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ../../.env
+      - ./.env
+    environment:
+      - DEX=pyth
+      - SOLANA_RPC=https://solrpc3.aleph.cloud/step
+    ports:
+      - 8080:8080
+    # (configure them in .env file)
+    #   - LETSENCRYPT_HOST=api.staking.markets
+    #   - VIRTUAL_HOST=api.staking.markets
+    #   - VIRTUAL_PORT=8080
+    network_mode: bridge
