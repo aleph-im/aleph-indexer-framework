@@ -57,6 +57,7 @@ export class AccountDomain {
     return {
       id: '',
       timestamp: 0,
+      pubSlot: 0,
       priceAccount: this.info.address,
       price: 0,
       confidence: 0,

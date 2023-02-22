@@ -10,11 +10,10 @@ async function main() {
   const workerDomainPath = path.join(__dirname, './src/domain/worker.js')
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
-  const layoutPath = path.join(__dirname, './src/layouts/layout.js')
 
   const indexerInstances = Number(config.INDEXER_INSTANCES || 4)
-  const fetcherInstances = Number(config.FETCHER_INSTANCES || 2)
-  const parserInstances = Number(config.PARSER_INSTANCES || 2)
+  const fetcherInstances = Number(config.FETCHER_INSTANCES || 1)
+  const parserInstances = Number(config.PARSER_INSTANCES || 1)
   const apiPort = Number(config.INDEXER_API_PORT || 8080)
   const tcpUrls = config.INDEXER_TCP_URLS || undefined
   const natsUrl = config.INDEXER_NATS_URL || undefined
@@ -38,7 +37,6 @@ async function main() {
     },
     parser: {
       instances: parserInstances,
-      layoutPath
     },
     indexer: {
       dataPath,

@@ -1,14 +1,12 @@
 import {
-  PythEventInfo,
-  UpdPriceInstruction,
   PythEvent,
-  PythEventType,
+  PythEventType, EventAccounts, PythInstructionInfo,
 } from '../types.js'
 import {
   SolanaParsedInstructionContext,
   SolanaParsedEvent,
 } from '@aleph-indexer/solana'
-import { ParserContext } from '@aleph-indexer/framework'
+import { BN } from 'bn.js'
 
 export class EventParser {
   parse(
@@ -21,7 +19,7 @@ export class EventParser {
   ): PythEvent {
     const { instruction, parentInstruction, parentTransaction } = ixCtx
     const parsed = (
-      instruction as SolanaParsedEvent<PythEventType, PythEventInfo>
+      instruction as SolanaParsedEvent<PythEventType, PythInstructionInfo>
     ).parsed
 
     const id = `${parentTransaction.signature}${
@@ -34,17 +32,25 @@ export class EventParser {
       ? parentTransaction.blockTime * 1000
       : parentTransaction.slot
 
+    const accounts: EventAccounts = {
+      fundingAccount: parsed.info.funding_account,
+      productAccount: context.account,
+      priceAccount: parsed.info.price_account,
+    }
+
+    const { conf, price, pubSlot, ...info } = parsed.info
+
     return {
       id,
       timestamp,
       type: parsed.type,
       account: context.account,
-      ...parsed.info,
+      conf: new BN(conf, "hex").toNumber(),
+      price: new BN(price, "hex").toNumber(),
+      pubSlot: new BN(pubSlot, "hex").toNumber(),
+      ...info,
+      accounts,
     } as PythEvent
-  }
-
-  isUpdatePriceEvent(info: PythEventInfo): info is UpdPriceInstruction {
-    return (info as UpdPriceInstruction).pubSlot !== undefined
   }
 }
 

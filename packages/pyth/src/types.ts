@@ -94,6 +94,7 @@ export type ParsedAccountsData = ProductDataWithoutHeader & PriceDataBN
 export type Price = {
   id: string
   timestamp: number
+  pubSlot: number
   priceAccount: string
   price: number
   confidence: number
@@ -101,7 +102,7 @@ export type Price = {
 }
 
 // ------------------- INSTRUCTIONS -------------------
-export type IxAccounts = {
+export type EventAccounts = {
   fundingAccount: string
   productAccount: string
   priceAccount: string
@@ -110,34 +111,72 @@ export type IxAccounts = {
 export type UpdPriceInstruction = {
   status: number
   unused: number
+  price: string
+  conf: string
+  pubSlot: string
+  funding_account: string
+  price_account: string
+  clock_account: string
+}
+
+export type UpdPriceInfo = {
+  status: number
+  unused: number
   price: number
   conf: number
   pubSlot: number
-  accounts: IxAccounts
+  accounts: EventAccounts
 }
 
 export type AggPriceInstruction = {
   status: number
   unused: number
-  price: number
-  conf: number
-  pubSlot: number
-  accounts: IxAccounts
+  price: string
+  conf: string
+  pubSlot: string
+  funding_account: string
+  price_account: string
+  clock_account: string
 }
 
-export type UpdPriceNoFailOnErrorInstruction = {
+export type AggPriceInfo = {
   status: number
   unused: number
   price: number
   conf: number
   pubSlot: number
-  accounts: IxAccounts
+  accounts: EventAccounts
 }
 
-export type PythEventInfo =
+export type UpdPriceNoFailOnErrorInstruction = {
+  status: number
+  unused: number
+  price: string
+  conf: string
+  pubSlot: string
+  funding_account: string
+  price_account: string
+  clock_account: string
+}
+
+export type UpdPriceNoFailOnErrorInfo = {
+  status: number
+  unused: number
+  price: number
+  conf: number
+  pubSlot: number
+  accounts: EventAccounts
+}
+
+export type PythInstructionInfo =
   | UpdPriceInstruction
   | AggPriceInstruction
   | UpdPriceNoFailOnErrorInstruction
+
+export type PythEventInfo =
+  | UpdPriceInfo
+  | AggPriceInfo
+  | UpdPriceNoFailOnErrorInfo
 
 /**
  * @note: Exclude not significant events from being indexed
@@ -145,33 +184,27 @@ export type PythEventInfo =
 
 export type PythEventBase = EventBase<PythEventType>
 
-export type PythEvent = PythEventBase &
-  (UpdPriceInstruction | AggPriceInstruction | UpdPriceNoFailOnErrorInstruction)
+export type PythEvent = PythEventBase & PythEventInfo
 
 // @note: The only significant event is the price update
 export type UpdatePriceEvent = PythEventBase &
-  UpdPriceInstruction & {
+  UpdPriceInfo & {
     type: PythEventType.UpdPrice
   }
 
 export type AggregatePriceEvent = PythEventBase &
-  AggPriceInstruction & {
+  AggPriceInfo & {
     type: PythEventType.AggPrice
   }
 
 export type UpdatePriceNoFailOnErrorEvent = PythEventBase &
-  UpdPriceNoFailOnErrorInstruction & {
+  UpdPriceNoFailOnErrorInfo & {
     type: PythEventType.UpdPriceNoFailOnError
   }
 
 // -------------- STATS -------------------
 
 export type CandleInterval =
-  | 'minute1'
-  | 'minute5'
-  | 'minute10'
-  | 'minute15'
-  | 'minute30'
   | 'hour'
   | 'day'
   | 'week'

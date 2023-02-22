@@ -259,7 +259,7 @@ export class IdlCoder {
 
       return borsh.rustEnum(variants, name)
     } else {
-      throw new Error(`Unknown type kint: ${typeDef}`)
+      throw new Error(`Unknown type kind: ${typeDef}`)
     }
   }
 }

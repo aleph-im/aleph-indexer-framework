@@ -23,7 +23,7 @@ import {
   PythAccountInfo,
   Price,
   PythAccountStats,
-  PythEvent,
+  PythEvent, PythEventType,
 } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createCandles } from './stats/timeSeries.js'
@@ -116,13 +116,14 @@ export default class WorkerDomain
     }
     const parsedIxs = entities.map((entity) => this.eventParser.parse(accountIndexerContext, entity))
 
-    // group by data feed or price account
-    const accountsIxns: [string, PythEvent[]][] = Object.entries(
-      listGroupBy(
-        parsedIxs,
-        (event: PythEvent) => event.accounts.priceAccount,
-      ),
-    )
+    try {
+      // group by data feed or price account
+      const accountsIxns: [string, PythEvent[]][] = Object.entries(
+        listGroupBy(
+          parsedIxs,
+          (event: PythEvent) => event.accounts.priceAccount,
+        ),
+      )
 
     // group by slots
     const accountsSlotBatches: Record<string, Record<string, PythEvent[]>> = {}
@@ -145,6 +146,11 @@ export default class WorkerDomain
     }
 
     await this.priceDAL.save(parsedPrices)
+    } catch (e) {
+      console.error(e)
+      console.log(entities[0])
+      console.log(parsedIxs[0])
+    }
   }
 
   // ------------- Custom impl methods -------------------

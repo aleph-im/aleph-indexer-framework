@@ -9,6 +9,7 @@ export class PriceParser {
   parse(events: PythEvent[], info: PythAccountInfo): Price {
     const id = `${info.address}:${events[0].timestamp}`
     const timestamp = events[0].timestamp
+    const pubSlot = events[0].pubSlot
 
     const pricesAsc = events
       .flatMap((e) => [e.price, e.price + e.conf, e.price - e.conf])
@@ -26,6 +27,7 @@ export class PriceParser {
     return {
       id,
       timestamp,
+      pubSlot: pubSlot,
       price: median * Math.pow(10, info.data.exponent),
       confidence: conf * Math.pow(10, info.data.exponent),
       priceAccount: info.address,

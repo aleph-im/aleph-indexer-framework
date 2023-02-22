@@ -185,12 +185,12 @@
           "type": "u32"
         },
         {
-          "name": "price",
-          "type": "i64"
-        },
-        {
           "name": "conf",
           "type": "u64"
+        },
+        {
+          "name": "price",
+          "type": "i64"
         },
         {
           "name": "pubSlot",
@@ -228,12 +228,12 @@
           "type": "u32"
         },
         {
-          "name": "price",
-          "type": "i64"
-        },
-        {
           "name": "conf",
           "type": "u64"
+        },
+        {
+          "name": "price",
+          "type": "i64"
         },
         {
           "name": "pubSlot",
@@ -325,12 +325,12 @@
           "type": "u32"
         },
         {
-          "name": "price",
-          "type": "i64"
-        },
-        {
           "name": "conf",
           "type": "u64"
+        },
+        {
+          "name": "price",
+          "type": "i64"
         },
         {
           "name": "pubSlot",
