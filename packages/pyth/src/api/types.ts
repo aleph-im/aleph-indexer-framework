@@ -3,19 +3,12 @@ import {
   GraphQLEnumType,
   GraphQLFloat,
   GraphQLInt,
-  GraphQLInterfaceType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql'
 import { GraphQLDateTime } from 'graphql-scalars'
-import { TIME_FRAMES } from '../constants.js'
-
-export const CandleInterval = new GraphQLEnumType({
-  name: 'CandleInterval',
-  values: Object.fromEntries(TIME_FRAMES.map((value) => [value, { value }])),
-})
 
 export const AssetType = new GraphQLEnumType({
   name: 'AssetType',

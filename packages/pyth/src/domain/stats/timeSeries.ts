@@ -1,18 +1,20 @@
 import {
   AccountTimeSeriesStatsManager,
   Blockchain,
+  IndexableEntityType,
   IndexerMsClient,
   StatsStateStorage,
   StatsTimeSeriesStorage,
+  TimeFrame,
   TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { PriceDALIndex, PriceStorage } from '../../dal/price.js'
-import { Candle, PythAccountStats, Price } from '../../types.js'
+import { Candle, Price, PythAccountStats } from '../../types.js'
 import pythCandleAggregator from './candleAggregator.js'
-import { TIME_FRAMES_AS_DURATION } from '../../constants.js'
 import statsAggregator from './statsAggregator.js'
 
 export function createCandles(
+  projectId: string,
   blockchainId: Blockchain,
   account: string,
   indexerApi: IndexerMsClient,
@@ -24,7 +26,14 @@ export function createCandles(
     {
       type: 'candle',
       startDate: 0,
-      timeFrames: TIME_FRAMES_AS_DURATION,
+      timeFrames: [
+        TimeFrame.Hour,
+        TimeFrame.Day,
+        TimeFrame.Week,
+        TimeFrame.Month,
+        TimeFrame.Year,
+        TimeFrame.All,
+      ],
       getInputStream: ({ account, startDate, endDate }) => {
         return priceDAL
           .useIndex(PriceDALIndex.AccountTimestamp)
@@ -44,6 +53,7 @@ export function createCandles(
   return new AccountTimeSeriesStatsManager<PythAccountStats>(
     {
       blockchainId,
+      type: IndexableEntityType.Transaction,
       account,
       series: [timeSeriesStats],
       aggregate(args) {

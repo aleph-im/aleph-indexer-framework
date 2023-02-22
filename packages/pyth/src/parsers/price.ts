@@ -4,6 +4,7 @@ export class PriceParser {
   /**
    * Implements the Pyth price aggregation algorithm.
    * @param events - UpdPrice events occurring in a single slot.
+   * @param info - Price account info.
    */
   parse(events: PythEvent[], info: PythAccountInfo): Price {
     const id = `${info.address}:${events[0].timestamp}`

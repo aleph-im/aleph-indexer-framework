@@ -1,69 +1,49 @@
 import {
-  ParsedEventsInfo,
+  PythEventInfo,
   UpdPriceInstruction,
   PythEvent,
   PythEventType,
-  IxEventInfo,
-  IxAccounts,
 } from '../types.js'
 import {
-  SolanaInstructionContext,
+  SolanaParsedInstructionContext,
   SolanaParsedEvent,
 } from '@aleph-indexer/solana'
-import { pythOracleCoder } from '@pythnetwork/client'
+import { ParserContext } from '@aleph-indexer/framework'
 
 export class EventParser {
-  parse(ixsContext: SolanaInstructionContext[]): PythEvent[] {
-    const updatePriceEvents: PythEvent[] = []
-    for (const ixCtx of ixsContext) {
-      const { ix, parentIx, txContext } = ixCtx
-      const parsed = (ix as SolanaParsedEvent<PythEventType, ParsedEventsInfo>)
-        .parsed
+  parse(
+    context: {
+      account: string
+      startDate: number
+      endDate: number
+    },
+    ixCtx: SolanaParsedInstructionContext
+  ): PythEvent {
+    const { instruction, parentInstruction, parentTransaction } = ixCtx
+    const parsed = (
+      instruction as SolanaParsedEvent<PythEventType, PythEventInfo>
+    ).parsed
 
-      if ('data' in ix) {
-        const decoded = pythOracleCoder().instruction.decode(ix.data, 'base58')
-        if (
-          decoded &&
-          (decoded.data as IxEventInfo) &&
-          decoded.data.price.toNumber() > 0
-        ) {
-          const id = `${txContext.tx.signature}${
-            parentIx ? ` :${parentIx.index.toString().padStart(2, '0')}` : ''
-          }:${ix.index.toString().padStart(2, '0')}`
+    const id = `${parentTransaction.signature}${
+      parentInstruction
+        ? `:${parentInstruction.index.toString().padStart(2, '0')}`
+        : ''
+    }:${instruction.index.toString().padStart(2, '0')}`
 
-          const accounts: IxAccounts = {
-            fundingAccount: ix.accounts[0],
-            priceAccount: ix.accounts[1],
-            productAccount: ix.accounts[2], // not correct, corresponds to the clock account
-          }
+    const timestamp = parentTransaction.blockTime
+      ? parentTransaction.blockTime * 1000
+      : parentTransaction.slot
 
-          const timestamp = txContext.tx.blockTime
-            ? txContext.tx.blockTime * 1000
-            : txContext.tx.slot
-
-          const ixData: ParsedEventsInfo = {
-            status: decoded.data.status as number,
-            unused: decoded.data.unused as number,
-            price: decoded.data.price.toNumber() as number,
-            conf: decoded.data.conf.toNumber() as number,
-            pubSlot: decoded.data.pubSlot.toNumber() as number,
-            accounts: accounts,
-          }
-
-          updatePriceEvents.push({
-            id,
-            timestamp,
-            type: parsed.type,
-            account: txContext.parserContext.account,
-            ...ixData,
-          } as PythEvent)
-        }
-      }
-    }
-    return updatePriceEvents
+    return {
+      id,
+      timestamp,
+      type: parsed.type,
+      account: context.account,
+      ...parsed.info,
+    } as PythEvent
   }
 
-  isUpdatePriceEvent(info: ParsedEventsInfo): info is UpdPriceInstruction {
+  isUpdatePriceEvent(info: PythEventInfo): info is UpdPriceInstruction {
     return (info as UpdPriceInstruction).pubSlot !== undefined
   }
 }

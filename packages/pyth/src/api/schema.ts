@@ -69,23 +69,6 @@ export default class APISchema extends IndexerAPISchema {
             resolve: (_, ctx) => this.resolver.getPriceByTimestamp(ctx as PriceFilters),
           },
 
-          candles: {
-            type: Types.Candles,
-            args: {
-              address: { type: new GraphQLNonNull(GraphQLString) },
-              candleInterval: {
-                type: new GraphQLNonNull(Types.CandleInterval),
-              },
-              startDate: { type: GraphQLFloat },
-              endDate: { type: GraphQLFloat },
-              limit: { type: GraphQLInt },
-              skip: { type: GraphQLInt },
-              reverse: { type: GraphQLBoolean },
-            },
-            resolve: (_, ctx) =>
-              this.resolver.getCandles(ctx as CandlesFilters),
-          },
-
           globalStats: {
             type: Types.GlobalStats,
             args: {},

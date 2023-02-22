@@ -7,7 +7,6 @@ import {
   PythAccountInfo,
 } from '../types.js'
 import MainDomain from '../domain/main.js'
-import { getTimeFrame } from '../constants.js'
 
 export type PricesFilters = {
   address: string
@@ -95,44 +94,6 @@ export class APIResolver {
     timestamp,
   }: PriceFilters): Promise<Price> {
     return await this.domain.getPriceByTimestamp(address, timestamp)
-  }
-
-  async getCandles({
-    address,
-    candleInterval,
-    startDate = 0,
-    endDate = Date.now(),
-    limit = 1000,
-    skip = 0,
-    reverse = true,
-  }: CandlesFilters): Promise<Candle[]> {
-    if (limit < 1 || limit > 1000)
-      throw new Error('400 Bad Request: 1 <= limit <= 1000')
-
-    const timeFrame = getTimeFrame(candleInterval)
-    const result: Candle[] = []
-
-    const { series } = await this.domain.getCandles(
-      address,
-      timeFrame,
-      startDate,
-      endDate,
-      {
-        reverse,
-        limit: limit + skip,
-      },
-    )
-    for await (const { value } of series) {
-      // @note: Skip first N events
-      if (--skip >= 0) continue
-
-      result.push(value)
-
-      // @note: Stop when after reaching the limit
-      if (limit > 0 && result.length >= limit) return result
-    }
-
-    return result
   }
 
   async getGlobalStats(): Promise<GlobalPythStats> {

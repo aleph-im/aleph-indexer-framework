@@ -1,7 +1,6 @@
 import { DateTime, Duration } from 'luxon'
 import {
-  AccountAggregatorFnArgs,
-  MAX_TIMEFRAME,
+  AccountAggregatorFnArgs, TimeFrame,
 } from '@aleph-indexer/framework'
 import { PythAccountStats } from '../../types.js'
 import pythCandleAggregator from './candleAggregator.js'
@@ -146,7 +145,7 @@ export class StatsAggregator {
     const total = await timeSeriesDAL.get([
       account,
       type,
-      MAX_TIMEFRAME.toMillis(),
+      TimeFrame.All,
       0,
     ])
 

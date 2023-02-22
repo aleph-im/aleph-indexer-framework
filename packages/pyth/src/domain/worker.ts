@@ -8,12 +8,12 @@ import {
   createStatsTimeSeriesDAL,
   AccountTimeSeriesStats,
   AccountStatsFilters,
-  AccountStats,
+  AccountStats, ParserContext,
 } from '@aleph-indexer/framework'
 import {
   isParsedIx,
   SolanaIndexerWorkerDomainI,
-  SolanaInstructionContext,
+  SolanaParsedInstructionContext,
 } from '@aleph-indexer/solana'
 import { eventParser as eParser } from '../parsers/event.js'
 import { priceParser as pParser } from '../parsers/price.js'
@@ -45,6 +45,7 @@ export default class WorkerDomain
     protected statsStateDAL = createStatsStateDAL(context.dataPath),
     protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
     protected previousSlotBatch: PythEvent[] = [],
+    protected programId = PYTH_PROGRAM_ID,
   ) {
     super(context)
   }
@@ -53,11 +54,13 @@ export default class WorkerDomain
     config: AccountIndexerConfigWithMeta<PythAccountInfo>,
   ): Promise<void> {
     const { blockchainId, account, meta } = config
+    const { projectId, apiClient: indexerApi } = this.context
 
     const accountTimeSeries = createCandles(
+      projectId,
       blockchainId,
       account,
-      this.context.apiClient,
+      indexerApi,
       this.priceDAL,
       this.statsStateDAL,
       this.statsTimeSeriesDAL,
@@ -90,25 +93,33 @@ export default class WorkerDomain
     return this.getAccountStats(account)
   }
 
-  async solanaFilterInstructions(
-    ixsContext: SolanaInstructionContext[],
-  ): Promise<SolanaInstructionContext[]> {
-    return ixsContext.filter(({ ix }) => {
-      return isParsedIx(ix) && ix.programId === PYTH_PROGRAM_ID
-    })
+  async solanaFilterInstruction(
+    context: ParserContext,
+    entity: SolanaParsedInstructionContext,
+  ): Promise<boolean> {
+    return (
+      isParsedIx(entity.instruction) &&
+      entity.instruction.programId === this.programId
+    )
   }
 
   async solanaIndexInstructions(
-    ixsContext: SolanaInstructionContext[],
+    context: ParserContext,
+    entities: SolanaParsedInstructionContext[],
   ): Promise<void> {
-    console.log(`indexing ${ixsContext.length} parsed ixs`)
+    console.log(`indexing ${entities.length} parsed ixs`)
 
-    const parsedIxns = this.eventParser.parse(ixsContext)
+    const accountIndexerContext = context as {
+      account: string
+      startDate: number
+      endDate: number
+    }
+    const parsedIxs = entities.map((entity) => this.eventParser.parse(accountIndexerContext, entity))
 
     // group by data feed or price account
     const accountsIxns: [string, PythEvent[]][] = Object.entries(
       listGroupBy(
-        parsedIxns,
+        parsedIxs,
         (event: PythEvent) => event.accounts.priceAccount,
       ),
     )

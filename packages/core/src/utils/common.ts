@@ -87,6 +87,20 @@ export function listSubstraction<T>(
   })
 }
 
+export function listGroupBy<T>(
+  a: T[],
+  getKey: (i: T) => string | number | symbol,
+): Record<string | number | symbol, T[]> {
+  return a.reduce((acc, curr) => {
+    const k = getKey(curr)
+    if (!acc[k]) {
+      acc[k] = []
+    }
+    acc[k].push(curr)
+    return acc
+  }, {} as Record<string | number | symbol, T[]>)
+}
+
 export function sortTimeStatsMap<T extends { interval: string }>(
   map: Record<string, T>,
   reverse = false,

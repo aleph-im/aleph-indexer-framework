@@ -1,20 +1,45 @@
-// Borrowed from coral-xyz/anchor
-//
-// https://github.com/coral-xyz/anchor/blob/master/ts/packages/anchor/src/coder/borsh/idl.ts
-
+// @ts-nocheck
+import { LayoutImplementation } from '../types.js'
+import { PYTH_SOLANA_MAINNET_PROGRAM_ID } from '../layoutHub.js'
+import { pythOracleCoder } from '@pythnetwork/client'
 import camelCase from 'camelcase'
-import { Layout } from '@aleph-indexer/layout'
 import * as borsh from '@coral-xyz/borsh'
 import { IdlError, Idl } from '@coral-xyz/anchor'
+import { Layout } from 'buffer-layout'
 import {
+  IdlAccountItem,
   IdlEnumVariant,
   IdlField,
   IdlType,
   IdlTypeDef,
 } from '@coral-xyz/anchor/dist/cjs/idl'
-import { PythIdlInstruction, PythOracle } from '../types.js'
 import bs58 from 'bs58'
-import idl from '../idl.json' assert { type: 'json' }
+
+import idl from './idl/pyth.json' assert { type: 'json' }
+
+// @note: https://github.com/pyth-network/pyth-client/blob/idl/program/idl.json
+export enum PythEventType {
+  UpdPrice = 'updPrice',
+  AggPrice = 'aggPrice',
+  UpdPriceNoFailOnError = 'updPriceNoFailOnError',
+}
+
+export type PythIdlInstruction = {
+  name: string
+  docs?: string[]
+  accounts: IdlAccountItem[]
+  args: IdlField[]
+  returns?: IdlType
+  discriminant: IdlDiscriminant
+}
+
+export type IdlDiscriminant = {
+  value: number[]
+}
+
+// Borrowed from coral-xyz/anchor
+//
+// https://github.com/coral-xyz/anchor/blob/master/ts/packages/anchor/src/coder/borsh/idl.ts
 
 export class IdlCoder {
   // Instruction args layout. Maps namespaced method
@@ -239,4 +264,54 @@ export class IdlCoder {
   }
 }
 
-export default new IdlCoder(idl as PythOracle)
+const idlCoder = new IdlCoder(idl as Idl)
+
+export function getPythEventType(ix: Buffer): string | undefined {
+  const name = pythOracleCoder().instruction.decode(ix)?.name
+  if (
+    name === PythEventType.UpdPriceNoFailOnError ||
+    name === PythEventType.AggPrice ||
+    name === PythEventType.UpdPrice
+  ) {
+    return name
+  }
+  return undefined
+}
+
+// ------------------- IX DATA LAYOUT -------------------
+export const PYTH_IX_DATA_LAYOUT: Partial<Record<PythEventType, Layout>> = {
+  [PythEventType.UpdPrice]: idlCoder.ixLayout.get('updPrice'),
+  [PythEventType.AggPrice]: idlCoder.ixLayout.get('aggPrice'),
+  [PythEventType.UpdPriceNoFailOnError]: idlCoder.ixLayout.get(
+    'updPriceNoFailOnError',
+  ),
+}
+
+// ------------------- ACCOUNT LAYOUT -------------------
+export const PYTH_ACCOUNT_LAYOUT: Partial<Record<PythEventType, string[]>> = {
+  [PythEventType.UpdPrice]: [
+    'funding_account',
+    'price_account',
+    'clock_account',
+  ],
+  [PythEventType.AggPrice]: [
+    'funding_account',
+    'price_account',
+    'clock_account',
+  ],
+  [PythEventType.UpdPriceNoFailOnError]: [
+    'funding_account',
+    'price_account',
+    'clock_account',
+  ],
+}
+
+export default class implements LayoutImplementation {
+  name = 'pyth'
+  programID = PYTH_SOLANA_MAINNET_PROGRAM_ID
+  accountLayoutMap = PYTH_ACCOUNT_LAYOUT
+  dataLayoutMap = PYTH_IX_DATA_LAYOUT
+  accountDataLayoutMap = {}
+  eventType = PythEventType
+  getInstructionType = getPythEventType
+}
