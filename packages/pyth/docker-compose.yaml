@@ -14,7 +14,7 @@ services:
       - ./.env
     environment:
       - DEX=pyth
-      - SOLANA_RPC=https://solrpc3.aleph.cloud/step
+      - SOLANA_RPC=https://solrpc3.aleph.cloud/pyth
     ports:
       - 8080:8080
     # (configure them in .env file)

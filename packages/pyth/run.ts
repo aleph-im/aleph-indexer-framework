@@ -12,7 +12,7 @@ async function main() {
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
 
   const indexerInstances = Number(config.INDEXER_INSTANCES || 4)
-  const fetcherInstances = Number(config.FETCHER_INSTANCES || 1)
+  const fetcherInstances = Number(config.FETCHER_INSTANCES || 2)
   const parserInstances = Number(config.PARSER_INSTANCES || 1)
   const apiPort = Number(config.INDEXER_API_PORT || 8080)
   const tcpUrls = config.INDEXER_TCP_URLS || undefined
