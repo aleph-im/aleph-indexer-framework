@@ -60,7 +60,10 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
           Object.assign(newEntity, oldEntity)
         }
 
-        if (('parsed' in newEntity) && !newEntity.nonceIndexes) {
+        if (
+          ('parsed' in newEntity)
+          && !newEntity.nonceIndexes
+        ) {
           return EntityUpdateOp.Delete
         }
 
