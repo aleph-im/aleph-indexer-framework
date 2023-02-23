@@ -231,10 +231,12 @@ export abstract class BaseIndexerEntityFetcher<
         this.log('----> REMOVE REQ 🎈', request.nonce)
         await this.entityRequestDAL.remove(request)
         // remove nonce from nonceIndex and update response
+        const items = []
         for await (const item of response) {
           delete item.nonceIndexes[request.nonce]
-          await this.entityRequestResponseDAL.save(item)
+          items.push(item)
         }
+        await this.entityRequestResponseDAL.save(items)
       },
     }
   }
