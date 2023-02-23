@@ -1,6 +1,5 @@
 import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 import { IndexableEntityType, ParsedEntity } from '../../../../types.js'
-import * as console from 'console'
 
 export type EntitySignatureResponse = {
   id: string
