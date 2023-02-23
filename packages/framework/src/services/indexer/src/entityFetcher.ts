@@ -54,14 +54,14 @@ export interface TransactionResponse<T> {
 export abstract class BaseIndexerEntityFetcher<
   T extends ParsedEntity<unknown>,
 > {
-  protected checkPendingRetriesJob!: Utils.JobRunner
+  protected retryPendingSignaturesJob!: Utils.JobRunner
   protected checkCompletionJob!: Utils.DebouncedJob<void>
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
   protected incomingEntities: PendingWorkPool<T>
-  protected toRetryBuffer: Utils.BufferExec<EntityRequestPendingEntity>
-  protected toRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
+  protected pendingRequestToRetryBuffer: Utils.BufferExec<EntityRequestPendingEntity>
+  protected pendingRequestToRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
 
   constructor(
     protected type: IndexableEntityType,
@@ -83,22 +83,32 @@ export abstract class BaseIndexerEntityFetcher<
       checkComplete: async (): Promise<boolean> => true,
     })
 
-    this.checkPendingRetriesJob = new JobRunner({
-      name: `${type}-indexer-pending-retries`,
+    this.incomingEntities = new PendingWorkPool({
+      id: `${type}-indexer-incoming-entities`,
+      interval: 0,
+      chunkSize: 1000,
+      concurrency: 1,
+      dal: this.entityRequestIncomingEntityDAL,
+      handleWork: this.handleIncomingEntities.bind(this),
+      checkComplete: async (): Promise<boolean> => true,
+    })
+
+    this.retryPendingSignaturesJob = new JobRunner({
+      name: `${type}-indexer-retry-pending-signatures`,
       interval: 1000 * 60 * 10,
-      intervalFn: this.handlePendingRetries.bind(this),
+      intervalFn: this.retryPendingSignatures.bind(this),
     })
 
     this.checkCompletionJob = new DebouncedJob<void>(
       this.checkAllRequestCompletion.bind(this),
     )
 
-    this.toRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
+    this.pendingRequestToRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRetryPendingEntities.bind(this),
       1000,
     )
 
-    this.toRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
+    this.pendingRequestToRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRemovePendingTransactions.bind(this),
       1000,
     )
@@ -106,12 +116,12 @@ export abstract class BaseIndexerEntityFetcher<
 
   async start(): Promise<void> {
     await this.incomingEntities.start()
-    this.checkPendingRetriesJob.start().catch(() => 'ignore')
+    this.retryPendingSignaturesJob.start().catch(() => 'ignore')
   }
 
   async stop(): Promise<void> {
     await this.incomingEntities.stop()
-    this.checkPendingRetriesJob.stop().catch(() => 'ignore')
+    this.retryPendingSignaturesJob.stop().catch(() => 'ignore')
   }
 
   async fetchEntitiesById(params: IdRange): Promise<number> {
@@ -189,23 +199,20 @@ export abstract class BaseIndexerEntityFetcher<
 
   async isRequestComplete(nonce: number): Promise<boolean> {
     const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
+    if (!request) throw new Error(`Request with nonce ${nonce} does not exist`)
 
     return !!request.complete
   }
 
   async awaitRequestComplete(nonce: number): Promise<void> {
-    const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
-
-    if (!request.complete) {
+    if (!await this.isRequestComplete(nonce)) {
       await this.getFuture(nonce).promise
     }
   }
 
   async getResponse(nonce: number): Promise<TransactionResponse<T>> {
     const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
+    if (!request) throw new Error(`Request with nonce ${nonce} does not exist`)
 
     if (!request.complete) {
       await this.getFuture(nonce).promise
@@ -223,7 +230,11 @@ export abstract class BaseIndexerEntityFetcher<
       remove: async () => {
         this.log('----> REMOVE REQ 🎈', request.nonce)
         await this.entityRequestDAL.remove(request)
-        // @todo: Update nonceIndexes / Remove from entityRequestResponseDAL
+        // remove nonce from nonceIndex and update response
+        for await (const item of response) {
+          delete item.nonceIndexes[request.nonce]
+          await this.entityRequestResponseDAL.save(item)
+        }
       },
     }
   }
@@ -484,17 +495,7 @@ export abstract class BaseIndexerEntityFetcher<
     this.resolveFuture(nonce)
   }
 
-  protected async checkAllPendingSignatures(): Promise<void> {
-    const requests = await this.entityRequestDAL.getAllValues()
-
-    for await (const request of requests) {
-      await this.checkPendingSignatures(request, false)
-    }
-
-    await this.drainPendingSignaturesBuffer()
-  }
-
-  protected async checkPendingSignatures(
+  protected async checkPendingSignature(
     request: EntityRequest,
     drain = true,
   ): Promise<void> {
@@ -520,8 +521,8 @@ export abstract class BaseIndexerEntityFetcher<
       const hasResponse = !!tx && 'parsed' in tx && tx.nonceIndexes[nonce] >= 0
 
       hasResponse
-        ? await this.toRemoveBuffer.add(pending)
-        : await this.toRetryBuffer.add(pending)
+        ? await this.pendingRequestToRemoveBuffer.add(pending)
+        : await this.pendingRequestToRetryBuffer.add(pending)
     }
 
     if (drain) {
@@ -530,12 +531,16 @@ export abstract class BaseIndexerEntityFetcher<
   }
 
   protected async drainPendingSignaturesBuffer(): Promise<void> {
-    await this.toRemoveBuffer.drain()
-    await this.toRetryBuffer.drain()
+    await this.pendingRequestToRemoveBuffer.drain()
+    await this.pendingRequestToRetryBuffer.drain()
   }
 
-  protected async handlePendingRetries(): Promise<void> {
-    await this.checkAllPendingSignatures()
+  protected async retryPendingSignatures(): Promise<void> {
+    const requests = await this.entityRequestDAL.getAllValues()
+    for await (const request of requests) {
+      await this.checkPendingSignature(request, false)
+    }
+    await this.drainPendingSignaturesBuffer()
     await this.checkCompletionJob.run()
   }
 

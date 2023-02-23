@@ -1,5 +1,6 @@
 import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
 import { IndexableEntityType, ParsedEntity } from '../../../../types.js'
+import * as console from 'console'
 
 export type EntitySignatureResponse = {
   id: string
@@ -56,6 +57,9 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
       newEntity: EntityRequestResponse<T>,
     ): Promise<EntityUpdateOp> {
       if (oldEntity) {
+        if (!newEntity.nonceIndexes) {
+          return EntityUpdateOp.Delete
+        }
         const nonceIndexes = {
           ...oldEntity.nonceIndexes,
           ...newEntity.nonceIndexes,
