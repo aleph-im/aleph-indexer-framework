@@ -83,16 +83,6 @@ export abstract class BaseIndexerEntityFetcher<
       checkComplete: async (): Promise<boolean> => true,
     })
 
-    this.incomingEntities = new PendingWorkPool({
-      id: `${type}-indexer-incoming-entities`,
-      interval: 0,
-      chunkSize: 1000,
-      concurrency: 1,
-      dal: this.entityRequestIncomingEntityDAL,
-      handleWork: this.handleIncomingEntities.bind(this),
-      checkComplete: async (): Promise<boolean> => true,
-    })
-
     this.retryPendingSignaturesJob = new JobRunner({
       name: `${type}-indexer-retry-pending-signatures`,
       interval: 1000 * 60 * 10,
