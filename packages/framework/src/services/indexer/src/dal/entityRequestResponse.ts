@@ -56,24 +56,18 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
       newEntity: EntityRequestResponse<T>,
     ): Promise<EntityUpdateOp> {
       if (oldEntity) {
-        if (!newEntity.nonceIndexes) {
-          return EntityUpdateOp.Delete
-        }
-        const nonceIndexes = {
-          ...oldEntity.nonceIndexes,
-          ...newEntity.nonceIndexes,
-        }
-
         if (!('parsed' in newEntity) && 'parsed' in oldEntity) {
           Object.assign(newEntity, oldEntity)
         }
 
-        newEntity.nonceIndexes = nonceIndexes
+        if (('parsed' in newEntity) && !newEntity.nonceIndexes) {
+          return EntityUpdateOp.Delete
+        }
 
-        // console.log(
-        //   'updated entity [entity_request_responses]',
-        //   newEntity.timestampIndexes.length,
-        // )
+        newEntity.nonceIndexes = {
+          ...oldEntity.nonceIndexes,
+          ...newEntity.nonceIndexes,
+        }
       }
 
       return EntityUpdateOp.Update
