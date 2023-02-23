@@ -23,7 +23,6 @@ export class PriceParser {
       Math.abs(median - percentile75),
     )
 
-    console.log('price account with parsed prices:', info.address)
     return {
       id,
       timestamp,
