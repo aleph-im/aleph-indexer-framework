@@ -67,9 +67,14 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
           return EntityUpdateOp.Delete
         }
 
+        // @note: This is a hack to make sure that the nonce indexes are
+        // not overwritten by the new entity. This is usually the case when
+        // the entity contains the actual transaction data, at which point we
+        // do not have the actual nonce indexes, but still need to pass in a
+        // nonce index object to the entity storage.
         newEntity.nonceIndexes = {
-          ...oldEntity.nonceIndexes,
           ...newEntity.nonceIndexes,
+          ...oldEntity.nonceIndexes,
         }
       }
 
