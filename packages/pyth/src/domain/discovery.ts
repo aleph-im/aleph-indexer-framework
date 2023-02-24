@@ -5,6 +5,7 @@ import {
   PriceDataBN,
   PythAccountInfo,
 } from '../types.js'
+import { config } from '@aleph-indexer/core'
 import { PYTH_PROGRAM_ID, PYTH_PROGRAM_ID_PK } from '../constants.js'
 import { solanaPrivateRPC } from '@aleph-indexer/solana'
 import { AccountInfo, PublicKey } from '@solana/web3.js'
@@ -25,7 +26,13 @@ export default class DiscoveryHelper {
 
   async loadAccounts(): Promise<PythAccountInfo[]> {
     const newAccounts: PythAccountInfo[] = []
-    const accounts = await this.getAllAccounts()
+    let accounts = await this.getAllAccounts()
+    if (config.INDEXED_ACCOUNTS) {
+      const indexedTokens = config.INDEXED_ACCOUNTS.split(',')
+      accounts = accounts.filter((account) =>
+        indexedTokens.includes(account.address),
+      )
+    }
 
     for (const accountInfo of accounts) {
       if (this.cache[accountInfo.address]) continue

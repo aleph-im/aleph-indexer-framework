@@ -13,8 +13,9 @@ services:
       - ../../.env
       - ./.env
     environment:
-      - DEX=pyth
+      - INDEXER=pyth
       - SOLANA_RPC=https://solrpc3.aleph.cloud/pyth
+      - INDEXED_ACCOUNTS=GVXRSBjFk6e6J3NbVPXohDJetcTjaeeuykUpbQF8UoMU,H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG,CQzPyC5xVhkuBfWFJiPCvPEnBshmRium4xxUxnX1ober
     ports:
       - 8080:8080
     # (configure them in .env file)
