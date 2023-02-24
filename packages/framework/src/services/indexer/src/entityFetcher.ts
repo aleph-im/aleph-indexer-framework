@@ -54,14 +54,14 @@ export interface TransactionResponse<T> {
 export abstract class BaseIndexerEntityFetcher<
   T extends ParsedEntity<unknown>,
 > {
-  protected retryPendingSignaturesJob!: Utils.JobRunner
+  protected checkPendingRetriesJob!: Utils.JobRunner
   protected checkCompletionJob!: Utils.DebouncedJob<void>
   protected requestFutures: Record<number, Utils.Future<number>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
   protected incomingEntities: PendingWorkPool<T>
-  protected pendingRequestToRetryBuffer: Utils.BufferExec<EntityRequestPendingEntity>
-  protected pendingRequestToRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
+  protected toRetryBuffer: Utils.BufferExec<EntityRequestPendingEntity>
+  protected toRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
 
   constructor(
     protected type: IndexableEntityType,
@@ -83,22 +83,22 @@ export abstract class BaseIndexerEntityFetcher<
       checkComplete: async (): Promise<boolean> => true,
     })
 
-    this.retryPendingSignaturesJob = new JobRunner({
-      name: `${type}-indexer-retry-pending-signatures`,
+    this.checkPendingRetriesJob = new JobRunner({
+      name: `${type}-indexer-pending-retries`,
       interval: 1000 * 60 * 10,
-      intervalFn: this.retryPendingSignatures.bind(this),
+      intervalFn: this.handlePendingRetries.bind(this),
     })
 
     this.checkCompletionJob = new DebouncedJob<void>(
       this.checkAllRequestCompletion.bind(this),
     )
 
-    this.pendingRequestToRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
+    this.toRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRetryPendingEntities.bind(this),
       1000,
     )
 
-    this.pendingRequestToRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
+    this.toRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRemovePendingTransactions.bind(this),
       1000,
     )
@@ -106,12 +106,12 @@ export abstract class BaseIndexerEntityFetcher<
 
   async start(): Promise<void> {
     await this.incomingEntities.start()
-    this.retryPendingSignaturesJob.start().catch(() => 'ignore')
+    this.checkPendingRetriesJob.start().catch(() => 'ignore')
   }
 
   async stop(): Promise<void> {
     await this.incomingEntities.stop()
-    this.retryPendingSignaturesJob.stop().catch(() => 'ignore')
+    this.checkPendingRetriesJob.stop().catch(() => 'ignore')
   }
 
   async fetchEntitiesById(params: IdRange): Promise<number> {
@@ -486,7 +486,17 @@ export abstract class BaseIndexerEntityFetcher<
     this.resolveFuture(nonce)
   }
 
-  protected async checkPendingSignature(
+  protected async checkAllPendingSignatures(): Promise<void> {
+    const requests = await this.entityRequestDAL.getAllValues()
+
+    for await (const request of requests) {
+      await this.checkPendingSignatures(request, false)
+    }
+
+    await this.drainPendingSignaturesBuffer()
+  }
+
+  protected async checkPendingSignatures(
     request: EntityRequest,
     drain = true,
   ): Promise<void> {
@@ -512,8 +522,8 @@ export abstract class BaseIndexerEntityFetcher<
       const hasResponse = !!tx && 'parsed' in tx && tx.nonceIndexes[nonce] >= 0
 
       hasResponse
-        ? await this.pendingRequestToRemoveBuffer.add(pending)
-        : await this.pendingRequestToRetryBuffer.add(pending)
+        ? await this.toRemoveBuffer.add(pending)
+        : await this.toRetryBuffer.add(pending)
     }
 
     if (drain) {
@@ -522,16 +532,12 @@ export abstract class BaseIndexerEntityFetcher<
   }
 
   protected async drainPendingSignaturesBuffer(): Promise<void> {
-    await this.pendingRequestToRemoveBuffer.drain()
-    await this.pendingRequestToRetryBuffer.drain()
+    await this.toRemoveBuffer.drain()
+    await this.toRetryBuffer.drain()
   }
 
-  protected async retryPendingSignatures(): Promise<void> {
-    const requests = await this.entityRequestDAL.getAllValues()
-    for await (const request of requests) {
-      await this.checkPendingSignature(request, false)
-    }
-    await this.drainPendingSignaturesBuffer()
+  protected async handlePendingRetries(): Promise<void> {
+    await this.checkAllPendingSignatures()
     await this.checkCompletionJob.run()
   }
 
