@@ -6,17 +6,35 @@ import { JobRunner } from './jobRunner.js'
 
 export * from './dal/pendingWork.js'
 
+/**
+ * A pending work item
+ */
 export type PendingWork<T> = {
   id: string
   time: number
   payload: T
 }
 
+/**
+ * Options for the pending work pool
+ * @template T The type of the payload
+ * @property id - The id of the pool
+ * @property dal - The data access layer
+ * @property interval - The interval to run the pool
+ * @property concurrency - The number of concurrent jobs to run
+ * @property maxQueueSize - The max number of works to queue
+ * @property chunkSize - The number of works to fetch at once
+ * @property handleWork - The function to handle the works
+ * @property checkComplete - The function to check if a work is complete
+ * @property preCheckComplete - Whether to check if a work is complete before
+ * handling it
+ */
 export interface PendingWorkOptions<T> {
   id: string
   dal: PendingWorkDAL<T>
   interval: number
   concurrency: number
+  maxQueueSize?: number
   chunkSize: number
   handleWork: (
     works: PendingWork<T>[],
@@ -25,12 +43,31 @@ export interface PendingWorkOptions<T> {
   preCheckComplete?: boolean
 }
 
+/**
+ * Error thrown when the pending work queue is full
+ */
+export class QueueFullError extends Error {
+  constructor(
+    protected pendingWork: PendingWorkPool<any>,
+  ) {
+    super(`Queue (max size: ${pendingWork.options.maxQueueSize}) is full for ${pendingWork.options.id}`)
+  }
+}
+
+/**
+ * A pool of pending works. It will run the works in the pool at a given interval
+ * or when new works arrive. It will also check if the works are complete before
+ * running them. If they are, it will remove them from the pool.
+ * @note If the interval is 0, it will only run when new works arrive.
+ * @template T The type of the payload
+ * @property options The options of the pool
+ */
 export class PendingWorkPool<T> {
   protected skipSleep = false
   protected debouncedJob: DebouncedJobRunner | undefined
   protected coordinatorJob: JobRunner | undefined
 
-  constructor(protected options: PendingWorkOptions<T>) {
+  constructor(public readonly options: PendingWorkOptions<T>) {
     const name = `${this.options.id} 🔄`
 
     // @note: If interval is 0, run it only when new items arrive
@@ -67,9 +104,19 @@ export class PendingWorkPool<T> {
     return this.coordinatorJob && this.coordinatorJob.stop()
   }
 
+  /**
+   * Add work to the pool
+   * @param work The work payload to add
+   * @throws QueueFullError if the queue is full
+   */
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
     work = Array.isArray(work) ? work : [work]
     if (!work.length) return
+    if (this.options.maxQueueSize) {
+      const count = await this.getCount()
+      if (count + work.length > this.options.maxQueueSize)
+        throw new QueueFullError(this)
+    }
 
     await this.options.dal.save(work)
 
