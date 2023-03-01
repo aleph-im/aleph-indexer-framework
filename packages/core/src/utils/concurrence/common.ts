@@ -4,12 +4,12 @@ import { sleep } from '../time.js'
 /**
  * It keeps a concurrent fixed size buffer of pending promises.
  * When some of them finish, it takes another one from the provided iterator
- * @param {Iterator} iterator - A iterator function that returns promises
- * @param {number} concurrency - The max number of concurrent pending promises
+ * @param it - A iterator function that returns promises
+ * @param concurrency - The max number of concurrent pending promises
  */
 export async function concurrentPromises<T>(
   it: Iterator<Promise<unknown>, T>,
-  concurrency = 20,
+  concurrency: number = 20,
 ): Promise<T> {
   let done
   let lastValue!: T
@@ -52,7 +52,7 @@ export async function concurrentPromises<T>(
  * In other frameworks they usually call it "Deferred" too.
  *
  * Example:
- *
+ * ```ts
  * function sleep(ms) {
  *   const future = new Future()
  *   setTimeout(() => future.resolve(), ms)
@@ -62,6 +62,7 @@ export async function concurrentPromises<T>(
  * async function main() {
  *   await sleep(1000)
  * }
+ * ```
  */
 export class Future<T> {
   public resolve!: (value: T | PromiseLike<T>) => void
@@ -81,7 +82,7 @@ export class Future<T> {
  * to some region of the code
  *
  * Example:
- *
+ * ```ts
  * // Waits for the lock to be free and returns the releaser function
  * const release = await mutex.acquire()
  *
@@ -92,6 +93,7 @@ export class Future<T> {
  *   // Ensures that the lock is always released, even if there are errors
  *   release()
  * }
+ * ```
  */
 export class Mutex {
   protected queue = Promise.resolve()
@@ -114,8 +116,22 @@ export class Mutex {
 }
 
 /**
- * An util for retaining an unique snapshot of data while
- * the previous snapshot is being processed
+ * An util for retaining a unique snapshot of data while
+ * the previous snapshot is being processed.
+ * 
+ * Example:
+ * ```ts
+ * const job = new DebouncedJob<string>(async (data) => {
+ *  // Do something with the data
+ *  console.log(data)
+ *  return data
+ * }, 1000)
+ * 
+ * job.run('foo')
+ * ```
+ * 
+ * @param callback - The callback function that will be called with the data
+ * @param throttle - The minimum time between calls
  */
 export class DebouncedJob<T = void, R = unknown> {
   protected pendingData: T | undefined
