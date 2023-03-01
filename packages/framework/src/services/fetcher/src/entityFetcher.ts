@@ -4,7 +4,8 @@ import {
   EntityStorage,
   PendingWork,
   PendingWorkPool,
-  Utils,
+  QueueFullError,
+  Utils
 } from '@aleph-indexer/core'
 import {
   FetchEntitiesByIdRequestArgs,
@@ -33,13 +34,15 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
 
   /**
    * Initialize the fetcher service.
+   * @param type
+   * @param blockchainId The blockchain
    * @param broker The moleculer broker to assign to the service.
    * @param pendingEntityDAL The pending entities' storage.
-   * @param pendingEntityCacheDAL
-   * @param pendingEntityFetchDAL
+   * @param pendingEntityCacheDAL The pending entity cache storage.
+   * @param pendingEntityFetchDAL The pending entity
    * @param entityCacheDAL The raw entities' storage.
    */
-  constructor(
+  protected constructor(
     protected type: IndexableEntityType,
     protected blockchainId: Blockchain,
     protected broker: ServiceBroker,
@@ -73,6 +76,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
       id: `${blockchainId}:pending-${type}`,
       interval: 0,
       chunkSize: 1000,
+      maxQueueSize: 10000,
       concurrency: 1,
       dal: this.pendingEntityDAL,
       handleWork: this.handlePendingEntities.bind(this),
@@ -106,13 +110,10 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   /**
    * Fetch entities from an account by ids.
    * @param args Entity ids.
+   * @throws QueueFullError if fetcher queue is full
    */
   async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
     const { ids, indexerId } = args
-
-    this.log(
-      `🔗 ${ids.length} new ids added to the ${this.type} fetcher queue... [${indexerId}]`,
-    )
 
     const entities = ids.filter(this.filterEntityId.bind(this)).map((id) => ({
       id,
@@ -121,6 +122,23 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
     }))
 
     await this.pendingEntities.addWork(entities)
+      .catch((e: Error) => {
+        if (e.constructor == QueueFullError) {
+          return Promise.reject(e)
+        } else {
+          throw e
+        }
+      })
+      .then(() => {
+          this.log(
+            `🔗 ${ids.length} new ids added to the ${this.type} fetcher queue... [${indexerId}]`,
+          )
+        },
+        () => {
+          this.log(
+            `⏯ ${ids.length} new ids waiting to be added to the ${this.type} fetcher queue... [${indexerId}]`,
+          )
+        })
   }
 
   /**
@@ -302,7 +320,7 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
 
   /**
    * Returns the fetch status of certain txn signatures.
-   * @param signatures The txn signatures to get its state.
+   * @param args The txn ids to check
    */
   async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
     const { ids } = args
@@ -356,8 +374,9 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
   }
 
   /**
-   * Fetch entities from a RPC Node.
-   * @param works Entity ids with extra properties as time and payload.
+   * Guard to fetch entities from an RPC Node.
+   * @param ids Entity ids with extra properties as time and payload.
+   * @param isRetry Whether this request is a retry
    */
   protected abstract remoteFetchIds(
     ids: string[],
