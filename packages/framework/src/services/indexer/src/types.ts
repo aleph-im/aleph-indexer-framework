@@ -73,11 +73,13 @@ export type AccountIndexerEntityRequestArgs = BlockchainRequestArgs &
      */
     type: IndexableEntityType
     /**
-     * How often to fetch a new chunk of transactions. (@todo: what is this helpful for?)
+     * How fast to fetch a new chunk of transactions after finishing the
+     * previous one. 0 means no delay.
      */
     chunkDelay: number
     /**
-     * How large the timeframe of a chunk is. (@todo: what is this helpful for?)
+     * How large the timeframe of a chunk is. Reduce this if you want to index
+     * accounts with a lot of transactions.
      */
     chunkTimeframe: number
   }
