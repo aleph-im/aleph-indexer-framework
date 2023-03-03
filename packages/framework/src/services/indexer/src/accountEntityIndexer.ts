@@ -179,7 +179,13 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     }
   }
 
-  protected async onEntityResponse(requestNonce: number): Promise<void> {
+  /**
+   * Callback for when the entity fetcher signals that a request has been (partially) completed and is ready for processing.
+   * @param requestNonce The nonce of the request that is ready for processing
+   * @param page The page of the request that is ready for processing
+   * @protected
+   */
+  protected async onEntityResponse(requestNonce: number, page: number): Promise<void> {
     const { Ready, Pending } = EntityIndexerStateCode
 
     const range = await this.entityIndexerStateDAL

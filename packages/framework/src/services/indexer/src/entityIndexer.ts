@@ -25,7 +25,9 @@ export class BaseEntityIndexer<
   protected accountIndexers: Record<string, BaseAccountEntityIndexer<PE>> = {}
 
   /**
+   * @param type What entity type this indexer processes.
    * @param blockchainId The blockchain identifier.
+   * @param domain The indexer domain class that handles all user requests.
    * @param fetcherClient Allows communication with the fetcher service.
    * @param indexerClient Allows communication with the sibling indexer instances.
    * @param parserClient Allows communication with the parser service.
@@ -62,6 +64,10 @@ export class BaseEntityIndexer<
     await this.entityFetcher.start().catch(() => 'ignore')
   }
 
+  /**
+   * Unregisters the onEntities event on the parser.
+   * Stops the entity fetcher.
+   */
   async stop(): Promise<void> {
     this.parserClient.off(
       `parser.${this.blockchainId}.${this.type}`,
@@ -71,6 +77,10 @@ export class BaseEntityIndexer<
     await this.entityFetcher.stop().catch(() => 'ignore')
   }
 
+  /**
+   * Adds a new account indexer.
+   * @param args Parameters such as the account address, the blockchain id, and chunking options.
+   */
   async addAccount(args: AccountIndexerEntityRequestArgs): Promise<void> {
     const { account } = args
 
@@ -90,6 +100,10 @@ export class BaseEntityIndexer<
     this.accountIndexers[account] = accountIndexer
   }
 
+  /**
+   * Removes an account indexer.
+   * @param account The account address.
+   */
   async delAccount(account: string): Promise<void> {
     const accountIndexer = this.accountIndexers[account]
     if (!accountIndexer) return
@@ -99,10 +113,11 @@ export class BaseEntityIndexer<
     delete this.accountIndexers[account]
   }
 
-  async getAccountState(
-    args: GetAccountIndexingEntityStateRequestArgs,
-  ): Promise<AccountEntityIndexerState | undefined> {
-    const { account } = args
+  /**
+   * Returns the state of an account indexer.
+   * @param account The account address.
+   */
+  async getAccountState(account: string): Promise<AccountEntityIndexerState | undefined> {
 
     const indexer = this.accountIndexers[account]
     if (!indexer) return
@@ -114,6 +129,10 @@ export class BaseEntityIndexer<
     return state
   }
 
+  /**
+   * Returns the state of pending requests.
+   * @param filters Filters such as the account address, the blockchain id, and the entity type.
+   */
   async getEntityPendingRequests(
     filters: GetEntityPendingRequestsRequestArgs,
   ): Promise<EntityRequest[]> {
@@ -121,6 +140,11 @@ export class BaseEntityIndexer<
     return this.mapWithIndexerId(requests)
   }
 
+  /**
+   * Hook to be called when new entities are received by the indexer.
+   * @param chunk
+   * @protected
+   */
   protected async onEntities(chunk: PE[]): Promise<void> {
     console.log(
       `${this.blockchainId} ${this.type} | 💌 ${chunk.length} entities received by the indexer...`,
@@ -128,6 +152,11 @@ export class BaseEntityIndexer<
     await this.entityFetcher.onEntities(chunk)
   }
 
+  /**
+   * Maps the items with the indexer id.
+   * @param items The items to map.
+   * @protected
+   */
   protected mapWithIndexerId<T>(items: T[]): T[] {
     const indexer = this.indexerClient.getNodeId()
     return items.map((item) => {

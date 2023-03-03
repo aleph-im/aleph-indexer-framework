@@ -7,6 +7,14 @@ export enum EntityIndexerStateCode {
   Processed = 2,
 }
 
+/**
+ * Describes an indexer state date range associated with an account.
+ * @property {string} account Account to index.
+ * @property {number} startDate Start date of the range.
+ * @property {number} endDate End date of the range.
+ * @property {EntityIndexerStateCode} state State of the indexer.
+ * @property {number} requestNonce Request nonce of the indexer request
+ */
 export type EntityIndexerState = {
   account: string
   startDate: number

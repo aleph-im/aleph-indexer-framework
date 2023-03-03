@@ -83,21 +83,25 @@ export abstract class BaseIndexerEntityFetcher<
       checkComplete: async (): Promise<boolean> => true,
     })
 
+    // @note: checks pending retries every 10 minutes
     this.checkPendingRetriesJob = new JobRunner({
       name: `${type}-indexer-pending-retries`,
       interval: 1000 * 60 * 10,
       intervalFn: this.handlePendingRetries.bind(this),
     })
 
+    // @note: triggerable job that checks if all requests are completed
     this.checkCompletionJob = new DebouncedJob<void>(
       this.checkAllRequestCompletion.bind(this),
     )
 
+    // @note: buffer to retry pending entities
     this.toRetryBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRetryPendingEntities.bind(this),
       1000,
     )
 
+    // @note: buffer to remove pending entities
     this.toRemoveBuffer = new BufferExec<EntityRequestPendingEntity>(
       this.handleRemovePendingTransactions.bind(this),
       1000,
@@ -437,6 +441,10 @@ export abstract class BaseIndexerEntityFetcher<
     }
   }
 
+  /**
+   * Checks whether all requests are completed, meaning all txns fetched.
+   * @protected
+   */
   protected async checkAllRequestCompletion(): Promise<void> {
     const requests = await this.entityRequestDAL.getAllValues()
 
@@ -445,6 +453,11 @@ export abstract class BaseIndexerEntityFetcher<
     }
   }
 
+  /**
+   * Checks whether a particular request is completed and resolves it future.
+   * @param request The request to check.
+   * @protected
+   */
   protected async checkRequestCompletion(
     request: EntityRequest,
   ): Promise<void> {
@@ -454,26 +467,6 @@ export abstract class BaseIndexerEntityFetcher<
     let pending = !!(await this.entityRequestPendingEntityDAL
       .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
       .getFirstKeyFromTo([nonce], [nonce], { atomic: true }))
-
-    // @note: Debug false positives completing request when there are pending txs
-    if (!pending) {
-      this.log('pending enter =>', pending)
-
-      const pendings = await this.entityRequestPendingEntityDAL
-        .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
-        .getAllFromTo([nonce], [nonce], { atomic: true })
-
-      let pending2 = false
-      for await (const item of pendings) {
-        pending2 = true
-        break
-      }
-
-      if (pending !== pending2) {
-        pending = pending2
-        this.log('👺👺👺 ERROR checkRequestCompletion => ', nonce)
-      }
-    }
 
     if (pending) {
       this.log(`🔴 Request ${nonce} pending`)
@@ -486,6 +479,12 @@ export abstract class BaseIndexerEntityFetcher<
     this.resolveFuture(nonce)
   }
 
+  /**
+   * Fully checks every pending request for its pending signatures. Completed requests will be
+   * removed from the pending signatures db. Requests that are not completed will be added to
+   * the retry buffer.
+   * @protected
+   */
   protected async checkAllPendingSignatures(): Promise<void> {
     const requests = await this.entityRequestDAL.getAllValues()
 
@@ -496,6 +495,14 @@ export abstract class BaseIndexerEntityFetcher<
     await this.drainPendingSignaturesBuffer()
   }
 
+  /**
+   * Checks a particular request whether its pending signatures are completed (txn fetched).
+   * If not, it will be added to the retry buffer. If it is, it will be removed from the
+   * pending signatures db.
+   * @param request The request to check
+   * @param drain Whether to drain the pending signatures buffer
+   * @protected
+   */
   protected async checkPendingSignatures(
     request: EntityRequest,
     drain = true,
@@ -531,11 +538,20 @@ export abstract class BaseIndexerEntityFetcher<
     }
   }
 
+  /**
+   * Drains the pending signatures buffer, removing the completed signatures and
+   * retrying the pending ones.
+   * @protected
+   */
   protected async drainPendingSignaturesBuffer(): Promise<void> {
     await this.toRemoveBuffer.drain()
     await this.toRetryBuffer.drain()
   }
 
+  /**
+   * Handles the pending retries.
+   * @protected
+   */
   protected async handlePendingRetries(): Promise<void> {
     await this.checkAllPendingSignatures()
     await this.checkCompletionJob.run()

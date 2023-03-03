@@ -107,7 +107,7 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined> {
     const indexer = this.getEntityIndexerInstance(args.type)
-    return indexer.getAccountState(args)
+    return indexer.getAccountState(args.account)
   }
 
   async getEntityPendingRequests(
