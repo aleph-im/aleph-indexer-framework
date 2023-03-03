@@ -52,7 +52,7 @@ export default class MainDomain
         index: {
           transactions: {
             chunkDelay: 0,
-            chunkTimeframe: 1000 * 60 * 60 * 24,
+            chunkTimeframe: 1000 * 60 * 10,
           },
           content: false,
         },
