@@ -575,7 +575,7 @@ export class EntityIndexStorage<
 
       if (value === undefined && options?.atomic) {
         console.log(
-          `🟥 Inconsistent lookup key [${entityKey}] from key (${key}) on index [${this.options.sublevel}]`,
+          `[${this.options.name}] 🟥 Inconsistent lookup key [${entityKey}] from key (${key}) on index [${this.options.sublevel}]`,
         )
         return
       }
