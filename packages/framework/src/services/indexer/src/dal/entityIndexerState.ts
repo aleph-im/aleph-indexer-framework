@@ -19,6 +19,7 @@ export type EntityIndexerState = {
   account: string
   startDate: number
   endDate: number
+  page?: number
 } & (
   | {
       state: EntityIndexerStateCode.Processed
@@ -33,7 +34,7 @@ export type EntityIndexerState = {
 export type EntityIndexerStateStorage = EntityStorage<EntityIndexerState>
 
 export enum EntityIndexerStateDALIndex {
-  RequestState = 'request_state',
+  Request = 'request',
   AccountState = 'account_state',
 }
 
@@ -62,6 +63,11 @@ const requestKey = {
   length: EntityStorage.TimestampLength,
 }
 
+const pageKey = {
+  get: (e: EntityIndexerState) => e.page,
+  length: 5, // @note: 5 digits should be enough for 10 mil transactions per hour
+}
+
 export function createEntityIndexerStateDAL(
   path: string,
   type: IndexableEntityType,
@@ -69,11 +75,11 @@ export function createEntityIndexerStateDAL(
   return new EntityStorage<EntityIndexerState>({
     name: `${type}_indexer_state`,
     path,
-    key: [accountKey, startDateKey, endDateKey],
+    key: [accountKey, startDateKey, endDateKey, pageKey],
     indexes: [
       {
-        name: EntityIndexerStateDALIndex.RequestState,
-        key: [requestKey, stateKey],
+        name: EntityIndexerStateDALIndex.Request,
+        key: [requestKey],
       },
       {
         name: EntityIndexerStateDALIndex.AccountState,

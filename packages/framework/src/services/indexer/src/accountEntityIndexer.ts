@@ -201,6 +201,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       ...range,
       requestNonce,
       state: Ready,
+      page,
     })
   }
 

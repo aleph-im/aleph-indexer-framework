@@ -12,7 +12,6 @@ import { EntityRequest } from './dal/entityRequest.js'
 import { BaseIndexerEntityFetcher } from './entityFetcher.js'
 import {
   AccountIndexerEntityRequestArgs,
-  GetAccountIndexingEntityStateRequestArgs,
   IndexerWorkerDomainI,
   GetEntityPendingRequestsRequestArgs,
   AccountEntityIndexerState,

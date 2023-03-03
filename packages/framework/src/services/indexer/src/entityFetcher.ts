@@ -568,11 +568,11 @@ export abstract class BaseIndexerEntityFetcher<
     return future
   }
 
-  protected resolveFuture(nonce: number): void {
+  protected resolveFuture(nonce: number, page: number): void {
     this.requestFutures[nonce]?.resolve(nonce)
 
     setImmediate(() => {
-      this.events.emit('response', nonce)
+      this.events.emit('response', nonce, page)
       delete this.requestFutures[nonce]
     })
   }
