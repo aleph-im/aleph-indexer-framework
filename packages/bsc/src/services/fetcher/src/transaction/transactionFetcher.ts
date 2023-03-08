@@ -4,11 +4,9 @@ import {
   PendingEntityStorage,
   RawEntityStorage,
 } from '@aleph-indexer/framework'
-import {
-  EthereumRawTransaction,
-  EthereumTransactionFetcher,
-} from '@aleph-indexer/ethereum'
+import { EthereumTransactionFetcher } from '@aleph-indexer/ethereum'
 import { BscClient } from '../../../../sdk/client.js'
+import { BscRawTransaction } from '../../../parser/src/types.js'
 
 export class BscTransactionFetcher extends EthereumTransactionFetcher {
   constructor(
@@ -17,7 +15,7 @@ export class BscTransactionFetcher extends EthereumTransactionFetcher {
     pendingEntityDAL: PendingEntityStorage,
     pendingEntityCacheDAL: PendingEntityStorage,
     pendingEntityFetchDAL: PendingEntityStorage,
-    entityCacheDAL: RawEntityStorage<EthereumRawTransaction>,
+    entityCacheDAL: RawEntityStorage<BscRawTransaction>,
     blockchainId: Blockchain = Blockchain.Bsc,
   ) {
     super(

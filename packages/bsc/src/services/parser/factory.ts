@@ -2,12 +2,11 @@
 import path from 'path'
 import { config, Utils } from '@aleph-indexer/core'
 import { BlockchainParserI } from '@aleph-indexer/framework'
-import { EthereumRawTransaction } from '@aleph-indexer/ethereum'
 import { BscClient, createBscClient } from '../../sdk/index.js'
 import { BscParser } from './main.js'
 import { BscAccountStateParser } from './src/accountStateParser.js'
 import { BscTransactionParser } from './src/transactionParser.js'
-import { BscParsedTransaction } from './src/types.js'
+import { BscParsedTransaction, BscRawTransaction } from './src/types.js'
 import { BscLogParser } from './src/logParser.js'
 import { BscAbiFactory } from './src/abiFactory.js'
 
@@ -23,7 +22,7 @@ export async function bscParserFactory(
   layoutPath?: string,
 ): Promise<
   BlockchainParserI<
-    EthereumRawTransaction,
+    BscRawTransaction,
     BscParsedTransaction
   >
 > {
