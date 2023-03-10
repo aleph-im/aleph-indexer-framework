@@ -35,7 +35,7 @@ const { BufferExec } = Utils
  * @type I The event type that the stats are based on.
  * @type O The time frame type of the stats ("candles"/"bars").
  */
-export class TimeSeriesStats<I, O> {
+export class TimeSeriesStats<I extends object, O extends object> {
   constructor(
     public config: TimeSeriesStatsConfig<I, O>,
     protected stateDAL: StatsStateStorage,
