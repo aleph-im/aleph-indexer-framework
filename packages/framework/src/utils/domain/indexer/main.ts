@@ -231,6 +231,9 @@ export abstract class IndexerMainDomain {
   ): string[] {
     const accountsSet = this.accounts[blockchainId]
 
+    const client = this.context.apiClient.useBlockchain(blockchainId)
+    accounts = accounts.map((account) => client.normalizeAccount(account))
+
     return accounts.length === 0
       ? Array.from(accountsSet.values())
       : accounts.filter((account) => accountsSet.has(account))
@@ -248,7 +251,10 @@ export abstract class IndexerMainDomain {
           `Accounts that belongs to "${blockchainId}" blockchain are NOT supported by the indexer. Add "${blockchainId}" to "supportedBlockchains" list in the indexer configuration, or remove the account from the discovery process`,
         )
 
-      return !this.accounts[blockchainId].has(account)
+      const client = this.context.apiClient.useBlockchain(blockchainId)
+      const acc = client.normalizeAccount(account)
+
+      return !blockchainAccounts.has(acc)
     })
 
     await this.indexAccounts(newOptions)
@@ -267,10 +273,12 @@ export abstract class IndexerMainDomain {
   ): Promise<void> {
     await Promise.all(
       options.map(async (option) => {
-        await this.context.apiClient
-          .useBlockchain(option.blockchainId)
-          .indexAccount(option)
-        this.accounts[option.blockchainId].add(option.account)
+        const client = this.context.apiClient.useBlockchain(option.blockchainId)
+
+        await client.indexAccount(option)
+
+        const account = client.normalizeAccount(option.account)
+        this.accounts[option.blockchainId].add(account)
       }),
     )
   }

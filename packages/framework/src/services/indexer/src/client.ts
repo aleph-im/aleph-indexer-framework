@@ -10,7 +10,7 @@ import {
   GetEntityPendingRequestsRequestArgs,
 } from './types.js'
 import { BlockchainRequestArgs } from '../../types.js'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 
 /**
  * Client to access the main indexer service through the broker.
@@ -27,10 +27,16 @@ export abstract class BaseIndexerClient implements IndexerClientI {
     protected msId: MsIds = MsIds.Indexer,
   ) {}
 
+  abstract normalizeAccount(account: string): string
+
+  abstract normalizeEntityId(entity: IndexableEntityType, id: string): string
+
   async indexAccount(
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
     broadcast = false,
   ): Promise<void> {
+    const account = this.normalizeAccount(args.account)
+
     if (broadcast) {
       const nodes = Object.keys(this.broker.registry.nodes.nodes)
 
@@ -39,9 +45,10 @@ export abstract class BaseIndexerClient implements IndexerClientI {
           this.broker.call(
             `${this.msId}.indexAccount`,
             {
-              partitionKey: args.partitionKey || args.account,
+              partitionKey: args.partitionKey || account,
               blockchainId: this.blockchainId,
               ...args,
+              account,
             },
             { nodeID },
           ),
@@ -52,9 +59,10 @@ export abstract class BaseIndexerClient implements IndexerClientI {
     }
 
     return this.broker.call(`${this.msId}.indexAccount`, {
-      partitionKey: args.partitionKey || args.account,
+      partitionKey: args.partitionKey || account,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
@@ -62,6 +70,8 @@ export abstract class BaseIndexerClient implements IndexerClientI {
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
     broadcast = false,
   ): Promise<void> {
+    const account = this.normalizeAccount(args.account)
+
     if (broadcast) {
       const nodes = Object.keys(this.broker.registry.nodes.nodes)
 
@@ -70,9 +80,10 @@ export abstract class BaseIndexerClient implements IndexerClientI {
           this.broker.call(
             `${this.msId}.deleteAccount`,
             {
-              partitionKey: args.partitionKey || args.account,
+              partitionKey: args.partitionKey || account,
               blockchainId: this.blockchainId,
               ...args,
+              account,
             },
             { nodeID },
           ),
@@ -83,9 +94,10 @@ export abstract class BaseIndexerClient implements IndexerClientI {
     }
 
     return this.broker.call(`${this.msId}.deleteAccount`, {
-      partitionKey: args.partitionKey || args.account,
+      partitionKey: args.partitionKey || account,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
@@ -95,22 +107,28 @@ export abstract class BaseIndexerClient implements IndexerClientI {
       keyof BlockchainRequestArgs
     >,
   ): Promise<AccountIndexerState | undefined> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(`${this.msId}.getAccountState`, {
-      partitionKey: args.partitionKey || args.account,
+      partitionKey: args.partitionKey || account,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
   invokeDomainMethod(
     args: Omit<InvokeMethodRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<unknown> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(
       `${this.msId}.invokeDomainMethod`,
       {
-        partitionKey: args.partitionKey || args.account,
+        partitionKey: args.partitionKey || account,
         blockchainId: this.blockchainId,
         ...args,
+        account,
       },
       { meta: { $streamObjectMode: true }, nodeID: args.indexer },
     )
@@ -124,11 +142,16 @@ export abstract class BaseIndexerClient implements IndexerClientI {
       keyof BlockchainRequestArgs
     >,
   ): Promise<EntityRequest[]> {
+    const account = args.account
+      ? this.normalizeAccount(args.account)
+      : args.account
+
     return this.broker.call(
       `${this.msId}.getEntityPendingRequests`,
       {
         blockchainId: this.blockchainId,
         ...args,
+        account,
       },
       { nodeID: args.indexer },
     )

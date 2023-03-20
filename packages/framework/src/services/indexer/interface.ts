@@ -1,3 +1,4 @@
+import { IndexableEntityType } from '../../types.js'
 import { BlockchainRequestArgs } from '../types.js'
 import { EntityRequest } from './src/dal/entityRequest.js'
 import {
@@ -52,21 +53,29 @@ export interface IndexerMsI {
 }
 
 export interface IndexerClientI {
+  normalizeAccount(account: string): string
+
+  normalizeEntityId(entity: IndexableEntityType, id: string): string
+
   indexAccount(
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
+
   getAccountState(
     args: Omit<
       GetAccountIndexingEntityStateRequestArgs,
       keyof BlockchainRequestArgs
     >,
   ): Promise<AccountIndexerState | undefined>
+
   invokeDomainMethod(
     args: Omit<InvokeMethodRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<unknown>
+
   deleteAccount(
     args: Omit<AccountIndexerRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>
+
   getEntityPendingRequests(
     args: Omit<
       GetEntityPendingRequestsRequestArgs,
