@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/framework",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -26,9 +26,9 @@
     "luxon": "^3.0.4"
   },
   "devDependencies": {
-    "@aleph-indexer/bsc": "^1.0.39",
-    "@aleph-indexer/ethereum": "^1.0.39",
-    "@aleph-indexer/solana": "^1.0.37",
+    "@aleph-indexer/bsc": "^1.0.40",
+    "@aleph-indexer/ethereum": "^1.0.40",
+    "@aleph-indexer/solana": "^1.0.40",
     "@types/dotenv-defaults": "^2.0.1",
     "@types/luxon": "^3.0.1",
     "@types/node": "^17.0.33",
