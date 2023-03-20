@@ -61,6 +61,7 @@ export async function solanaIndexerFactory(
   }
 
   return new SolanaIndexer(
+    indexerMsClient,
     domain,
     entityIndexers,
   )

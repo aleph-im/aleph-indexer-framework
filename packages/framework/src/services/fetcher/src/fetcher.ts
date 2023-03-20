@@ -15,11 +15,14 @@ import {
 import { FetcherMsClient } from '../client.js'
 import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { BaseEntityFetcherMain } from './entityFetcherMain.js'
+import { FetcherClientI } from '../interface.js'
 
 /**
  * The main class of the fetcher service.
  */
 export abstract class BaseFetcher implements BlockchainFetcherI {
+  protected blockchainFetcherClient: FetcherClientI
+
   /**
    * Initialize the fetcher service.
    * @param blockchainId The blockchain identifier.
@@ -34,7 +37,11 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
     protected entityFetchers: Partial<
       Record<IndexableEntityType, BaseEntityFetcherMain<unknown>>
     >,
-  ) {}
+  ) {
+    this.blockchainFetcherClient = this.fetcherClient.useBlockchain(
+      this.blockchainId,
+    )
+  }
 
   async start(): Promise<void> {
     const entityFetchers = Object.values(this.entityFetchers)
@@ -55,22 +62,25 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   async addAccountEntityFetcher(
     args: AddAccountEntityRequestArgs,
   ): Promise<void> {
+    const account = this.mapAccount(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.addAccount(args)
+    return entityFetcher.addAccount({ ...args, account })
   }
 
   async delAccountEntityFetcher(
     args: DelAccountEntityRequestArgs,
   ): Promise<void> {
+    const account = this.mapAccount(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.delAccount(args)
+    return entityFetcher.delAccount({ ...args, account })
   }
 
   async getAccountEntityFetcherState(
     args: GetAccountEntityStateRequestArgs,
   ): Promise<AccountEntityHistoryState<any> | undefined> {
+    const account = this.mapAccount(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.getAccountState(args)
+    return entityFetcher.getAccountState({ ...args, account })
   }
 
   async getFetcherState({
@@ -96,23 +106,27 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
   async fetchAccountEntitiesByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
+    const account = this.mapAccount(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.fetchAccountEntitiesByDate(args)
+    return entityFetcher.fetchAccountEntitiesByDate({ ...args, account })
   }
 
   async fetchEntitiesById(args: FetchEntitiesByIdRequestArgs): Promise<void> {
+    const ids = this.mapEntityIds(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.fetchEntitiesById(args)
+    return entityFetcher.fetchEntitiesById({ ...args, ids })
   }
 
   async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+    const ids = this.mapEntityIds(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.getEntityState(args)
+    return entityFetcher.getEntityState({ ...args, ids })
   }
 
   async delEntityCache(args: DelEntityRequestArgs): Promise<void> {
+    const ids = this.mapEntityIds(args)
     const entityFetcher = this.getEntityFetcherInstance(args.type)
-    return entityFetcher.delEntityCache(args)
+    return entityFetcher.delEntityCache({ ...args, ids })
   }
 
   protected getEntityFetcherInstance(
@@ -126,5 +140,18 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
 
   protected getFetcherId(): string {
     return this.fetcherClient.getNodeId()
+  }
+
+  protected mapAccount(args: { account: string }): string {
+    return this.blockchainFetcherClient.normalizeAccount(args.account)
+  }
+
+  protected mapEntityIds(args: {
+    ids: string[]
+    type: IndexableEntityType
+  }): string[] {
+    return args.ids.map((id) =>
+      this.blockchainFetcherClient.normalizeEntityId(args.type, id),
+    )
   }
 }

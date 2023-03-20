@@ -89,6 +89,7 @@ export async function ethereumIndexerFactory(
   }
 
   return new EthereumIndexer(
+    indexerMsClient,
     domain,
     entityIndexers,
   )

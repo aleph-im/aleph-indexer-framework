@@ -89,6 +89,7 @@ export async function bscIndexerFactory(
   }
 
   return new BscIndexer(
+    indexerMsClient,
     domain,
     entityIndexers,
   )
