@@ -4,6 +4,7 @@ There are two crucial repos you should be aware of:
 1. Aleph indexer framework: (You're here already!) Consisting of the main building blocks that the indexer library needs to create an indexer. Changes made in the framework will reflect all future indexers. If you want to contribute to the framework, you're in the correct repo. If you want to create your indexer, head to point two of this section.
 2. [Solana indexer library](https://github.com/aleph-im/solana-indexer-library): This is where you need to start if you want to create your own solana indexer.
 
+You can find low-level documentation here: https://aleph-im.github.io/aleph-indexer-framework/
 
 ## Aleph Indexer Framework v1.0
 
