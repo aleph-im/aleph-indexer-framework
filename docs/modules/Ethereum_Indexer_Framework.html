@@ -19,9 +19,14 @@
 <li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/ethereum/index.ts#L1">packages/ethereum/index.ts:1</a></li></ul></aside>
 <section class="tsd-panel-group">
 <section class="tsd-panel tsd-typography">
-<a href="#framework-ethereum-package" id="framework-ethereum-package" style="color: inherit; text-decoration: none;">
-  <h1>Framework Ethereum Package</h1>
+<a href="#ethereum-connector" id="ethereum-connector" style="color: inherit; text-decoration: none;">
+  <h1>Ethereum Connector</h1>
 </a>
+<p>This connector allows your indexer to index data from the Ethereum blockchain.</p>
+<p>It indexes data differently from the Solana indexer, as it is not possible to call
+<code>getConfirmedSignaturesForAddress</code> on the Ethereum blockchain. Instead, it can index
+events and logs emitted by smart contracts. This is reflected in the</p>
+<p><a href="../framework/src/types.ts"><code>IndexableEntityType</code></a></p>
 </section></section>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">

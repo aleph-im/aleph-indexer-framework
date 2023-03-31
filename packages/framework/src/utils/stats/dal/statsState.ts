@@ -16,7 +16,8 @@ export type StatsState = {
 }
 
 /**
- * Stats Entity Storage.
+ * Stats Entity Storage. It stores the completion state of the stats processing
+ * for a given account, type and time frame.
  */
 export type StatsStateStorage = EntityStorage<StatsState>
 
@@ -52,6 +53,8 @@ const stateKey = {
 
 /**
  * Creates a stats Entity Storage.
+ *
+ * @param path The path where the database will be stored
  */
 export function createStatsStateDAL(path: string): StatsStateStorage {
   return new EntityStorage<StatsState>({

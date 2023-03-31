@@ -22,7 +22,15 @@ import {
 const { JobRunner } = Utils
 
 /**
- * Defines the account stats handler class.
+ * This class handles the stats for a given account. It is responsible for
+ * aggregating the stats from the time series and compacting the time series
+ * database when needed.
+ *
+ * The stats are stored in two different places:
+ * - The time series, which is a list of stats for a given time frame
+ * - The state, which is the current state of the processed account stats
+ *
+ * @typeParam V The type of the value of the account stats
  */
 export class AccountTimeSeriesStatsManager<V> {
   protected compactionJob!: Utils.JobRunner
@@ -43,10 +51,18 @@ export class AccountTimeSeriesStatsManager<V> {
     this.init()
   }
 
+  /**
+   * Initializes the account stats manager. It will start the compaction job.
+   */
   async init(): Promise<void> {
     this.compactionJob.run().catch(() => 'ignore')
   }
 
+  /**
+   * Returns time series values for a given time frame.
+   * @param type The type of the time series, as defined by the user
+   * @param filters The filters to apply to the time series fetched
+   */
   async getTimeSeriesStats(
     type: string,
     filters: AccountStatsFilters,
@@ -71,6 +87,9 @@ export class AccountTimeSeriesStatsManager<V> {
     }
   }
 
+  /**
+   * Returns the currently aggregated account stats.
+   */
   async getStats(): Promise<AccountStats<V>> {
     if (!this.stats) {
       await this.aggregateAccountStats(Date.now())
@@ -78,6 +97,11 @@ export class AccountTimeSeriesStatsManager<V> {
     return this.stats
   }
 
+  /**
+   * Processes the account stats. It will trigger the processing of time stats
+   * based on fetched events and aggregate the account stats.
+   * @param now The timestamp to which to process past stats
+   */
   async process(now: number): Promise<void> {
     console.log(`📊 processing time series stats for ${this.config.account}`)
     await this.aggregateTimeSeries(now)

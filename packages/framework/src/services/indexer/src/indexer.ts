@@ -20,11 +20,13 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   protected blockchainIndexerClient: IndexerClientI
 
   /**
+   * Returns the main indexer instance.
    * @param blockchainId The blockchain identifier.
+   * @param indexerClient The indexer client.
    * @param domain The customized domain user class.
    * @param entityIndexers Handles all indexing process related with an specific entity
    */
-  constructor(
+  protected constructor(
     protected blockchainId: Blockchain,
     protected indexerClient: IndexerMsClient,
     protected entityIndexers: Partial<

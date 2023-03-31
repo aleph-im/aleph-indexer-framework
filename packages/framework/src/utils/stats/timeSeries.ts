@@ -32,10 +32,10 @@ const { BufferExec } = Utils
 
 /**
  * Base class for time series stats.
- * @type I The event type that the stats are based on.
- * @type O The time frame type of the stats ("candles"/"bars").
+ * @typeParam I The event type that the stats are based on.
+ * @typeParam O The time frame type of the stats ("candles"/"bars").
  */
-export class TimeSeriesStats<I, O> {
+export class TimeSeriesStats<I extends object, O> {
   constructor(
     public config: TimeSeriesStatsConfig<I, O>,
     protected stateDAL: StatsStateStorage,
@@ -49,7 +49,7 @@ export class TimeSeriesStats<I, O> {
    * @param startDate The start date of the interval.
    * @param endDate The end date of the interval.
    * @param limit The maximum number of time frames to return.
-   * @param reverse Whether to return the time frames in reverse order (oldest-to-newest). @todo: correct?
+   * @param reverse Whether to return the time frames in reverse order (oldest-to-newest).
    */
   async getStats(
     account: string,
@@ -87,11 +87,10 @@ export class TimeSeriesStats<I, O> {
 
   /**
    * Process the events for a given account into time frames.
-   * @todo: refactor for better readability.
    * @param account The account to process the events for.
    * @param now The current unix timestamp.
    * @param pendingDateRanges The requested time frames to process.
-   * @param minDate @todo: what is this for?
+   * @param minDate The earliest date to which to process events.
    */
   async process(
     account: string,

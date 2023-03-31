@@ -23,9 +23,13 @@
 <h4>Type Parameters</h4>
 <ul class="tsd-type-parameters">
 <li>
-<h4>I<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">object</span></h4></li>
+<h4>I<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">object</span></h4>
+<div class="tsd-comment tsd-typography"><p>The event type that the stats are based on.</p>
+</div></li>
 <li>
-<h4>O</h4></li></ul></section> 
+<h4>O</h4>
+<div class="tsd-comment tsd-typography"><p>The time frame type of the stats (&quot;candles&quot;/&quot;bars&quot;).</p>
+</div></li></ul></section> 
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
@@ -112,7 +116,7 @@
 <h5>account: <span class="tsd-signature-type">string</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L313">packages/framework/src/utils/stats/timeSeries.ts:313</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L312">packages/framework/src/utils/stats/timeSeries.ts:312</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getPrevValue" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Prev<wbr/>Value</span><a href="#getPrevValue" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -125,7 +129,7 @@
 <h5>__namedParameters: <a href="../types/Indexer_Framework.PrevValueFactoryFnArgs.html" class="tsd-signature-type" data-tsd-kind="Type alias">PrevValueFactoryFnArgs</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">O</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L298">packages/framework/src/utils/stats/timeSeries.ts:298</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L297">packages/framework/src/utils/stats/timeSeries.ts:297</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="getStats" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Stats</span><a href="#getStats" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -157,14 +161,13 @@
 <h5><code class="tsd-tag ts-flagRest">Rest</code> <span class="tsd-signature-symbol">...</span>msgs: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L355">packages/framework/src/utils/stats/timeSeries.ts:355</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L354">packages/framework/src/utils/stats/timeSeries.ts:354</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="process" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>process</span><a href="#process" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="process.process-1">process<span class="tsd-signature-symbol">(</span>account<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, now<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, pendingDateRanges<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">DateRange</span><span class="tsd-signature-symbol">[]</span>, minDate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#process.process-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Process the events for a given account into time frames.
-@todo: refactor for better readability.</p>
+<div class="tsd-comment tsd-typography"><p>Process the events for a given account into time frames.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -183,11 +186,11 @@
 </div></li>
 <li>
 <h5>minDate: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
-<div class="tsd-comment tsd-typography"><p>@todo: what is this for?</p>
+<div class="tsd-comment tsd-typography"><p>The earliest date to which to process events.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L96">packages/framework/src/utils/stats/timeSeries.ts:96</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/aleph-im/aleph-indexer-framework/blob/08126aa/packages/framework/src/utils/stats/timeSeries.ts#L95">packages/framework/src/utils/stats/timeSeries.ts:95</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
