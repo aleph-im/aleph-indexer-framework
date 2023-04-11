@@ -12,7 +12,7 @@ import {
   u8,
   Structure,
 } from 'buffer-layout'
-import * as borsh from '@project-serum/borsh'
+import * as borsh from '@coral-xyz/borsh'
 
 export {
   struct,
