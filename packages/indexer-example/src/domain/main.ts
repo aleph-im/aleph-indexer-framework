@@ -1,9 +1,9 @@
-import { Blockchain } from '@aleph-indexer/framework'
 import {
-  IndexerMainDomain,
-  IndexerMainDomainWithDiscovery,
   AccountIndexerConfigWithMeta,
+  Blockchain,
+  IndexerMainDomain,
   IndexerMainDomainContext,
+  IndexerMainDomainWithDiscovery,
 } from '@aleph-indexer/framework'
 
 export default class MainDomain
@@ -21,8 +21,9 @@ export default class MainDomain
     const alephTokenBsc = '0x82D2f8E02Afb160Dd5A480a617692e62de9038C4'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
 
-    return [
-      {
+    let accountIndexerConfigs = []
+    if (this.context.supportedBlockchains.includes(Blockchain.Ethereum))
+      accountIndexerConfigs.push({
         blockchainId: Blockchain.Ethereum,
         account: alephTokenEth,
         meta: 1,
@@ -37,8 +38,9 @@ export default class MainDomain
             chunkTimeframe: 1000 * 60 * 60 * 24,
           },
         },
-      },
-      {
+      })
+    if (this.context.supportedBlockchains.includes(Blockchain.Solana))
+      accountIndexerConfigs.push({
         blockchainId: Blockchain.Solana,
         account: alephTokenSol,
         meta: 2,
@@ -50,8 +52,9 @@ export default class MainDomain
           state: false,
           logs: false,
         },
-      },
-      {
+      })
+    if (this.context.supportedBlockchains.includes(Blockchain.Bsc))
+      accountIndexerConfigs.push({
         blockchainId: Blockchain.Bsc,
         account: alephTokenBsc,
         meta: 3,
@@ -60,7 +63,8 @@ export default class MainDomain
           state: false,
           logs: true,
         },
-      },
-    ]
+      })
+
+    return accountIndexerConfigs
   }
 }
