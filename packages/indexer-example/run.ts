@@ -35,14 +35,14 @@ async function main() {
     transport,
     transportConfig,
     apiPort,
-    // fetcher: {
-    //   dataPath,
-    //   instances: 1,
-    // },
-    // parser: {
-    //   dataPath,
-    //   instances: 1,
-    // },
+    fetcher: {
+      dataPath,
+      instances: 1,
+    },
+    parser: {
+      dataPath,
+      instances: 1,
+    },
     indexer: {
       dataPath,
       main: {
