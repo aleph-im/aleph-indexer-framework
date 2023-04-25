@@ -189,23 +189,20 @@ export abstract class BaseIndexerEntityFetcher<
 
   async isRequestComplete(nonce: number): Promise<boolean> {
     const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
+    if (!request) throw new Error(`Request with nonce ${nonce} does not exist`)
 
     return !!request.complete
   }
 
   async awaitRequestComplete(nonce: number): Promise<void> {
-    const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
-
-    if (!request.complete) {
+    if (!await this.isRequestComplete(nonce)) {
       await this.getFuture(nonce).promise
     }
   }
 
   async getResponse(nonce: number): Promise<TransactionResponse<T>> {
     const request = await this.entityRequestDAL.get(nonce.toString())
-    if (!request) throw new Error(`Request with nonce ${nonce} does not exists`)
+    if (!request) throw new Error(`Request with nonce ${nonce} does not exist`)
 
     if (!request.complete) {
       await this.getFuture(nonce).promise
@@ -223,7 +220,13 @@ export abstract class BaseIndexerEntityFetcher<
       remove: async () => {
         this.log('----> REMOVE REQ 🎈', request.nonce)
         await this.entityRequestDAL.remove(request)
-        // @todo: Update nonceIndexes / Remove from entityRequestResponseDAL
+        // remove nonce from nonceIndex and update response
+        const items = []
+        for await (const item of response) {
+          delete item.nonceIndexes[request.nonce]
+          items.push(item)
+        }
+        await this.entityRequestResponseDAL.save(items)
       },
     }
   }
@@ -253,10 +256,9 @@ export abstract class BaseIndexerEntityFetcher<
       const requestsNonces = []
       let lastFilteredTxs = 0
 
-      let filteredTxs: T[] = []
+      let filteredTxs: EntityRequestResponse<T>[] = []
       let remainingTxs: T[] = chunk
       let requestCount = 0
-      const requestCountId = []
 
       for await (const request of requests) {
         const { nonce, complete } = request
@@ -267,10 +269,13 @@ export abstract class BaseIndexerEntityFetcher<
           request,
         )
 
-        filteredTxs = filteredTxs.concat(result.filteredEntities)
+        const requestResponses = result.filteredEntities as EntityRequestResponse<T>[]
+        for (const responses of requestResponses) {
+          (responses as EntityRequestResponse<T>).nonceIndexes = { [nonce]: 0 }
+        }
+        filteredTxs = filteredTxs.concat(requestResponses)
         remainingTxs = result.remainingEntities
         requestCount++
-        requestCountId.push(nonce)
 
         lastFilteredTxs = filteredTxs.length - lastFilteredTxs
         requestsNonces.push([nonce, lastFilteredTxs])
@@ -282,14 +287,11 @@ export abstract class BaseIndexerEntityFetcher<
 
       if (filteredTxs.length === 0) return
 
-      const requestResponse =
-        filteredTxs as unknown as EntityRequestResponse<T>[]
-
       const pendingIds = filteredTxs as unknown as EntityRequestPendingEntity[]
 
-      this.log(`Removing pendingIds`, pendingIds.map((p) => p.id).join('\n'))
+      //this.log(`Removing pendingIds`, pendingIds.map((p) => p.id).join('\n'))
 
-      await this.entityRequestResponseDAL.save(requestResponse)
+      await this.entityRequestResponseDAL.save(filteredTxs)
       await this.entityRequestPendingEntityDAL.remove(pendingIds)
 
       this.checkCompletionJob.run().catch(() => 'ignore')
@@ -347,7 +349,7 @@ export abstract class BaseIndexerEntityFetcher<
     const future = this.getFuture(nonce)
     let count = 0
 
-    // @note: Sometimes we receive the responses before inserting the pendings signatures on
+    // @note: Sometimes we receive the responses before inserting the pending signatures on
     // the db, the purpose of this mutex is to avoid this
     const now1 = Date.now()
     const release = await this.requestMutex.acquire()
@@ -397,7 +399,7 @@ export abstract class BaseIndexerEntityFetcher<
     const elapsed2 = Date.now() - now2
     this.log(`onRequest time => ${elapsed1 / 1000} | ${elapsed2 / 1000}`)
 
-    this.log(`🟡 Request ${nonce} inited`)
+    this.log(`🟡 Request ${nonce} initialized with ${count} entities`)
 
     if (!count) {
       this.log(`🟢 Request ${nonce} complete`)
@@ -513,7 +515,7 @@ export abstract class BaseIndexerEntityFetcher<
         `[Retry] Check ${tx?.id}`,
         !!tx,
         tx && 'parsed' in (tx || {}),
-        tx && tx.nonceIndexes[nonce] >= 0,
+        tx?.nonceIndexes[nonce],
         request.nonce,
       )
 
@@ -564,7 +566,7 @@ export abstract class BaseIndexerEntityFetcher<
   ): Promise<void> {
     const ids = pendings.map(({ id }) => id)
 
-    this.log(`Retrying ${ids.length} ${this.blockchainId} ids`, ids)
+    this.log(`Retrying ${ids.length} ${this.blockchainId} ids`)
 
     return this.fetcherMsClient
       .useBlockchain(this.blockchainId as Blockchain)

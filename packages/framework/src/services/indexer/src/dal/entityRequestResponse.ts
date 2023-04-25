@@ -56,21 +56,26 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
       newEntity: EntityRequestResponse<T>,
     ): Promise<EntityUpdateOp> {
       if (oldEntity) {
-        const nonceIndexes = {
-          ...oldEntity.nonceIndexes,
-          ...newEntity.nonceIndexes,
-        }
-
         if (!('parsed' in newEntity) && 'parsed' in oldEntity) {
           Object.assign(newEntity, oldEntity)
         }
 
-        newEntity.nonceIndexes = nonceIndexes
+        if (
+          ('parsed' in newEntity)
+          && !newEntity.nonceIndexes
+        ) {
+          return EntityUpdateOp.Delete
+        }
 
-        // console.log(
-        //   'updated entity [entity_request_responses]',
-        //   newEntity.timestampIndexes.length,
-        // )
+        // @note: This is a hack to make sure that the nonce indexes are
+        // not overwritten by the new entity. This is usually the case when
+        // the entity contains the actual transaction data, at which point we
+        // do not have the actual nonce indexes, but still need to pass in a
+        // nonce index object to the entity storage.
+        newEntity.nonceIndexes = {
+          ...newEntity.nonceIndexes,
+          ...oldEntity.nonceIndexes,
+        }
       }
 
       return EntityUpdateOp.Update
