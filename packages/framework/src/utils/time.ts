@@ -180,6 +180,17 @@ export async function mergeDateRangesFromIterable(
   let prevMerged = false
 
   for await (const range of mergeRanges) {
+    // @note: Fix invalid ranges
+    if (range.endDate < range.startDate) {
+      const fixedRange = {
+        startDate: range.endDate,
+        endDate: range.endDate,
+      }
+      oldRanges.push(range)
+      newRanges.push(fixedRange)
+      continue
+    }
+
     if (!prevRange) {
       prevRange = range
       continue
