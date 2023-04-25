@@ -24,6 +24,23 @@ export interface JobRunnerOptions {
   jitter?: number
 }
 
+/**
+ * Runs an `intervalFn` at a given `interval`. The `intervalFn` can return a
+ * number to change the interval for the next run. `intervalMax` can be used to
+ * limit the maximum interval time.
+ *
+ * The `intervalFn` can also return `JobRunnerReturnCode.Reset == -1` to reset
+ * the interval to the initial value, or `JobRunnerReturnCode.Stop == -2` to
+ * stop the runner.
+ *
+ * You can configure the `times` an interval is run, and also set a `jitter` to
+ * randomize the interval. This is useful to avoid stampedes.
+ *
+ * Set `startAfter` to delay the first run. `intervalInit` can be used to set a
+ * different interval for after the first run. `intervalAccuracy` can be used to
+ * make sure the `intervalFn` is called at the exact interval time, otherwise
+ * it will be called again after execution time + interval.
+ */
 export class JobRunner {
   private _events = new EventEmitter()
   private _isRunning = false
@@ -84,6 +101,13 @@ export class JobRunner {
     }
   }
 
+  /**
+   * Registers an event handler. Possible events are:
+   * - `beforeSleep`: Called before the runner sleeps until the next interval.
+   * - `firstRun`: Called after the first run.
+   * @param event
+   * @param handler
+   */
   on(
     event: 'beforeSleep' | 'firstRun',
     handler: (...args: any[]) => void | Promise<void>,
@@ -98,10 +122,17 @@ export class JobRunner {
     }
   }
 
+  /**
+   * Starts the runner.
+   */
   async start(): Promise<void> {
     return this.run()
   }
 
+  /**
+   * The runner function. Returns a promise that resolves when the runner is
+   * finished.
+   */
   async run(): Promise<void> {
     if (this._isRunning) return
     this._isRunning = true
@@ -202,11 +233,17 @@ export class JobRunner {
     p.resolve()
   }
 
+  /**
+   * Stops the runner.
+   */
   stop(): Promise<void> {
     this._isRunning = false
     return this.hasFinished()
   }
 
+  /**
+   * Returns a promise that resolves when the runner is finished.
+   */
   hasFinished(): Promise<void> {
     return this._finished.promise
   }

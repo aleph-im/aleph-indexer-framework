@@ -28,7 +28,7 @@ export interface FetcherPoolOptions<T>
 
 export class FetcherPool<T> extends PendingWorkPool<T> {
   protected workFetcher: Record<string, BaseHistoryFetcher<any>> = {}
-  public options!: FetcherPoolOptions<T> & PendingWorkOptions<T>
+  public readonly options!: FetcherPoolOptions<T> & PendingWorkOptions<T>
 
   constructor(options: FetcherPoolOptions<T>) {
     const { checkComplete, ...rest } = options
