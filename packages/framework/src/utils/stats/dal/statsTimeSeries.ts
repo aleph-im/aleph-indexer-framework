@@ -11,7 +11,8 @@ export type StatsTimeSeries<T> = {
 }
 
 /**
- * Stats Time Series Entity Storage.
+ * Stats Time Series Entity Storage. It stores the time series data for a given
+ * account, type and time frame.
  */
 export type StatsTimeSeriesStorage = EntityStorage<StatsTimeSeries<any>>
 
@@ -38,6 +39,8 @@ const startDateKey = {
 
 /**
  * Creates a stats time series Entity Storage.
+ *
+ * @param path The path where the database will be stored
  */
 export function createStatsTimeSeriesDAL(path: string): StatsTimeSeriesStorage {
   return new EntityStorage<StatsTimeSeries<any>>({

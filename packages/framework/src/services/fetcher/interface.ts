@@ -1,3 +1,4 @@
+import { IndexableEntityType } from '../../types.js'
 import {
   BlockchainRequestArgs,
   InvokeBlockchainMethodRequestArgs,
@@ -84,6 +85,10 @@ export interface FetcherMsI {
 }
 
 export interface FetcherClientI {
+  normalizeAccount(account: string): string
+
+  normalizeEntityId(entity: IndexableEntityType, id: string): string
+
   addAccountEntityFetcher(
     args: Omit<AddAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void>

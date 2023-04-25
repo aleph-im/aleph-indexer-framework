@@ -10,23 +10,34 @@ import { BlockchainIndexerI } from './types.js'
 import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { BaseEntityIndexer } from './entityIndexer.js'
 import { EntityRequest } from './dal/entityRequest.js'
+import { IndexerMsClient } from '../client.js'
+import { IndexerClientI } from '../interface.js'
 
 /**
  * Main class of the indexer service. Creates and manages all indexers.
  */
 export abstract class BaseIndexer implements BlockchainIndexerI {
+  protected blockchainIndexerClient: IndexerClientI
+
   /**
+   * Returns the main indexer instance.
    * @param blockchainId The blockchain identifier.
+   * @param indexerClient The indexer client.
    * @param domain The customized domain user class.
    * @param entityIndexers Handles all indexing process related with an specific entity
    */
-  constructor(
+  protected constructor(
     protected blockchainId: Blockchain,
+    protected indexerClient: IndexerMsClient,
     protected entityIndexers: Partial<
       Record<IndexableEntityType, BaseEntityIndexer>
     >,
     protected domain: IndexerWorkerDomainI,
-  ) {}
+  ) {
+    this.blockchainIndexerClient = this.indexerClient.useBlockchain(
+      this.blockchainId,
+    )
+  }
 
   async start(): Promise<void> {
     const entityIndexers = Object.values(this.entityIndexers)
@@ -45,7 +56,8 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   }
 
   async indexAccount(args: AccountIndexerRequestArgs): Promise<void> {
-    const { account, blockchainId, index } = args
+    const account = this.mapAccount(args)
+    const { blockchainId, index } = args
     const { transactions, logs, state } = index
     const { Transaction, Log, State } = IndexableEntityType
 
@@ -82,11 +94,12 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
       })
     }
 
-    await this.domain.onNewAccount(args)
+    await this.domain.onNewAccount({ ...args, account })
   }
 
   async deleteAccount(args: DelAccountIndexerRequestArgs): Promise<void> {
-    const { account, index } = args
+    const account = this.mapAccount(args)
+    const { index } = args
     const { transactions, logs, state } = index
     const { Transaction, Log, State } = IndexableEntityType
 
@@ -106,15 +119,24 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
   async getAccountState(
     args: GetAccountIndexingEntityStateRequestArgs,
   ): Promise<AccountIndexerState | undefined> {
+    const account = this.mapAccount(args)
     const indexer = this.getEntityIndexerInstance(args.type)
-    return indexer.getAccountState(args)
+    return indexer.getAccountState({ ...args, account })
   }
 
   async getEntityPendingRequests(
     args: GetEntityPendingRequestsRequestArgs,
   ): Promise<EntityRequest[]> {
+    const account = args.account
+      ? this.mapAccount(args as { account: string })
+      : args.account
+
+    const id = args.id
+      ? this.mapEntityId(args as { id: string; type: IndexableEntityType })
+      : args.id
+
     const indexer = this.getEntityIndexerInstance(args.type)
-    return indexer.getEntityPendingRequests(args)
+    return indexer.getEntityPendingRequests({ ...args, id, account })
   }
 
   protected getEntityIndexerInstance(
@@ -124,5 +146,16 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
     if (!entityIndexer) throw new Error('Entity indexer not implemented.')
 
     return entityIndexer
+  }
+
+  protected mapAccount(args: { account: string }): string {
+    return this.blockchainIndexerClient.normalizeAccount(args.account)
+  }
+
+  protected mapEntityId(args: {
+    id: string
+    type: IndexableEntityType
+  }): string {
+    return this.blockchainIndexerClient.normalizeEntityId(args.type, args.id)
   }
 }

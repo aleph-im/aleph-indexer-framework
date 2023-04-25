@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '../../../types.js'
+import { Blockchain, IndexableEntityType } from '../../../types.js'
 import { MsIds } from '../../common.js'
 import {
   BlockchainRequestArgs,
@@ -35,36 +35,49 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     protected msId: MsIds = MsIds.Fetcher,
   ) {}
 
+  abstract normalizeAccount(account: string): string
+
+  abstract normalizeEntityId(entity: IndexableEntityType, id: string): string
+
   addAccountEntityFetcher(
     args: Omit<AddAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(`${this.msId}.addAccountEntityFetcher`, {
-      partitionKey: args.account,
+      partitionKey: account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
   delAccountEntityFetcher(
     args: Omit<DelAccountEntityRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(`${this.msId}.delAccountEntityFetcher`, {
-      partitionKey: args.account,
+      partitionKey: account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
   getAccountEntityFetcherState(
     args: Omit<GetAccountEntityStateRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<AccountEntityHistoryState<unknown> | undefined> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(`${this.msId}.getAccountEntityFetcherState`, {
-      partitionKey: args.account,
+      partitionKey: account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
@@ -74,27 +87,31 @@ export abstract class BaseFetcherClient implements FetcherClientI {
       keyof BlockchainRequestArgs
     >,
   ): Promise<void | AsyncIterable<string[]>> {
+    const account = this.normalizeAccount(args.account)
+
     return this.broker.call(`${this.msId}.fetchAccountEntitiesByDate`, {
-      partitionKey: args.account,
+      partitionKey: account,
       indexerId: this.broker.nodeID,
       blockchainId: this.blockchainId,
       ...args,
+      account,
     })
   }
 
   async fetchEntitiesById(
     args: Omit<FetchEntitiesByIdRequestArgs, keyof BlockchainRequestArgs>,
   ): Promise<void> {
-    const groups = this.getEntityPartitionGroups(args)
+    const ids = this.mapEntityIds(args)
+    const groups = this.getEntityPartitionGroups({ ...args, ids })
 
     await Promise.all(
-      Object.entries(groups).map(([partitionKey, signatures]) => {
+      Object.entries(groups).map(([partitionKey, ids]) => {
         return this.broker.call(`${this.msId}.fetchEntitiesById`, {
           indexerId: this.broker.nodeID,
           blockchainId: this.blockchainId,
           ...args,
           partitionKey,
-          signatures,
+          ids,
         })
       }),
     )
@@ -108,9 +125,8 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  async getEntityState({
-    ids,
-  }: CheckEntityRequestArgs): Promise<EntityState[]> {
+  async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+    const ids = this.mapEntityIds(args)
     const groups = this.getEntityPartitionGroups({ ids })
 
     const states = (await Promise.all(
@@ -125,7 +141,8 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     return states.flatMap((state) => state)
   }
 
-  async delEntityCache({ ids }: DelEntityRequestArgs): Promise<void> {
+  async delEntityCache(args: DelEntityRequestArgs): Promise<void> {
+    const ids = this.mapEntityIds(args)
     const groups = this.getEntityPartitionGroups({ ids })
 
     await Promise.all(
@@ -164,5 +181,12 @@ export abstract class BaseFetcherClient implements FetcherClientI {
         }, {} as Record<string, string[]>)
 
     return partitionGroups
+  }
+
+  protected mapEntityIds(args: {
+    ids: string[]
+    type: IndexableEntityType
+  }): string[] {
+    return args.ids.map((id) => this.normalizeEntityId(args.type, id))
   }
 }
