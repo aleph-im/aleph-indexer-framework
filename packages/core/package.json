@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/core",
-  "version": "1.0.33",
+  "version": "1.0.41",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
