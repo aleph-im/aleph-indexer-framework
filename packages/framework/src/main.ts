@@ -49,11 +49,11 @@ export type IndexerConfig = {
    */
   transportConfig?: {
     /**
-     * @todo
+     * The TCP URL which the transport layer will listen on.
      */
     tcpUrls?: string | string[]
     /**
-     * @todo
+     * The NATS URL which the transport layer will connect to.
      */
     natsUrl?: string
   }
@@ -101,7 +101,7 @@ export type IndexerConfig = {
    */
   fetcher?: {
     /**
-     * Whether to enable the fetcher API. @todo: (For development purposes only?)
+     * Whether to enable the fetcher API. Useful for debugging.
      */
     api?: boolean
     /**
@@ -113,7 +113,7 @@ export type IndexerConfig = {
      */
     instanceOffset?: number
     /**
-     * Directory to which the fetcher service will write the fetcher state. (@todo: Only state or txn too?)
+     * Directory to which the fetcher service will write the fetcher state.
      */
     dataPath?: string
   }
@@ -122,7 +122,7 @@ export type IndexerConfig = {
    */
   parser?: {
     /**
-     * Whether to enable the parser API. @todo: (For development purposes only?)
+     * Whether to enable the parser API. Useful for debugging.
      */
     api?: boolean
     /**
@@ -134,7 +134,7 @@ export type IndexerConfig = {
      */
     instanceOffset?: number
     /**
-     * Directory to which the parser service will write the parsed data. (@todo: Is this correct?)
+     * Directory to which the parser service will write the parsed data.
      */
     dataPath?: string
     /**
