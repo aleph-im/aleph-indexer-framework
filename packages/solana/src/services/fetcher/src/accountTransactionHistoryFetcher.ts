@@ -36,6 +36,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
    * @param solanaRpc The Solana RPC client.
    * @param solanaMainPublicRpc The Solana mainnet public RPC client.
    * @param fetcherStateDAL The fetcher state storage.
+   * @param times The number of times to fetch signatures.
    */
   constructor(
     protected address: string,
@@ -66,59 +67,6 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       fetcherStateDAL,
     )
   }
-
-  // async run(): Promise<unknown> {
-  //   const isRestored = await this.dal.restore().catch(() => false)
-
-  //   // @note: Reset the fetcher state accordingly with the restored signatures
-  //   if (isRestored) {
-  //     const firstItem = await this.dal
-  //       .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountTimestampIndex)
-  //       .getFirstValueFromTo([this.address], [this.address])
-
-  //     if (firstItem) {
-  //       this.fetcherState.cursors = this.fetcherState.cursors || {}
-
-  //       const backwardState = (this.fetcherState.cursors.backward =
-  //         this.fetcherState.cursors.backward || {})
-
-  //       backwardState.signature = firstItem.signature
-  //       backwardState.slot = firstItem.slot
-  //       backwardState.timestamp = (firstItem.blockTime || 0) * 1000
-
-  //       this.fetcherState.jobs.backward = {
-  //         ...this.fetcherState.jobs.backward,
-  //         numRuns: firstItem.accountSlotIndex[this.address],
-  //         complete: false,
-  //         useHistoricRPC: false,
-  //       }
-  //     }
-
-  //     const lastItem = await this.dal
-  //       .useIndex(SolanaAccountTransactionHistoryDALIndex.AccountTimestampIndex)
-  //       .getLastValueFromTo([this.address], [this.address])
-
-  //     if (lastItem) {
-  //       this.fetcherState.cursors = this.fetcherState.cursors || {}
-
-  //       const forwardState = (this.fetcherState.cursors.forward =
-  //         this.fetcherState.cursors.forward || {})
-
-  //       forwardState.signature = lastItem.signature
-  //       forwardState.slot = lastItem.slot
-  //       forwardState.timestamp = (lastItem.blockTime || 0) * 1000
-
-  //       this.fetcherState.jobs.forward = {
-  //         ...this.fetcherState.jobs.forward,
-  //         numRuns: lastItem.accountSlotIndex[this.address],
-  //         complete: false,
-  //         useHistoricRPC: false,
-  //       }
-  //     }
-  //   }
-
-  //   return super.run()
-  // }
 
   protected async fetchForward({
     firstRun,

@@ -9,6 +9,9 @@ import {
 import { SolanaRawTransaction } from '../../../types.js'
 import { SolanaRPC } from '../../../sdk/client.js'
 
+/**
+ * Fetches transactions from the Solana blockchain.
+ */
 export class SolanaTransactionFetcher extends BaseEntityFetcher<SolanaRawTransaction> {
   constructor(
     protected solanaRpc: SolanaRPC,

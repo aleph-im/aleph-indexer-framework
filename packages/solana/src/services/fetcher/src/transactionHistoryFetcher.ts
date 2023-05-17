@@ -25,6 +25,7 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
    * @param solanaRpc The solana RPC client to use.
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    * @param fetcherStateDAL The fetcher state storage.
+   * @param args The fetcher client and the account and transaction history storage.
    */
   constructor(
     protected solanaRpc: SolanaRPC,
