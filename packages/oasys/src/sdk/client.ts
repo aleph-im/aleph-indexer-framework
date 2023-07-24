@@ -15,11 +15,11 @@ export class OasysClient extends EthereumClient {
   ) {
     super(options, accountSignatureDAL, logBloomDAL, blockchainId)
 
-    // @note: Quick fix for BSC it doesn't affect ethereum
+    // @note: Quick fix for Oasys it doesn't affect ethereum
     // Take a look at https://github.com/web3/web3.js/pull/3948#issuecomment-821779691
     // @note: Take a look at:
     // @note: https://github.com/web3/web3.js/pull/3948#issuecomment-821779691
-    console.log('⚡️ monkey patched "web3-utils" "hexToNumber" for BSC chain')
+    console.log('⚡️ monkey patched "web3-utils" "hexToNumber" for Oasys chain')
 
     const hexToNumberOld = this.sdk.utils.hexToNumber
     this.sdk.utils.hexToNumber = function (value) {
