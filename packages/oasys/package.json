@@ -1,5 +1,5 @@
 {
-  "name": "@aleph-indexer/bsc",
+  "name": "@aleph-indexer/oasys",
   "version": "1.0.43",
   "description": "",
   "main": "dist/index.js",
@@ -38,6 +38,6 @@
   },
   "typedoc": {
     "entryPoint": "./index.ts",
-    "displayName": "Bsc Indexer Framework"
+    "displayName": "Oasys Indexer Framework"
   }
 }

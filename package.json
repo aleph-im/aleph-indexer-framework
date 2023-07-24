@@ -61,6 +61,7 @@
     "packages/ethereum",
     "packages/framework",
     "packages/indexer-example",
-    "packages/solana"
+    "packages/solana",
+    "packages/oasys"
   ]
 }
