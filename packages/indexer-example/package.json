@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@aleph-indexer/bsc": "^1.0.43",
+    "@aleph-indexer/oasys": "^1.0.43",
     "@aleph-indexer/core": "^1.0.42",
     "@aleph-indexer/ethereum": "^1.0.43",
     "@aleph-indexer/framework": "^1.0.43",

@@ -16,13 +16,15 @@ import {
   SolanaParsedInstructionContext,
 } from '@aleph-indexer/solana'
 import { BscIndexerWorkerDomainI } from '@aleph-indexer/bsc'
+import { OasysIndexerWorkerDomainI } from '@aleph-indexer/oasys'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
   implements
     EthereumIndexerWorkerDomainI,
     SolanaIndexerWorkerDomainI,
-    BscIndexerWorkerDomainI
+    BscIndexerWorkerDomainI,
+    OasysIndexerWorkerDomainI
 {
   constructor(
     protected context: IndexerDomainContext,
@@ -117,5 +119,35 @@ export default class WorkerDomain
     entities: EthereumParsedLog[],
   ): Promise<void> {
     console.log('Index bsc log', JSON.stringify(entities, null, 2))
+  }
+
+  // Oasys
+
+  async oasysFilterTransaction(
+    context: ParserContext,
+    entity: EthereumParsedTransaction,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async oasysIndexTransactions(
+    context: ParserContext,
+    entities: EthereumParsedTransaction[],
+  ): Promise<void> {
+    console.log('Index oasys transaction', JSON.stringify(entities, null, 2))
+  }
+
+  async oasysFilterLog(
+    context: ParserContext,
+    entity: EthereumParsedLog,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async oasysIndexLogs(
+    context: ParserContext,
+    entities: EthereumParsedLog[],
+  ): Promise<void> {
+    console.log('Index oasys log', JSON.stringify(entities, null, 2))
   }
 }

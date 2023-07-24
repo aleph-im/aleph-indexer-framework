@@ -19,9 +19,11 @@ export default class MainDomain
   async discoverAccounts(): Promise<AccountIndexerConfigWithMeta<number>[]> {
     const alephTokenEth = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
     const alephTokenBsc = '0x82D2f8E02Afb160Dd5A480a617692e62de9038C4'
+    const OAXTokenOasys = '0x4688e596fb8ffaa9f7c1f02985b44651cf642123'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
 
-    let accountIndexerConfigs = []
+    const accountIndexerConfigs = []
+
     if (this.context.supportedBlockchains.includes(Blockchain.Ethereum))
       accountIndexerConfigs.push({
         blockchainId: Blockchain.Ethereum,
@@ -39,6 +41,7 @@ export default class MainDomain
           },
         },
       })
+
     if (this.context.supportedBlockchains.includes(Blockchain.Solana))
       accountIndexerConfigs.push({
         blockchainId: Blockchain.Solana,
@@ -53,11 +56,24 @@ export default class MainDomain
           logs: false,
         },
       })
+
     if (this.context.supportedBlockchains.includes(Blockchain.Bsc))
       accountIndexerConfigs.push({
         blockchainId: Blockchain.Bsc,
         account: alephTokenBsc,
         meta: 3,
+        index: {
+          transactions: false,
+          state: false,
+          logs: true,
+        },
+      })
+
+    if (this.context.supportedBlockchains.includes(Blockchain.Oasys))
+      accountIndexerConfigs.push({
+        blockchainId: Blockchain.Oasys,
+        account: OAXTokenOasys,
+        meta: 4,
         index: {
           transactions: false,
           state: false,
