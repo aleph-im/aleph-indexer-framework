@@ -6,10 +6,12 @@
   "module": "dist/index.js",
   "types": "dist/index.d.js",
   "type": "module",
+  "private": "true",
   "publishConfig": {
-    "access": "public"
+    "access": "restricted"
   },
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "up": "docker-compose up -d",
     "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name staking-devnet up -d"

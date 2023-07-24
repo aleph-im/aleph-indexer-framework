@@ -9,27 +9,19 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "clean:deps": "lerna exec -- npx rimraf node_modules && npx rimraf node_modules",
+    "clean:dist": "lerna exec -- npx rimraf dist && npx rimraf dist",
+    "clean": "npm run clean:dist && npm run clean:deps",
     "prepare": "husky install",
-    "postinstall": "npm run bootstrap && npm run build",
+    "postinstall": "npm run build",
     "start": "npm run postinstall && ./run.sh",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "test:rebuild": "npm run build && npm run test",
-    "test:reinstall": "npm run clean:all && npm i && npm run test",
     "lint": "eslint --cache --ignore-path .gitignore './packages/**/src/**/*.{js,ts,tsx}'",
     "lint:fix": "npm run lint -- --fix --quiet",
-    "build": "npm run clean:dist && npm run build:ts",
-    "build:ts": "lerna exec -- tsc -p ./tsconfig.json",
-    "build:all": "npm i && npm run docs",
-    "watch:ts": "lerna exec --parallel -- tsc -w -p ./tsconfig.json",
-    "bootstrap": "lerna bootstrap --hoist --force-local",
-    "version": "lerna version",
-    "publish:ci": "lerna publish from-git --yes",
-    "link": "lerna link --force-local && node ./scripts/links.js",
-    "clean:dist": "find ./packages -maxdepth 2 -type d -name 'dist' -exec rm -rf '{}' +",
-    "clean:package-lock": "find . -maxdepth 3 -type f -name package-lock.json -exec rm -rf '{}' +",
-    "clean": "lerna clean --yes && npm run clean:dist && npm run clean:package-lock",
-    "clean:all": "npm run clean && rm -rf ./node_modules",
+    "build": "npm run clean:dist && lerna run build",
+    "version": "lerna version --no-private",
+    "publish": "lerna publish from-git --no-private --yes",
     "deps:fix": "madge --exclude 'dist/(.+)' --circular packages",
     "docs": "typedoc --tsconfig ./tsconfig.json"
   },
@@ -50,7 +42,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "husky": "^8.0.1",
     "jest": "^28.1.0",
-    "lerna": "^5.5.1",
+    "lerna": "^7.1.4",
     "lint-staged": "^12.4.1",
     "madge": "^5.0.1",
     "prettier": "^2.6.2",
@@ -62,5 +54,13 @@
   "dependencies": {
     "luxon": "^3.0.4",
     "protobufjs": "^7.2.2"
-  }
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/bsc",
+    "packages/ethereum",
+    "packages/framework",
+    "packages/indexer-example",
+    "packages/solana"
+  ]
 }

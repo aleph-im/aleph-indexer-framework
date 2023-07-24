@@ -33,6 +33,6 @@ jobs:
         # Internally calls build:ts
 
       - name: "Publish packages"
-        run: npm run publish:ci -- --yes
+        run: npm run publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

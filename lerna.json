@@ -1,12 +1,7 @@
 {
+  "version": "1.0.43",
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "packages": [
-    "packages/core",
-    "packages/layout",
-    "packages/framework",
-    "packages/ethereum",
-    "packages/solana",
-    "packages/bsc",
-    "packages/indexer-example"
-  ],
-  "version": "1.0.43"
+    "packages/*"
+  ]
 }
