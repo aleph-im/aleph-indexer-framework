@@ -18,8 +18,8 @@ import { OasysLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
 import { OasysLogFetcher } from './src/log/logFetcher.js'
 
 export function oasysClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): OasysClient {
-  const url = config.BSC_RPC
-  if (!url) throw new Error('BSC_RPC not configured')
+  const url = config.OASYS_RPC
+  if (!url) throw new Error('OASYS_RPC not configured')
 
   return createOasysClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }

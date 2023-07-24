@@ -11,8 +11,8 @@ import { OasysLogParser } from './src/logParser.js'
 import { OasysAbiFactory } from './src/abiFactory.js'
 
 export  function oasysClientParserFactory(): OasysClient {
-  const url = config.BSC_RPC
-  if (!url) throw new Error('BSC_RPC not configured')
+  const url = config.OASYS_RPC
+  if (!url) throw new Error('OASYS_RPC not configured')
 
   return createOasysClient(url)
 }
