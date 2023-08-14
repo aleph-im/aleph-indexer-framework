@@ -2,8 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import fetch from 'node-fetch'
 import { AbiItem } from 'web3-utils'
-import { config } from '@aleph-indexer/core'
-import { Blockchain } from '@aleph-indexer/framework'
+import { BlockchainId } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/index.js'
 
 export type Abi = [AbiItem]
@@ -11,10 +10,10 @@ export type Abi = [AbiItem]
 // @todo: Implement inmemory cache
 export class EthereumAbiFactory {
   constructor(
+    protected blockchainId: BlockchainId,
     protected basePath: string,
     protected ethereumClient: EthereumClient,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
-    protected apiKey = config.ETHEREUM_SCAN_API_KEY,
+    protected apiKey: string | undefined,
   ) {}
 
   async getAbi(address: string): Promise<Abi | undefined> {

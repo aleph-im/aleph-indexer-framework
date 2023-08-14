@@ -2,7 +2,8 @@
 import { Utils } from '@aleph-indexer/core'
 import {
   BaseEntityIndexer,
-  Blockchain,
+  BaseIndexer,
+  BlockchainId,
   BlockchainIndexerI,
   createEntityIndexerStateDAL,
   createEntityRequestDAL,
@@ -16,11 +17,11 @@ import {
   ParserMsClient,
 } from '@aleph-indexer/framework'
 import { EthereumParsedLog, EthereumParsedTransaction } from '../parser/src/types.js'
-import { EthereumIndexer } from './main.js'
 import { EthereumIndexerLogFetcher } from './src/logFetcher.js'
 import { EthereumIndexerTransactionFetcher } from './src/transactionFetcher.js'
 
 export async function ethereumIndexerFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
@@ -46,6 +47,7 @@ export async function ethereumIndexerFactory(
   // Instances
 
   const transactionFetcher = new EthereumIndexerTransactionFetcher(
+    blockchainId,
     fetcherMsClient,
     transactionRequestDAL,
     transactionRequestIncomingEntityDAL,
@@ -54,8 +56,8 @@ export async function ethereumIndexerFactory(
   )
 
   const transactionFetcherMain = new BaseEntityIndexer(
+    blockchainId,
     IndexableEntityType.Transaction,
-    Blockchain.Ethereum,
     domain,
     indexerMsClient,
     fetcherMsClient,
@@ -65,6 +67,7 @@ export async function ethereumIndexerFactory(
   )
 
   const logFetcher = new EthereumIndexerLogFetcher(
+    blockchainId,
     fetcherMsClient,
     logRequestDAL,
     logRequestIncomingEntityDAL,
@@ -73,8 +76,8 @@ export async function ethereumIndexerFactory(
   )
 
   const logFetcherMain = new BaseEntityIndexer(
+    blockchainId,
     IndexableEntityType.Log,
-    Blockchain.Ethereum,
     domain,
     indexerMsClient,
     fetcherMsClient,
@@ -86,11 +89,12 @@ export async function ethereumIndexerFactory(
   const entityIndexers = {
     [IndexableEntityType.Transaction]: transactionFetcherMain,
     [IndexableEntityType.Log]: logFetcherMain
-  }
+  } as Record<IndexableEntityType, BaseEntityIndexer<any>>
 
-  return new EthereumIndexer(
+  return new BaseIndexer(
+    blockchainId,
     indexerMsClient,
-    domain,
     entityIndexers,
+    domain,
   )
 }

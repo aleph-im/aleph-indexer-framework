@@ -7,7 +7,7 @@ import {
   GetEntityPendingRequestsRequestArgs,
 } from './types.js'
 import { BlockchainIndexerI } from './types.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 import { BaseEntityIndexer } from './entityIndexer.js'
 import { EntityRequest } from './dal/entityRequest.js'
 import { IndexerMsClient } from '../client.js'
@@ -16,7 +16,9 @@ import { IndexerClientI } from '../interface.js'
 /**
  * Main class of the indexer service. Creates and manages all indexers.
  */
-export abstract class BaseIndexer implements BlockchainIndexerI {
+export class BaseIndexer<BEI extends BaseEntityIndexer = BaseEntityIndexer>
+  implements BlockchainIndexerI
+{
   protected blockchainIndexerClient: IndexerClientI
 
   /**
@@ -26,12 +28,10 @@ export abstract class BaseIndexer implements BlockchainIndexerI {
    * @param domain The customized domain user class.
    * @param entityIndexers Handles all indexing process related with an specific entity
    */
-  protected constructor(
-    protected blockchainId: Blockchain,
+  constructor(
+    protected blockchainId: BlockchainId,
     protected indexerClient: IndexerMsClient,
-    protected entityIndexers: Partial<
-      Record<IndexableEntityType, BaseEntityIndexer>
-    >,
+    protected entityIndexers: Partial<Record<IndexableEntityType, BEI>>,
     protected domain: IndexerWorkerDomainI,
   ) {
     this.blockchainIndexerClient = this.indexerClient.useBlockchain(

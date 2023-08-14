@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 import { MsIds } from '../../common.js'
 import {
   BlockchainRequestArgs,
@@ -30,7 +30,7 @@ export abstract class BaseFetcherClient implements FetcherClientI {
    * @param msId The moleculer service id of the fetcher service.
    */
   constructor(
-    protected blockchainId: Blockchain,
+    protected blockchainId: BlockchainId,
     protected broker: ServiceBroker,
     protected msId: MsIds = MsIds.Fetcher,
   ) {}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ServiceBroker } from 'moleculer'
 import {
   BlockchainFetcherI,
@@ -43,12 +44,21 @@ export type ParsedEntity<P> = RawEntity & {
 
 // ---------------- Supported blockchains --------------------------
 
-export enum Blockchain {
+export type BlockchainId = string
+
+export enum BlockchainChain {
   Ethereum = 'ethereum',
   Bsc = 'bsc',
   Oasys = 'oasys',
   Solana = 'solana',
 }
+
+export type BlockchainConfig = {
+  chain: BlockchainChain
+  id: BlockchainId
+}
+
+export type Blockchain = BlockchainId | BlockchainConfig
 
 export enum IndexableEntityType {
   Block = 'block',
@@ -58,32 +68,35 @@ export enum IndexableEntityType {
 }
 
 export type BlockchainFetcherClientFactory = (
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ) => Promise<FetcherClientI>
 
 export type BlockchainParserClientFactory = (
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ) => Promise<ParserClientI>
 
 export type BlockchainIndexerClientFactory = (
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ) => Promise<IndexerClientI>
 
 export type BlockchainFetcherFactory = (
+  blockchainId: BlockchainId,
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
 ) => Promise<BlockchainFetcherI>
 
 export type BlockchainParserFactory = (
+  blockchainId: BlockchainId,
   basePath: string,
   layoutPath?: string,
 ) => Promise<BlockchainParserI>
 
 export type BlockchainIndexerFactory = (
+  blockchainId: BlockchainId,
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
@@ -92,14 +105,16 @@ export type BlockchainIndexerFactory = (
 ) => Promise<BlockchainIndexerI>
 
 export type BlockchainWorkerDomainFactory = (
+  blockchainId: BlockchainId,
   context: IndexerDomainContext,
-  hooks: unknown,
+  hooks: any,
 ) => Promise<BlockchainIndexerWorkerI<ParsedEntity<unknown>>>
 
 // @todo
 export type BlockchainMainDomainFactory = (
+  blockchainId: BlockchainId,
   context: IndexerDomainContext,
-  hooks: unknown,
+  hooks: any,
 ) => Promise<unknown>
 
 export interface BlockchainFrameworkImplementation {
@@ -119,4 +134,21 @@ export interface BlockchainFrameworkImplementation {
       main: BlockchainMainDomainFactory | null
     }
   }
+}
+
+export function getBlockchainConfig(blockchain: Blockchain): BlockchainConfig {
+  if (typeof blockchain === 'string') {
+    const parts = blockchain.split(':')
+
+    const [chain, id] = (
+      parts.length < 2 ? [blockchain, blockchain] : parts
+    ) as [BlockchainChain, string]
+
+    if (!Object.values(BlockchainChain).includes(chain as BlockchainChain))
+      throw new Error(`Module not found, try: npm i @aleph-indexer/${chain}`)
+
+    return { chain, id }
+  }
+
+  return blockchain
 }

@@ -4,7 +4,7 @@ import {
   BaseFetcherPaginationCursors,
   BaseFetcherState,
   BaseHistoryFetcher,
-  Blockchain,
+  BlockchainId,
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
@@ -31,11 +31,11 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected account: string,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountTransactionHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected times = 1,
   ) {
     super(

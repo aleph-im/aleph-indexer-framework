@@ -1,5 +1,5 @@
 import {
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   ParsedEntity,
 } from '../../../types.js'
@@ -33,8 +33,8 @@ export class BaseEntityIndexer<
    * @param entityFetcher Fetches actual entity data by their signatures.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected type: IndexableEntityType,
-    protected blockchainId: Blockchain,
     protected domain: IndexerWorkerDomainI,
     protected indexerClient: IndexerMsClient,
     protected fetcherClient: FetcherMsClient,

@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseFetcherClient,
-  Blockchain,
+  BlockchainId,
   BlockchainRequestArgs,
   FetchAccountEntitiesByDateRequestArgs,
   FetchEntitiesByIdRequestArgs,
@@ -32,7 +32,7 @@ export class EthereumFetcherClient
 }
 
 export async function ethereumFetcherClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<FetcherClientI> {
   return new EthereumFetcherClient(blockchainId, broker)

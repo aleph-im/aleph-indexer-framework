@@ -1,14 +1,14 @@
 /* eslint-disable prettier/prettier */
 import { Utils } from '@aleph-indexer/core'
-import { BlockchainParserI } from '@aleph-indexer/framework'
+import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
 import { SolanaRawTransaction, SolanaParsedTransaction } from '../../types.js'
 import { SolanaParser } from './main.js'
 import { SolanaAccountStateParser } from './src/accountState/accountStateParser.js'
 import { SolanaInstructionParser } from './src/instruction/instructionParser.js'
 import { SolanaTransactionParser } from './src/transaction/transactionParser.js'
 
-
 export async function solanaParserFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   layoutPath?: string,
 ): Promise<

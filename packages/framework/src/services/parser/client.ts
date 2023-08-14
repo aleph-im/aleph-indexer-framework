@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain, ParsedEntity, RawEntity } from '../../types.js'
+import { BlockchainId, ParsedEntity, RawEntity } from '../../types.js'
 import {
   EventOptions,
   getRegistryNodesWithService,
@@ -23,7 +23,7 @@ export class ParserMsClient extends MsClientWithEvents<Event> {
    */
   constructor(
     protected broker: ServiceBroker,
-    protected blockchains: Record<Blockchain, ParserClientI<any, any>>,
+    protected blockchains: Record<BlockchainId, ParserClientI<any, any>>,
     protected clientEvents = false,
     protected eventOpts?: EventOptions,
     protected msId: MsIds = MsIds.Parser,
@@ -34,7 +34,7 @@ export class ParserMsClient extends MsClientWithEvents<Event> {
   useBlockchain<
     RE extends RawEntity = RawEntity,
     PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
-  >(blockchainId: Blockchain): ParserClientI<RE, PE> {
+  >(blockchainId: BlockchainId): ParserClientI<RE, PE> {
     return this.getBlockchainClientInstance(blockchainId)
   }
 
@@ -42,8 +42,8 @@ export class ParserMsClient extends MsClientWithEvents<Event> {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
-  getAllBlockchains(): Blockchain[] {
-    return Object.keys(this.blockchains) as Blockchain[]
+  getAllBlockchains(): BlockchainId[] {
+    return Object.keys(this.blockchains) as BlockchainId[]
   }
 
   getNodeId(): string {
@@ -61,7 +61,7 @@ export class ParserMsClient extends MsClientWithEvents<Event> {
   protected getBlockchainClientInstance<
     RE extends RawEntity = RawEntity,
     PE extends ParsedEntity<unknown> = ParsedEntity<unknown>,
-  >(blockchainId: Blockchain): ParserClientI<RE, PE> {
+  >(blockchainId: BlockchainId): ParserClientI<RE, PE> {
     const instance = this.blockchains[blockchainId]
 
     if (!instance) {

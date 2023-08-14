@@ -1,4 +1,4 @@
-import { Blockchain } from '../../types.js'
+import { BlockchainId } from '../../types.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 import { IndexerMsClient } from './client.js'
 import { IndexerMsI } from './interface.js'
@@ -25,7 +25,7 @@ export class IndexerMsMain implements IndexerMsI {
    */
   constructor(
     protected indexerClient: IndexerMsClient,
-    protected blockchains: Record<Blockchain, BlockchainIndexerI>,
+    protected blockchains: Record<BlockchainId, BlockchainIndexerI>,
     protected domain: IndexerWorkerDomainI,
   ) {}
 
@@ -111,7 +111,7 @@ export class IndexerMsMain implements IndexerMsI {
   }
 
   protected getBlockchainInstance(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
   ): BlockchainIndexerI {
     const instance = this.blockchains[blockchainId]
 

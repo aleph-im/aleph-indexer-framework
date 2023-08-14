@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseEntityFetcher,
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   PendingEntityStorage,
   RawEntityStorage,
@@ -14,6 +14,7 @@ import { SolanaRPC } from '../../../sdk/client.js'
  */
 export class SolanaTransactionFetcher extends BaseEntityFetcher<SolanaRawTransaction> {
   constructor(
+    protected blockchainId: BlockchainId,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     ...args: [
@@ -24,13 +25,15 @@ export class SolanaTransactionFetcher extends BaseEntityFetcher<SolanaRawTransac
       RawEntityStorage<SolanaRawTransaction>,
     ]
   ) {
-    super(IndexableEntityType.Transaction, Blockchain.Solana, ...args)
+    super(blockchainId, IndexableEntityType.Transaction, ...args)
   }
 
   protected filterEntityId(id: string): boolean {
     const isSignature = id.length >= 64 && id.length <= 88
     if (!isSignature)
-      console.log(`solana transaction | Fetcher Invalid signature ${id}`)
+      console.log(
+        `${this.blockchainId} transaction | Fetcher Invalid signature ${id}`,
+      )
     return isSignature
   }
 

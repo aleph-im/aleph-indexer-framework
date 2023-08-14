@@ -1,7 +1,7 @@
-import { Blockchain } from '../types'
+import { BlockchainId } from '../types'
 
 export type BlockchainRequestArgs = {
-  blockchainId: Blockchain
+  blockchainId: BlockchainId
 }
 
 export type InvokeBlockchainMethodRequestArgs<A> = BlockchainRequestArgs & {

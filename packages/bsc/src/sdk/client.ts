@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/framework'
+import { BlockchainId } from '@aleph-indexer/framework'
 import {
   EthereumAccountTransactionHistoryStorage,
   EthereumClient,
@@ -8,12 +8,12 @@ import {
 
 export class BscClient extends EthereumClient {
   constructor(
+    protected blockchainId: BlockchainId,
     protected options: EthereumClientOptions,
     protected accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
     protected logBloomDAL?: EthereumLogBloomStorage,
-    protected blockchainId: Blockchain = Blockchain.Bsc,
   ) {
-    super(options, accountSignatureDAL, logBloomDAL, blockchainId)
+    super(blockchainId, options, accountSignatureDAL, logBloomDAL)
 
     // @note: Quick fix for BSC it doesn't affect ethereum
     // Take a look at https://github.com/web3/web3.js/pull/3948#issuecomment-821779691

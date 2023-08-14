@@ -1,5 +1,5 @@
 import {
-  Blockchain,
+  BlockchainId,
   GetAccountEntityStateRequestArgs,
   FetcherMsClient,
   FetcherStateLevelStorage,
@@ -30,6 +30,7 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
@@ -37,11 +38,10 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     protected fetcherClient: FetcherMsClient,
     protected accountDAL: PendingAccountStorage,
     protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(
-      IndexableEntityType.Log,
       blockchainId,
+      IndexableEntityType.Log,
       fetcherClient,
       accountDAL,
       accountLogHistoryDAL,
@@ -79,6 +79,7 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
     account: string,
   ): EthereumAccountLogHistoryFetcher {
     return new EthereumAccountLogHistoryFetcher(
+      this.blockchainId,
       account,
       this.accountLogHistoryDAL,
       this.rawLogDAL,

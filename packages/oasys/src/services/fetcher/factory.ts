@@ -4,32 +4,25 @@ import { config, Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   FetcherMsClient,
-  IndexableEntityType,
-  BaseEntityFetcherMain,
-  Blockchain
+  BlockchainId
 } from '@aleph-indexer/framework'
-import { ethereumDalsFetcherFactory, ethereumConfigFactory } from '@aleph-indexer/ethereum'
-import { OasysFetcher } from './main.js'
-import { OasysBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
-import { createOasysClient, OasysClient } from '../../sdk/index.js'
-import { OasysTransactionHistoryFetcher } from './src/transaction/transactionHistoryFetcher.js'
-import { OasysTransactionFetcher } from './src/transaction/transactionFetcher.js'
-import { OasysLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
-import { OasysLogFetcher } from './src/log/logFetcher.js'
+import { ethereumDalsFetcherFactory, ethereumFetcherInstanceFactory } from '@aleph-indexer/ethereum'
+import { OasysClient } from '../../sdk/index.js'
 
-export function oasysClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): OasysClient {
-  const url = config.OASYS_RPC
-  if (!url) throw new Error('OASYS_RPC not configured')
+export function oasysClientFetcherFactory(
+  blockchainId: BlockchainId,
+  DALs: ReturnType<typeof ethereumDalsFetcherFactory>): OasysClient {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const ENV = `${BLOCKCHAIN_ID}_RPC`
 
-  return createOasysClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
-}
+  const url = config[ENV]
+  if (!url) throw new Error(`${ENV} not configured`)
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function oasysConfigFactory() {
-  return ethereumConfigFactory(Blockchain.Oasys)
+  return new OasysClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }
 
 export async function oasysFetcherFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
@@ -42,82 +35,13 @@ export async function oasysFetcherFactory(
 
   // Instances 
 
-  const oasysClient = oasysClientFetcherFactory(DALs)
+  const oasysClient = oasysClientFetcherFactory(blockchainId, DALs)
 
-  const config = oasysConfigFactory()
-
-  const blockHistoryFetcher = new OasysBlockHistoryFetcher(
-    config,
-    oasysClient,
-    DALs.blockFetcherHistoryStateDAL,
-    DALs.rawBlockDAL,
-  )
-
-  // Transactions
-
-  const transactionHistoryFetcher = new OasysTransactionHistoryFetcher(
-    oasysClient,
-    DALs.transactionHistoryFetcherStateDAL,
-    blockHistoryFetcher,
-    fetcherClient,
-    DALs.transactionHistoryPendingAccountDAL,
-    DALs.accountTransactionHistoryDAL,
-  )
-
-  const transactionFetcher = new OasysTransactionFetcher(
-    oasysClient,
+  return ethereumFetcherInstanceFactory(
+    blockchainId,
     broker,
-    DALs.pendingTransactionDAL,
-    DALs.pendingTransactionCacheDAL,
-    DALs.pendingTransactionFetchDAL,
-    DALs.rawTransactionDAL,
-  )
-
-  const transactionFetcherMain = new BaseEntityFetcherMain(
-    IndexableEntityType.Transaction,
-    transactionFetcher,
-    transactionHistoryFetcher,
-  )
-
-  // Logs
-
-  const logHistoryFetcher = new OasysLogHistoryFetcher(
-    oasysClient,
-    DALs.logHistoryFetcherStateDAL,
-    blockHistoryFetcher,
-    DALs.rawLogDAL,
     fetcherClient,
-    DALs.logHistoryPendingAccountDAL,
-    DALs.accountLogHistoryDAL,
-  )
-
-  const logFetcher = new OasysLogFetcher(
     oasysClient,
-    broker,
-    DALs.pendingLogDAL,
-    DALs.pendingLogCacheDAL,
-    DALs.pendingLogFetchDAL,
-    DALs.rawLogDAL,
-  )
-
-  const logFetcherMain = new BaseEntityFetcherMain(
-    IndexableEntityType.Log,
-    logFetcher,
-    logHistoryFetcher,
-  )
-
-  // Entity Fetchers
-
-  const entityFetchers = {
-    [IndexableEntityType.Transaction]: transactionFetcherMain,
-    [IndexableEntityType.Log]: logFetcherMain,
-  }
-
-  // Main service
-
-  return new OasysFetcher(
-    fetcherClient,
-    blockHistoryFetcher,
-    entityFetchers
+    DALs
   )
 }

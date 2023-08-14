@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseParserClient,
-  Blockchain,
+  BlockchainId,
   BlockchainRequestArgs,
   ParserClientI,
 } from '@aleph-indexer/framework'
@@ -31,7 +31,7 @@ export default class SolanaParserClient extends BaseParserClient<
 }
 
 export async function solanaParserClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<ParserClientI<SolanaRawTransaction, SolanaParsedTransaction>> {
   return new SolanaParserClient(blockchainId, broker)

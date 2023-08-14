@@ -31,7 +31,7 @@ import {
   IdRange,
 } from './types.js'
 import {
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   ParsedEntity,
 } from '../../../types.js'
@@ -64,8 +64,8 @@ export abstract class BaseIndexerEntityFetcher<
   protected toRemoveBuffer: Utils.BufferExec<EntityRequestPendingEntity>
 
   constructor(
+    protected blockchainId: BlockchainId,
     protected type: IndexableEntityType,
-    protected blockchainId: Blockchain,
     protected fetcherMsClient: FetcherMsClient,
     protected entityRequestDAL: EntityRequestStorage,
     protected entityRequestIncomingEntityDAL: EntityRequestIncomingEntityStorage<T>,
@@ -195,7 +195,7 @@ export abstract class BaseIndexerEntityFetcher<
   }
 
   async awaitRequestComplete(nonce: number): Promise<void> {
-    if (!await this.isRequestComplete(nonce)) {
+    if (!(await this.isRequestComplete(nonce))) {
       await this.getFuture(nonce).promise
     }
   }
@@ -269,9 +269,10 @@ export abstract class BaseIndexerEntityFetcher<
           request,
         )
 
-        const requestResponses = result.filteredEntities as EntityRequestResponse<T>[]
+        const requestResponses =
+          result.filteredEntities as EntityRequestResponse<T>[]
         for (const responses of requestResponses) {
-          (responses as EntityRequestResponse<T>).nonceIndexes = { [nonce]: 0 }
+          ;(responses as EntityRequestResponse<T>).nonceIndexes = { [nonce]: 0 }
         }
         filteredTxs = filteredTxs.concat(requestResponses)
         remainingTxs = result.remainingEntities
@@ -569,7 +570,7 @@ export abstract class BaseIndexerEntityFetcher<
     this.log(`Retrying ${ids.length} ${this.blockchainId} ids`)
 
     return this.fetcherMsClient
-      .useBlockchain(this.blockchainId as Blockchain)
+      .useBlockchain(this.blockchainId as BlockchainId)
       .fetchEntitiesById({ type: this.type, ids })
   }
 

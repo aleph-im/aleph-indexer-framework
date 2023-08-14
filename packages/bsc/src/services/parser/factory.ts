@@ -1,23 +1,41 @@
 /* eslint-disable prettier/prettier */
 import path from 'path'
 import { config, Utils } from '@aleph-indexer/core'
-import { BlockchainParserI } from '@aleph-indexer/framework'
-import { BscClient, createBscClient } from '../../sdk/index.js'
-import { BscParser } from './main.js'
-import { BscAccountStateParser } from './src/accountStateParser.js'
-import { BscTransactionParser } from './src/transactionParser.js'
+import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
+import {ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
+import { BscClient } from '../../sdk/index.js'
 import { BscParsedTransaction, BscRawTransaction } from './src/types.js'
-import { BscLogParser } from './src/logParser.js'
 import { BscAbiFactory } from './src/abiFactory.js'
 
-export  function bscClientParserFactory(): BscClient {
-  const url = config.BSC_RPC
-  if (!url) throw new Error('BSC_RPC not configured')
+export function bscClientParserFactory(
+  blockchainId: BlockchainId,
+): BscClient {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const ENV = `${BLOCKCHAIN_ID}_RPC`
 
-  return createBscClient(url)
+  const url = config[ENV]
+  if (!url) throw new Error(`${ENV} not configured`)
+
+  return new BscClient(blockchainId, { url })
+}
+
+export async function bscAbiParserFactory(
+  blockchainId: BlockchainId,
+  bscClient: BscClient,
+  basePath: string,
+  layoutPath?: string,
+): Promise<BscAbiFactory> {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const scanAPIKey = config[`${BLOCKCHAIN_ID}_SCAN_API_KEY`]
+
+  const abiBasePath = layoutPath || path.join(basePath, 'abi')
+  await Utils.ensurePath(abiBasePath)
+
+  return new BscAbiFactory(blockchainId, abiBasePath, bscClient, scanAPIKey)
 }
 
 export async function bscParserFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   layoutPath?: string,
 ): Promise<
@@ -26,20 +44,17 @@ export async function bscParserFactory(
     BscParsedTransaction
   >
 > {
-  const abiBasePath = layoutPath || path.join(basePath, 'abi')
-  await Utils.ensurePath(abiBasePath)
+  const bscClient = bscClientParserFactory(blockchainId)
 
-  const bscClient = bscClientParserFactory()
-  
-  const abiFactory = new BscAbiFactory(abiBasePath, bscClient)
-  
-  const bscAccountStateParser = new BscAccountStateParser()
-  const bscTransactionParser = new BscTransactionParser(abiFactory, bscClient)
-  const bscLogParser = new BscLogParser(abiFactory, bscClient)
+  const bscAbiFactory = await bscAbiParserFactory(
+    blockchainId,
+    bscClient,
+    basePath,
+    layoutPath
+  )
 
-  return new BscParser(
-    bscTransactionParser,
-    bscLogParser,
-    bscAccountStateParser,
+  return ethereumParserInstanceFactory(
+    bscClient,
+    bscAbiFactory,
   )
 }

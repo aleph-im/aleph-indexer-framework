@@ -1,9 +1,11 @@
 import { ServiceBroker, Context, Service } from 'moleculer'
 import {
   Blockchain,
+  BlockchainId,
   IndexableEntityType,
   ParsedEntity,
   RawEntity,
+  getBlockchainConfig,
 } from '../../types.js'
 import { MsIds, MainFactory } from '../common.js'
 import { ParserMsMain } from './main.js'
@@ -28,13 +30,11 @@ export class ParserMs<
 
     this.main = ParserMs.mainFactory(broker) as any
 
-    const events = ParserMs.supportedBlockchains.reduce((acc, blockchainId) => {
+    const events = ParserMs.supportedBlockchains.reduce((acc, blockchain) => {
+      const { id } = getBlockchainConfig(blockchain)
+
       for (const type of ParserMs.supportedEntities) {
-        acc[`fetcher.${blockchainId}.${type}`] = this.onEntities.bind(
-          this,
-          type,
-          blockchainId,
-        )
+        acc[`fetcher.${id}.${type}`] = this.onEntities.bind(this, id, type)
       }
 
       return acc
@@ -50,11 +50,11 @@ export class ParserMs<
   }
 
   onEntities(
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
-    blockchainId: Blockchain,
     chunk: RawEntityMsg<RE>[],
   ): Promise<void> {
-    return this.main.onEntities(type, blockchainId, chunk)
+    return this.main.onEntities(blockchainId, type, chunk)
   }
 
   parseEntity(ctx: Context<ParseEntityRequestArgs<RE>>): Promise<RE | PE> {

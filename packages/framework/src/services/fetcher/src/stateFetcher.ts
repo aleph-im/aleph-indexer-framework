@@ -4,7 +4,7 @@ import {
   DelAccountEntityRequestArgs,
 } from './types.js'
 import { PendingAccountStorage } from './dal/account.js'
-import { Blockchain } from '../../../types.js'
+import { BlockchainId } from '../../../types.js'
 
 const { MAX_TIMER_INTEGER } = Utils
 
@@ -26,7 +26,7 @@ export abstract class BaseStateFetcher {
    * @param accountDAL The account job storage.
    */
   constructor(
-    protected blockchainId: Blockchain,
+    protected blockchainId: BlockchainId,
     protected accountDAL: PendingAccountStorage,
   ) {
     this.pendingAccounts = new PendingWorkPool({

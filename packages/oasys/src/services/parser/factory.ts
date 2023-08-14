@@ -1,23 +1,38 @@
 /* eslint-disable prettier/prettier */
 import path from 'path'
 import { config, Utils } from '@aleph-indexer/core'
-import { BlockchainParserI } from '@aleph-indexer/framework'
-import { OasysClient, createOasysClient } from '../../sdk/index.js'
-import { OasysParser } from './main.js'
-import { OasysAccountStateParser } from './src/accountStateParser.js'
-import { OasysTransactionParser } from './src/transactionParser.js'
+import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
+import {ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
+import { OasysClient } from '../../sdk/index.js'
 import { OasysParsedTransaction, OasysRawTransaction } from './src/types.js'
-import { OasysLogParser } from './src/logParser.js'
 import { OasysAbiFactory } from './src/abiFactory.js'
 
-export  function oasysClientParserFactory(): OasysClient {
-  const url = config.OASYS_RPC
-  if (!url) throw new Error('OASYS_RPC not configured')
+export function oasysClientParserFactory(
+  blockchainId: BlockchainId,
+): OasysClient {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const ENV = `${BLOCKCHAIN_ID}_RPC`
 
-  return createOasysClient(url)
+  const url = config[ENV]
+  if (!url) throw new Error(`${ENV} not configured`)
+
+  return new OasysClient(blockchainId, { url })
+}
+
+export async function oasysAbiParserFactory(
+  blockchainId: BlockchainId,
+  oasysClient: OasysClient,
+  basePath: string,
+  layoutPath?: string,
+): Promise<OasysAbiFactory> {
+  const abiBasePath = layoutPath || path.join(basePath, 'abi')
+  await Utils.ensurePath(abiBasePath)
+
+  return new OasysAbiFactory(blockchainId, abiBasePath, oasysClient, undefined)
 }
 
 export async function oasysParserFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   layoutPath?: string,
 ): Promise<
@@ -26,20 +41,17 @@ export async function oasysParserFactory(
     OasysParsedTransaction
   >
 > {
-  const abiBasePath = layoutPath || path.join(basePath, 'abi')
-  await Utils.ensurePath(abiBasePath)
+  const oasysClient = oasysClientParserFactory(blockchainId)
 
-  const oasysClient = oasysClientParserFactory()
-  
-  const abiFactory = new OasysAbiFactory(abiBasePath, oasysClient)
-  
-  const oasysAccountStateParser = new OasysAccountStateParser()
-  const oasysTransactionParser = new OasysTransactionParser(abiFactory, oasysClient)
-  const oasysLogParser = new OasysLogParser(abiFactory, oasysClient)
+  const oasysAbiFactory = await oasysAbiParserFactory(
+    blockchainId,
+    oasysClient,
+    basePath,
+    layoutPath
+  )
 
-  return new OasysParser(
-    oasysTransactionParser,
-    oasysLogParser,
-    oasysAccountStateParser,
+  return ethereumParserInstanceFactory(
+    oasysClient,
+    oasysAbiFactory,
   )
 }

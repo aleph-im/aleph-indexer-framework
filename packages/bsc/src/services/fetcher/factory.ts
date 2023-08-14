@@ -4,32 +4,25 @@ import { config, Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   FetcherMsClient,
-  IndexableEntityType,
-  BaseEntityFetcherMain,
-  Blockchain
+  BlockchainId
 } from '@aleph-indexer/framework'
-import { ethereumDalsFetcherFactory, ethereumConfigFactory } from '@aleph-indexer/ethereum'
-import { BscFetcher } from './main.js'
-import { BscBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
-import { createBscClient, BscClient } from '../../sdk/index.js'
-import { BscTransactionHistoryFetcher } from './src/transaction/transactionHistoryFetcher.js'
-import { BscTransactionFetcher } from './src/transaction/transactionFetcher.js'
-import { BscLogHistoryFetcher } from './src/log/logHistoryFetcher.js'
-import { BscLogFetcher } from './src/log/logFetcher.js'
+import { ethereumDalsFetcherFactory, ethereumFetcherInstanceFactory } from '@aleph-indexer/ethereum'
+import { BscClient } from '../../sdk/index.js'
 
-export function bscClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
-  const url = config.BSC_RPC
-  if (!url) throw new Error('BSC_RPC not configured')
+export function bscClientFetcherFactory(
+  blockchainId: BlockchainId,
+  DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const ENV = `${BLOCKCHAIN_ID}_RPC`
 
-  return createBscClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
-}
+  const url = config[ENV]
+  if (!url) throw new Error(`${ENV} not configured`)
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function bscConfigFactory() {
-  return ethereumConfigFactory(Blockchain.Bsc)
+  return new BscClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }
 
 export async function bscFetcherFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
@@ -42,82 +35,13 @@ export async function bscFetcherFactory(
 
   // Instances 
 
-  const bscClient = bscClientFetcherFactory(DALs)
+  const bscClient = bscClientFetcherFactory(blockchainId, DALs)
 
-  const config = bscConfigFactory()
-
-  const blockHistoryFetcher = new BscBlockHistoryFetcher(
-    config,
-    bscClient,
-    DALs.blockFetcherHistoryStateDAL,
-    DALs.rawBlockDAL,
-  )
-
-  // Transactions
-
-  const transactionHistoryFetcher = new BscTransactionHistoryFetcher(
-    bscClient,
-    DALs.transactionHistoryFetcherStateDAL,
-    blockHistoryFetcher,
-    fetcherClient,
-    DALs.transactionHistoryPendingAccountDAL,
-    DALs.accountTransactionHistoryDAL,
-  )
-
-  const transactionFetcher = new BscTransactionFetcher(
-    bscClient,
+  return ethereumFetcherInstanceFactory(
+    blockchainId,
     broker,
-    DALs.pendingTransactionDAL,
-    DALs.pendingTransactionCacheDAL,
-    DALs.pendingTransactionFetchDAL,
-    DALs.rawTransactionDAL,
-  )
-
-  const transactionFetcherMain = new BaseEntityFetcherMain(
-    IndexableEntityType.Transaction,
-    transactionFetcher,
-    transactionHistoryFetcher,
-  )
-
-  // Logs
-
-  const logHistoryFetcher = new BscLogHistoryFetcher(
-    bscClient,
-    DALs.logHistoryFetcherStateDAL,
-    blockHistoryFetcher,
-    DALs.rawLogDAL,
     fetcherClient,
-    DALs.logHistoryPendingAccountDAL,
-    DALs.accountLogHistoryDAL,
-  )
-
-  const logFetcher = new BscLogFetcher(
     bscClient,
-    broker,
-    DALs.pendingLogDAL,
-    DALs.pendingLogCacheDAL,
-    DALs.pendingLogFetchDAL,
-    DALs.rawLogDAL,
-  )
-
-  const logFetcherMain = new BaseEntityFetcherMain(
-    IndexableEntityType.Log,
-    logFetcher,
-    logHistoryFetcher,
-  )
-
-  // Entity Fetchers
-
-  const entityFetchers = {
-    [IndexableEntityType.Transaction]: transactionFetcherMain,
-    [IndexableEntityType.Log]: logFetcherMain,
-  }
-
-  // Main service
-
-  return new BscFetcher(
-    fetcherClient,
-    blockHistoryFetcher,
-    entityFetchers
+    DALs
   )
 }

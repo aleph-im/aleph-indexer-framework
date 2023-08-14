@@ -1,6 +1,6 @@
 import {
   BaseIndexerEntityFetcher,
-  Blockchain,
+  BlockchainId,
   FetcherMsClient,
   NonceTimestamp,
   EntityRequest,
@@ -15,7 +15,7 @@ import { SolanaParsedTransaction } from '../../../types.js'
 
 export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<SolanaParsedTransaction> {
   constructor(
-    protected blockchainId: Blockchain,
+    protected blockchainId: BlockchainId,
     protected fetcherMsClient: FetcherMsClient,
     protected transactionRequestDAL: EntityRequestStorage,
     protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<SolanaParsedTransaction>,
@@ -24,8 +24,8 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<So
     protected nonce: NonceTimestamp = new NonceTimestamp(),
   ) {
     super(
-      IndexableEntityType.Transaction,
       blockchainId,
+      IndexableEntityType.Transaction,
       fetcherMsClient,
       transactionRequestDAL,
       transactionRequestIncomingTransactionDAL,
@@ -52,7 +52,7 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<So
         for (const tx of entities) {
           if (!tx.parsed) {
             console.log(
-              'solana transaction | 👺 error incoming tx without parsed field',
+              `${this.blockchainId} transaction | 👺 error incoming tx without parsed field`,
               request.nonce,
               tx,
             )

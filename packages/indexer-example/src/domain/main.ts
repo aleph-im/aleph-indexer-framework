@@ -1,6 +1,6 @@
 import {
   AccountIndexerConfigWithMeta,
-  Blockchain,
+  BlockchainChain,
   IndexerMainDomain,
   IndexerMainDomainContext,
   IndexerMainDomainWithDiscovery,
@@ -24,9 +24,9 @@ export default class MainDomain
 
     const accountIndexerConfigs = []
 
-    if (this.context.supportedBlockchains.includes(Blockchain.Ethereum))
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Ethereum))
       accountIndexerConfigs.push({
-        blockchainId: Blockchain.Ethereum,
+        blockchainId: BlockchainChain.Ethereum,
         account: alephTokenEth,
         meta: 1,
         index: {
@@ -42,9 +42,9 @@ export default class MainDomain
         },
       })
 
-    if (this.context.supportedBlockchains.includes(Blockchain.Solana))
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Solana))
       accountIndexerConfigs.push({
-        blockchainId: Blockchain.Solana,
+        blockchainId: BlockchainChain.Solana,
         account: alephTokenSol,
         meta: 2,
         index: {
@@ -57,9 +57,9 @@ export default class MainDomain
         },
       })
 
-    if (this.context.supportedBlockchains.includes(Blockchain.Bsc))
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Bsc))
       accountIndexerConfigs.push({
-        blockchainId: Blockchain.Bsc,
+        blockchainId: BlockchainChain.Bsc,
         account: alephTokenBsc,
         meta: 3,
         index: {
@@ -69,9 +69,9 @@ export default class MainDomain
         },
       })
 
-    if (this.context.supportedBlockchains.includes(Blockchain.Oasys))
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Oasys))
       accountIndexerConfigs.push({
-        blockchainId: Blockchain.Oasys,
+        blockchainId: BlockchainChain.Oasys,
         account: OAXTokenOasys,
         meta: 4,
         index: {

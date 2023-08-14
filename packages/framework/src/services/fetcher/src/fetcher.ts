@@ -13,14 +13,17 @@ import {
   FetchEntitiesByIdRequestArgs,
 } from './types.js'
 import { FetcherMsClient } from '../client.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 import { BaseEntityFetcherMain } from './entityFetcherMain.js'
 import { FetcherClientI } from '../interface.js'
 
 /**
  * The main class of the fetcher service.
  */
-export abstract class BaseFetcher implements BlockchainFetcherI {
+export class BaseFetcher<
+  EFM extends BaseEntityFetcherMain<unknown> = BaseEntityFetcherMain<unknown>,
+> implements BlockchainFetcherI
+{
   protected blockchainFetcherClient: FetcherClientI
 
   /**
@@ -32,11 +35,9 @@ export abstract class BaseFetcher implements BlockchainFetcherI {
    * @param accountStateFetcher It handles the account state tracking
    */
   constructor(
-    protected blockchainId: Blockchain,
+    protected blockchainId: BlockchainId,
     protected fetcherClient: FetcherMsClient,
-    protected entityFetchers: Partial<
-      Record<IndexableEntityType, BaseEntityFetcherMain<unknown>>
-    >,
+    protected entityFetchers: Partial<Record<IndexableEntityType, EFM>>,
   ) {
     this.blockchainFetcherClient = this.fetcherClient.useBlockchain(
       this.blockchainId,

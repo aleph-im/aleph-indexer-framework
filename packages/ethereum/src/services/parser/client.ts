@@ -1,6 +1,6 @@
 import {
   BaseParserClient,
-  Blockchain,
+  BlockchainId,
   ParserClientI,
 } from '@aleph-indexer/framework'
 import { ServiceBroker } from 'moleculer'
@@ -13,7 +13,7 @@ export class EthereumParserClient<
 > extends BaseParserClient<R, P> {}
 
 export async function ethereumParserClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<ParserClientI<EthereumRawTransaction, EthereumParsedTransaction>> {
   return new EthereumParserClient(blockchainId, broker)

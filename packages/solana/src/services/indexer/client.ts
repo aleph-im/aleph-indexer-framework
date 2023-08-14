@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseIndexerClient,
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   IndexerClientI,
 } from '@aleph-indexer/framework'
@@ -21,7 +21,7 @@ export default class SolanaIndexerClient
 }
 
 export async function solanaIndexerClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<IndexerClientI> {
   return new SolanaIndexerClient(blockchainId, broker)

@@ -1,6 +1,7 @@
 import { StorageValueStream } from '@aleph-indexer/core'
 import {
   Blockchain,
+  BlockchainId,
   IndexableEntityType,
   ParsedEntity,
 } from '../../../types.js'
@@ -13,7 +14,7 @@ import { EntityRequest, EntityRequestType } from './dal/entityRequest.js'
  * Describes a date range associated with an account.
  */
 export type IdRange = {
-  blockchainId: Blockchain
+  blockchainId: BlockchainId
   ids: string[]
 }
 
@@ -21,7 +22,7 @@ export type IdRange = {
  * Describes a date range associated with an account.
  */
 export type AccountDateRange = {
-  blockchainId: Blockchain
+  blockchainId: BlockchainId
   account: string
   startDate: number
   endDate: number
@@ -31,7 +32,7 @@ export type AccountDateRange = {
  * Describes a slot range associated with an account.
  */
 export type AccountSlotRange = {
-  blockchainId: Blockchain
+  blockchainId: BlockchainId
   account: string
   startSlot: number
   endSlot: number
@@ -260,8 +261,8 @@ export type IndexerMainDomainI = {
  */
 export type AccountEntityIndexerState = {
   indexer: string
+  blockchain: BlockchainId
   type: IndexableEntityType
-  blockchain: Blockchain
 
   /**
    * Which account is being indexed.
@@ -289,7 +290,7 @@ export type AccountEntityIndexerState = {
  * Stats about an account indexer's state.
  */
 export type AccountIndexerState = AccountEntityIndexerState & {
-  blockchain: Blockchain
+  blockchain: BlockchainId
 }
 
 export interface BlockchainIndexerI {

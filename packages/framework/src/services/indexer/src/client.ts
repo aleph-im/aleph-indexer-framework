@@ -10,7 +10,7 @@ import {
   GetEntityPendingRequestsRequestArgs,
 } from './types.js'
 import { BlockchainRequestArgs } from '../../types.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 
 /**
  * Client to access the main indexer service through the broker.
@@ -22,7 +22,7 @@ export abstract class BaseIndexerClient implements IndexerClientI {
    * @param msId The moleculer service id of the indexer service.
    */
   constructor(
-    protected blockchainId: Blockchain,
+    protected blockchainId: BlockchainId,
     protected broker: ServiceBroker,
     protected msId: MsIds = MsIds.Indexer,
   ) {}

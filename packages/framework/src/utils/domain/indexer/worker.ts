@@ -5,7 +5,7 @@ import {
   IndexerDomainContext,
   IndexerWorkerDomainI,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain, ParsedEntity } from '../../../types.js'
+import { BlockchainId, ParsedEntity } from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -40,7 +40,7 @@ export abstract class IndexerWorkerDomain<
 {
   protected instance!: number
   protected blockchainInstances!: Record<
-    Blockchain,
+    BlockchainId,
     BlockchainIndexerWorkerI<T>
   >
 

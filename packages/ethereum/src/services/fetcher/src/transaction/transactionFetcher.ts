@@ -1,6 +1,6 @@
 import {
   BaseEntityFetcher,
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   PendingEntityStorage,
   RawEntityStorage,
@@ -14,17 +14,17 @@ import { EthereumRawTransaction } from '../../../../types.js'
  */
 export class EthereumTransactionFetcher extends BaseEntityFetcher<EthereumRawTransaction> {
   constructor(
+    protected blockchainId: BlockchainId,
     protected ethereumClient: EthereumClient,
     protected broker: ServiceBroker,
     protected pendingEntityDAL: PendingEntityStorage,
     protected pendingEntityCacheDAL: PendingEntityStorage,
     protected pendingEntityFetchDAL: PendingEntityStorage,
     protected entityCacheDAL: RawEntityStorage<EthereumRawTransaction>,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(
-      IndexableEntityType.Transaction,
       blockchainId,
+      IndexableEntityType.Transaction,
       broker,
       pendingEntityDAL,
       pendingEntityCacheDAL,

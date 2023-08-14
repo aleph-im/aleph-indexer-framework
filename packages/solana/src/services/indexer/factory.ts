@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Utils } from '@aleph-indexer/core'
 import {
-  Blockchain,
+  BlockchainId,
   BlockchainIndexerI,
   createEntityIndexerStateDAL,
   createEntityRequestDAL,
@@ -13,13 +13,14 @@ import {
   IndexerMsClient,
   IndexerWorkerDomainI,
   ParserMsClient,
-  BaseEntityIndexer
+  BaseEntityIndexer,
+  BaseIndexer
 } from '@aleph-indexer/framework'
 import { SolanaParsedTransaction } from '../../types.js'
-import { SolanaIndexer } from './main.js'
 import { SolanaIndexerTransactionFetcher } from './src/transactionFetcher.js'
 
 export async function solanaIndexerFactory(
+  blockchainId: BlockchainId,
   basePath: string,
   domain: IndexerWorkerDomainI,
   indexerMsClient: IndexerMsClient,
@@ -35,9 +36,8 @@ export async function solanaIndexerFactory(
   const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
   const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
- 
   const transactionFetcher = new SolanaIndexerTransactionFetcher(
-    Blockchain.Solana,
+    blockchainId,
     fetcherMsClient,
     transactionRequestDAL,
     transactionRequestIncomingTransactionDAL,
@@ -46,8 +46,8 @@ export async function solanaIndexerFactory(
   )
 
   const transactionFetcherMain = new BaseEntityIndexer(
+    blockchainId,
     IndexableEntityType.Transaction,
-    Blockchain.Solana,
     domain,
     indexerMsClient,
     fetcherMsClient,
@@ -56,13 +56,14 @@ export async function solanaIndexerFactory(
     transactionFetcher,
   )
 
-  const entityIndexers = {
+  const entityIndexers: any = {
     [IndexableEntityType.Transaction]: transactionFetcherMain
   }
 
-  return new SolanaIndexer(
+  return new BaseIndexer(
+    blockchainId,
     indexerMsClient,
-    domain,
     entityIndexers,
+    domain,
   )
 }

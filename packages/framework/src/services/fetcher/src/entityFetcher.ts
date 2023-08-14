@@ -5,7 +5,7 @@ import {
   PendingWork,
   PendingWorkPool,
   QueueFullError,
-  Utils
+  Utils,
 } from '@aleph-indexer/core'
 import {
   FetchEntitiesByIdRequestArgs,
@@ -17,7 +17,7 @@ import {
 import { MsIds } from '../../common.js'
 import { PendingEntityStorage } from './dal/pendingEntity.js'
 import { RawEntityMsg } from '../../parser/src/types.js'
-import { Blockchain, IndexableEntityType, RawEntity } from '../../../types.js'
+import { BlockchainId, IndexableEntityType, RawEntity } from '../../../types.js'
 
 const { sleep } = Utils
 
@@ -43,8 +43,8 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
    * @param entityCacheDAL The raw entities' storage.
    */
   protected constructor(
+    protected blockchainId: BlockchainId,
     protected type: IndexableEntityType,
-    protected blockchainId: Blockchain,
     protected broker: ServiceBroker,
     protected pendingEntityDAL: PendingEntityStorage,
     protected pendingEntityCacheDAL: PendingEntityStorage,
@@ -121,7 +121,8 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
       payload: indexerId ? [indexerId] : [],
     }))
 
-    await this.pendingEntities.addWork(entities)
+    await this.pendingEntities
+      .addWork(entities)
       .catch((e: Error) => {
         if (e.constructor == QueueFullError) {
           return Promise.reject(e)
@@ -129,7 +130,8 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
           throw e
         }
       })
-      .then(() => {
+      .then(
+        () => {
           this.log(
             `🔗 ${ids.length} new ids added to the ${this.type} fetcher queue... [${indexerId}]`,
           )
@@ -138,7 +140,8 @@ export abstract class BaseEntityFetcher<RE extends RawEntity> {
           this.log(
             `⏯ ${ids.length} new ids waiting to be added to the ${this.type} fetcher queue... [${indexerId}]`,
           )
-        })
+        },
+      )
   }
 
   /**

@@ -1,7 +1,7 @@
 import {
   BaseStateFetcher,
   BaseStateFetcherI,
-  Blockchain,
+  BlockchainId,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../../sdk/client.js'
@@ -18,9 +18,9 @@ export class EthereumStateFetcher extends BaseStateFetcher {
    * @param ethereumClient The solana RPC client to use.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected ethereumClient: EthereumClient,
     protected accountStateDAL: EthereumAccountStateStorage,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
     ...args: [PendingAccountStorage]
   ) {
     super(blockchainId, ...args)
@@ -33,6 +33,7 @@ export class EthereumStateFetcher extends BaseStateFetcher {
     }
 
     return new EthereumAccountStateFetcher(
+      this.blockchainId,
       opts,
       this.accountStateDAL,
       this.ethereumClient,

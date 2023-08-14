@@ -11,13 +11,13 @@ import {
   FetcherMsClient,
   IndexableEntityType,
   BaseEntityFetcherMain,
-  Blockchain
+  BlockchainId
 } from '@aleph-indexer/framework'
 import { EthereumFetcher } from './main.js'
 import { createEthereumRawBlockDAL as createEthereumRawBlockDAL } from './src/block/dal/rawBlock.js'
 import { createEthereumAccountTransactionHistoryDAL } from './src/transaction/dal/accountTransactionHistory.js'
 import { EthereumBlockHistoryFetcher } from './src/block/blockHistoryFetcher.js'
-import { createEthereumClient, EthereumClient } from '../../sdk/index.js'
+import { EthereumClient } from '../../sdk/index.js'
 import { EthereumTransactionHistoryFetcher } from './src/transaction/transactionHistoryFetcher.js'
 import { EthereumTransactionFetcher } from './src/transaction/transactionFetcher.js'
 import { createEthereumLogBloomDAL } from './src/log/dal/logBloom.js'
@@ -53,43 +53,43 @@ export function ethereumDalsFetcherFactory(basePath: string) {
   }
 }
 
-export function ethereumClientFetcherFactory(DALs: ReturnType<typeof ethereumDalsFetcherFactory>): EthereumClient {
-  const url = config.ETHEREUM_RPC
-  if (!url) throw new Error('ETHEREUM_RPC not configured')
+export function ethereumClientFetcherFactory(
+  blockchainId: BlockchainId,
+  DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
+): EthereumClient {
+  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const ENV = `${BLOCKCHAIN_ID}_RPC`
 
-  return createEthereumClient(url, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
+  const url = config[ENV]
+  if (!url) throw new Error(`${ENV} not configured`)
+
+  return new EthereumClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }
 
 // @todo: Refactor and pass the vars through SDK.init extended config
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function ethereumConfigFactory(blockchainId: Blockchain = Blockchain.Ethereum) {
+export function ethereumConfigFactory(blockchainId: BlockchainId) {
   const BLOCKCHAIN_ID = blockchainId.toUpperCase()
 
   return {
     indexRawBlocks: config[`${BLOCKCHAIN_ID}_INDEX_BLOCKS`] === 'true', // default false
     indexAccountTransactionHistory: config[`${BLOCKCHAIN_ID}_INDEX_TRANSACTIONS`] !== 'false', // default true
-    indexAccountLogHistory: config[`${BLOCKCHAIN_ID}_INDEX_`] !== 'false', // default true
+    indexAccountLogHistory: config[`${BLOCKCHAIN_ID}_INDEX_LOGS`] !== 'false', // default true
   }
 }
 
-export async function ethereumFetcherFactory(
-  basePath: string,
+export function ethereumFetcherInstanceFactory(
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
-): Promise<BlockchainFetcherI> {
-  if (basePath) await Utils.ensurePath(basePath)
+  ethereumClient: EthereumClient,
+  DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
+): EthereumFetcher {
 
-  // DALs
-
-  const DALs = ethereumDalsFetcherFactory(basePath)
-
-  // Instances 
-
-  const ethereumClient = ethereumClientFetcherFactory(DALs)
-
-  const config = ethereumConfigFactory()
+  const config = ethereumConfigFactory(blockchainId)
 
   const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
+    blockchainId,
     config,
     ethereumClient,
     DALs.blockFetcherHistoryStateDAL,
@@ -99,6 +99,7 @@ export async function ethereumFetcherFactory(
   // Transactions
 
   const transactionHistoryFetcher = new EthereumTransactionHistoryFetcher(
+    blockchainId,
     ethereumClient,
     DALs.transactionHistoryFetcherStateDAL,
     blockHistoryFetcher,
@@ -108,6 +109,7 @@ export async function ethereumFetcherFactory(
   )
 
   const transactionFetcher = new EthereumTransactionFetcher(
+    blockchainId,
     ethereumClient,
     broker,
     DALs.pendingTransactionDAL,
@@ -125,6 +127,7 @@ export async function ethereumFetcherFactory(
   // Logs
 
   const logHistoryFetcher = new EthereumLogHistoryFetcher(
+    blockchainId,
     ethereumClient,
     DALs.logHistoryFetcherStateDAL,
     blockHistoryFetcher,
@@ -135,6 +138,7 @@ export async function ethereumFetcherFactory(
   )
 
   const logFetcher = new EthereumLogFetcher(
+    blockchainId,
     ethereumClient,
     broker,
     DALs.pendingLogDAL,
@@ -159,8 +163,34 @@ export async function ethereumFetcherFactory(
   // Main service
 
   return new EthereumFetcher(
+    blockchainId,
     fetcherClient,
     blockHistoryFetcher,
     entityFetchers
+  )
+}
+
+export async function ethereumFetcherFactory(
+  blockchainId: BlockchainId,
+  basePath: string,
+  broker: ServiceBroker,
+  fetcherClient: FetcherMsClient,
+): Promise<BlockchainFetcherI> {
+  if (basePath) await Utils.ensurePath(basePath)
+
+  // DALs
+
+  const DALs = ethereumDalsFetcherFactory(basePath)
+
+  // Instances 
+
+  const ethereumClient = ethereumClientFetcherFactory(blockchainId, DALs)
+
+  return ethereumFetcherInstanceFactory(
+    blockchainId,
+    broker,
+    fetcherClient,
+    ethereumClient,
+    DALs
   )
 }

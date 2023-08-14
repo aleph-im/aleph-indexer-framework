@@ -8,7 +8,7 @@ import {
   RawEntityMsg,
 } from './src/types.js'
 import {
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   ParsedEntity,
   RawEntity,
@@ -23,14 +23,14 @@ export class ParserMsMain<
 {
   constructor(
     protected broker: ServiceBroker,
-    protected blockchains: Record<Blockchain, BlockchainParserI<RE, PE>>,
+    protected blockchains: Record<BlockchainId, BlockchainParserI<RE, PE>>,
   ) {
     super(broker, MsIds.Parser)
   }
 
   async onEntities(
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
-    blockchainId: Blockchain,
     chunk: RawEntityMsg<RE>[],
   ): Promise<void> {
     console.log(
@@ -59,7 +59,7 @@ export class ParserMsMain<
       }
     }
 
-    await this.emitParsedEntities(type, blockchainId, parsedMsgs)
+    await this.emitParsedEntities(blockchainId, type, parsedMsgs)
   }
 
   async parseEntity(args: ParseEntityRequestArgs<RE>): Promise<RE | PE> {
@@ -84,8 +84,8 @@ export class ParserMsMain<
   }
 
   protected async emitParsedEntities(
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
-    blockchainId: Blockchain,
     msgs: ParsedEntityMsg<RE | PE>[],
   ): Promise<void> {
     if (!msgs.length) return
@@ -136,7 +136,7 @@ export class ParserMsMain<
   }
 
   protected getBlockchainInstance(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
   ): BlockchainParserI<RE, PE> {
     const instance = this.blockchains[blockchainId]
 

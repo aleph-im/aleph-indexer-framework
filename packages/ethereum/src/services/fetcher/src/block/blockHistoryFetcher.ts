@@ -3,7 +3,7 @@ import {
   BaseFetcherJobState,
   BaseFetcherState,
   BaseHistoryFetcher,
-  Blockchain,
+  BlockchainId,
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
@@ -31,11 +31,11 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   protected pageLimit = 50
 
   constructor(
+    protected blockchainId: BlockchainId,
     protected config: EthereumBlockHistoryFetcherConfig,
     protected ethereumClient: EthereumClient,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumBlockHistoryPaginationCursor>,
     protected blockDAL: EthereumRawBlockStorage,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     const blockTime = config.blockTime || (10 + 2) * 1000
 

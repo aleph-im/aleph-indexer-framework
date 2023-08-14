@@ -8,7 +8,7 @@ import {
   isUserEthereumAddressInBloom,
   isContractAddressInBloom,
 } from 'ethereum-bloom-filters'
-import { Blockchain } from '@aleph-indexer/framework'
+import { BlockchainId } from '@aleph-indexer/framework'
 import {
   EthereumRawBlock,
   EthereumRawLog,
@@ -97,10 +97,10 @@ export class EthereumClient {
   protected sdk: Web3
 
   constructor(
+    protected blockchainId: BlockchainId,
     protected options: EthereumClientOptions,
     protected accountSignatureDAL?: EthereumAccountTransactionHistoryStorage,
     protected logBloomDAL?: EthereumLogBloomStorage,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     this.sdk = new Web3(options.url)
   }

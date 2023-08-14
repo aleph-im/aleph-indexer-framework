@@ -37,7 +37,7 @@ export type IndexerConfig = {
    */
   projectId: string
   /**
-   * Supported blockchains (default: solana)
+   * Supported blockchains
    */
   supportedBlockchains: Blockchain[]
   /**
@@ -163,12 +163,8 @@ export class SDK {
     // @todo: External transport (thread by default)
     config.transport = config.transport || TransportType.Thread
 
-    const {
-      projectId,
-      transport,
-      transportConfig,
-      supportedBlockchains = [Blockchain.Solana],
-    } = config
+    const { projectId, transport, transportConfig, supportedBlockchains } =
+      config
 
     const args = {
       projectId,

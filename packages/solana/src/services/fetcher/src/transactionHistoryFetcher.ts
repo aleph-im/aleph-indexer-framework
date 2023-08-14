@@ -1,6 +1,6 @@
 import {
   BaseEntityHistoryFetcher,
-  Blockchain,
+  BlockchainId,
   FetcherMsClient,
   FetcherStateLevelStorage,
   GetAccountEntityStateRequestArgs,
@@ -28,6 +28,7 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
    * @param args The fetcher client and the account and transaction history storage.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected fetcherStateDAL: FetcherStateLevelStorage,
@@ -37,7 +38,7 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
       SolanaAccountTransactionHistoryStorage,
     ]
   ) {
-    super(IndexableEntityType.Transaction, Blockchain.Solana, ...args)
+    super(blockchainId, IndexableEntityType.Transaction, ...args)
   }
 
   /**
@@ -122,6 +123,7 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
     account: string,
   ): SolanaAccountTransactionHistoryFetcher {
     return new SolanaAccountTransactionHistoryFetcher(
+      this.blockchainId,
       account,
       this.accountEntityHistoryDAL,
       this.solanaRpc,

@@ -1,6 +1,6 @@
 import {
   BaseFetcher,
-  Blockchain,
+  BlockchainId,
   BlockchainFetcherI,
   FetcherMsClient,
   IndexableEntityType,
@@ -12,12 +12,12 @@ import { EthereumFetcherState } from './src/types.js'
 
 export class EthereumFetcher extends BaseFetcher implements BlockchainFetcherI {
   constructor(
+    protected blockchainId: BlockchainId,
     protected fetcherClient: FetcherMsClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,
     protected entityFetchers: Partial<
       Record<IndexableEntityType, BaseEntityFetcherMain<any, any, any>>
     >,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(blockchainId, fetcherClient, entityFetchers)
   }

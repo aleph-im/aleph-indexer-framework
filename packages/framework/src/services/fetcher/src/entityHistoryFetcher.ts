@@ -11,7 +11,7 @@ import {
 import { FetcherMsClient } from '../client.js'
 import { PendingAccountStorage } from './dal/account.js'
 import { FetcherPool } from './fetcherPool.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 import { BaseHistoryFetcher } from './baseHistoryFetcher.js'
 import {
   AccountEntityHistoryDALIndex,
@@ -37,8 +37,8 @@ export abstract class BaseEntityHistoryFetcher<
    * @param accountDAL The account job storage.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected type: IndexableEntityType,
-    protected blockchainId: Blockchain,
     protected fetcherClient: FetcherMsClient,
     protected accountDAL: PendingAccountStorage,
     protected accountEntityHistoryDAL: AccountEntityHistoryStorage<HE>,

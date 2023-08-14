@@ -7,7 +7,11 @@ import {
   GetEntityPendingRequestsRequestArgs,
   IndexerMainDomainContext,
 } from '../../../services/indexer/src/types.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import {
+  BlockchainId,
+  IndexableEntityType,
+  getBlockchainConfig,
+} from '../../../types.js'
 import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
@@ -30,7 +34,7 @@ export type IndexerMainDomainWithStats = {
    * @param filters The transformations and clipping to apply to the time-series.
    */
   getAccountTimeSeriesStats(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     accounts: string[],
     type: string,
     filters: AccountStatsFilters,
@@ -40,7 +44,7 @@ export type IndexerMainDomainWithStats = {
    * @param accounts The accounts to get the summary from.
    */
   getAccountStats(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     accounts: string[],
   ): Promise<AccountStats[]>
 }
@@ -76,16 +80,18 @@ export type IndexerMainDomainConfig = {
 export abstract class IndexerMainDomain {
   protected discoverJob: Utils.JobRunner | undefined
   protected statsJob: Utils.JobRunner | undefined
-  protected accounts: Record<Blockchain, Set<string>>
+  protected accounts: Record<BlockchainId, Set<string>>
 
   constructor(
     protected context: IndexerMainDomainContext,
     protected baseConfig?: IndexerMainDomainConfig,
   ) {
     this.accounts = this.context.supportedBlockchains.reduce((acc, curr) => {
-      acc[curr] = new Set<string>()
+      const { id } = getBlockchainConfig(curr)
+
+      acc[id] = new Set<string>()
       return acc
-    }, {} as Record<Blockchain, Set<string>>)
+    }, {} as Record<BlockchainId, Set<string>>)
 
     if (typeof baseConfig?.discoveryInterval === 'number') {
       this.discoverJob = new Utils.JobRunner({
@@ -152,7 +158,7 @@ export abstract class IndexerMainDomain {
    * @param accounts The accounts to get the state from.
    */
   async getAccountState(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
     accounts: string[] = [],
   ): Promise<AccountIndexerState[]> {
@@ -174,7 +180,7 @@ export abstract class IndexerMainDomain {
    * @param filters The transformations and clipping to apply to the time-series.
    */
   async getAccountTimeSeriesStats<V>(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     accounts: string[] = [],
     type: string,
     filters: AccountStatsFilters,
@@ -203,7 +209,7 @@ export abstract class IndexerMainDomain {
    * @param accounts The accounts to get the summary from.
    */
   async getAccountStats<V>(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     accounts: string[] = [],
   ): Promise<AccountStats<V>[]> {
     this.checkStats()
@@ -226,7 +232,7 @@ export abstract class IndexerMainDomain {
   }
 
   protected getBlockchainAccounts(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     accounts: string[] = [],
   ): string[] {
     const accountsSet = this.accounts[blockchainId]
@@ -287,7 +293,7 @@ export abstract class IndexerMainDomain {
     if (!this.checkStats()) return
 
     const now = Date.now()
-    const blockchains = Object.keys(this.accounts) as Blockchain[]
+    const blockchains = Object.keys(this.accounts) as BlockchainId[]
 
     await Promise.all(
       blockchains.map(async (blockchainId) => {

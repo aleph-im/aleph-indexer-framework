@@ -3,7 +3,7 @@ import { StorageValueStream } from '@aleph-indexer/core'
 import { TimeFrame } from '../time.js'
 import { TimeSeriesStats } from './timeSeries.js'
 import { StatsTimeSeriesStorage } from './dal/statsTimeSeries.js'
-import { Blockchain, IndexableEntityType } from '../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../types.js'
 
 export type PrevValueFactoryFnArgs = {
   account: string
@@ -92,7 +92,7 @@ export type AccountTimeSeriesStatsConfig<V> = {
   /**
    * The blockchain that this aggregator uses.
    */
-  blockchainId: Blockchain
+  blockchainId: BlockchainId
   /**
    * The type of events/entities that this aggregator processes.
    */

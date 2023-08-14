@@ -1,5 +1,8 @@
 import { GraphQLEnumType, GraphQLString } from 'graphql'
-import { Blockchain as BC, IndexableEntityType as IET } from '../../types.js'
+import {
+  BlockchainChain as BC,
+  IndexableEntityType as IET,
+} from '../../types.js'
 
 // Time
 export const GraphQLTimeInfo = GraphQLString

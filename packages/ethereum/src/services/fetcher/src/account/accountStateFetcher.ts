@@ -1,4 +1,4 @@
-import { Blockchain } from '@aleph-indexer/framework'
+import { BlockchainId } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../../sdk/client.js'
 import {
   EthereumAccountStateFetcherOptions,
@@ -18,10 +18,10 @@ export class EthereumAccountStateFetcher {
    * @param id Identifier containing the account address.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected opts: EthereumAccountStateFetcherOptions,
     protected dal: EthereumAccountStateStorage,
     protected ethereumClient: EthereumClient,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
     protected id = `${blockchainId}:account-state:${opts.account}`,
   ) {}
 

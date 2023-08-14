@@ -15,7 +15,7 @@ import {
 } from './src/types.js'
 import { FetcherMsClient } from './client.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
-import { Blockchain } from '../../types.js'
+import { BlockchainId } from '../../types.js'
 
 /**
  * The main class of the fetcher service.
@@ -30,7 +30,7 @@ export class FetcherMsMain implements FetcherMsI {
    */
   constructor(
     protected fetcherClient: FetcherMsClient,
-    protected blockchains: Record<Blockchain, BlockchainFetcherI>,
+    protected blockchains: Record<BlockchainId, BlockchainFetcherI>,
   ) {}
 
   /**
@@ -140,7 +140,7 @@ export class FetcherMsMain implements FetcherMsI {
   }
 
   protected getBlockchainInstance(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
   ): BlockchainFetcherI {
     const instance = this.blockchains[blockchainId]
 

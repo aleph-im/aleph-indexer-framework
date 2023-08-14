@@ -1,7 +1,7 @@
 import {
   BaseStateFetcher,
   BaseStateFetcherI,
-  Blockchain,
+  BlockchainId,
   PendingAccountStorage,
 } from '@aleph-indexer/framework'
 import { SolanaRPC } from '../../../sdk/client.js'
@@ -19,12 +19,13 @@ export class SolanaStateFetcher extends BaseStateFetcher {
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
     protected accountStateDAL: SolanaAccountStateStorage,
     ...args: [PendingAccountStorage]
   ) {
-    super(Blockchain.Solana, ...args)
+    super(blockchainId, ...args)
   }
 
   protected getAccountFetcher(account: string): BaseStateFetcherI {
@@ -34,6 +35,7 @@ export class SolanaStateFetcher extends BaseStateFetcher {
     }
 
     return new SolanaAccountStateFetcher(
+      this.blockchainId,
       opts,
       this.accountStateDAL,
       this.solanaRpc,

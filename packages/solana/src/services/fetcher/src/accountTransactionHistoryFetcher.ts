@@ -4,6 +4,7 @@ import { Utils } from '@aleph-indexer/core'
 import {
   BaseFetcherPaginationCursors,
   BaseHistoryFetcher,
+  BlockchainId,
   FetcherJobRunnerHandleFetchResult,
   FetcherStateLevelStorage,
 } from '@aleph-indexer/framework'
@@ -39,6 +40,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
    * @param times The number of times to fetch signatures.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected address: string,
     protected dal: SolanaAccountTransactionHistoryStorage,
     protected solanaRpc: SolanaRPC,
@@ -48,7 +50,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
   ) {
     super(
       {
-        id: `solana:account-signature-history:${address}`,
+        id: `${blockchainId}:account-signature-history:${address}`,
         jobs: {
           forward: {
             times,
@@ -176,9 +178,9 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       {}
 
     console.log(`
-      solana transaction | fetchSignatures [${
-        goingForward ? 'forward' : 'backward'
-      }] { 
+      ${this.blockchainId} transaction | fetchSignatures [${
+      goingForward ? 'forward' : 'backward'
+    }] { 
         address: ${address}
         useHistoricRPC: ${rpc === this.solanaMainPublicRpc}
       }
@@ -220,7 +222,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const newDuration = Duration.fromMillis(newInterval).toISOTime() || '+24h'
 
     console.log(
-      `solana transaction | fetchForward ratio: {
+      `${this.blockchainId} transaction | fetchForward ratio: {
         target: ${this.forwardRatio}
         current: ${count}
         factor: ${ratioFactor.toFixed(2)}
@@ -243,7 +245,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     sigOffset: number,
   ): Promise<void> {
     console.log(
-      `solana transaction | [${this.options.id} ${
+      `${this.blockchainId} transaction | [${this.options.id} ${
         goingForward ? '⏩' : '⏪'
       }] signatures received ${signatures.length}`,
       `

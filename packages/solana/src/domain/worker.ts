@@ -7,6 +7,7 @@ import {
   EntityDateRangeResponse,
   IndexableEntityType,
   ParserContext,
+  BlockchainId,
 } from '@aleph-indexer/framework'
 import {
   SolanaParsedTransaction,
@@ -162,6 +163,7 @@ export default class SolanaIndexerWorkerDomain {
 }
 
 export async function solanaWorkerDomainFactory(
+  blockchainId: BlockchainId,
   context: IndexerDomainContext,
   hooks: SolanaIndexerWorkerDomainI,
 ): Promise<BlockchainIndexerWorkerI<SolanaParsedTransaction>> {

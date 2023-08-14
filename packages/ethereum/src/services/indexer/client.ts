@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseIndexerClient,
-  Blockchain,
+  BlockchainId,
   IndexerClientI,
 } from '@aleph-indexer/framework'
 import { normalizeAccount, normalizeEntityId } from '../../utils/normalize.js'
@@ -17,7 +17,7 @@ export class EthereumIndexerClient
 }
 
 export async function ethereumIndexerClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<IndexerClientI> {
   return new EthereumIndexerClient(blockchainId, broker)

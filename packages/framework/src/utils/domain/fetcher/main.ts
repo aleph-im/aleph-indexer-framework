@@ -5,7 +5,7 @@ import {
   FetcherState,
   EntityState,
 } from '../../../services/fetcher/src/types.js'
-import { Blockchain, IndexableEntityType } from '../../../types.js'
+import { BlockchainId, IndexableEntityType } from '../../../types.js'
 
 /**
  * The main fetcher domain class.
@@ -24,7 +24,7 @@ export class FetcherMainDomain {
    * @param blockchainId The blockchain id to get the blockchain fetcher instance
    */
   async getFetcherState(
-    blockchainId: Blockchain[] = this.context.apiClient.getAllBlockchains(),
+    blockchainId: BlockchainId[] = this.context.apiClient.getAllBlockchains(),
     type: IndexableEntityType[] = Object.values(IndexableEntityType),
     fetchers: string[] = this.context.apiClient.getAllFetchers(),
   ): Promise<FetcherState[]> {
@@ -46,7 +46,7 @@ export class FetcherMainDomain {
    * @param accounts The accounts of which to get the fetchers.
    */
   async getAccountEntityFetcherState<T>(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
     accounts: string[] = [],
   ): Promise<AccountEntityHistoryState<T>[]> {
@@ -66,7 +66,7 @@ export class FetcherMainDomain {
    * @param signatures The signatures of the transactions to get the state for.
    */
   async getEntityState(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
     ids: string[] = [],
   ): Promise<EntityState[]> {
@@ -80,7 +80,7 @@ export class FetcherMainDomain {
    * @param signatures The txn signatures to delete the cache for.
    */
   async delEntityCache(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
     type: IndexableEntityType,
     ids: string[] = [],
   ): Promise<boolean> {

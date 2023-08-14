@@ -1,7 +1,7 @@
 import { ServiceBroker } from 'moleculer'
 import {
   BaseFetcherClient,
-  Blockchain,
+  BlockchainId,
   FetcherClientI,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
@@ -38,7 +38,7 @@ export default class SolanaFetcherClient
 }
 
 export async function solanaFetcherClientFactory(
-  blockchainId: Blockchain,
+  blockchainId: BlockchainId,
   broker: ServiceBroker,
 ): Promise<FetcherClientI> {
   return new SolanaFetcherClient(blockchainId, broker)

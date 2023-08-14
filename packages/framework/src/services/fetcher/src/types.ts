@@ -1,5 +1,5 @@
 import { Utils } from '@aleph-indexer/core'
-import { Blockchain, IndexableEntityType, RawEntity } from '../../../types.js'
+import { BlockchainId, IndexableEntityType, RawEntity } from '../../../types.js'
 import { BlockchainRequestArgs } from '../../types.js'
 import { FetcherMsClient } from '../client.js'
 
@@ -82,8 +82,8 @@ export type BaseFetcherState<C> = {
 
 export type AccountEntityHistoryState<C> = {
   fetcher: string
+  blockchain: BlockchainId
   type: IndexableEntityType
-  blockchain: Blockchain
   account: string
   completeHistory: boolean
   firstTimestamp?: number
@@ -113,7 +113,7 @@ export type AccountEntityFetcherMainState = EntityFetcherState &
   }
 
 export type FetcherState<T = any> = (AccountEntityFetcherMainState & {
-  blockchain: Blockchain
+  blockchain: BlockchainId
   fetcher: string
   type: IndexableEntityType
   data?: T
@@ -196,7 +196,7 @@ export type FetcherStateRequestArgs = Omit<
   FetcherPartitionRequestArgs,
   'blockchainId'
 > & {
-  blockchainId?: Blockchain[]
+  blockchainId?: BlockchainId[]
   type?: IndexableEntityType[]
 }
 

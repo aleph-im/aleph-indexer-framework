@@ -38,7 +38,7 @@ export type WorkerInfo = {
    */
   projectId: string
   /**
-   * Supported blockchains (default: solana)
+   * Supported blockchains
    */
   supportedBlockchains: Blockchain[]
   /**

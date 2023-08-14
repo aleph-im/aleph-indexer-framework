@@ -1,6 +1,6 @@
 import {
   BaseEntityFetcher,
-  Blockchain,
+  BlockchainId,
   IndexableEntityType,
   PendingEntityStorage,
 } from '@aleph-indexer/framework'
@@ -14,17 +14,17 @@ import { EthereumRawLogStorage } from './dal/rawLog.js'
  */
 export class EthereumLogFetcher extends BaseEntityFetcher<EthereumRawLog> {
   constructor(
+    protected blockchainId: BlockchainId,
     protected ethereumClient: EthereumClient,
     protected broker: ServiceBroker,
     protected pendingLogDAL: PendingEntityStorage,
     protected pendingLogCacheDAL: PendingEntityStorage,
     protected pendingLogFetchDAL: PendingEntityStorage,
     protected rawLogDAL: EthereumRawLogStorage,
-    protected blockchainId: Blockchain = Blockchain.Ethereum,
   ) {
     super(
-      IndexableEntityType.Log,
       blockchainId,
+      IndexableEntityType.Log,
       broker,
       pendingLogDAL,
       pendingLogCacheDAL,

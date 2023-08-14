@@ -5,6 +5,7 @@ import {
   SolanaAccountStateStorage,
 } from './types.js'
 import { SolanaRPC } from '../../../sdk/client.js'
+import { BlockchainId } from '@aleph-indexer/framework'
 
 // @todo: REFACTOR
 
@@ -25,11 +26,12 @@ export class SolanaAccountStateFetcher {
    * @param id Identifier containing the account address.
    */
   constructor(
+    protected blockchainId: BlockchainId,
     protected opts: SolanaAccountStateFetcherOptions,
     protected accountStateDAL: SolanaAccountStateStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
-    protected id = `solana:account-state:${opts.account}`,
+    protected id = `${blockchainId}:account-state:${opts.account}`,
   ) {
     this.debouncedJob = new Utils.DebouncedJob<AccountInfo<Buffer>>(
       async (accountInfo) => {

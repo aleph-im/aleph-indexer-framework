@@ -1,5 +1,5 @@
 import { ServiceBroker } from 'moleculer'
-import { Blockchain } from '../../types.js'
+import { BlockchainId } from '../../types.js'
 import {
   MsIds,
   getRegistryNodesWithService,
@@ -18,11 +18,11 @@ export class FetcherMsClient {
    */
   constructor(
     protected broker: ServiceBroker,
-    protected blockchains: Record<Blockchain, FetcherClientI>,
+    protected blockchains: Record<BlockchainId, FetcherClientI>,
     protected msId: MsIds = MsIds.Fetcher,
   ) {}
 
-  useBlockchain(blockchainId: Blockchain): FetcherClientI {
+  useBlockchain(blockchainId: BlockchainId): FetcherClientI {
     return this.getBlockchainClientInstance(blockchainId)
   }
 
@@ -38,8 +38,8 @@ export class FetcherMsClient {
     return getRegistryNodesWithService(this.broker, this.msId)
   }
 
-  getAllBlockchains(): Blockchain[] {
-    return Object.keys(this.blockchains) as Blockchain[]
+  getAllBlockchains(): BlockchainId[] {
+    return Object.keys(this.blockchains) as BlockchainId[]
   }
 
   getNodeId(): string {
@@ -53,7 +53,7 @@ export class FetcherMsClient {
   }
 
   protected getBlockchainClientInstance(
-    blockchainId: Blockchain,
+    blockchainId: BlockchainId,
   ): FetcherClientI {
     const instance = this.blockchains[blockchainId]
 
