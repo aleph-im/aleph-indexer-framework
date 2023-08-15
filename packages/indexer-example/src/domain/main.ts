@@ -20,6 +20,7 @@ export default class MainDomain
     const alephTokenEth = '0x27702a26126e0b3702af63ee09ac4d1a084ef628'
     const alephTokenBsc = '0x82D2f8E02Afb160Dd5A480a617692e62de9038C4'
     const OAXTokenOasys = '0x4688e596fb8ffaa9f7c1f02985b44651cf642123'
+    const contractHomeverse = '0x7aB9B14Eb42913fe48AC01f3BB453cA7BEf343EA'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
 
     const accountIndexerConfigs = []
@@ -69,7 +70,7 @@ export default class MainDomain
         },
       })
 
-    if (this.context.supportedBlockchains.includes(BlockchainChain.Oasys))
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Oasys)) {
       accountIndexerConfigs.push({
         blockchainId: BlockchainChain.Oasys,
         account: OAXTokenOasys,
@@ -80,6 +81,18 @@ export default class MainDomain
           logs: true,
         },
       })
+
+      accountIndexerConfigs.push({
+        blockchainId: 'homeverse',
+        account: contractHomeverse,
+        meta: 4,
+        index: {
+          transactions: false,
+          state: false,
+          logs: true,
+        },
+      })
+    }
 
     return accountIndexerConfigs
   }

@@ -62,6 +62,7 @@
     "packages/framework",
     "packages/indexer-example",
     "packages/solana",
-    "packages/oasys"
+    "packages/oasys",
+    "packages/oasys-verse"
   ]
 }

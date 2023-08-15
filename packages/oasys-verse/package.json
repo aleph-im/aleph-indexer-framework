@@ -1,0 +1,31 @@
+{
+  "name": "@aleph-indexer/oasys-verse",
+  "version": "1.0.43",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.js",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ALEPH.im",
+  "license": "ISC",
+  "peerDependencies": {
+    "@aleph-indexer/oasys": "1.x"
+  },
+  "dependencies": {
+    "@aleph-indexer/oasys": "^1.0.42"
+  },
+  "typedoc": {
+    "entryPoint": "./index.ts",
+    "displayName": "Oasys Verse Indexer Framework"
+  }
+}

@@ -46,20 +46,21 @@ export class EthereumIndexerWorkerDomain {
   ): Promise<void> {
     const { entities, ...context } = response
 
-    const filterTransaction = this.hooks[
-      `${this.blockchainId}FilterTransaction`
-    ].bind(this.hooks, context)
+    const filterTransaction = this.getBlockchainMethod(
+      'filter-transaction',
+    ).bind(this.hooks, context)
 
-    const indexTransactions = this.hooks[
-      `${this.blockchainId}IndexTransactions`
-    ].bind(this.hooks, context)
+    const indexTransactions = this.getBlockchainMethod(
+      'index-transactions',
+    ).bind(this.hooks, context)
+
+    const transactionsBuffer =
+      this.getBlockchainMethod('transaction-buffer-length', false) || 1000
 
     await promisify(pipeline)(
       entities,
       new StreamFilter(filterTransaction),
-      new StreamBuffer(
-        this.hooks[`${this.blockchainId}TransactionBufferLength`] || 1000,
-      ),
+      new StreamBuffer(transactionsBuffer),
       new StreamMap(indexTransactions),
     )
   }
@@ -69,59 +70,69 @@ export class EthereumIndexerWorkerDomain {
   ): Promise<void> {
     const { entities, ...context } = response
 
-    const filterLog = this.hooks[`${this.blockchainId}FilterLog`].bind(
+    const filterLog = this.getBlockchainMethod('filter-log').bind(
       this.hooks,
       context,
     )
 
-    const indexLogs = this.hooks[`${this.blockchainId}IndexLogs`].bind(
+    const indexLogs = this.getBlockchainMethod('index-logs').bind(
       this.hooks,
       context,
     )
+
+    const logsBuffer =
+      this.getBlockchainMethod('log-buffer-length', false) || 1000
 
     await promisify(pipeline)(
       entities,
       new StreamFilter(filterLog),
-      new StreamBuffer(
-        this.hooks[`${this.blockchainId}LogBufferLength`] || 1000,
-      ),
+      new StreamBuffer(logsBuffer),
       new StreamMap(indexLogs),
     )
   }
 
   protected checkEthereumIndexerHooks(): void {
-    if (
-      (this.hooks[`${this.blockchainId}FilterTransaction`] === undefined ||
-        this.hooks[`${this.blockchainId}IndexTransactions`] === undefined) &&
-      (this.hooks[`${this.blockchainId}FilterLog`] === undefined ||
-        this.hooks[`${this.blockchainId}IndexLogs`] === undefined)
-    ) {
+    const hasSomeMethod = [
+      'filter-transaction',
+      'index-transactions',
+      'filter-log',
+      'index-logs',
+    ].some((method) => this.getBlockchainMethod(method, false))
+
+    if (!hasSomeMethod) {
       throw new Error(
-        `${this.blockchainId}IndexerWorkerDomainI must be implemented on WorkerDomain class`,
+        `${Utils.capitalize(
+          Utils.toCamelCase(this.blockchainId),
+        )}IndexerWorkerDomainI interface must be implemented on WorkerDomain class`,
       )
     }
   }
 
   protected checkEthereumTransactionIndexerHooks(): void {
-    if (
-      this.hooks[`${this.blockchainId}FilterTransaction`] === undefined ||
-      this.hooks[`${this.blockchainId}IndexTransactions`] === undefined
-    ) {
-      throw new Error(
-        `${this.blockchainId}TransactionIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class`,
-      )
-    }
+    ;['filter-transaction', 'index-transactions'].every((method) =>
+      this.getBlockchainMethod(method),
+    )
   }
 
   protected checkEthereumLogIndexerHooks(): void {
-    if (
-      this.hooks[`${this.blockchainId}FilterLog`] === undefined ||
-      this.hooks[`${this.blockchainId}IndexLogs`] === undefined
-    ) {
+    ;['filter-log', 'index-logs'].every((method) =>
+      this.getBlockchainMethod(method),
+    )
+  }
+
+  protected getBlockchainMethod(name: string, mandatory = true): any {
+    const methodName = Utils.toCamelCase(`${this.blockchainId}-${name}`)
+    const method = this.hooks[methodName]
+
+    if (mandatory && !method) {
       throw new Error(
-        `${this.blockchainId}LogIndexerWorkerDomainI or EthereumIndexerWorkerDomainI must be implemented on WorkerDomain class`,
+        `${methodName} method not found on the IndexerWorkerDomain class. ${Utils.capitalize(
+          Utils.toCamelCase(this.blockchainId),
+        )}IndexerWorkerDomainI interface must be implemented on WorkerDomain class`,
       )
     }
+
+    return method
   }
 }
 

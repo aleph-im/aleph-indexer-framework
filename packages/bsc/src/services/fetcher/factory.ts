@@ -1,10 +1,11 @@
 /* eslint-disable prettier/prettier */
 import { ServiceBroker } from 'moleculer'
-import { config, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   FetcherMsClient,
-  BlockchainId
+  BlockchainId,
+  getBlockchainEnv
 } from '@aleph-indexer/framework'
 import { ethereumDalsFetcherFactory, ethereumFetcherInstanceFactory } from '@aleph-indexer/ethereum'
 import { BscClient } from '../../sdk/index.js'
@@ -12,11 +13,7 @@ import { BscClient } from '../../sdk/index.js'
 export function bscClientFetcherFactory(
   blockchainId: BlockchainId,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const ENV = `${BLOCKCHAIN_ID}_RPC`
-
-  const url = config[ENV]
-  if (!url) throw new Error(`${ENV} not configured`)
+  const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
   return new BscClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }

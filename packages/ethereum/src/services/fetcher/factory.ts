@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ServiceBroker } from 'moleculer'
-import { config, Utils } from '@aleph-indexer/core'
+import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   createPendingAccountDAL,
@@ -11,7 +11,8 @@ import {
   FetcherMsClient,
   IndexableEntityType,
   BaseEntityFetcherMain,
-  BlockchainId
+  BlockchainId,
+  getBlockchainEnv
 } from '@aleph-indexer/framework'
 import { EthereumFetcher } from './main.js'
 import { createEthereumRawBlockDAL as createEthereumRawBlockDAL } from './src/block/dal/rawBlock.js'
@@ -57,11 +58,7 @@ export function ethereumClientFetcherFactory(
   blockchainId: BlockchainId,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
 ): EthereumClient {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const ENV = `${BLOCKCHAIN_ID}_RPC`
-
-  const url = config[ENV]
-  if (!url) throw new Error(`${ENV} not configured`)
+  const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
   return new EthereumClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
 }
@@ -69,12 +66,14 @@ export function ethereumClientFetcherFactory(
 // @todo: Refactor and pass the vars through SDK.init extended config
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function ethereumConfigFactory(blockchainId: BlockchainId) {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
+  const indexRawBlocks = getBlockchainEnv(blockchainId, 'INDEX_BLOCKS', false) === 'true'
+  const indexAccountTransactionHistory = getBlockchainEnv(blockchainId, 'INDEX_TRANSACTIONS', false) !== 'false'
+  const indexAccountLogHistory = getBlockchainEnv(blockchainId, 'INDEX_LOGS', false) !== 'false'
 
   return {
-    indexRawBlocks: config[`${BLOCKCHAIN_ID}_INDEX_BLOCKS`] === 'true', // default false
-    indexAccountTransactionHistory: config[`${BLOCKCHAIN_ID}_INDEX_TRANSACTIONS`] !== 'false', // default true
-    indexAccountLogHistory: config[`${BLOCKCHAIN_ID}_INDEX_LOGS`] !== 'false', // default true
+    indexRawBlocks, // default false
+    indexAccountTransactionHistory, // default true
+    indexAccountLogHistory, // default true
   }
 }
 

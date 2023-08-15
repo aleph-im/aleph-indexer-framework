@@ -150,4 +150,37 @@ export default class WorkerDomain
   ): Promise<void> {
     console.log('Index oasys log', JSON.stringify(entities, null, 2))
   }
+
+  // Homeverse
+
+  async homeverseFilterTransaction(
+    context: ParserContext,
+    entity: EthereumParsedTransaction,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async homeverseIndexTransactions(
+    context: ParserContext,
+    entities: EthereumParsedTransaction[],
+  ): Promise<void> {
+    console.log(
+      'Index homeverse transaction',
+      JSON.stringify(entities, null, 2),
+    )
+  }
+
+  async homeverseFilterLog(
+    context: ParserContext,
+    entity: EthereumParsedLog,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async homeverseIndexLogs(
+    context: ParserContext,
+    entities: EthereumParsedLog[],
+  ): Promise<void> {
+    console.log('Index homeverse log', JSON.stringify(entities, null, 2))
+  }
 }

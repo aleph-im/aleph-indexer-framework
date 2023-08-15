@@ -77,9 +77,8 @@ INDEXER_FRAMEWORK_DATA_PATH
 # To specify a custom ethereum RPC node (*mandatory*)
 ETHEREUM_RPC
 
-# Custom etherscan api key for avoiding rate limits
-# This is used as fallback for getting contract ABIs (optional)
-ETHEREUM_SCAN_API_KEY
+# Custom etherscan url to get contract abis (*mandatory*)
+ETHEREUM_EXPLORER_URL
 
 # Feature flag for storing blocks in cache (default "false") 
 ETHEREUM_INDEX_BLOCKS

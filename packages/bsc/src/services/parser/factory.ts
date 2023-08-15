@@ -1,37 +1,15 @@
 /* eslint-disable prettier/prettier */
-import path from 'path'
-import { config, Utils } from '@aleph-indexer/core'
-import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
-import {ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
+import { BlockchainId, BlockchainParserI, getBlockchainEnv } from '@aleph-indexer/framework'
+import {ethereumAbiParserFactory, ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
 import { BscClient } from '../../sdk/index.js'
 import { BscParsedTransaction, BscRawTransaction } from './src/types.js'
-import { BscAbiFactory } from './src/abiFactory.js'
 
 export function bscClientParserFactory(
   blockchainId: BlockchainId,
 ): BscClient {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const ENV = `${BLOCKCHAIN_ID}_RPC`
-
-  const url = config[ENV]
-  if (!url) throw new Error(`${ENV} not configured`)
+  const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
   return new BscClient(blockchainId, { url })
-}
-
-export async function bscAbiParserFactory(
-  blockchainId: BlockchainId,
-  bscClient: BscClient,
-  basePath: string,
-  layoutPath?: string,
-): Promise<BscAbiFactory> {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const scanAPIKey = config[`${BLOCKCHAIN_ID}_SCAN_API_KEY`]
-
-  const abiBasePath = layoutPath || path.join(basePath, 'abi')
-  await Utils.ensurePath(abiBasePath)
-
-  return new BscAbiFactory(blockchainId, abiBasePath, bscClient, scanAPIKey)
 }
 
 export async function bscParserFactory(
@@ -46,7 +24,7 @@ export async function bscParserFactory(
 > {
   const bscClient = bscClientParserFactory(blockchainId)
 
-  const bscAbiFactory = await bscAbiParserFactory(
+  const bscAbiFactory = await ethereumAbiParserFactory(
     blockchainId,
     bscClient,
     basePath,
@@ -54,6 +32,7 @@ export async function bscParserFactory(
   )
 
   return ethereumParserInstanceFactory(
+    blockchainId,
     bscClient,
     bscAbiFactory,
   )

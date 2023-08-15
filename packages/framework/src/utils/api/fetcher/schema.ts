@@ -43,7 +43,9 @@ export class FetcherAPISchema extends GraphQLSchema {
           accountState: {
             type: Types.GraphQLAccountEntityFetcherStateList,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              blockchain: {
+                type: new GraphQLNonNull(Types.GraphQLBlockchain),
+              },
               type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               account: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
@@ -60,7 +62,9 @@ export class FetcherAPISchema extends GraphQLSchema {
           entityState: {
             type: Types.GraphQLEntityStateList,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              blockchain: {
+                type: new GraphQLNonNull(Types.GraphQLBlockchain),
+              },
               type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
@@ -77,7 +81,9 @@ export class FetcherAPISchema extends GraphQLSchema {
           deleteEntityCache: {
             type: GraphQLBoolean,
             args: {
-              blockchain: { type: new GraphQLNonNull(Types.GraphQLBlockchain) },
+              blockchain: {
+                type: new GraphQLNonNull(Types.GraphQLBlockchain),
+              },
               type: { type: new GraphQLNonNull(Types.GraphQLEntityType) },
               id: {
                 type: new GraphQLNonNull(new GraphQLList(GraphQLString)),

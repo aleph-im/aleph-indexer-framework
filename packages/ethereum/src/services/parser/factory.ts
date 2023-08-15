@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import path from 'path'
-import { config, Utils } from '@aleph-indexer/core'
-import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
+import { Utils } from '@aleph-indexer/core'
+import { BlockchainId, BlockchainParserI, getBlockchainEnv } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../sdk/index.js'
 import { EthereumRawTransaction } from '../../types.js'
 import { EthereumParser } from './main.js'
@@ -14,11 +14,7 @@ import { EthereumLogParser } from './src/logParser.js'
 export function ethereumClientParserFactory(
   blockchainId: BlockchainId,
 ): EthereumClient {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const ENV = `${BLOCKCHAIN_ID}_RPC`
-
-  const url = config[ENV]
-  if (!url) throw new Error(`${ENV} not configured`)
+  const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
   return new EthereumClient(blockchainId, { url })
 }
@@ -29,16 +25,21 @@ export async function ethereumAbiParserFactory(
   basePath: string,
   layoutPath?: string,
 ): Promise<EthereumAbiFactory> {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const scanAPIKey = config[`${BLOCKCHAIN_ID}_SCAN_API_KEY`]
+  const explorerURL = getBlockchainEnv(blockchainId, 'EXPLORER_URL', true)
 
   const abiBasePath = layoutPath || path.join(basePath, 'abi')
   await Utils.ensurePath(abiBasePath)
 
-  return new EthereumAbiFactory(blockchainId, abiBasePath, ethereumClient, scanAPIKey)
+  return new EthereumAbiFactory(
+    blockchainId,
+    abiBasePath,
+    ethereumClient,
+    explorerURL
+  )
 }
 
 export async function ethereumParserInstanceFactory(
+  blockchainId: BlockchainId,
   ethereumClient: EthereumClient,
   abiFactory: EthereumAbiFactory
 ): Promise<
@@ -48,8 +49,8 @@ export async function ethereumParserInstanceFactory(
   >
 > {
   const ethereumAccountStateParser = new EthereumAccountStateParser()
-  const ethereumTransactionParser = new EthereumTransactionParser(abiFactory, ethereumClient)
-  const ethereumLogParser = new EthereumLogParser(abiFactory, ethereumClient)
+  const ethereumTransactionParser = new EthereumTransactionParser(blockchainId, abiFactory, ethereumClient)
+  const ethereumLogParser = new EthereumLogParser(blockchainId, abiFactory, ethereumClient)
 
   return new EthereumParser(
     ethereumTransactionParser,
@@ -78,6 +79,7 @@ export async function ethereumParserFactory(
   )
 
   return ethereumParserInstanceFactory(
+    blockchainId,
     ethereumClient,
     ethereumAbiFactory,
   )

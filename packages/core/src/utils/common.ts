@@ -118,3 +118,26 @@ export async function arrayFromAsyncIterator<T>(
   for await (const item of iterable) arr.push(item)
   return arr
 }
+
+export function toSnakeCase(input: string): string {
+  return toKebabCase(input).replace(/-/g, '_')
+}
+
+export function toKebabCase(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_\\-]/g, '')
+    .replace(/_/g, '-')
+}
+
+export function toCamelCase(input: string): string {
+  return toKebabCase(input).replace(/[-]+(.)?/g, (_, c) =>
+    c ? c.toUpperCase() : '',
+  )
+}
+
+export function capitalize(input: string): string {
+  if (input.length === 0) return input
+  return input.charAt(0).toUpperCase() + input.slice(1)
+}

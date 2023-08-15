@@ -1,34 +1,15 @@
 /* eslint-disable prettier/prettier */
-import path from 'path'
-import { config, Utils } from '@aleph-indexer/core'
-import { BlockchainId, BlockchainParserI } from '@aleph-indexer/framework'
-import {ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
+import { BlockchainId, BlockchainParserI, getBlockchainEnv } from '@aleph-indexer/framework'
+import {ethereumAbiParserFactory, ethereumParserInstanceFactory } from '@aleph-indexer/ethereum'
 import { OasysClient } from '../../sdk/index.js'
 import { OasysParsedTransaction, OasysRawTransaction } from './src/types.js'
-import { OasysAbiFactory } from './src/abiFactory.js'
 
 export function oasysClientParserFactory(
   blockchainId: BlockchainId,
 ): OasysClient {
-  const BLOCKCHAIN_ID = blockchainId.toUpperCase()
-  const ENV = `${BLOCKCHAIN_ID}_RPC`
-
-  const url = config[ENV]
-  if (!url) throw new Error(`${ENV} not configured`)
+  const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
   return new OasysClient(blockchainId, { url })
-}
-
-export async function oasysAbiParserFactory(
-  blockchainId: BlockchainId,
-  oasysClient: OasysClient,
-  basePath: string,
-  layoutPath?: string,
-): Promise<OasysAbiFactory> {
-  const abiBasePath = layoutPath || path.join(basePath, 'abi')
-  await Utils.ensurePath(abiBasePath)
-
-  return new OasysAbiFactory(blockchainId, abiBasePath, oasysClient, undefined)
 }
 
 export async function oasysParserFactory(
@@ -43,7 +24,7 @@ export async function oasysParserFactory(
 > {
   const oasysClient = oasysClientParserFactory(blockchainId)
 
-  const oasysAbiFactory = await oasysAbiParserFactory(
+  const oasysAbiFactory = await ethereumAbiParserFactory(
     blockchainId,
     oasysClient,
     basePath,
@@ -51,6 +32,7 @@ export async function oasysParserFactory(
   )
 
   return ethereumParserInstanceFactory(
+    blockchainId,
     oasysClient,
     oasysAbiFactory,
   )

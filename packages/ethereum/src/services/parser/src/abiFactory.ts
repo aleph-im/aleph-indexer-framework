@@ -13,7 +13,7 @@ export class EthereumAbiFactory {
     protected blockchainId: BlockchainId,
     protected basePath: string,
     protected ethereumClient: EthereumClient,
-    protected apiKey: string | undefined,
+    protected explorerUrl: string,
   ) {}
 
   async getAbi(address: string): Promise<Abi | undefined> {
@@ -82,9 +82,7 @@ export class EthereumAbiFactory {
   }
 
   protected getRemoteUrl(address: string): string {
-    return `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}${
-      this.apiKey ? `&apikey=${this.apiKey}` : ''
-    }`
+    return this.explorerUrl.replaceAll('$ADDRESS', address)
   }
 
   protected log(...msgs: any[]): void {

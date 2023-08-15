@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ServiceBroker } from 'moleculer'
+import { config, Utils } from '@aleph-indexer/core'
 import {
   BlockchainFetcherI,
   FetcherClientI,
@@ -49,8 +50,9 @@ export type BlockchainId = string
 export enum BlockchainChain {
   Ethereum = 'ethereum',
   Bsc = 'bsc',
-  Oasys = 'oasys',
   Solana = 'solana',
+  Oasys = 'oasys',
+  OasysVerse = 'oasys-verse',
 }
 
 export type BlockchainConfig = {
@@ -145,10 +147,33 @@ export function getBlockchainConfig(blockchain: Blockchain): BlockchainConfig {
     ) as [BlockchainChain, string]
 
     if (!Object.values(BlockchainChain).includes(chain as BlockchainChain))
-      throw new Error(`Module not found, try: npm i @aleph-indexer/${chain}`)
+      throw new Error(
+        `Blockchain module not found, try installing it running "npm i @aleph-indexer/${chain}"\nSupported chains are:\n${Object.values(
+          BlockchainChain,
+        ).join('\n')}`,
+      )
+
+    const parsedId = Utils.toKebabCase(id)
+    if (parsedId !== id)
+      throw new Error(
+        `Blockchain id should be specified in kebab-case format (${parsedId} instead of ${id})`,
+      )
 
     return { chain, id }
   }
 
   return blockchain
+}
+
+export function getBlockchainEnv<M extends boolean>(
+  blockchainId: BlockchainId,
+  name: string,
+  mandatory: M,
+): M extends false ? string | undefined : string {
+  const ENV = Utils.toSnakeCase(`${blockchainId}_${name}`).toUpperCase()
+
+  const value = config[ENV]
+  if (mandatory && !value) throw new Error(`mandatory env var "${ENV}" not set`)
+
+  return value as M extends false ? string | undefined : string
 }

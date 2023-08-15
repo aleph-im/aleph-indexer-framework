@@ -1,4 +1,4 @@
-import { DefinedParser } from '@aleph-indexer/framework'
+import { BlockchainId, DefinedParser } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../sdk/client.js'
 import { EthereumRawLog } from '../../../types.js'
 import { EthereumAbiFactory } from './abiFactory.js'
@@ -9,6 +9,7 @@ export class EthereumLogParser extends DefinedParser<
   EthereumParsedLog
 > {
   constructor(
+    protected blockchainId: BlockchainId,
     protected abiFactory: EthereumAbiFactory,
     protected ethereumClient: EthereumClient,
   ) {
@@ -20,7 +21,7 @@ export class EthereumLogParser extends DefinedParser<
   ): Promise<EthereumRawLog | EthereumParsedLog> {
     if (!rawLog.address) return rawLog
 
-    console.log('ethereum rawLog', JSON.stringify(rawLog, null, 2))
+    console.log(`${this.blockchainId} rawLog`, JSON.stringify(rawLog, null, 2))
 
     let abi
 
@@ -34,7 +35,10 @@ export class EthereumLogParser extends DefinedParser<
 
     const parsedLog = this.ethereumClient.parseLog(rawLog, abi)
 
-    console.log('ethereum parsed log => ', JSON.stringify(parsedLog, null, 2))
+    console.log(
+      `${this.blockchainId} parsed log => `,
+      JSON.stringify(parsedLog, null, 2),
+    )
     return parsedLog
   }
 }
