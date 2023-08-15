@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/bsc",
-  "version": "1.0.43",
+  "version": "1.1.0",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -31,9 +31,9 @@
     "luxon": "3.2.1"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.42",
-    "@aleph-indexer/ethereum": "^1.0.43",
-    "@aleph-indexer/framework": "^1.0.43",
+    "@aleph-indexer/core": "^1.1.0",
+    "@aleph-indexer/ethereum": "^1.1.0",
+    "@aleph-indexer/framework": "^1.1.0",
     "moleculer": "^0.14.24"
   },
   "typedoc": {
