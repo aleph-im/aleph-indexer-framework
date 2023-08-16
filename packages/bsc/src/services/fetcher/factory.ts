@@ -7,15 +7,21 @@ import {
   BlockchainId,
   getBlockchainEnv
 } from '@aleph-indexer/framework'
-import { ethereumDalsFetcherFactory, ethereumFetcherInstanceFactory } from '@aleph-indexer/ethereum'
+import { ethereumConfigFactory, ethereumDalsFetcherFactory, ethereumFetcherInstanceFactory } from '@aleph-indexer/ethereum'
 import { BscClient } from '../../sdk/index.js'
 
 export function bscClientFetcherFactory(
   blockchainId: BlockchainId,
+  config: ReturnType<typeof ethereumConfigFactory>,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>): BscClient {
   const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
-  return new BscClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
+  return new BscClient(
+    blockchainId,
+    { ...config, url },
+    DALs.accountTransactionHistoryDAL,
+    DALs.logBloomDAL
+  )
 }
 
 export async function bscFetcherFactory(
@@ -26,19 +32,28 @@ export async function bscFetcherFactory(
 ): Promise<BlockchainFetcherI> {
   if (basePath) await Utils.ensurePath(basePath)
 
+  // Config
+
+  const config = ethereumConfigFactory(blockchainId)
+
   // DALs
 
   const DALs = ethereumDalsFetcherFactory(basePath)
 
   // Instances 
 
-  const bscClient = bscClientFetcherFactory(blockchainId, DALs)
+  const bscClient = bscClientFetcherFactory(
+    blockchainId,
+    config,
+    DALs
+  )
 
   return ethereumFetcherInstanceFactory(
     blockchainId,
     broker,
     fetcherClient,
     bscClient,
+    config,
     DALs
   )
 }

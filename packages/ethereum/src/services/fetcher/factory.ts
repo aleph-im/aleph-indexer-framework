@@ -56,11 +56,17 @@ export function ethereumDalsFetcherFactory(basePath: string) {
 
 export function ethereumClientFetcherFactory(
   blockchainId: BlockchainId,
+  config: ReturnType<typeof ethereumConfigFactory>,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
 ): EthereumClient {
   const url = getBlockchainEnv(blockchainId, 'RPC', true)
 
-  return new EthereumClient(blockchainId, { url }, DALs.accountTransactionHistoryDAL, DALs.logBloomDAL)
+  return new EthereumClient(
+    blockchainId,
+    { ...config, url },
+    DALs.accountTransactionHistoryDAL,
+    DALs.logBloomDAL
+  )
 }
 
 // @todo: Refactor and pass the vars through SDK.init extended config
@@ -82,10 +88,10 @@ export function ethereumFetcherInstanceFactory(
   broker: ServiceBroker,
   fetcherClient: FetcherMsClient,
   ethereumClient: EthereumClient,
+  config: ReturnType<typeof ethereumConfigFactory>,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
 ): EthereumFetcher {
 
-  const config = ethereumConfigFactory(blockchainId)
 
   const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
     blockchainId,
@@ -177,19 +183,28 @@ export async function ethereumFetcherFactory(
 ): Promise<BlockchainFetcherI> {
   if (basePath) await Utils.ensurePath(basePath)
 
+  // Config
+
+  const config = ethereumConfigFactory(blockchainId)
+
   // DALs
 
   const DALs = ethereumDalsFetcherFactory(basePath)
 
   // Instances 
 
-  const ethereumClient = ethereumClientFetcherFactory(blockchainId, DALs)
+  const ethereumClient = ethereumClientFetcherFactory(
+    blockchainId,
+    config,
+    DALs
+  )
 
   return ethereumFetcherInstanceFactory(
     blockchainId,
     broker,
     fetcherClient,
     ethereumClient,
+    config,
     DALs
   )
 }

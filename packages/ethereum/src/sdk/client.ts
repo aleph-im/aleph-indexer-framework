@@ -39,8 +39,9 @@ import { EthereumLogBloomStorage } from '../services/fetcher/src/log/dal/logBloo
 export interface EthereumClientOptions {
   url: string
   rateLimit?: boolean
-  indexBlockSignatures?: boolean
-  indexBlockLogBloom?: boolean
+  indexRawBlocks?: boolean
+  indexAccountTransactionHistory?: boolean
+  indexAccountLogHistory?: boolean
 }
 
 // Blocks
@@ -555,8 +556,15 @@ export class EthereumClient {
     const cursor = before - 1
     const now = Date.now() / 1000
 
+    const withTransactionObjects = !!(
+      this.options.indexRawBlocks || this.options.indexAccountTransactionHistory
+    )
+
     const heights = Array.from({ length }).map((_, i) => cursor - i)
-    const chunk = (await this.getBlocks(heights, true)) as EthereumRawBlock[]
+    const chunk = (await this.getBlocks(
+      heights,
+      withTransactionObjects,
+    )) as EthereumRawBlock[]
 
     const count = chunk.length
     const lastItem = chunk[0]
@@ -570,14 +578,6 @@ export class EthereumClient {
         lastItem.number,
         `${Number(Date.now() / 1000 - now).toFixed(4)} secs`,
       )
-
-    if (this.options.indexBlockSignatures) {
-      await this.indexBlockAccountTransactions(chunk)
-    }
-
-    if (this.options.indexBlockLogBloom) {
-      await this.indexBlockLogBloom(chunk)
-    }
 
     return {
       chunk,
