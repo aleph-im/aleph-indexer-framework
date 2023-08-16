@@ -1,4 +1,8 @@
-import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
+import {
+  EntityStorage,
+  EntityUpdateCheckFnReturn,
+  EntityUpdateOp,
+} from '@aleph-indexer/core'
 import { IndexableEntityType } from '../../../../types.js'
 
 export type EntityRequestPendingEntity = {
@@ -40,21 +44,22 @@ export function createEntityRequestPendingEntityDAL(
     async updateCheckFn(
       oldEntity: EntityRequestPendingEntity | undefined,
       newEntity: EntityRequestPendingEntity,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<EntityRequestPendingEntity>> {
+      let entity = newEntity
+
       if (oldEntity) {
         const ts = new Set([
           ...(oldEntity.nonces || []),
           ...(newEntity.nonces || []),
         ])
-        newEntity.nonces = [...ts]
 
-        // console.log(
-        //   'updated entity [transaction_request_pending_signatures]',
-        //   newEntity.timestamps.length,
-        // )
+        entity = {
+          ...newEntity,
+          nonces: [...ts],
+        }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }

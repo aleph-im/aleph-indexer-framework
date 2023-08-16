@@ -59,7 +59,13 @@ export enum EntityUpdateOp {
   Delete,
 }
 
+export type EntityUpdateCheckFnReturn<Entity> =
+  | { op: EntityUpdateOp.Delete; entity?: undefined }
+  | { op: EntityUpdateOp.Keep; entity?: undefined }
+  | { op: EntityUpdateOp.Update; entity: Entity }
+
 export type EntityUpdateCheckFn<Entity> = (
   oldEntity: Entity | undefined,
   newEntity: Entity,
-) => Promise<EntityUpdateOp>
+  op: EntityUpdateOp,
+) => Promise<EntityUpdateCheckFnReturn<Entity>>

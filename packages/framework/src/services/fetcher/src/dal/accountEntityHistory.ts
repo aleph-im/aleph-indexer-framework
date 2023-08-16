@@ -1,6 +1,7 @@
 import {
   EntityStorage,
   EntityStorageOptions,
+  EntityUpdateCheckFnReturn,
   EntityUpdateOp,
 } from '@aleph-indexer/core'
 import { IndexableEntityType } from '../../../../types.js'
@@ -93,16 +94,22 @@ export function createAccountEntityHistoryDAL<
     async updateCheckFn(
       oldEntity: T | undefined,
       newEntity: T,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<T>> {
+      let entity = newEntity
+
       if (oldEntity) {
         const accounts = new Set([
           ...(oldEntity.accounts || []),
           ...(newEntity.accounts || []),
         ])
-        newEntity.accounts = [...accounts]
+
+        entity = {
+          ...newEntity,
+          accounts: [...accounts],
+        }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }

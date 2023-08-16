@@ -1,4 +1,8 @@
-import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
+import {
+  EntityStorage,
+  EntityUpdateCheckFnReturn,
+  EntityUpdateOp,
+} from '@aleph-indexer/core'
 import {
   AccountEntityHistoryStorage,
   AccountEntityHistoryDALIndex,
@@ -66,17 +70,23 @@ export function createSolanaAccountTransactionHistoryDAL(
     async updateCheckFn(
       oldEntity: SolanaSignature | undefined,
       newEntity: SolanaSignature,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<SolanaSignature>> {
+      let entity = newEntity
+
       if (oldEntity) {
-        newEntity.accountSlotIndex = {
+        const accountSlotIndex = {
           ...oldEntity.accountSlotIndex,
           ...newEntity.accountSlotIndex,
         }
 
-        newEntity.accounts = Object.keys(newEntity.accountSlotIndex)
+        entity = {
+          ...newEntity,
+          accountSlotIndex,
+          accounts: Object.keys(newEntity.accountSlotIndex),
+        }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }

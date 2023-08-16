@@ -1,4 +1,5 @@
 import {
+  EntityUpdateCheckFnReturn,
   EntityUpdateOp,
   PendingWork,
   PendingWorkStorage,
@@ -23,18 +24,23 @@ export function createPendingEntityDAL(
     async updateCheckFn(
       oldEntity: PendingWork<string[]> | undefined,
       newEntity: PendingWork<string[]>,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<PendingWork<string[]>>> {
+      let entity = newEntity
+
       if (oldEntity) {
         const peers = new Set([
           ...(oldEntity.payload || []),
           ...(newEntity.payload || []),
         ])
 
-        newEntity.payload = [...peers]
-        newEntity.time = oldEntity.time
+        entity = {
+          ...newEntity,
+          payload: [...peers],
+          time: oldEntity.time,
+        }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }

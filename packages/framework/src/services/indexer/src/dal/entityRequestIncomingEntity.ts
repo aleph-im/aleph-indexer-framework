@@ -1,4 +1,5 @@
 import {
+  EntityUpdateCheckFnReturn,
   EntityUpdateOp,
   PendingWork,
   PendingWorkStorage,
@@ -26,12 +27,17 @@ export function createEntityRequestIncomingEntityDAL<
     async updateCheckFn(
       oldEntity: PendingWork<T> | undefined,
       newEntity: PendingWork<T>,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<PendingWork<T>>> {
+      let entity = newEntity
+
       if (oldEntity) {
-        newEntity.time = oldEntity.time
+        entity = {
+          ...newEntity,
+          time: oldEntity.time,
+        }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }

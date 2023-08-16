@@ -3,7 +3,11 @@ import {
   EntityStorage,
   EntityStorageOptions,
 } from '../../../storage/entityStorage.js'
-import { EntityUpdateOp, KeySchema } from '../../../storage/types.js'
+import {
+  EntityUpdateCheckFnReturn,
+  EntityUpdateOp,
+  KeySchema,
+} from '../../../storage/types.js'
 
 export type PendingWorkStorageOptions<T> = Pick<
   EntityStorageOptions<PendingWork<T>>,
@@ -42,9 +46,10 @@ export class PendingWorkStorage<T> extends EntityStorage<PendingWork<T>> {
       ],
       async updateCheckFn(
         oldEntity: PendingWork<T> | undefined,
-      ): Promise<EntityUpdateOp> {
-        if (oldEntity) return EntityUpdateOp.Keep
-        return EntityUpdateOp.Update
+        newEntity: PendingWork<T>,
+      ): Promise<EntityUpdateCheckFnReturn<PendingWork<T>>> {
+        if (oldEntity) return { op: EntityUpdateOp.Keep }
+        return { op: EntityUpdateOp.Update, entity: newEntity }
       },
       ...options,
     })

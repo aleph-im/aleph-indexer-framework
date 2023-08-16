@@ -29,7 +29,6 @@ export type EntityStorageOptions<Entity> = EntityIndexStorageOptions<Entity> & {
   filterFn?: StorageFilterFn<Entity>
   mapFn?: StorageMapFn<Entity>
   updateCheckFn?: EntityUpdateCheckFn<Entity>
-  deleteCheckFn?: EntityUpdateCheckFn<Entity>
   count?: boolean
 }
 
@@ -174,27 +173,32 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     toUpdate: Entity[]
     toRemove: Entity[]
   }> {
-    const toRemove: Map<string, Entity> = new Map()
+    // @note: toUpdate should contain the latest entity version while toRemove should contain any
+    // discarded version if multiple updates for the same primaryKey are performed on the same chunk
+    const toRemove: Entity[] = []
     const toUpdate: Map<string, Entity> = new Map()
 
     const { updateCheckFn } = this.options
 
-    for (const entity of entities) {
+    for (let entity of entities) {
       const [primaryKey] = this.getKeys(entity)
       const oldEntity = toUpdate.get(primaryKey) || (await this.get(primaryKey))
 
       if (op === EntityUpdateOp.Update && updateCheckFn) {
-        op = await updateCheckFn(oldEntity, entity)
+        const result = await updateCheckFn(oldEntity, entity, op)
+
+        op = result.op
+        entity = result.entity || entity
       }
 
       switch (op) {
         case EntityUpdateOp.Update: {
           toUpdate.set(primaryKey, entity)
-          if (oldEntity) toRemove.set(primaryKey, oldEntity)
+          if (oldEntity) toRemove.push(oldEntity)
           break
         }
         case EntityUpdateOp.Delete: {
-          if (oldEntity) toRemove.set(primaryKey, oldEntity)
+          if (oldEntity) toRemove.push(oldEntity)
           break
         }
         case EntityUpdateOp.Keep: // noopMutex
@@ -203,7 +207,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
     return {
       toUpdate: Array.from(toUpdate.values()),
-      toRemove: Array.from(toRemove.values()),
+      toRemove,
     }
   }
 

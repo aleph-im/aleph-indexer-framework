@@ -1,4 +1,8 @@
-import { EntityStorage, EntityUpdateOp } from '@aleph-indexer/core'
+import {
+  EntityStorage,
+  EntityUpdateCheckFnReturn,
+  EntityUpdateOp,
+} from '@aleph-indexer/core'
 import { IndexableEntityType, ParsedEntity } from '../../../../types.js'
 
 export type EntitySignatureResponse = {
@@ -54,14 +58,16 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
     async updateCheckFn(
       oldEntity: EntityRequestResponse<T> | undefined,
       newEntity: EntityRequestResponse<T>,
-    ): Promise<EntityUpdateOp> {
+    ): Promise<EntityUpdateCheckFnReturn<EntityRequestResponse<T>>> {
+      let entity = newEntity
+
       if (oldEntity) {
         if (!('parsed' in newEntity) && 'parsed' in oldEntity) {
-          Object.assign(newEntity, oldEntity)
+          entity = { ...oldEntity }
         }
 
         if ('parsed' in newEntity && !newEntity.nonceIndexes) {
-          return EntityUpdateOp.Delete
+          return { op: EntityUpdateOp.Delete }
         }
 
         // @note: This is a hack to make sure that the nonce indexes are
@@ -69,13 +75,13 @@ export function createEntityRequestResponseDAL<T extends ParsedEntity<unknown>>(
         // the entity contains the actual transaction data, at which point we
         // do not have the actual nonce indexes, but still need to pass in a
         // nonce index object to the entity storage.
-        newEntity.nonceIndexes = {
+        entity.nonceIndexes = {
           ...newEntity.nonceIndexes,
           ...oldEntity.nonceIndexes,
         }
       }
 
-      return EntityUpdateOp.Update
+      return { op: EntityUpdateOp.Update, entity }
     },
   })
 }
