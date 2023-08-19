@@ -102,7 +102,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     try {
       entities = Array.isArray(entities) ? entities : [entities]
 
-      const { toRemove, toUpdate } = await this.getEntityGroups(
+      const { toRemove, toUpdate, count } = await this.getEntityGroups(
         entities,
         EntityUpdateOp.Update,
       )
@@ -112,7 +112,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       // 1. Save Entity by id
       // 2. Save Indexes
 
-      const count = toUpdate.length - toRemove.length
+      await super.remove(toRemove, { count, batch })
       await super.save(toUpdate, { count, batch })
 
       await Promise.all(
@@ -138,7 +138,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     try {
       entities = Array.isArray(entities) ? entities : [entities]
 
-      const { toRemove } = await this.getEntityGroups(
+      const { toRemove, count } = await this.getEntityGroups(
         entities,
         EntityUpdateOp.Delete,
       )
@@ -156,7 +156,6 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         }),
       )
 
-      const count = toRemove.length
       await super.remove(toRemove, { count, batch })
 
       await batch.write()
@@ -172,10 +171,11 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   ): Promise<{
     toUpdate: Entity[]
     toRemove: Entity[]
+    count: number
   }> {
     // @note: toUpdate should contain the latest entity version while toRemove should contain any
     // discarded version if multiple updates for the same primaryKey are performed on the same chunk
-    const toRemove: Entity[] = []
+    const toRemove: Map<string, Entity[]> = new Map()
     const toUpdate: Map<string, Entity> = new Map()
 
     const checkFn =
@@ -197,20 +197,38 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       switch (entityOp) {
         case EntityUpdateOp.Update: {
           toUpdate.set(primaryKey, entity)
-          if (oldEntity) toRemove.push(oldEntity)
+
+          if (oldEntity) {
+            const toRemoveItems = toRemove.get(primaryKey) || []
+            toRemoveItems.push(oldEntity)
+            toRemove.set(primaryKey, toRemoveItems)
+          }
+
           break
         }
         case EntityUpdateOp.Delete: {
-          if (oldEntity) toRemove.push(oldEntity)
+          toUpdate.delete(primaryKey)
+
+          if (oldEntity) {
+            const toRemoveItems = toRemove.get(primaryKey) || []
+            toRemoveItems.push(oldEntity)
+            toRemove.set(primaryKey, toRemoveItems)
+          }
+
           break
         }
         case EntityUpdateOp.Keep: // noopMutex
       }
     }
 
+    const toUpdateDedup = Array.from(toUpdate.values())
+    const toRemoveDedup = Array.from(toRemove.values())
+    const count = toUpdateDedup.length - toRemoveDedup.length
+
     return {
-      toUpdate: Array.from(toUpdate.values()),
-      toRemove,
+      toUpdate: toUpdateDedup,
+      toRemove: toRemoveDedup.flatMap((v) => v),
+      count,
     }
   }
 
