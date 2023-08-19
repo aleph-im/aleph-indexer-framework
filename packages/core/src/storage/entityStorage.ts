@@ -178,20 +178,23 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     const toRemove: Entity[] = []
     const toUpdate: Map<string, Entity> = new Map()
 
-    const { updateCheckFn } = this.options
+    const checkFn =
+      op === EntityUpdateOp.Update ? this.options.updateCheckFn : undefined
 
     for (let entity of entities) {
+      let entityOp = op
+
       const [primaryKey] = this.getKeys(entity)
       const oldEntity = toUpdate.get(primaryKey) || (await this.get(primaryKey))
 
-      if (op === EntityUpdateOp.Update && updateCheckFn) {
-        const result = await updateCheckFn(oldEntity, entity, op)
+      if (checkFn) {
+        const result = await checkFn(oldEntity, entity, entityOp)
 
-        op = result.op
+        entityOp = result.op
         entity = result.entity || entity
       }
 
-      switch (op) {
+      switch (entityOp) {
         case EntityUpdateOp.Update: {
           toUpdate.set(primaryKey, entity)
           if (oldEntity) toRemove.push(oldEntity)
