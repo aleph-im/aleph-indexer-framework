@@ -85,14 +85,15 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   > {
     const { account } = this
 
-    // @note: not "before" (autodetected by the client (last block height))
-    const until = this.fetcherState.cursors?.forward?.height
-    const iterationLimit = !until ? 1000 : Number.MAX_SAFE_INTEGER
+    const forwardCursor = this.fetcherState.cursors?.forward
+    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+
+    const iterationLimit = !fromBlock ? 1000 : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchSignaturesOptions = {
-      before: undefined,
       account,
-      until,
+      fromBlock,
+      toBlock: undefined,
       iterationLimit,
     }
 
@@ -113,20 +114,25 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   > {
     const { account } = this
 
-    // @note: until is autodetected by the client (height 0 / first block)
-    let before = this.fetcherState.cursors?.backward?.height
+    const backwardCursor = this.fetcherState.cursors?.backward
+    let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
 
-    if (!before) {
+    if (!toBlock) {
       const blockState = await this.blockHistoryFetcher.getState()
-      before = blockState.cursors?.forward?.height
+      toBlock = blockState.cursors?.forward?.height
     }
+
+    if (toBlock === undefined)
+      throw new Error(
+        `${this.blockchainId} fetchTransactionHistory needs "toBlock" cursor to be initialized`,
+      )
 
     const iterationLimit = 1000
 
     const options: EthereumFetchSignaturesOptions = {
-      until: undefined,
-      before,
       account,
+      fromBlock: undefined,
+      toBlock,
       iterationLimit,
     }
 
@@ -157,7 +163,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       {}
 
     console.log(`
-      ${this.blockchainId} fetchSignatures [${
+      ${this.blockchainId} fetchTransactionHistory [${
       goingForward ? 'forward' : 'backward'
     }] { 
         account: ${account}
@@ -192,7 +198,7 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
     newItems: boolean
     error?: Error
   }): Promise<boolean> {
-    const { newItems, error, fetcherState } = ctx
+    const { error, fetcherState } = ctx
     const fetcherBackward = fetcherState.cursors?.backward?.height
     const isBlockComplete = await this.blockHistoryFetcher.isComplete(
       'backward',
@@ -200,7 +206,6 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
 
     return (
       isBlockComplete &&
-      !newItems &&
       !error &&
       fetcherBackward !== undefined &&
       fetcherBackward <= 0

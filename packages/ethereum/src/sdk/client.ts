@@ -48,8 +48,8 @@ export interface EthereumClientOptions {
 
 export type EthereumBlocksChunkOptions = {
   limit: number
-  before: number
-  until: number
+  toBlock: number
+  fromBlock: number
   // retries?: number
 }
 
@@ -65,8 +65,8 @@ export type EthereumBlocksChunkResponse = {
 export type EthereumSignaturesChunkOptions = {
   account: string
   limit: number
-  before: number
-  until: number
+  toBlock: number
+  fromBlock: number
 }
 
 export type EthereumSignaturesChunkResponse = {
@@ -81,8 +81,8 @@ export type EthereumSignaturesChunkResponse = {
 export type EthereumLogsChunkOptions = {
   account: string
   limit: number
-  before: number
-  until: number
+  toBlock: number
+  fromBlock: number
   isContractAccount?: boolean
 }
 
@@ -112,6 +112,10 @@ export class EthereumClient {
 
   getBalance(account: string): Promise<string> {
     return this.sdk.eth.getBalance(account)
+  }
+
+  getLastBlockNumber(): Promise<number> {
+    return this.sdk.eth.getBlockNumber()
   }
 
   async getTransactions(
@@ -217,12 +221,10 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { until = -1, pageLimit = 1000 } = args
+    const { fromBlock = 0, pageLimit = 1000 } = args
 
-    let {
-      before = (await this.sdk.eth.getBlockNumber()) + 1,
-      iterationLimit = 1000,
-    } = args
+    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
+      args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -230,8 +232,8 @@ export class EthereumClient {
 
       console.log(`
         ${this.blockchainId} fetch blocks { 
-          before: ${before}
-          until: ${until}
+          fromBlock: ${fromBlock}
+          toBlock: ${toBlock}
           iterationLimit: ${iterationLimit}
         }
       `)
@@ -239,8 +241,8 @@ export class EthereumClient {
       const { chunk, count, firstItem, lastItem } =
         await this.getBlockHistoryChunk({
           limit,
-          before,
-          until,
+          toBlock,
+          fromBlock,
         })
 
       if (count === 0) break
@@ -264,8 +266,9 @@ export class EthereumClient {
       yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
+      if (!firstKey) break
 
-      before = firstKey?.height as number
+      toBlock = firstKey.height - 1
     }
   }
 
@@ -275,12 +278,10 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { account, until = -1, pageLimit = 1000 } = args
+    const { account, fromBlock = 0, pageLimit = 1000 } = args
 
-    let {
-      before = (await this.sdk.eth.getBlockNumber()) + 1,
-      iterationLimit = 1000,
-    } = args
+    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
+      args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -289,8 +290,8 @@ export class EthereumClient {
       console.log(`
         ${this.blockchainId} fetch signatures { 
           account: ${account}
-          before: ${before}
-          until: ${until}
+          toBlock: ${toBlock}
+          fromBlock: ${fromBlock}
           iterationLimit: ${iterationLimit}
         }
       `)
@@ -299,8 +300,8 @@ export class EthereumClient {
         await this.getTransactionHistoryChunk({
           account,
           limit,
-          before,
-          until,
+          toBlock,
+          fromBlock,
         })
 
       if (count === 0) break
@@ -324,8 +325,9 @@ export class EthereumClient {
       yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
+      if (!firstKey) break
 
-      before = firstKey?.height as number
+      toBlock = firstKey.height - 1
     }
   }
 
@@ -336,12 +338,10 @@ export class EthereumClient {
     let lastKey
 
     // @note: pageLimit = 10 to avoid Error: Too many ["eth_getLogs"] methods in the batch
-    const { account, until = -1, pageLimit = 10, isContractAccount } = args
+    const { account, fromBlock = 0, pageLimit = 10, isContractAccount } = args
 
-    let {
-      before = (await this.sdk.eth.getBlockNumber()) + 1,
-      iterationLimit = 1000,
-    } = args
+    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
+      args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -350,8 +350,8 @@ export class EthereumClient {
       console.log(`
         ${this.blockchainId} fetch logs { 
           account: ${account}
-          before: ${before}
-          until: ${until}
+          toBlock: ${toBlock}
+          fromBlock: ${fromBlock}
           iterationLimit: ${iterationLimit}
         }
       `)
@@ -360,8 +360,8 @@ export class EthereumClient {
         await this.getLogHistoryChunk({
           account,
           limit,
-          before,
-          until,
+          toBlock,
+          fromBlock,
           isContractAccount,
         })
 
@@ -384,8 +384,9 @@ export class EthereumClient {
       yield { chunk, count, cursors: { backward: firstKey, forward: lastKey } }
 
       if (count < limit) break
+      if (!firstKey) break
 
-      before = firstKey?.height as number
+      toBlock = firstKey.height - 1
     }
   }
 
@@ -546,14 +547,14 @@ export class EthereumClient {
   }
 
   protected async getBlockHistoryChunk({
-    before,
-    until,
+    toBlock,
+    fromBlock,
     limit,
   }: EthereumBlocksChunkOptions): Promise<EthereumBlocksChunkResponse> {
-    const length = Math.min(limit, Math.max(before - (until + 1), 0))
+    const length = Math.min(limit, Math.max(toBlock - fromBlock + 1, 0))
     if (length === 0) throw new Error('Invalid block chunk range')
 
-    const cursor = before - 1
+    const cursor = toBlock
     const now = Date.now() / 1000
 
     const withTransactionObjects = !!(
@@ -589,8 +590,8 @@ export class EthereumClient {
 
   protected async getTransactionHistoryChunk({
     account,
-    before,
-    until,
+    toBlock,
+    fromBlock,
     limit,
   }: EthereumSignaturesChunkOptions): Promise<EthereumSignaturesChunkResponse> {
     if (!this.accountSignatureDAL)
@@ -598,18 +599,15 @@ export class EthereumClient {
         'EthereumAccountTransactionHistoryStorage not provided to EthereumClient',
       )
 
-    if (before <= 0 || until >= before)
-      throw new Error('Invalid signature chunk range')
-
-    before = before - 1
-    until = until + 1
+    const length = Math.min(limit, Math.max(toBlock - fromBlock + 1, 0))
+    if (length === 0) throw new Error('Invalid signature chunk range')
 
     const now = Date.now() / 1000
     const chunk: EthereumAccountTransactionHistoryStorageEntity[] = []
 
     const signatures = await this.accountSignatureDAL
       .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
-      .getAllValuesFromTo([account, until], [account, before], {
+      .getAllValuesFromTo([account, fromBlock], [account, toBlock], {
         limit,
         reverse: true,
         atomic: true,
@@ -640,26 +638,23 @@ export class EthereumClient {
 
   protected async getLogHistoryChunk({
     account,
-    before,
-    until,
+    toBlock,
+    fromBlock,
     limit,
     isContractAccount,
   }: EthereumLogsChunkOptions): Promise<EthereumLogsChunkResponse> {
     if (!this.logBloomDAL)
       throw new Error('EthereumLogBloomStorage not provided to EthereumClient')
 
-    if (before <= 0 || until >= before)
-      throw new Error('Invalid log chunk range')
-
-    before = before - 1
-    until = until + 1
+    const length = Math.min(limit, Math.max(toBlock - fromBlock + 1, 0))
+    if (length === 0) throw new Error('Invalid log chunk range')
 
     const now = Date.now() / 1000
     const logBloomChunk: EthereumLogBloom[] = []
 
     const logBlooms = await this.logBloomDAL.getAllValuesFromTo(
-      [until],
-      [before],
+      [fromBlock],
+      [toBlock],
       { limit, reverse: true, atomic: true },
     )
 
@@ -728,6 +723,11 @@ export class EthereumClient {
     const newBlock = block as EthereumRawBlock
     newBlock.id = newBlock.hash
     newBlock.timestamp = Number(newBlock.timestamp) * 1000
+
+    // @note: Genesis block has timestamp === 0
+    // https://github.com/ethereum/go-ethereum/issues/17042
+    // Replace it with to don't cause problems querying entities by time range
+    if (newBlock.number === 0) newBlock.timestamp = 1438269973000
 
     return newBlock as R
   }

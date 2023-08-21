@@ -110,29 +110,41 @@ export class BaseHistoryFetcher<C> {
   }
 
   async isComplete(fetcherType?: 'forward' | 'backward'): Promise<boolean> {
-    const fetcherState = await this.getFetcherState()
+    if (fetcherType) {
+      const fetcherState = await this.getFetcherState()
 
-    return fetcherType
-      ? fetcherState.jobs[fetcherType].complete
-      : fetcherState.jobs.forward.complete &&
-          fetcherState.jobs.backward.complete
+      const fetcherOptions = this.options.jobs?.[fetcherType]
+      if (!fetcherOptions) return true
+
+      return fetcherState.jobs[fetcherType].complete
+    }
+
+    const forwardComplete = await this.isComplete('forward')
+    const backwardComplete = await this.isComplete('backward')
+
+    return forwardComplete && backwardComplete
   }
 
   async getLastRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
-    const fetcherState = await this.getFetcherState()
+    if (fetcherType) {
+      const fetcherState = await this.getFetcherState()
 
-    return fetcherType
-      ? fetcherState.jobs[fetcherType].lastRun
-      : Math.max(
-          fetcherState.jobs.forward.lastRun,
-          fetcherState.jobs.backward.lastRun,
-        )
+      const fetcherOptions = this.options.jobs?.[fetcherType]
+      if (!fetcherOptions) return 0
+
+      return fetcherState.jobs[fetcherType].lastRun
+    }
+
+    const forwardLastRun = await this.getLastRun('forward')
+    const backwardLastRun = await this.getLastRun('backward')
+
+    return Math.max(forwardLastRun, backwardLastRun)
   }
 
   async getNextRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
-    const fetcherState = await this.getFetcherState()
-
     if (fetcherType) {
+      const fetcherState = await this.getFetcherState()
+
       return (await this.isComplete(fetcherType))
         ? Number.POSITIVE_INFINITY
         : (await this.getLastRun(fetcherType)) +
@@ -149,17 +161,18 @@ export class BaseHistoryFetcher<C> {
 
   async getPendingRuns(fetcherType?: 'forward' | 'backward'): Promise<number> {
     if (fetcherType) {
-      return (
-        (fetcherType === 'forward'
+      const fetcher =
+        fetcherType === 'forward'
           ? this.options.jobs?.forward
           : this.options.jobs?.backward
-        )?.times || Number.POSITIVE_INFINITY
-      )
+
+      if (!fetcher) return 0
+      return fetcher?.times || Number.POSITIVE_INFINITY
     }
 
     return Math.max(
-      this.options.jobs?.forward?.times || Number.POSITIVE_INFINITY,
-      this.options.jobs?.backward?.times || Number.POSITIVE_INFINITY,
+      await this.getPendingRuns('forward'),
+      await this.getPendingRuns('backward'),
     )
   }
 

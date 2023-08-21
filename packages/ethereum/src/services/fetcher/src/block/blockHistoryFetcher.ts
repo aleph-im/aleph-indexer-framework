@@ -63,21 +63,22 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   protected async runForward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
-    // @note: not "before" (autodetected by the node (last block height))
-    const until = this.fetcherState.cursors?.forward?.height
+    const forwardCursor = this.fetcherState.cursors?.forward
+    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+
     const { pageLimit } = this
-    const iterationLimit = !until
+    const iterationLimit = !fromBlock
       ? this.iterationLimit
       : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchBlocksOptions = {
-      before: undefined,
-      until,
+      toBlock: undefined, // lastHeight
+      fromBlock,
       iterationLimit,
       pageLimit,
     }
 
-    const { lastCursors, error } = await this.fetchBlocks(options, true)
+    const { lastCursors, error } = await this.fetchBlockHistory(options, true)
 
     return { lastCursors, error }
   }
@@ -85,18 +86,19 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
   protected async runBackward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
-    // @note: until is autodetected by the node (height 0 / first block)
-    const before = this.fetcherState.cursors?.backward?.height
+    const backwardCursor = this.fetcherState.cursors?.backward
+    const toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
+
     const { iterationLimit, pageLimit } = this
 
     const options: EthereumFetchBlocksOptions = {
-      until: undefined,
-      before,
+      fromBlock: undefined, // 0
+      toBlock,
       iterationLimit,
       pageLimit,
     }
 
-    const { lastCursors, error } = await this.fetchBlocks(options, false)
+    const { lastCursors, error } = await this.fetchBlockHistory(options, false)
 
     // @note: Stop the indexer if there wasnt more items
     const stop = !error && !lastCursors?.backward?.height
@@ -105,7 +107,7 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     return { newInterval, lastCursors, error }
   }
 
-  protected async fetchBlocks(
+  protected async fetchBlockHistory(
     options: EthereumFetchBlocksOptions,
     goingForward: boolean,
   ): Promise<{

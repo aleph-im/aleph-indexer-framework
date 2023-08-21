@@ -90,22 +90,23 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   > {
     const { account, pageLimit } = this
 
-    // @note: not "before" (autodetected by the client (last block height))
-    const until = this.fetcherState.cursors?.forward?.height
-    const iterationLimit = !until
+    const forwardCursor = this.fetcherState.cursors?.forward
+    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+
+    const iterationLimit = !fromBlock
       ? this.iterationLimit
       : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchLogsOptions = {
-      before: undefined,
       account,
-      until,
+      fromBlock,
+      toBlock: undefined, // last block height
       iterationLimit,
       pageLimit,
       isContractAccount: this.isContract,
     }
 
-    const { lastCursors, error } = await this.fetchLogs(options, true)
+    const { lastCursors, error } = await this.fetchLogHistory(options, true)
     return { lastCursors, error }
   }
 
@@ -119,26 +120,34 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   > {
     const { account, pageLimit } = this
 
-    // @note: until is autodetected by the client (height 0 / first block)
-    let before = this.fetcherState.cursors?.backward?.height
+    const backwardCursor = this.fetcherState.cursors?.backward
+    let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
 
-    if (!before) {
+    if (toBlock === undefined) {
       const blockState = await this.blockHistoryFetcher.getState()
-      before = blockState.cursors?.forward?.height
+      toBlock = blockState.cursors?.forward?.height
     }
+
+    if (toBlock === undefined)
+      throw new Error(
+        `${this.blockchainId} fetchLogHistory needs "toBlock" cursor to be initialized`,
+      )
 
     const iterationLimit = this.iterationLimit
 
     const options: EthereumFetchLogsOptions = {
-      until: undefined,
-      before,
       account,
+      fromBlock: undefined, // first block height (0)
+      toBlock,
       iterationLimit,
       pageLimit,
       isContractAccount: this.isContract,
     }
 
-    const { lastCursors, error, count } = await this.fetchLogs(options, false)
+    const { lastCursors, error, count } = await this.fetchLogHistory(
+      options,
+      false,
+    )
 
     const newInterval =
       error || count === 0 ? interval + 1000 : JobRunnerReturnCode.Reset
@@ -146,7 +155,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     return { lastCursors, error, newInterval }
   }
 
-  protected async fetchLogs(
+  protected async fetchLogHistory(
     options: EthereumFetchLogsOptions,
     goingForward: boolean,
   ): Promise<{
@@ -162,7 +171,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       {}
 
     console.log(`
-      ${this.blockchainId} fetchLogs [${
+      ${this.blockchainId} fetchLogHistory [${
       goingForward ? 'forward' : 'backward'
     }] { 
         account: ${account}
@@ -197,13 +206,12 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     newItems: boolean
     error?: Error
   }): Promise<boolean> {
-    const { newItems, error, fetcherState } = ctx
+    const { error, fetcherState } = ctx
     const fetcherBackward = fetcherState.cursors?.backward?.height
     const isComplete = await this.blockHistoryFetcher.isComplete('backward')
 
     return (
       isComplete &&
-      !newItems &&
       !error &&
       fetcherBackward !== undefined &&
       fetcherBackward <= 0
