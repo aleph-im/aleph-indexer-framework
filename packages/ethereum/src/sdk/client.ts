@@ -96,6 +96,7 @@ export type EthereumLogsChunkResponse = {
 // @note: Refactor to only use "ethers" and remove web3 deps
 export class EthereumClient {
   protected sdk: Web3
+  protected genesisBlockTimestamp = 1438269973000
 
   constructor(
     protected blockchainId: BlockchainId,
@@ -741,7 +742,9 @@ export class EthereumClient {
     // @note: Genesis block has timestamp === 0
     // https://github.com/ethereum/go-ethereum/issues/17042
     // Replace it with to don't cause problems querying entities by time range
-    if (newBlock.number === 0) newBlock.timestamp = 1438269973000
+    if (newBlock.number === 0 && newBlock.timestamp === 0) {
+      newBlock.timestamp = this.genesisBlockTimestamp
+    }
 
     return newBlock as R
   }
