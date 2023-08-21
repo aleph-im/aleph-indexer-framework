@@ -162,7 +162,7 @@ export class EthereumClient {
     for (const [height, contractMap] of Object.entries(blockHeightLogs)) {
       for (const [address, logSet] of Object.entries(contractMap)) {
         const logs = await this.getBlockLogs(
-          [height],
+          [{ fromBlock: height, toBlock: height }],
           options?.swallowErrors,
           address,
         )
@@ -337,8 +337,7 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    // @note: pageLimit = 10 to avoid Error: Too many ["eth_getLogs"] methods in the batch
-    const { account, fromBlock = 0, pageLimit = 10, isContractAccount } = args
+    const { account, fromBlock = 0, pageLimit = 1000, isContractAccount } = args
 
     let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
       args
@@ -458,13 +457,18 @@ export class EthereumClient {
     S extends boolean,
     R = S extends false ? EthereumRawLog : EthereumRawLog | null,
   >(
-    blockHashOrBlockNumber: (number | string)[],
+    blockHashOrBlockNumber: {
+      fromBlock: string | number
+      toBlock: string | number
+    }[],
     swallowErrors?: S,
     address?: string,
   ): Promise<R[]> {
     const args: PastLogsOptions[][] = blockHashOrBlockNumber.map(
-      (blockOrNum) => [{ fromBlock: blockOrNum, toBlock: blockOrNum, address }],
+      ({ fromBlock, toBlock }) => [{ fromBlock, toBlock, address }],
     )
+
+    console.log('getPastLogs', args)
 
     const logs: Log[] = await this.batchRequest('getPastLogs', args, {
       swallowErrors,
@@ -647,7 +651,8 @@ export class EthereumClient {
       throw new Error('EthereumLogBloomStorage not provided to EthereumClient')
 
     const length = Math.min(limit, Math.max(toBlock - fromBlock + 1, 0))
-    if (length === 0) throw new Error('Invalid log chunk range')
+    if (length === 0)
+      throw new Error(`Invalid log chunk range [${fromBlock}, ${toBlock}]`)
 
     const now = Date.now() / 1000
     const logBloomChunk: EthereumLogBloom[] = []
@@ -670,27 +675,36 @@ export class EthereumClient {
         ? isContractAddressInBloom
         : isUserEthereumAddressInBloom
 
-      const filteredLogBloomChunk = logBloomChunk.filter(({ logsBloom }) =>
+      const relevantLogBloomChunk = logBloomChunk.filter(({ logsBloom }) =>
         checkFn(logsBloom, account),
       )
 
-      if (filteredLogBloomChunk.length > 0) {
-        const blocksHeights = filteredLogBloomChunk.map((item) => item.height)
+      if (relevantLogBloomChunk.length > 0) {
+        const fromBlock =
+          relevantLogBloomChunk[relevantLogBloomChunk.length - 1].height
+        const toBlock = relevantLogBloomChunk[0].height
 
-        const logs = (await this.getBlockLogs(
-          blocksHeights,
+        // @note: Fetch the biggest range in just one rpc method and then filter locally
+        // to avoid Error: Too many ["eth_getLogs"] methods in the batch
+        let logs = (await this.getBlockLogs(
+          [{ fromBlock, toBlock }],
           false,
           isContractAccount ? account : undefined,
         )) as EthereumRawLog[]
 
-        let filteredLogs = logs
-
         if (!isContractAccount) {
           const accountTopic = `0x${account.substring(2).padStart(64, '0')}`
-          filteredLogs = logs.filter((log) => log.topics.includes(accountTopic))
+
+          const relevantHeightsSet = new Set(
+            relevantLogBloomChunk.map((item) => item.height),
+          )
+
+          logs = logs
+            .filter((log) => relevantHeightsSet.has(log.height))
+            .filter((log) => log.topics.includes(accountTopic))
         }
 
-        chunk = filteredLogs
+        chunk = logs
       }
     }
 

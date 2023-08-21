@@ -25,8 +25,8 @@ const { JobRunnerReturnCode } = Utils
  */
 export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<EthereumAccountLogHistoryPaginationCursor> {
   protected isContract = false
-  protected iterationLimit = 100
-  protected pageLimit = 10
+  protected iterationLimit = 5000
+  protected pageLimit = 5000
 
   /**
    * Initializes the signature fetcher.
