@@ -47,10 +47,10 @@ export interface PendingWorkOptions<T> {
  * Error thrown when the pending work queue is full
  */
 export class QueueFullError extends Error {
-  constructor(
-    protected pendingWork: PendingWorkPool<any>,
-  ) {
-    super(`Queue (max size: ${pendingWork.options.maxQueueSize}) is full for ${pendingWork.options.id}`)
+  constructor(protected pendingWork: PendingWorkPool<any>) {
+    super(
+      `Queue (max size: ${pendingWork.options.maxQueueSize}) is full for ${pendingWork.options.id}`,
+    )
   }
 }
 
@@ -112,6 +112,7 @@ export class PendingWorkPool<T> {
   async addWork(work: PendingWork<T> | PendingWork<T>[]): Promise<void> {
     work = Array.isArray(work) ? work : [work]
     if (!work.length) return
+
     if (this.options.maxQueueSize) {
       const count = await this.getCount()
       if (count + work.length > this.options.maxQueueSize)

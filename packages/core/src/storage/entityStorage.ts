@@ -77,6 +77,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
           sublevel: index.name,
           key: index.key,
           entityStore: this,
+          count: false,
         },
         this.atomicOpMutex,
         storage,
@@ -102,7 +103,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     try {
       entities = Array.isArray(entities) ? entities : [entities]
 
-      const { toRemove, toUpdate, count } = await this.getEntityGroups(
+      const { toRemove, toSave } = await this.getEntityGroups(
         entities,
         EntityUpdateOp.Update,
       )
@@ -112,15 +113,15 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       // 1. Save Entity by id
       // 2. Save Indexes
 
-      await super.remove(toRemove, { count, batch })
-      await super.save(toUpdate, { count, batch })
+      await super.remove(toRemove.entities, { count: toRemove.count, batch })
+      await super.save(toSave.entities, { count: toSave.count, batch })
 
       await Promise.all(
         Object.values(this.byIndex).map(async (byIndex) => {
           // @note: Improve performance by storing in a prefixed-sublevel
           // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove, { batch })
-          await byIndex.save(toUpdate, { batch })
+          await byIndex.remove(toRemove.entities, { batch })
+          await byIndex.save(toSave.entities, { batch })
         }),
       )
 
@@ -138,7 +139,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     try {
       entities = Array.isArray(entities) ? entities : [entities]
 
-      const { toRemove, count } = await this.getEntityGroups(
+      const { toRemove } = await this.getEntityGroups(
         entities,
         EntityUpdateOp.Delete,
       )
@@ -152,11 +153,11 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         Object.values(this.byIndex).map(async (byIndex) => {
           // @note: Improve performance by storing in a prefixed-sublevel
           // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove, { batch })
+          await byIndex.remove(toRemove.entities, { batch })
         }),
       )
 
-      await super.remove(toRemove, { count, batch })
+      await super.remove(toRemove.entities, { count: toRemove.count, batch })
 
       await batch.write()
     } finally {
@@ -169,14 +170,19 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     entities: Entity[],
     op: EntityUpdateOp,
   ): Promise<{
-    toUpdate: Entity[]
-    toRemove: Entity[]
-    count: number
+    toSave: {
+      entities: Entity[]
+      count: number
+    }
+    toRemove: {
+      entities: Entity[]
+      count: number
+    }
   }> {
-    // @note: toUpdate should contain the latest entity version while toRemove should contain any
+    // @note: toSave should contain the latest entity version while toRemove should contain any
     // discarded version if multiple updates for the same primaryKey are performed on the same chunk
-    const toRemove: Map<string, Entity[]> = new Map()
-    const toUpdate: Map<string, Entity> = new Map()
+    const toRemove: Map<string, Entity> = new Map()
+    const toSave: Map<string, Entity> = new Map()
 
     const checkFn =
       op === EntityUpdateOp.Update ? this.options.updateCheckFn : undefined
@@ -185,7 +191,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       let entityOp = op
 
       const [primaryKey] = this.getKeys(entity)
-      const oldEntity = toUpdate.get(primaryKey) || (await this.get(primaryKey))
+      let oldEntity = toSave.get(primaryKey)
+      let oldEntityInStore = false
+
+      if (!oldEntity) {
+        oldEntity = await this.get(primaryKey)
+        if (oldEntity) oldEntityInStore = true
+      }
 
       if (checkFn) {
         const result = await checkFn(oldEntity, entity, entityOp)
@@ -196,39 +208,39 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
       switch (entityOp) {
         case EntityUpdateOp.Update: {
-          toUpdate.set(primaryKey, entity)
+          toSave.set(primaryKey, entity)
 
-          if (oldEntity) {
-            const toRemoveItems = toRemove.get(primaryKey) || []
-            toRemoveItems.push(oldEntity)
-            toRemove.set(primaryKey, toRemoveItems)
+          if (oldEntityInStore && oldEntity) {
+            toRemove.set(primaryKey, oldEntity)
           }
 
           break
         }
         case EntityUpdateOp.Delete: {
-          toUpdate.delete(primaryKey)
+          toSave.delete(primaryKey)
 
-          if (oldEntity) {
-            const toRemoveItems = toRemove.get(primaryKey) || []
-            toRemoveItems.push(oldEntity)
-            toRemove.set(primaryKey, toRemoveItems)
+          if (oldEntityInStore && oldEntity) {
+            toRemove.set(primaryKey, oldEntity)
           }
 
           break
         }
-        case EntityUpdateOp.Keep: // noopMutex
+        case EntityUpdateOp.Keep: // Noop
       }
     }
 
-    const toUpdateDedup = Array.from(toUpdate.values())
-    const toRemoveDedup = Array.from(toRemove.values())
-    const count = toUpdateDedup.length - toRemoveDedup.length
+    const toSaveEntities = Array.from(toSave.values())
+    const toRemoveEntities = Array.from(toRemove.values())
 
     return {
-      toUpdate: toUpdateDedup,
-      toRemove: toRemoveDedup.flatMap((v) => v),
-      count,
+      toSave: {
+        entities: toSaveEntities,
+        count: toSaveEntities.length,
+      },
+      toRemove: {
+        entities: toRemoveEntities,
+        count: toRemoveEntities.length,
+      },
     }
   }
 

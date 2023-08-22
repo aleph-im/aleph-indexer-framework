@@ -99,6 +99,14 @@ export class EntityIndexStorage<
     const release = await this.getAtomicOpMutex(options?.atomic)
 
     try {
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            getCount: ${this.options.name} [${this.options.sublevel}]
+            count: ${this.count}
+        `)
+      }
+
       return this.count
     } finally {
       release()
@@ -395,6 +403,15 @@ export class EntityIndexStorage<
       const keys = items.map(({ key }) => key)
       const countDelta = await this.getCountDelta(keys, false, options?.count)
 
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            saveCount: ${this.options.name} [${this.options.sublevel}]
+            fixedCount: ${options?.count}
+            countDelta: ${countDelta}
+        `)
+      }
+
       await this.storage.save(items, {
         sublevel: this.options.sublevel,
         batch: options?.batch,
@@ -420,6 +437,15 @@ export class EntityIndexStorage<
         .filter((key) => key !== undefined) as string[]
 
       const countDelta = await this.getCountDelta(items, true, options?.count)
+
+      if (options?.debug) {
+        console.log(`
+          dbDebug:
+            removeCount: ${this.options.name} [${this.options.sublevel}]
+            fixedCount: ${options?.count}
+            countDelta: ${countDelta}
+        `)
+      }
 
       await this.storage.remove(items, {
         sublevel: this.options.sublevel,
