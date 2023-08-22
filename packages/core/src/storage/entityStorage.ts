@@ -179,8 +179,6 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       count: number
     }
   }> {
-    // @note: toSave should contain the latest entity version while toRemove should contain any
-    // discarded version if multiple updates for the same primaryKey are performed on the same chunk
     const toRemove: Map<string, Entity> = new Map()
     const toSave: Map<string, Entity> = new Map()
 
@@ -191,12 +189,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       let entityOp = op
 
       const [primaryKey] = this.getKeys(entity)
-      let oldEntity = toSave.get(primaryKey)
-      let oldEntityInStore = false
 
-      if (!oldEntity) {
+      let oldEntity = toSave.get(primaryKey)
+      let oldEntityFromStore = false
+
+      if (!oldEntity && !toRemove.has(primaryKey)) {
         oldEntity = await this.get(primaryKey)
-        if (oldEntity) oldEntityInStore = true
+        oldEntityFromStore = true
       }
 
       if (checkFn) {
@@ -210,7 +209,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         case EntityUpdateOp.Update: {
           toSave.set(primaryKey, entity)
 
-          if (oldEntityInStore && oldEntity) {
+          if (oldEntityFromStore && oldEntity) {
             toRemove.set(primaryKey, oldEntity)
           }
 
@@ -219,7 +218,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         case EntityUpdateOp.Delete: {
           toSave.delete(primaryKey)
 
-          if (oldEntityInStore && oldEntity) {
+          if (oldEntityFromStore && oldEntity) {
             toRemove.set(primaryKey, oldEntity)
           }
 
