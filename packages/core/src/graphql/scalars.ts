@@ -1,11 +1,11 @@
-import graphql, { Kind, ValueNode } from 'graphql'
+import { Kind, ValueNode, GraphQLScalarType } from 'graphql'
 import BN from 'bn.js'
 export { GraphQLJSON, GraphQLJSONObject } from 'graphql-type-json'
 
 /**
  * GraphQL Big Number scalar type
  */
-export const GraphQLBigNumber = new graphql.GraphQLScalarType({
+export const GraphQLBigNumber = new GraphQLScalarType({
   name: 'BigNumber',
   description: 'GraphQL representation of BigNumber',
   parseValue(value) {
@@ -41,7 +41,7 @@ export function coerceLong(value: any) {
 /**
  * GraphQL Long scalar type
  */
-export const GraphQLLong = new graphql.GraphQLScalarType({
+export const GraphQLLong = new GraphQLScalarType({
   name: 'Long',
   description: 'The `Long` scalar type represents 52-bit integers',
   parseValue: coerceLong,
