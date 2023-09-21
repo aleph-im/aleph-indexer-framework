@@ -19,28 +19,46 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "peerDependencies": {
-    "@aleph-indexer/bsc": "^1.x.x",
-    "@aleph-indexer/ethereum": "^1.x.x",
-    "@aleph-indexer/solana": "^1.x.x",
-    "graphql": "^15.8.0",
-    "graphql-type-json": "^0.3.2",
-    "luxon": "3.2.1"
+    "@aleph-indexer/bsc": "^1.x",
+    "@aleph-indexer/ethereum": "^1.x",
+    "@aleph-indexer/oasys": "^1.x",
+    "@aleph-indexer/oasys-verse": "^1.x",
+    "@aleph-indexer/solana": "^1.x",
+    "graphql": "^15.x",
+    "graphql-type-json": "^0.x",
+    "luxon": "^3.x",
+    "nats": "^2.x"
+  },
+  "peerDependenciesMeta": {
+    "@aleph-indexer/bsc": {
+      "optional": true
+    },
+    "@aleph-indexer/ethereum": {
+      "optional": true
+    },
+    "@aleph-indexer/oasys": {
+      "optional": true
+    },
+    "@aleph-indexer/oasys-verse": {
+      "optional": true
+    },
+    "@aleph-indexer/solana": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@aleph-indexer/bsc": "^1.1.7",
-    "@aleph-indexer/ethereum": "^1.1.7",
-    "@aleph-indexer/solana": "^1.1.7",
     "@types/dotenv-defaults": "^2.0.1",
     "@types/luxon": "3.2.0",
     "@types/node": "^17.0.33",
     "graphql": "^15.8.0",
     "graphql-type-json": "^0.3.2",
-    "luxon": "3.2.1"
+    "luxon": "3.2.1",
+    "nats": "^2.7.1"
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.1.7",
     "moleculer": "^0.14.24",
-    "nats": "^2.7.1"
+    "protobufjs": "^7.2.2"
   },
   "typedoc": {
     "entryPoint": "./index.ts",
