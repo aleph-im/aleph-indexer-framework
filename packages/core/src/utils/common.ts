@@ -99,7 +99,7 @@ export function sortTimeStatsMap<T extends { interval: string }>(
 
 export async function ensurePath(dest: string): Promise<void> {
   const paths = dest.split('/')
-  let fullPath = ''
+  let fullPath = dest.startsWith('/') ? '/' : ''
 
   for (const p of paths) {
     fullPath = path.join(fullPath, p)
