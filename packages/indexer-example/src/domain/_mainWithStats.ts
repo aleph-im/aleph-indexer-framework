@@ -6,13 +6,14 @@ import {
   AccountStatsFilters,
   AccountTimeSeriesStats,
   AccountStats,
-} from '@aleph-indexer/framework';
+} from '@aleph-indexer/framework'
 
 export default class MainDomain
   extends IndexerMainDomain
-  implements IndexerMainDomainWithStats {
+  implements IndexerMainDomainWithStats
+{
   constructor(protected context: IndexerMainDomainContext) {
-    super(context);
+    super(context)
   }
 
   // Implement the updateStats method
@@ -30,7 +31,7 @@ export default class MainDomain
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats[]> {
     // Logic for retrieving and transforming time-series stats for specified accounts
-    return [];
+    return []
   }
 
   // Implement the getAccountStats method
@@ -39,6 +40,6 @@ export default class MainDomain
     accounts: string[],
   ): Promise<AccountStats[]> {
     // Logic for retrieving global stats for specified accounts
-    return [];
+    return []
   }
 }

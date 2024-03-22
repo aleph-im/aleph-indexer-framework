@@ -102,14 +102,14 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     )
 
     const pendingMilis = pendingRanges.reduce(
-      (acc, curr) => acc + Math.max(
-        (curr.endDate - curr.startDate), 1
-      ), 0)
+      (acc, curr) => acc + Math.max(curr.endDate - curr.startDate, 1),
+      0,
+    )
 
     const processedMilis = processedRanges.reduce(
-      (acc, curr) => acc + Math.max(
-        (curr.endDate - curr.startDate), 1
-      ), 0)
+      (acc, curr) => acc + Math.max(curr.endDate - curr.startDate, 1),
+      0,
+    )
 
     const pending = pendingRanges.map((range) =>
       getIntervalFromDateRange(range).toISO(),

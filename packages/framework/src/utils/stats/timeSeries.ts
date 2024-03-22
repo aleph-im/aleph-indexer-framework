@@ -124,10 +124,16 @@ export class TimeSeriesStats<I extends object, O> {
         trueDivideTimeFrameIndex--
       }
       if (timeFrame !== TimeFrame.All && trueDivideTimeFrameIndex > 0) {
-        const timeFrameSize = Duration.fromObject({[timeFrameName.toLowerCase()]: 1}).toMillis()
+        const timeFrameSize = Duration.fromObject({
+          [timeFrameName.toLowerCase()]: 1,
+        }).toMillis()
         while (true) {
           if (trueDivideTimeFrameIndex <= 0) break
-          const smallerSize = Duration.fromObject({[TimeFrame[sortedTimeFrames[trueDivideTimeFrameIndex]].toLowerCase()]: 1}).toMillis()
+          const smallerSize = Duration.fromObject({
+            [TimeFrame[
+              sortedTimeFrames[trueDivideTimeFrameIndex]
+            ].toLowerCase()]: 1,
+          }).toMillis()
           if (timeFrameSize % smallerSize === 0) break
           trueDivideTimeFrameIndex--
         }
@@ -259,7 +265,9 @@ export class TimeSeriesStats<I extends object, O> {
           let data: O | undefined
           for await (const value of inputs) {
             const input =
-              'data' in value && trueDivideTimeFrameIndex !== 0 ? value.data : value
+              'data' in value && trueDivideTimeFrameIndex !== 0
+                ? value.data
+                : value
             data = await aggregator({
               input,
               interval,
