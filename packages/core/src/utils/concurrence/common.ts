@@ -9,7 +9,7 @@ import { sleep } from '../time.js'
  */
 export async function concurrentPromises<T>(
   it: Iterator<Promise<unknown>, T>,
-  concurrency: number = 20,
+  concurrency = 20,
 ): Promise<T> {
   let done
   let lastValue!: T
@@ -118,7 +118,7 @@ export class Mutex {
 /**
  * An util for retaining a unique snapshot of data while
  * the previous snapshot is being processed.
- * 
+ *
  * Example:
  * ```ts
  * const job = new DebouncedJob<string>(async (data) => {
@@ -126,10 +126,10 @@ export class Mutex {
  *  console.log(data)
  *  return data
  * }, 1000)
- * 
+ *
  * job.run('foo')
  * ```
- * 
+ *
  * @param callback - The callback function that will be called with the data
  * @param throttle - The minimum time between calls
  */

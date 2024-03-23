@@ -41,11 +41,13 @@ export function splitDurationIntoIntervals(
     return []
   }
 
-  const length = startDate.equals(endDate) ? 1 : Math.ceil(
-    endDate
-      .diff(startDate, intervalUnit as DurationUnit)
-      .get(intervalUnit as DurationUnit) / intervalSize,
-  )
+  const length = startDate.equals(endDate)
+    ? 1
+    : Math.ceil(
+        endDate
+          .diff(startDate, intervalUnit as DurationUnit)
+          .get(intervalUnit as DurationUnit) / intervalSize,
+      )
 
   // Divide range (A, D) in chunks of intervalSize * intervalUnit time intervals
   // [(A, B), (B, C), (C, D)]
