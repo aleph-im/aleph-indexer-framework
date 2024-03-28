@@ -102,12 +102,12 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     )
 
     const pendingMilis = pendingRanges.reduce(
-      (acc, curr) => acc + Math.max(curr.endDate - curr.startDate, 1),
+      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
       0,
     )
 
     const processedMilis = processedRanges.reduce(
-      (acc, curr) => acc + Math.max(curr.endDate - curr.startDate, 1),
+      (acc, curr) => acc + Math.abs(curr.endDate - curr.startDate),
       0,
     )
 
@@ -121,9 +121,13 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
 
     const accurate = state?.completeHistory || false
 
-    const progress = Number(
-      ((processedMilis / (processedMilis + pendingMilis)) * 100).toFixed(2),
-    )
+    const totalMilis = processedMilis + pendingMilis
+    let progress
+    if (totalMilis === 0) {
+        progress = processedRanges.length === 0 ? 0 : 100
+    } else {
+        progress = Number(((processedMilis / totalMilis) * 100).toFixed(2))
+    }
 
     return {
       blockchain: this.config.blockchainId,
