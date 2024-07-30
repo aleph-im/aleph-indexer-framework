@@ -22,6 +22,7 @@ export default class MainDomain
     const OAXTokenOasys = '0x4688e596fb8ffaa9f7c1f02985b44651cf642123'
     const contractHomeverse = '0x7aB9B14Eb42913fe48AC01f3BB453cA7BEf343EA'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
+    const wethTokenBase = '0x4200000000000000000000000000000000000006'
 
     const accountIndexerConfigs = []
 
@@ -86,6 +87,19 @@ export default class MainDomain
         blockchainId: 'homeverse',
         account: contractHomeverse,
         meta: 4,
+        index: {
+          transactions: false,
+          state: false,
+          logs: true,
+        },
+      })
+    }
+
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Base)) {
+      accountIndexerConfigs.push({
+        blockchainId: BlockchainChain.Base,
+        account: wethTokenBase,
+        meta: -1,
         index: {
           transactions: false,
           state: false,

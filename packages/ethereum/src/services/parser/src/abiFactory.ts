@@ -69,6 +69,12 @@ export class EthereumAbiFactory {
 
     const body: any = await response.json()
 
+    // @note: We are supporting etherscan and blockscout kind of EVM explorer
+
+    if (body.abi) {
+      return body.abi as Abi
+    }
+
     // @note: Rate limit error sent with status 200 OK...
     // {
     //   "status": "0",

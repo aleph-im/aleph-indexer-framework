@@ -52,13 +52,14 @@
     "typescript": "^4.8.4"
   },
   "workspaces": [
-    "packages/core",
+    "packages/base",
     "packages/bsc",
+    "packages/core",
     "packages/ethereum",
     "packages/framework",
     "packages/indexer-example",
-    "packages/solana",
     "packages/oasys",
-    "packages/oasys-verse"
+    "packages/oasys-verse",
+    "packages/solana"
   ]
 }

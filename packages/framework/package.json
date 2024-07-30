@@ -19,6 +19,7 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "peerDependencies": {
+    "@aleph-indexer/base": "^1.x",
     "@aleph-indexer/bsc": "^1.x",
     "@aleph-indexer/ethereum": "^1.x",
     "@aleph-indexer/oasys": "^1.x",
@@ -30,6 +31,9 @@
     "nats": "^2.x"
   },
   "peerDependenciesMeta": {
+    "@aleph-indexer/base": {
+      "optional": true
+    },
     "@aleph-indexer/bsc": {
       "optional": true
     },
