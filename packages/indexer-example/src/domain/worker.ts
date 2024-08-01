@@ -17,6 +17,16 @@ import {
 } from '@aleph-indexer/solana'
 import { BscIndexerWorkerDomainI } from '@aleph-indexer/bsc'
 import { OasysIndexerWorkerDomainI } from '@aleph-indexer/oasys'
+import {
+  AvalancheIndexerWorkerDomainI,
+  AvalancheParsedLog,
+  AvalancheParsedTransaction,
+} from '@aleph-indexer/avalanche'
+import {
+  BaseIndexerWorkerDomainI,
+  BaseParsedLog,
+  BaseParsedTransaction,
+} from '@aleph-indexer/base'
 
 export default class WorkerDomain
   extends IndexerWorkerDomain
@@ -24,7 +34,9 @@ export default class WorkerDomain
     EthereumIndexerWorkerDomainI,
     SolanaIndexerWorkerDomainI,
     BscIndexerWorkerDomainI,
-    OasysIndexerWorkerDomainI
+    OasysIndexerWorkerDomainI,
+    BaseIndexerWorkerDomainI,
+    AvalancheIndexerWorkerDomainI
 {
   constructor(
     protected context: IndexerDomainContext,
@@ -188,29 +200,62 @@ export default class WorkerDomain
 
   async baseFilterTransaction(
     context: ParserContext,
-    entity: EthereumParsedTransaction,
+    entity: BaseParsedTransaction,
   ): Promise<boolean> {
     return true
   }
 
   async baseIndexTransactions(
     context: ParserContext,
-    entities: EthereumParsedTransaction[],
+    entities: BaseParsedTransaction[],
   ): Promise<void> {
     console.log('Index base transaction', JSON.stringify(entities, null, 2))
   }
 
   async baseFilterLog(
     context: ParserContext,
-    entity: EthereumParsedLog,
+    entity: BaseParsedLog,
   ): Promise<boolean> {
     return true
   }
 
   async baseIndexLogs(
     context: ParserContext,
-    entities: EthereumParsedLog[],
+    entities: BaseParsedLog[],
   ): Promise<void> {
     console.log('Index base log', JSON.stringify(entities, null, 2))
+  }
+
+  // Avalanche
+
+  async avalancheFilterTransaction(
+    context: ParserContext,
+    entity: AvalancheParsedTransaction,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async avalancheIndexTransactions(
+    context: ParserContext,
+    entities: AvalancheParsedTransaction[],
+  ): Promise<void> {
+    console.log(
+      'Index avalanche transaction',
+      JSON.stringify(entities, null, 2),
+    )
+  }
+
+  async avalancheFilterLog(
+    context: ParserContext,
+    entity: AvalancheParsedLog,
+  ): Promise<boolean> {
+    return true
+  }
+
+  async avalancheIndexLogs(
+    context: ParserContext,
+    entities: AvalancheParsedLog[],
+  ): Promise<void> {
+    console.log('Index avalanche log', JSON.stringify(entities, null, 2))
   }
 }

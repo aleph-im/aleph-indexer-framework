@@ -52,6 +52,7 @@
     "typescript": "^4.8.4"
   },
   "workspaces": [
+    "packages/avalanche",
     "packages/base",
     "packages/bsc",
     "packages/core",

@@ -19,6 +19,8 @@
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
+    "@aleph-indexer/avalanche": "^1.0.43",
+    "@aleph-indexer/base": "^1.0.43",
     "@aleph-indexer/bsc": "^1.0.43",
     "@aleph-indexer/oasys": "^1.0.43",
     "@aleph-indexer/core": "^1.0.42",

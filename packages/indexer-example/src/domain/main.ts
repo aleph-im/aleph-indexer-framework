@@ -23,6 +23,7 @@ export default class MainDomain
     const contractHomeverse = '0x7aB9B14Eb42913fe48AC01f3BB453cA7BEf343EA'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
     const wethTokenBase = '0x4200000000000000000000000000000000000006'
+    const alephSupertokenAvax = '0xc0Fbc4967259786C743361a5885ef49380473dCF'
 
     const accountIndexerConfigs = []
 
@@ -100,6 +101,19 @@ export default class MainDomain
         blockchainId: BlockchainChain.Base,
         account: wethTokenBase,
         meta: -1,
+        index: {
+          transactions: false,
+          state: false,
+          logs: true,
+        },
+      })
+    }
+
+    if (this.context.supportedBlockchains.includes(BlockchainChain.Avalanche)) {
+      accountIndexerConfigs.push({
+        blockchainId: BlockchainChain.Avalanche,
+        account: alephSupertokenAvax,
+        meta: -2,
         index: {
           transactions: false,
           state: false,

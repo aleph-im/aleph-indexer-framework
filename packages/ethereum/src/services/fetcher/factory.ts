@@ -90,10 +90,12 @@ export function ethereumFetcherInstanceFactory(
   ethereumClient: EthereumClient,
   config: ReturnType<typeof ethereumConfigFactory>,
   DALs: ReturnType<typeof ethereumDalsFetcherFactory>,
+  blockHistoryFetcher?: EthereumBlockHistoryFetcher,
+  logHistoryFetcher?: EthereumLogHistoryFetcher
 ): EthereumFetcher {
 
 
-  const blockHistoryFetcher = new EthereumBlockHistoryFetcher(
+  blockHistoryFetcher = blockHistoryFetcher || new EthereumBlockHistoryFetcher(
     blockchainId,
     config,
     ethereumClient,
@@ -131,7 +133,7 @@ export function ethereumFetcherInstanceFactory(
 
   // Logs
 
-  const logHistoryFetcher = new EthereumLogHistoryFetcher(
+   logHistoryFetcher = logHistoryFetcher || new EthereumLogHistoryFetcher(
     blockchainId,
     ethereumClient,
     DALs.logHistoryFetcherStateDAL,
