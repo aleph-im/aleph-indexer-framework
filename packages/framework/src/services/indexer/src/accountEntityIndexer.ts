@@ -124,9 +124,9 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     const totalMilis = processedMilis + pendingMilis
     let progress
     if (totalMilis === 0) {
-        progress = processedRanges.length === 0 ? 0 : 100
+      progress = processedRanges.length === 0 ? 0 : 100
     } else {
-        progress = Number(((processedMilis / totalMilis) * 100).toFixed(2))
+      progress = Number(((processedMilis / totalMilis) * 100).toFixed(2))
     }
 
     return {
@@ -422,11 +422,11 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
   }
 
   protected async addAccountEntityFetcher(): Promise<void> {
-    const { type, blockchainId, account } = this.config
+    const { type, blockchainId, account, params } = this.config
 
     await this.fetcherMsClient
       .useBlockchain(blockchainId)
-      .addAccountEntityFetcher({ type, account })
+      .addAccountEntityFetcher({ type, account, params })
   }
 
   protected async delAccountEntityFetcher(): Promise<void> {

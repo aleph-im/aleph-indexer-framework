@@ -79,8 +79,8 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
     account: string,
   ): EthereumAccountTransactionHistoryFetcher {
     return new EthereumAccountTransactionHistoryFetcher(
-      this.blockchainId,
       account,
+      this.blockchainId,
       this.fetcherStateDAL,
       this.ethereumClient,
       this.blockHistoryFetcher,

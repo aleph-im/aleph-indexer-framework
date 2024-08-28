@@ -5,7 +5,12 @@ import {
   PendingWorkStorage,
 } from '@aleph-indexer/core'
 
-export type PendingAccountStorage = PendingWorkStorage<string[]>
+export type PendingAccountPayload = {
+  peers: string[]
+  params?: Record<string, unknown>
+}
+
+export type PendingAccountStorage = PendingWorkStorage<PendingAccountPayload>
 
 /**
  * Creates a new pending transaction storage for the fetcher.
@@ -20,22 +25,20 @@ export function createPendingAccountDAL(
     path,
     count: true,
     async updateCheckFn(
-      oldEntity: PendingWork<string[]> | undefined,
-      newEntity: PendingWork<string[]>,
-    ): Promise<EntityUpdateCheckFnReturn<PendingWork<string[]>>> {
+      oldEntity: PendingWork<PendingAccountPayload> | undefined,
+      newEntity: PendingWork<PendingAccountPayload>,
+    ): Promise<EntityUpdateCheckFnReturn<PendingWork<PendingAccountPayload>>> {
       let entity = newEntity
 
       if (oldEntity) {
         const peers = new Set([
-          ...(oldEntity.payload || []),
-          ...(newEntity.payload || []),
+          ...(oldEntity.payload.peers || []),
+          ...(newEntity.payload.peers || []),
         ])
 
-        entity = {
-          ...newEntity,
-          payload: [...peers],
-          time: oldEntity.time,
-        }
+        entity = { ...newEntity }
+        entity.time = oldEntity.time
+        entity.payload.peers = [...peers]
       }
 
       return { op: EntityUpdateOp.Update, entity }

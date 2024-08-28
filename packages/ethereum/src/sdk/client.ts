@@ -83,7 +83,7 @@ export type EthereumLogsChunkOptions = {
   limit: number
   toBlock: number
   fromBlock: number
-  isContractAccount?: boolean
+  contract?: string
 }
 
 export type EthereumLogsChunkResponse = {
@@ -338,7 +338,7 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { account, fromBlock = 0, pageLimit = 1000, isContractAccount } = args
+    const { account, fromBlock = 0, pageLimit = 1000, contract } = args
 
     let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
       args
@@ -362,7 +362,7 @@ export class EthereumClient {
           limit,
           toBlock,
           fromBlock,
-          isContractAccount,
+          contract,
         })
 
       if (count === 0) break
@@ -646,7 +646,7 @@ export class EthereumClient {
     toBlock,
     fromBlock,
     limit,
-    isContractAccount,
+    contract,
   }: EthereumLogsChunkOptions): Promise<EthereumLogsChunkResponse> {
     if (!this.logBloomDAL)
       throw new Error('EthereumLogBloomStorage not provided to EthereumClient')
@@ -672,7 +672,7 @@ export class EthereumClient {
     let chunk: EthereumRawLog[] = []
 
     if (logBloomChunk.length > 0) {
-      const checkFn = isContractAccount
+      const checkFn = contract
         ? isContractAddressInBloom
         : isUserEthereumAddressInBloom
 
@@ -690,10 +690,10 @@ export class EthereumClient {
         let logs = (await this.getBlockLogs(
           [{ fromBlock, toBlock }],
           false,
-          isContractAccount ? account : undefined,
+          contract,
         )) as EthereumRawLog[]
 
-        if (!isContractAccount) {
+        if (!contract) {
           const accountTopic = `0x${account.substring(2).padStart(64, '0')}`
 
           const relevantHeightsSet = new Set(

@@ -9,7 +9,7 @@ import {
   GetAccountEntityStateRequestArgs,
 } from './types.js'
 import { FetcherMsClient } from '../client.js'
-import { PendingAccountStorage } from './dal/account.js'
+import { PendingAccountPayload, PendingAccountStorage } from './dal/account.js'
 import { FetcherPool } from './fetcherPool.js'
 import { BlockchainId, IndexableEntityType } from '../../../types.js'
 import { BaseHistoryFetcher } from './baseHistoryFetcher.js'
@@ -28,7 +28,7 @@ export abstract class BaseEntityHistoryFetcher<
   CU,
   HE extends AccountEntityHistoryStorageEntity,
 > {
-  protected pendingAccounts: FetcherPool<string[]>
+  protected pendingAccounts: FetcherPool<PendingAccountPayload>
 
   /**
    * Initialize the fetcher service.
@@ -49,7 +49,9 @@ export abstract class BaseEntityHistoryFetcher<
       interval: 0,
       concurrency: 1,
       dal: this.accountDAL,
-      getFetcher: ({ id }) => this.getAccountFetcher(id),
+      fetcherCache: true,
+      getFetcher: ({ id, payload }) =>
+        this.getAccountFetcher(id, payload.params),
       // checkComplete: () => false, // @note: Delegated to each baseFetcher
     })
   }
@@ -70,10 +72,15 @@ export abstract class BaseEntityHistoryFetcher<
   async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     const { account, indexerId } = args
 
+    const payload: PendingAccountPayload = {
+      peers: indexerId ? [indexerId] : [],
+      params: args.params,
+    }
+
     const work = {
       id: account,
       time: Date.now(),
-      payload: indexerId ? [indexerId] : [],
+      payload,
     }
 
     await this.pendingAccounts.addWork(work)
@@ -91,12 +98,12 @@ export abstract class BaseEntityHistoryFetcher<
     const work = await this.accountDAL.getFirstValueFromTo([account], [account])
     if (!work) return
 
-    work.payload = work.payload.filter((id) => id !== indexerId)
+    work.payload.peers = work.payload.peers.filter((id) => id !== indexerId)
 
-    await this.pendingAccounts.removeWork(work)
-
-    if (work.payload.length > 0) {
+    if (work.payload.peers.length > 0) {
       await this.pendingAccounts.addWork(work)
+    } else {
+      await this.pendingAccounts.removeWork(work)
     }
   }
 
@@ -156,7 +163,7 @@ export abstract class BaseEntityHistoryFetcher<
   ): Promise<AccountEntityHistoryState<CU> | undefined> {
     const { account } = args
 
-    const fetcher = this.getAccountFetcher(args.account)
+    const fetcher = this.getAccountFetcher(args.account, undefined)
     const fetcherState = await fetcher.getState()
     if (!fetcherState) return
 
@@ -188,5 +195,8 @@ export abstract class BaseEntityHistoryFetcher<
     args: GetAccountEntityStateRequestArgs,
   ): Promise<AccountEntityHistoryState<CU> | undefined>
 
-  protected abstract getAccountFetcher(account: string): BaseHistoryFetcher<CU>
+  protected abstract getAccountFetcher(
+    account: string,
+    params: Record<string, unknown> | undefined,
+  ): BaseHistoryFetcher<CU>
 }

@@ -6,7 +6,10 @@ import {
 } from '@aleph-indexer/framework'
 import { EthereumClient } from '../../../../sdk/client.js'
 import { EthereumAccountStateFetcher } from './accountStateFetcher.js'
-import { EthereumAccountStateStorage } from '../types.js'
+import {
+  EthereumAccountStateFetcherOptions,
+  EthereumAccountStateStorage,
+} from '../types.js'
 
 /**
  * The main class of the fetcher service.
@@ -26,15 +29,14 @@ export class EthereumStateFetcher extends BaseStateFetcher {
     super(blockchainId, ...args)
   }
 
-  protected getAccountFetcher(account: string): BaseStateFetcherI {
-    const opts = {
-      account,
-      subscribeChanges: true,
-    }
-
+  protected getAccountFetcher(
+    account: string,
+    params: EthereumAccountStateFetcherOptions = {},
+  ): BaseStateFetcherI {
     return new EthereumAccountStateFetcher(
+      account,
+      params,
       this.blockchainId,
-      opts,
       this.accountStateDAL,
       this.ethereumClient,
       this.blockchainId,

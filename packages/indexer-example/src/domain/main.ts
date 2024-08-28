@@ -22,7 +22,7 @@ export default class MainDomain
     const OAXTokenOasys = '0x4688e596fb8ffaa9f7c1f02985b44651cf642123'
     const contractHomeverse = '0x7aB9B14Eb42913fe48AC01f3BB453cA7BEf343EA'
     const alephTokenSol = '3UCMiSnkcnkPE1pgQ5ggPCBv6dXgVUy16TmMUe1WpG9x'
-    const wethTokenBase = '0x4200000000000000000000000000000000000006'
+    const alephSupertokenBase = '0xc0Fbc4967259786C743361a5885ef49380473dCF'
     const alephSupertokenAvax = '0xc0Fbc4967259786C743361a5885ef49380473dCF'
 
     const accountIndexerConfigs = []
@@ -99,12 +99,17 @@ export default class MainDomain
     if (this.context.supportedBlockchains.includes(BlockchainChain.Base)) {
       accountIndexerConfigs.push({
         blockchainId: BlockchainChain.Base,
-        account: wethTokenBase,
+        account: alephSupertokenBase,
         meta: -1,
         index: {
           transactions: false,
           state: false,
           logs: true,
+          // logs: {
+          //   params: {
+          //     contract: '*',
+          //   },
+          // },
         },
       })
     }

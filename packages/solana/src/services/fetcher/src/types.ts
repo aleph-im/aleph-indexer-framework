@@ -68,7 +68,6 @@ export type SolanaTransactionHistoryPaginationResponse =
 // Account State
 
 export type SolanaAccountStateFetcherOptions = {
-  account: string
   subscribeChanges?: boolean
 }
 

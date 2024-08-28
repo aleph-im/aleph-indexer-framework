@@ -34,7 +34,7 @@ export class BaseHistoryFetcher<C> {
   async init(): Promise<void> {
     const fetcherState = await this.getFetcherState()
 
-    if (this.options.jobs?.backward) {
+    if (!this.backwardJob && this.options.jobs?.backward) {
       const { frequency: intervalInit, complete } =
         fetcherState.jobs?.backward || {}
 
@@ -48,7 +48,7 @@ export class BaseHistoryFetcher<C> {
       }
     }
 
-    if (this.options.jobs?.forward) {
+    if (!this.forwardJob && this.options.jobs?.forward) {
       const { frequency: intervalInit, complete } =
         fetcherState.jobs?.forward || {}
 

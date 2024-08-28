@@ -12,18 +12,26 @@ import {
 export class EthereumAccountStateFetcher {
   /**
    * Initialize the AccountInfoFetcher and saves the account info in the data access layer.
-   * @param opts Options where the account address is stored and if it needs to be updated.
+   * @param params Options where the account address is stored and if it needs to be updated.
    * @param dal The account info storage.
    * @param ethereumClient The ethereum RPC client to use.
    * @param id Identifier containing the account address.
    */
   constructor(
+    protected account: string,
+    protected params: EthereumAccountStateFetcherOptions,
     protected blockchainId: BlockchainId,
-    protected opts: EthereumAccountStateFetcherOptions,
     protected dal: EthereumAccountStateStorage,
     protected ethereumClient: EthereumClient,
-    protected id = `${blockchainId}:account-state:${opts.account}`,
-  ) {}
+    protected id = `${blockchainId}:account-state:${account}`,
+  ) {
+    // @note: Copy to dont override referenced object
+    this.params = { ...params }
+
+    if (this.params.subscribeChanges === undefined) {
+      this.params.subscribeChanges = true
+    }
+  }
 
   async init(): Promise<void> {
     // @note: no-op
@@ -36,10 +44,10 @@ export class EthereumAccountStateFetcher {
   async run(): Promise<void> {
     const balance = await this.ethereumClient
       .getSDK()
-      .eth.getBalance(this.opts.account)
+      .eth.getBalance(this.account)
 
     const state = {
-      account: this.opts.account,
+      account: this.account,
       balance,
     }
 

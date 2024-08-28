@@ -31,8 +31,8 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
-    protected blockchainId: BlockchainId,
     protected account: string,
+    protected blockchainId: BlockchainId,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountTransactionHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
     protected blockHistoryFetcher: EthereumBlockHistoryFetcher,

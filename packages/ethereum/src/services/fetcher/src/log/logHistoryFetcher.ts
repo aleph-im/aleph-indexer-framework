@@ -7,7 +7,10 @@ import {
   BaseEntityHistoryFetcher,
   IndexableEntityType,
 } from '@aleph-indexer/framework'
-import { EthereumAccountLogHistoryFetcher } from './accountLogHistoryFetcher.js'
+import {
+  EthereumAccountLogHistoryFetcher,
+  EthereumAccountLogHistoryFetcherParams,
+} from './accountLogHistoryFetcher.js'
 import { EthereumBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
 import { EthereumClient } from '../../../../sdk/client.js'
 import {
@@ -77,10 +80,12 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
 
   protected getAccountFetcher(
     account: string,
+    params: EthereumAccountLogHistoryFetcherParams = {},
   ): EthereumAccountLogHistoryFetcher {
     return new EthereumAccountLogHistoryFetcher(
-      this.blockchainId,
       account,
+      params,
+      this.blockchainId,
       this.accountLogHistoryDAL,
       this.rawLogDAL,
       this.fetcherStateDAL,

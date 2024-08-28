@@ -123,8 +123,8 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
     account: string,
   ): SolanaAccountTransactionHistoryFetcher {
     return new SolanaAccountTransactionHistoryFetcher(
-      this.blockchainId,
       account,
+      this.blockchainId,
       this.accountEntityHistoryDAL,
       this.solanaRpc,
       this.solanaMainPublicRpc,

@@ -81,6 +81,10 @@ export type AccountIndexerEntityRequestArgs = BlockchainRequestArgs &
      * How large the timeframe of a chunk is. (@todo: what is this helpful for?)
      */
     chunkTimeframe: number
+    /**
+     * Additional params to take into account while fetching
+     */
+    params?: Record<string, any>
   }
 
 export type AccountIndexerTransactionRequestArgs =
@@ -100,7 +104,7 @@ export type AccountIndexerRequestArgs = BlockchainRequestArgs &
       transactions?:
         | boolean
         | Omit<
-            AccountIndexerTransactionRequestArgs,
+            Partial<AccountIndexerTransactionRequestArgs>,
             'type' | 'account' | 'blockchainId'
           >
       /**
@@ -109,7 +113,7 @@ export type AccountIndexerRequestArgs = BlockchainRequestArgs &
       logs?:
         | boolean
         | Omit<
-            AccountIndexerLogRequestArgs,
+            Partial<AccountIndexerLogRequestArgs>,
             'type' | 'account' | 'blockchainId'
           >
       /**
@@ -118,7 +122,7 @@ export type AccountIndexerRequestArgs = BlockchainRequestArgs &
       state?:
         | boolean
         | Omit<
-            AccountIndexerStateRequestArgs,
+            Partial<AccountIndexerStateRequestArgs>,
             'type' | 'account' | 'blockchainId'
           >
     }

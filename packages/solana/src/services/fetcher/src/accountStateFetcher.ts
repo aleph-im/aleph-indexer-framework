@@ -19,19 +19,20 @@ export class SolanaAccountStateFetcher {
 
   /**
    * Initialize the AccountInfoFetcher and saves the account info in the data access layer.
-   * @param opts Options where the account address is stored and if it needs to be updated.
+   * @param params Options where the account address is stored and if it needs to be updated.
    * @param accountStateDAL The account info storage.
    * @param solanaRpc The solana RPC client to use.
    * @param solanaMainPublicRpc The solana mainnet public RPC client to use.
    * @param id Identifier containing the account address.
    */
   constructor(
+    protected account: string,
+    protected params: SolanaAccountStateFetcherOptions,
     protected blockchainId: BlockchainId,
-    protected opts: SolanaAccountStateFetcherOptions,
     protected accountStateDAL: SolanaAccountStateStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
-    protected id = `${blockchainId}:account-state:${opts.account}`,
+    protected id = `${blockchainId}:account-state:${account}`,
   ) {
     this.debouncedJob = new Utils.DebouncedJob<AccountInfo<Buffer>>(
       async (accountInfo) => {
@@ -39,7 +40,7 @@ export class SolanaAccountStateFetcher {
         const accountData = data.toJSON() as any
 
         const state = {
-          account: opts.account,
+          account: this.account,
           executable: accountInfo.executable,
           owner: accountInfo.owner.toString(),
           lamports: accountInfo.lamports,
@@ -50,6 +51,13 @@ export class SolanaAccountStateFetcher {
         await this.accountStateDAL.save(state)
       },
     )
+
+    // @note: Copy to dont override referenced object
+    this.params = { ...params }
+
+    if (this.params.subscribeChanges === undefined) {
+      this.params.subscribeChanges = true
+    }
   }
 
   async init(): Promise<void> {
@@ -71,12 +79,12 @@ export class SolanaAccountStateFetcher {
    */
   async run(): Promise<void> {
     const conn = this.solanaRpc.getConnection()
-    const address = new PublicKey(this.opts.account)
+    const address = new PublicKey(this.account)
     // Fetch them for the first time
     const accountInfo = await conn.getAccountInfo(address)
     if (accountInfo) this.debouncedJob.run(accountInfo)
 
-    if (this.opts.subscribeChanges) {
+    if (this.params.subscribeChanges) {
       this.subscriptionId = conn.onAccountChange(
         address,
         async (accountInfo) => {

@@ -143,11 +143,16 @@ export type FetcherAccountEntityTypeRequestArgs = {
   type: IndexableEntityType
 }
 
+export type FetcherAccountEntityExtraParamsArgs = {
+  params?: Record<string, unknown>
+}
+
 // Account transaction ------------------------------
 
 export type AddAccountEntityRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs &
-  FetcherAccountEntityTypeRequestArgs
+  FetcherAccountEntityTypeRequestArgs &
+  FetcherAccountEntityExtraParamsArgs
 
 export type DelAccountEntityRequestArgs = BlockchainRequestArgs &
   FetcherAccountPartitionRequestArgs &

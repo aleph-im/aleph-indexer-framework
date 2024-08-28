@@ -103,7 +103,7 @@ export type EthereumFetchLogsOptions = {
   fromBlock?: number
   iterationLimit?: number
   pageLimit?: number
-  isContractAccount?: boolean
+  contract?: string
 }
 
 export type EthereumAccountLogHistoryState =
@@ -115,7 +115,6 @@ export type EthereumAccountLogHistoryState =
 // Account State
 
 export type EthereumAccountStateFetcherOptions = {
-  account: string
   subscribeChanges?: boolean
 }
 

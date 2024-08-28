@@ -14,6 +14,7 @@ export class EthereumAbiFactory {
     protected basePath: string,
     protected ethereumClient: EthereumClient,
     protected explorerUrl: string,
+    protected cache: Record<string, Abi> = {},
   ) {}
 
   async getAbi(address: string): Promise<Abi | undefined> {
@@ -35,12 +36,16 @@ export class EthereumAbiFactory {
   }
 
   protected async getAbiFromCache(address: string): Promise<Abi | void> {
+    let abi = this.cache[address]
+    if (abi) return abi
+
     try {
       const cachePath = path.join(this.basePath, `${address}.json`)
       this.log('load abi from cache => ', cachePath)
 
       const file = await readFile(cachePath, 'utf8')
-      const abi = JSON.parse(file)
+      abi = JSON.parse(file)
+      this.cache[address] = abi
 
       this.log('cached abi => ', abi)
 

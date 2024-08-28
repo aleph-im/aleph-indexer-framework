@@ -3,7 +3,7 @@ import {
   AddAccountEntityRequestArgs,
   DelAccountEntityRequestArgs,
 } from './types.js'
-import { PendingAccountStorage } from './dal/account.js'
+import { PendingAccountPayload, PendingAccountStorage } from './dal/account.js'
 import { BlockchainId } from '../../../types.js'
 
 const { MAX_TIMER_INTEGER } = Utils
@@ -18,7 +18,7 @@ export interface BaseStateFetcherI {
  * The main class of the fetcher service.
  */
 export abstract class BaseStateFetcher {
-  protected pendingAccounts: PendingWorkPool<string[]>
+  protected pendingAccounts: PendingWorkPool<PendingAccountPayload>
   protected fetchers: Record<string, BaseStateFetcherI> = {}
 
   /**
@@ -55,10 +55,15 @@ export abstract class BaseStateFetcher {
   async addAccount(args: AddAccountEntityRequestArgs): Promise<void> {
     const { account, indexerId } = args
 
+    const payload: PendingAccountPayload = {
+      peers: indexerId ? [indexerId] : [],
+      params: args.params,
+    }
+
     const work = {
       id: account,
       time: Date.now(),
-      payload: indexerId ? [indexerId] : [],
+      payload,
     }
 
     await this.pendingAccounts.addWork(work)
@@ -72,9 +77,11 @@ export abstract class BaseStateFetcher {
     const work = await this.accountDAL.getFirstValueFromTo([account], [account])
     if (!work) return
 
-    work.payload = work.payload.filter((id: string) => id !== indexerId)
+    work.payload.peers = work.payload.peers.filter(
+      (id: string) => id !== indexerId,
+    )
 
-    if (work.payload.length > 0) {
+    if (work.payload.peers.length > 0) {
       await this.pendingAccounts.addWork(work)
     } else {
       await this.pendingAccounts.removeWork(work)
@@ -90,7 +97,7 @@ export abstract class BaseStateFetcher {
     let fetcher = this.fetchers[account]
     if (fetcher) return
 
-    fetcher = this.getAccountFetcher(account)
+    fetcher = this.getAccountFetcher(account, undefined)
 
     this.fetchers[account] = fetcher
 
@@ -116,7 +123,7 @@ export abstract class BaseStateFetcher {
    * @param works Txn signatures with extra properties as time and payload.
    */
   protected async _handleAccounts(
-    works: PendingWork<string[]>[],
+    works: PendingWork<PendingAccountPayload>[],
   ): Promise<void> {
     console.log(
       `ethereum Accounts State | Start handling ${works.length} accounts`,
@@ -129,5 +136,8 @@ export abstract class BaseStateFetcher {
     }
   }
 
-  protected abstract getAccountFetcher(account: string): BaseStateFetcherI
+  protected abstract getAccountFetcher(
+    account: string,
+    params: Record<string, unknown> | undefined,
+  ): BaseStateFetcherI
 }

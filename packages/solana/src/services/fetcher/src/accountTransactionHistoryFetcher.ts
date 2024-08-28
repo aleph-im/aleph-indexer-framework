@@ -32,7 +32,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
 
   /**
    * Initializes the signature fetcher.
-   * @param address The account address to fetch related signatures for.
+   * @param account The account address to fetch related signatures for.
    * @param dal The signature storage.
    * @param solanaRpc The Solana RPC client.
    * @param solanaMainPublicRpc The Solana mainnet public RPC client.
@@ -40,8 +40,8 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
    * @param times The number of times to fetch signatures.
    */
   constructor(
+    protected account: string,
     protected blockchainId: BlockchainId,
-    protected address: string,
     protected dal: SolanaAccountTransactionHistoryStorage,
     protected solanaRpc: SolanaRPC,
     protected solanaMainPublicRpc: SolanaRPC,
@@ -50,7 +50,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
   ) {
     super(
       {
-        id: `${blockchainId}:account-signature-history:${address}`,
+        id: `${blockchainId}:account-signature-history:${account}`,
         jobs: {
           forward: {
             times,
@@ -79,7 +79,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
   }): Promise<
     FetcherJobRunnerHandleFetchResult<SolanaAccountTransactionHistoryPaginationCursor>
   > {
-    const { address, errorFetching } = this
+    const { account, errorFetching } = this
 
     const useHistoricRPC = Boolean(
       this.fetcherState.jobs.forward.useHistoricRPC,
@@ -98,7 +98,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
 
     const options: SolanaFetchSignaturesOptions = {
       before: undefined,
-      address,
+      address: account,
       until,
       untilSlot,
       iterationLimit,
@@ -128,7 +128,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
   }): Promise<
     FetcherJobRunnerHandleFetchResult<SolanaAccountTransactionHistoryPaginationCursor>
   > {
-    const { address, errorFetching } = this
+    const { account, errorFetching } = this
 
     const useHistoricRPC = Boolean(
       this.fetcherState.jobs.backward.useHistoricRPC,
@@ -143,7 +143,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const options: SolanaFetchSignaturesOptions = {
       until,
       before,
-      address,
+      address: account,
       iterationLimit,
       errorFetching,
     }
@@ -266,7 +266,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       delete sig.confirmationStatus
 
       sig.accountSlotIndex = sig.accountSlotIndex || {}
-      sig.accountSlotIndex[this.address] = offset
+      sig.accountSlotIndex[this.account] = offset
 
       sig.accounts = Object.keys(sig.accountSlotIndex)
 

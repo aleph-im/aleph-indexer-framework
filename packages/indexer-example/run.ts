@@ -11,7 +11,7 @@ async function main() {
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
 
-  const instances = Number(config.INDEXER_INSTANCES || 2)
+  const instances = Number(config.INDEXER_INSTANCES || 1)
   const apiPort = Number(config.INDEXER_API_PORT || 8081)
   const tcpUrls = config.INDEXER_TCP_URLS || undefined
   const natsUrl = config.INDEXER_NATS_URL || undefined

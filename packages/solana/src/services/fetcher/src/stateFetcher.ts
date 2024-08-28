@@ -6,7 +6,10 @@ import {
 } from '@aleph-indexer/framework'
 import { SolanaRPC } from '../../../sdk/client.js'
 import { SolanaAccountStateFetcher } from './accountStateFetcher.js'
-import { SolanaAccountStateStorage } from './types.js'
+import {
+  SolanaAccountStateFetcherOptions,
+  SolanaAccountStateStorage,
+} from './types.js'
 
 /**
  * The main class of the fetcher service.
@@ -28,15 +31,14 @@ export class SolanaStateFetcher extends BaseStateFetcher {
     super(blockchainId, ...args)
   }
 
-  protected getAccountFetcher(account: string): BaseStateFetcherI {
-    const opts = {
-      account,
-      subscribeChanges: true,
-    }
-
+  protected getAccountFetcher(
+    account: string,
+    params: SolanaAccountStateFetcherOptions = {},
+  ): BaseStateFetcherI {
     return new SolanaAccountStateFetcher(
+      account,
+      params,
       this.blockchainId,
-      opts,
       this.accountStateDAL,
       this.solanaRpc,
       this.solanaMainPublicRpc,

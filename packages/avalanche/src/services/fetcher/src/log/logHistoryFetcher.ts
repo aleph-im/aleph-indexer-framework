@@ -1,13 +1,18 @@
 import { AvalancheAccountLogHistoryFetcher } from './accountLogHistoryFetcher.js'
-import { EthereumLogHistoryFetcher } from '@aleph-indexer/ethereum'
+import {
+  EthereumAccountLogHistoryFetcherParams,
+  EthereumLogHistoryFetcher,
+} from '@aleph-indexer/ethereum'
 
 export class AvalancheLogHistoryFetcher extends EthereumLogHistoryFetcher {
   protected getAccountFetcher(
     account: string,
+    params: EthereumAccountLogHistoryFetcherParams = {},
   ): AvalancheAccountLogHistoryFetcher {
     return new AvalancheAccountLogHistoryFetcher(
-      this.blockchainId,
       account,
+      params,
+      this.blockchainId,
       this.accountLogHistoryDAL,
       this.rawLogDAL,
       this.fetcherStateDAL,

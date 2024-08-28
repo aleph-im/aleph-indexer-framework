@@ -62,35 +62,47 @@ export class BaseIndexer<BEI extends BaseEntityIndexer = BaseEntityIndexer>
     const { Transaction, Log, State } = IndexableEntityType
 
     if (transactions) {
+      const transactionsParams = {
+        chunkDelay: 0,
+        chunkTimeframe: 1000 * 60 * 60 * 24,
+        ...(typeof transactions !== 'boolean' ? transactions : {}),
+      }
+
       await this.getEntityIndexerInstance(Transaction).addAccount({
         type: Transaction,
         blockchainId,
         account,
-        ...(typeof transactions !== 'boolean'
-          ? transactions
-          : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
+        ...transactionsParams,
       })
     }
 
     if (logs) {
+      const logsParams = {
+        chunkDelay: 0,
+        chunkTimeframe: 1000 * 60 * 60 * 24,
+        ...(typeof logs !== 'boolean' ? logs : {}),
+      }
+
       await this.getEntityIndexerInstance(Log).addAccount({
         type: Log,
         blockchainId,
         account,
-        ...(typeof logs !== 'boolean'
-          ? logs
-          : { chunkDelay: 0, chunkTimeframe: 1000 * 60 * 60 * 24 }),
+        ...logsParams,
       })
     }
 
     if (state) {
+      const stateParams = {
+        chunkDelay: 1000 * 60 * 60,
+        chunkTimeframe: 1000 * 60 * 60,
+        ...(typeof state !== 'boolean' ? state : {}),
+      }
+
       await this.getEntityIndexerInstance(State).addAccount({
         type: Log,
         blockchainId,
         account,
-        ...(typeof state !== 'boolean'
-          ? state
-          : { chunkDelay: 1000 * 60 * 60, chunkTimeframe: 1000 * 60 * 60 }),
+        ...stateParams,
       })
     }
 

@@ -20,14 +20,16 @@ import {
 
 const { JobRunnerReturnCode } = Utils
 
+export type EthereumAccountLogHistoryFetcherParams = {
+  contract?: string | '*'
+  iterationLimit?: number
+  pageLimit?: number
+}
+
 /**
  * Handles the fetching and processing of signatures on an account.
  */
 export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<EthereumAccountLogHistoryPaginationCursor> {
-  protected isContract = false
-  protected iterationLimit = 5000
-  protected pageLimit = 5000
-
   /**
    * Initializes the signature fetcher.
    * @param account The account account to fetch related signatures for.
@@ -35,8 +37,9 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
-    protected blockchainId: BlockchainId,
     protected account: string,
+    protected params: EthereumAccountLogHistoryFetcherParams,
+    protected blockchainId: BlockchainId,
     protected accountLogHistoryDAL: EthereumAccountLogHistoryStorage,
     protected rawLogDAL: EthereumRawLogStorage,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountLogHistoryPaginationCursor>,
@@ -65,11 +68,37 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       },
       fetcherStateDAL,
     )
+
+    // @note: Copy to dont override referenced object
+    this.params = { ...params }
+
+    if (this.params.iterationLimit === undefined) {
+      this.params.iterationLimit = 5000
+    }
+
+    if (this.params.pageLimit === undefined) {
+      this.params.pageLimit = 5000
+    }
   }
 
   async init(): Promise<void> {
     await super.init()
-    this.isContract = await this.ethereumClient.isContractAddress(this.account)
+
+    const { contract } = this.params
+
+    if (contract === '*') {
+      this.params.contract = undefined
+      return
+    }
+
+    if (contract) return
+
+    const { account } = this
+    const isContract = await this.ethereumClient.isContractAddress(account)
+
+    if (!isContract) return
+
+    this.params.contract = account
   }
 
   async getNextRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
@@ -88,13 +117,13 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   protected async fetchForward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountLogHistoryPaginationCursor>
   > {
-    const { account, pageLimit } = this
+    const { account, params } = this
 
     const forwardCursor = this.fetcherState.cursors?.forward
     const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
 
     const iterationLimit = !fromBlock
-      ? this.iterationLimit
+      ? params.iterationLimit
       : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchLogsOptions = {
@@ -102,8 +131,8 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       fromBlock,
       toBlock: undefined, // last block height
       iterationLimit,
-      pageLimit,
-      isContractAccount: this.isContract,
+      pageLimit: params.pageLimit,
+      contract: params.contract,
     }
 
     const { lastCursors, error } = await this.fetchLogHistory(options, true)
@@ -118,7 +147,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   }): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumAccountLogHistoryPaginationCursor>
   > {
-    const { account, pageLimit } = this
+    const { account, params } = this
 
     const backwardCursor = this.fetcherState.cursors?.backward
     let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
@@ -133,15 +162,15 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
         `${this.blockchainId} fetchLogHistory needs "toBlock" cursor to be initialized`,
       )
 
-    const iterationLimit = this.iterationLimit
+    const iterationLimit = params.iterationLimit
 
     const options: EthereumFetchLogsOptions = {
       account,
       fromBlock: undefined, // first block height (0)
       toBlock,
       iterationLimit,
-      pageLimit,
-      isContractAccount: this.isContract,
+      pageLimit: params.pageLimit,
+      contract: params.contract,
     }
 
     const { lastCursors, error, count } = await this.fetchLogHistory(
