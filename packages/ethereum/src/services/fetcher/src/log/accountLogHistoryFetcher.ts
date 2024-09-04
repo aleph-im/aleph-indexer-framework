@@ -119,16 +119,24 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   > {
     const { account, params } = this
 
+    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
+    const blockState = await this.blockHistoryFetcher.getState()
+
     const forwardCursor = this.fetcherState.cursors?.forward
-    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+    let fromBlock = forwardCursor ? forwardCursor.height - 1 : undefined
+    fromBlock =
+      fromBlock !== undefined ? fromBlock : blockState.cursors?.backward?.height
+
+    const toBlock = blockState.cursors?.forward?.height
 
     const iterationLimit = !fromBlock
       ? params.iterationLimit
       : Number.MAX_SAFE_INTEGER
 
-    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
-    const blockState = await this.blockHistoryFetcher.getState()
-    const toBlock = blockState.cursors?.forward?.height
+    if (fromBlock === undefined || toBlock === undefined)
+      throw new Error(
+        `${this.options.id} needs block fetcher cursors to be initialized`,
+      )
 
     const options: EthereumFetchLogsOptions = {
       account,
@@ -153,17 +161,19 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
   > {
     const { account, params } = this
 
+    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
+    const blockState = await this.blockHistoryFetcher.getState()
+
     const backwardCursor = this.fetcherState.cursors?.backward
     let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
+    toBlock =
+      toBlock !== undefined ? toBlock : blockState.cursors?.forward?.height
 
-    if (toBlock === undefined) {
-      const blockState = await this.blockHistoryFetcher.getState()
-      toBlock = blockState.cursors?.forward?.height
-    }
+    const fromBlock = blockState.cursors?.backward?.height
 
-    if (toBlock === undefined)
+    if (fromBlock === undefined || toBlock === undefined)
       throw new Error(
-        `${this.blockchainId} fetchLogHistory needs "toBlock" cursor to be initialized`,
+        `${this.options.id} needs block fetcher cursors to be initialized`,
       )
 
     const iterationLimit = params.iterationLimit
