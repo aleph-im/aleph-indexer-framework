@@ -125,13 +125,18 @@ export abstract class BaseFetcherClient implements FetcherClientI {
     })
   }
 
-  async getEntityState(args: CheckEntityRequestArgs): Promise<EntityState[]> {
+  async getEntityState(
+    args: Omit<CheckEntityRequestArgs, keyof BlockchainRequestArgs>,
+  ): Promise<EntityState[]> {
     const ids = this.mapEntityIds(args)
     const groups = this.getEntityPartitionGroups({ ids })
 
     const states = (await Promise.all(
       Object.entries(groups).map(([partitionKey, ids]) => {
         return this.broker.call(`${this.msId}.getEntityState`, {
+          indexerId: this.broker.nodeID,
+          blockchainId: this.blockchainId,
+          ...args,
           partitionKey,
           ids,
         })

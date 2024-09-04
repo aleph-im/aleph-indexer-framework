@@ -10,6 +10,8 @@ import {
   GetAccountEntityStateRequestArgs,
   DelAccountEntityRequestArgs,
   AccountEntityHistoryState,
+  CheckEntityRequestArgs,
+  EntityState,
 } from './src/types.js'
 import { InvokeBlockchainMethodRequestArgs } from '../types.js'
 
@@ -52,6 +54,10 @@ export class FetcherMs extends Service {
         getFetcherState: {
           ...shardBalancingStrategy,
           handler: this.getFetcherState,
+        },
+        getEntityState: {
+          ...shardBalancingStrategy,
+          handler: this.getEntityState,
         },
         invokeBlockchainMethod: {
           ...shardBalancingStrategy,
@@ -103,6 +109,10 @@ export class FetcherMs extends Service {
     ctx: Context<FetcherStateRequestArgs>,
   ): Promise<FetcherState[]> {
     return this.main.getFetcherState(ctx.params)
+  }
+
+  getEntityState(ctx: Context<CheckEntityRequestArgs>): Promise<EntityState[]> {
+    return this.main.getEntityState(ctx.params)
   }
 
   invokeBlockchainMethod(
