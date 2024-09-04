@@ -126,10 +126,14 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       ? params.iterationLimit
       : Number.MAX_SAFE_INTEGER
 
+    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
+    const blockState = await this.blockHistoryFetcher.getState()
+    const toBlock = blockState.cursors?.forward?.height
+
     const options: EthereumFetchLogsOptions = {
       account,
       fromBlock,
-      toBlock: undefined, // last block height
+      toBlock,
       iterationLimit,
       pageLimit: params.pageLimit,
       contract: params.contract,
