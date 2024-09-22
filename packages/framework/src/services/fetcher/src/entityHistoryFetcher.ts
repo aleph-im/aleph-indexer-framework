@@ -115,7 +115,7 @@ export abstract class BaseEntityHistoryFetcher<
   async fetchAccountEntitiesByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<void | AsyncIterable<string[]>> {
-    const { account, startDate, endDate, indexerId } = args
+    const { account, startDate, endDate } = args
 
     const state = await this.getAccountState({
       type: this.type,
@@ -179,7 +179,7 @@ export abstract class BaseEntityHistoryFetcher<
     }
   }
 
-  protected queryEntitiesByDate(
+  protected async queryEntitiesByDate(
     args: FetchAccountEntitiesByDateRequestArgs,
   ): Promise<StorageStream<string, HE>> {
     const { account, startDate, endDate } = args

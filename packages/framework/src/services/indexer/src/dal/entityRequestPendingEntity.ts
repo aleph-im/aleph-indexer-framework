@@ -32,7 +32,7 @@ export function createEntityRequestPendingEntityDAL(
   type: IndexableEntityType,
 ): EntityRequestPendingEntityStorage {
   return new EntityStorage<EntityRequestPendingEntity>({
-    name: `${type}_request_pending_signatures`,
+    name: `${type}_request_pending_entities`,
     path,
     key: [idKey],
     indexes: [
@@ -48,14 +48,14 @@ export function createEntityRequestPendingEntityDAL(
       let entity = newEntity
 
       if (oldEntity) {
-        const ts = new Set([
+        const nonces = new Set([
           ...(oldEntity.nonces || []),
           ...(newEntity.nonces || []),
         ])
 
         entity = {
           ...newEntity,
-          nonces: [...ts],
+          nonces: [...nonces],
         }
       }
 

@@ -101,8 +101,10 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
 
     const forward = state.cursors?.forward
     if (forward) {
-      state.lastTimestamp = forward.timestamp
-      state.lastSlot = forward.slot
+      const { slot, timestamp } = forward
+
+      state.lastSlot = slot
+      state.lastTimestamp = timestamp
     }
 
     const backward = state.cursors?.backward
@@ -110,10 +112,11 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
       // @note: Pagination in solana is by tx signature, so going backward we can't guarantee that each page contain complete date or slots ranges
       const offset = state.completeHistory ? 0 : 1
 
-      state.firstTimestamp = backward.timestamp
-        ? backward.timestamp + offset
-        : undefined
-      state.firstSlot = backward.slot ? backward.slot + offset : undefined
+      const { slot, timestamp } = backward
+
+      state.firstSlot = slot !== undefined ? slot + offset : slot
+      state.firstTimestamp =
+        timestamp !== undefined ? timestamp + offset : timestamp
     }
 
     return state

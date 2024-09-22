@@ -154,7 +154,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       rpc,
     )
 
-    // @note: Stop the indexer if there wasn't more items using historic RPC
+    // @note: Stop the indexer if there weren't more items using historic RPC
     const stop = !error && useHistoricRPC && !lastCursors?.backward?.signature
     const newInterval = stop ? JobRunnerReturnCode.Stop : interval
 

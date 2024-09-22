@@ -36,9 +36,14 @@ export function createPendingAccountDAL(
           ...(newEntity.payload.peers || []),
         ])
 
-        entity = { ...newEntity }
-        entity.time = oldEntity.time
-        entity.payload.peers = [...peers]
+        entity = {
+          ...newEntity,
+          time: oldEntity.time,
+          payload: {
+            ...newEntity.payload,
+            peers: [...peers],
+          },
+        }
       }
 
       return { op: EntityUpdateOp.Update, entity }
