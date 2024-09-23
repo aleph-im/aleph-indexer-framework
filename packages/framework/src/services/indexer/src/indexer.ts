@@ -61,6 +61,8 @@ export class BaseIndexer<BEI extends BaseEntityIndexer = BaseEntityIndexer>
     const { transactions, logs, state } = index
     const { Transaction, Log, State } = IndexableEntityType
 
+    await this.domain.onNewAccount({ ...args, account })
+
     if (transactions) {
       const transactionsParams = {
         chunkDelay: 0,
@@ -105,8 +107,6 @@ export class BaseIndexer<BEI extends BaseEntityIndexer = BaseEntityIndexer>
         ...stateParams,
       })
     }
-
-    await this.domain.onNewAccount({ ...args, account })
   }
 
   async deleteAccount(args: DelAccountIndexerRequestArgs): Promise<void> {

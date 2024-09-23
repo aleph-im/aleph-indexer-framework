@@ -17,7 +17,7 @@ const timestampKey = {
 const heightKey = {
   get: (e: EthereumLogBloomEntity) => e.height,
   // @note: up to 10**9 [9 digits] enough for 300 years
-  length: 8,
+  length: 9,
 }
 
 /**
