@@ -349,7 +349,7 @@ export class SolanaRPC {
     let lastItem
 
     let history
-    let retries = 7
+    let retries = 1
 
     // @note: Ensure that there will be at least "minSignatures" valid signatures to be fetched for not wasting batch
     // fetching size performing getConfirmedTransaction requests with just a few txs
