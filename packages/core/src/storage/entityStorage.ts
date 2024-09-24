@@ -113,8 +113,17 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       // 1. Save Entity by id
       // 2. Save Indexes
 
-      await super.remove(toRemove.entities, { count: toRemove.count, batch })
-      await super.save(toSave.entities, { count: toSave.count, batch })
+      await super.remove(toRemove.entities, {
+        count: toRemove.count,
+        atomic: false,
+        batch,
+      })
+
+      await super.save(toSave.entities, {
+        count: toSave.count,
+        atomic: false,
+        batch,
+      })
 
       await Promise.all(
         Object.values(this.byIndex).map(async (byIndex) => {
@@ -157,7 +166,11 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         }),
       )
 
-      await super.remove(toRemove.entities, { count: toRemove.count, batch })
+      await super.remove(toRemove.entities, {
+        count: toRemove.count,
+        atomic: false,
+        batch,
+      })
 
       await batch.write()
     } finally {
@@ -241,9 +254,5 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         count: toRemoveEntities.length,
       },
     }
-  }
-
-  protected getAtomicOpMutex(atomic = false): Promise<() => void> {
-    return atomic ? this.atomicOpMutex.acquire() : this.noopMutex
   }
 }

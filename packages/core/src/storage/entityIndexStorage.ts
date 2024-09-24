@@ -93,10 +93,13 @@ export class EntityIndexStorage<
     }
   }
 
+  async acquire(): Promise<() => void> {
+    return this.getAtomicOpMutex(true)
+  }
+
   async getCount(options?: EntityIndexStorageCallOptions): Promise<number> {
     if (!this.options.count) throw new Error('Count option not configured')
-
-    const release = await this.getAtomicOpMutex(options?.atomic)
+    const release = await this.getAtomicOpMutex(true)
 
     try {
       if (options?.debug) {
@@ -166,7 +169,11 @@ export class EntityIndexStorage<
     end?: Stringifable[],
     options: EntityIndexStorageGetStreamOptions<Returned> = { reverse: true },
   ): Promise<StorageStream<string, Returned>> {
-    const release = await this.getAtomicOpMutex(options?.atomic)
+    // @note: The atomic doesn't work fine here cause the stream is consumed after the mutex is released
+    // @todo: As a temporal workaround we are exposing the mutext through THE "acquire" method, but a better
+    // approach is to wrap the stream to detect the close event and release the mutex there
+    const atomic = options?.atomic !== undefined ? options.atomic : false
+    const release = await this.getAtomicOpMutex(atomic)
 
     try {
       const from = this.mapKeyChunks(start, false)
@@ -386,7 +393,8 @@ export class EntityIndexStorage<
     entities: Entity | Entity[],
     options?: EntityIndexStorageSaveOptions<string | Entity>,
   ): Promise<void> {
-    const release = await this.getAtomicOpMutex(options?.atomic)
+    const atomic = options?.atomic !== undefined ? options.atomic : true
+    const release = await this.getAtomicOpMutex(atomic)
 
     try {
       entities = Array.isArray(entities) ? entities : [entities]
@@ -427,7 +435,8 @@ export class EntityIndexStorage<
     entities: Entity | Entity[],
     options?: EntityIndexStorageRemoveOptions<string | Entity>,
   ): Promise<void> {
-    const release = await this.getAtomicOpMutex(options?.atomic)
+    const atomic = options?.atomic !== undefined ? options.atomic : true
+    const release = await this.getAtomicOpMutex(atomic)
 
     try {
       entities = Array.isArray(entities) ? entities : [entities]
@@ -655,7 +664,9 @@ export class EntityIndexStorage<
     return item.value
   }
 
-  protected getAtomicOpMutex(atomic = false): Promise<() => void> {
+  protected getAtomicOpMutex(
+    atomic = !!this.options.entityStore,
+  ): Promise<() => void> {
     return atomic ? this.atomicOpMutex.acquire() : this.noopMutex
   }
 

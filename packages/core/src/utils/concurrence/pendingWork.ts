@@ -138,15 +138,15 @@ export class PendingWorkPool<T> {
   }
 
   async getCount(): Promise<number> {
-    return this.options.dal.getCount({ atomic: true })
+    return this.options.dal.getCount()
   }
 
   async getFirstValue(): Promise<PendingWork<T> | undefined> {
-    return this.options.dal.getFirstValue({ atomic: true })
+    return this.options.dal.getFirstValue()
   }
 
   async get(signature: string): Promise<PendingWork<T> | undefined> {
-    return this.options.dal.get(signature, { atomic: true })
+    return this.options.dal.get(signature)
   }
 
   skipNextSleep(): void {
@@ -176,7 +176,7 @@ export class PendingWorkPool<T> {
   ): Promise<Generator<Promise<void>>> {
     const pendingWorkStream = await this.options.dal
       .useIndex(PendingWorkDALIndex.Sorted)
-      .getAll({ reverse: false, atomic: true })
+      .getAll({ reverse: false })
 
     const pendingWorkGen = pendingWorkStream[
       Symbol.asyncIterator

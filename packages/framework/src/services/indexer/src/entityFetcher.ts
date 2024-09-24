@@ -454,7 +454,7 @@ export abstract class BaseIndexerEntityFetcher<
 
     let pending = !!(await this.entityRequestPendingEntityDAL
       .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
-      .getFirstKeyFromTo([nonce], [nonce], { atomic: true }))
+      .getFirstKeyFromTo([nonce], [nonce]))
 
     // @note: Debug false positives completing request when there are pending txs
     if (!pending) {
@@ -462,7 +462,7 @@ export abstract class BaseIndexerEntityFetcher<
 
       const pendings = await this.entityRequestPendingEntityDAL
         .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
-        .getAllFromTo([nonce], [nonce], { atomic: true })
+        .getAllFromTo([nonce], [nonce])
 
       let pending2 = false
       for await (const item of pendings) {
@@ -505,7 +505,7 @@ export abstract class BaseIndexerEntityFetcher<
 
     const pendings = await this.entityRequestPendingEntityDAL
       .useIndex(EntityRequestPendingEntityDALIndex.Nonce)
-      .getAllValuesFromTo([nonce], [nonce], { atomic: true })
+      .getAllValuesFromTo([nonce], [nonce])
 
     for await (const pending of pendings) {
       const { id: signature } = pending

@@ -610,15 +610,20 @@ export class EthereumClient {
     const now = Date.now() / 1000
     const chunk: EthereumAccountTransactionHistoryStorageEntity[] = []
 
-    const signatures = await this.accountSignatureDAL
-      .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
-      .getAllValuesFromTo([account, fromBlock], [account, toBlock], {
-        limit,
-        reverse: true,
-        atomic: true,
-      })
+    const release = await this.accountSignatureDAL.acquire()
 
-    for await (const sig of signatures) chunk.push(sig)
+    try {
+      const signatures = await this.accountSignatureDAL
+        .useIndex(EthereumAccountTransactionHistoryDALIndex.AccountHeightIndex)
+        .getAllValuesFromTo([account, fromBlock], [account, toBlock], {
+          limit,
+          reverse: true,
+        })
+
+      for await (const sig of signatures) chunk.push(sig)
+    } finally {
+      release()
+    }
 
     const count = chunk.length
     const lastItem = chunk[0]
@@ -658,13 +663,19 @@ export class EthereumClient {
     const now = Date.now() / 1000
     const logBloomChunk: EthereumLogBloom[] = []
 
-    const logBlooms = await this.logBloomDAL.getAllValuesFromTo(
-      [fromBlock],
-      [toBlock],
-      { limit, reverse: true, atomic: true },
-    )
+    const release = await this.logBloomDAL.acquire()
 
-    for await (const bloom of logBlooms) logBloomChunk.push(bloom)
+    try {
+      const logBlooms = await this.logBloomDAL.getAllValuesFromTo(
+        [fromBlock],
+        [toBlock],
+        { limit, reverse: true },
+      )
+
+      for await (const bloom of logBlooms) logBloomChunk.push(bloom)
+    } finally {
+      release()
+    }
 
     const count = logBloomChunk.length
     const lastItem = logBloomChunk[0]
