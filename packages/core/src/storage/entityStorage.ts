@@ -98,6 +98,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
   async save(entities: Entity | Entity[]): Promise<void> {
     const release = await this.getAtomicOpMutex(true)
+    const atomic = false
     const batch = this.getBatch()
 
     try {
@@ -115,13 +116,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
       await super.remove(toRemove.entities, {
         count: toRemove.count,
-        atomic: false,
+        atomic,
         batch,
       })
 
       await super.save(toSave.entities, {
         count: toSave.count,
-        atomic: false,
+        atomic,
         batch,
       })
 
@@ -129,8 +130,8 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         Object.values(this.byIndex).map(async (byIndex) => {
           // @note: Improve performance by storing in a prefixed-sublevel
           // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove.entities, { batch })
-          await byIndex.save(toSave.entities, { batch })
+          await byIndex.remove(toRemove.entities, { atomic, batch })
+          await byIndex.save(toSave.entities, { atomic, batch })
         }),
       )
 
@@ -143,6 +144,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
 
   async remove(entities: Entity | Entity[]): Promise<void> {
     const release = await this.getAtomicOpMutex(true)
+    const atomic = false
     const batch = this.getBatch()
 
     try {
@@ -162,13 +164,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         Object.values(this.byIndex).map(async (byIndex) => {
           // @note: Improve performance by storing in a prefixed-sublevel
           // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove.entities, { batch })
+          await byIndex.remove(toRemove.entities, { atomic, batch })
         }),
       )
 
       await super.remove(toRemove.entities, {
         count: toRemove.count,
-        atomic: false,
+        atomic,
         batch,
       })
 
