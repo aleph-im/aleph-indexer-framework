@@ -70,18 +70,22 @@ export class BaseHistoryFetcher<C> {
   async run(): Promise<unknown> {
     const promises: Promise<void>[] = []
 
-    if (this.forwardJob) {
+    const fetcherState = await this.getFetcherState()
+    const backwardComplete = !!fetcherState.jobs?.backward?.complete
+    const forwardComplete = !!fetcherState.jobs?.forward?.complete
+
+    if (this.backwardJob && !backwardComplete) {
+      promises.push(this.backwardJob.hasFinished())
+      if (!this.forwardJob || forwardComplete) this.backwardJob.run()
+    } else {
+      console.log(`skipping backward job for ${this.options.id}`)
+    }
+
+    if (this.forwardJob && !forwardComplete) {
       promises.push(this.forwardJob.hasFinished())
       this.forwardJob.run()
     } else {
       console.log(`skipping forward job for ${this.options.id}`)
-    }
-
-    if (this.backwardJob) {
-      promises.push(this.backwardJob.hasFinished())
-      if (!this.forwardJob) this.backwardJob.run()
-    } else {
-      console.log(`skipping backward job for ${this.options.id}`)
     }
 
     await Promise.all(promises)
