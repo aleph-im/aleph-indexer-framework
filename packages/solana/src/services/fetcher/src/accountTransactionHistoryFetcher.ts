@@ -3,6 +3,7 @@ import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { Utils } from '@aleph-indexer/core'
 import {
   BaseFetcherPaginationCursors,
+  BaseFetcherState,
   BaseHistoryFetcher,
   BlockchainId,
   FetcherJobRunnerHandleFetchResult,
@@ -68,6 +69,13 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
       },
       fetcherStateDAL,
     )
+  }
+
+  protected async getFetcherState(): Promise<
+    BaseFetcherState<SolanaAccountTransactionHistoryPaginationCursor>
+  > {
+    const useHistoricRPC = this.solanaMainPublicRpc === this.solanaRpc
+    return super.getFetcherState(useHistoricRPC)
   }
 
   protected async fetchForward({

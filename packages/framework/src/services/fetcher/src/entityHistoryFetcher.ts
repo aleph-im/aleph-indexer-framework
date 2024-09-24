@@ -47,7 +47,7 @@ export abstract class BaseEntityHistoryFetcher<
     this.pendingAccounts = new FetcherPool({
       id,
       interval: 0,
-      concurrency: 1,
+      concurrency: 100,
       dal: this.accountDAL,
       fetcherCache: true,
       getFetcher: ({ id, payload }) =>

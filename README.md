@@ -88,12 +88,9 @@ ETHEREUM_INDEX_BLOCKS
 # For specifying a custom solana RPC node/cluster without rate limits (*mandatory*)
 SOLANA_RPC
 
-# For specifying a public solana RPC node/cluster rate limited (optional)
-SOLANA_PUBLIC_RPC
-
 # For specifying a main public solana RPC node/cluster rate limited 
 # that guarantees historical data access (default "https://api.mainnet-beta.solana.com")
-SOLANA_MAIN_PUBLIC_RPC
+SOLANA_HISTORIC_RPC
 
 # Other configuration vars
 

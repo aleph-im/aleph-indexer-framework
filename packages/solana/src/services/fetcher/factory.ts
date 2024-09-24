@@ -14,20 +14,56 @@ import {
   createRawEntityDAL,
   FetcherMsClient,
   IndexableEntityType,
+  getBlockchainEnv,
   // createAccountStateDAL,
 } from '@aleph-indexer/framework'
-import {
-  solanaMainPublicRPC,
-  solanaMainPublicRPCRoundRobin,
-  solanaPrivateRPC,
-  solanaPrivateRPCRoundRobin,
-} from '../../sdk/index.js'
+
 import { createSolanaAccountTransactionHistoryDAL } from './src/dal/accountTransactionHistory.js'
 import { SolanaRawTransaction } from '../../types.js'
 import { SolanaTransactionFetcher } from './src/transactionFetcher.js'
 import { SolanaTransactionHistoryFetcher } from './src/transactionHistoryFetcher.js'
+import { MAIN_SOLANA_CLUSTER_URL } from '../../utils/constants.js'
+import { SolanaRPC, SolanaRPCRoundRobin } from '../../sdk/client.js'
 // import { SolanaStateFetcher } from './src/stateFetcher.js'
 // import { SolanaAccountState } from './src/types.js'
+
+
+function getClusterConfig(blockchainId: BlockchainId): {
+  historyRpcRR: SolanaRPCRoundRobin
+  historyRpc: SolanaRPC,
+  privateRpcRR: SolanaRPCRoundRobin
+  privateRpc: SolanaRPC,
+} {
+  const historicEnv = getBlockchainEnv(blockchainId, 'HISTORIC_RPC', false) || `${MAIN_SOLANA_CLUSTER_URL}|true`
+  const [historicUrls, historicRateLimitStr] = historicEnv.split('|')
+  const historicUrlList = historicUrls.split(',')
+  const historicRateLimit = historicRateLimitStr === 'true'
+
+  const historyRpcRR = new SolanaRPCRoundRobin(historicUrlList, historicRateLimit)
+  const historyRpc = historyRpcRR.getProxy()
+
+
+  const privateEnv = getBlockchainEnv(blockchainId, 'RPC', true)
+  let privateRpcRR = historyRpcRR
+  let privateRpc = historyRpc
+
+  if (privateEnv !== historicEnv) {
+    const [privateUrls, privateRateLimitStr] = privateEnv.split('|')
+    const privateUrlList = privateUrls.split(',')
+    const privateRateLimit = privateRateLimitStr === 'true'
+
+    privateRpcRR = new SolanaRPCRoundRobin(privateUrlList, privateRateLimit)
+    privateRpc = privateRpcRR.getProxy()
+
+  }
+
+  return {
+    historyRpcRR,
+    historyRpc,
+    privateRpcRR,
+    privateRpc
+  }
+}
 
 export async function solanaFetcherFactory(
   blockchainId: BlockchainId,
@@ -37,11 +73,21 @@ export async function solanaFetcherFactory(
 ): Promise<BlockchainFetcherI> {
   if (basePath) await Utils.ensurePath(basePath)
 
+
+    const {
+      historyRpcRR,
+      historyRpc,
+      privateRpcRR,
+      privateRpc
+    } = getClusterConfig(blockchainId)
+
+
+
   // @note: Force resolve DNS and cache it before starting fetcher
   await Promise.allSettled(
     [
-      ...solanaPrivateRPCRoundRobin.getAllClients(),
-      ...solanaMainPublicRPCRoundRobin.getAllClients(),
+      ...privateRpcRR.getAllClients(),
+      ...historyRpcRR.getAllClients(),
     ].map(async (client) => {
       const conn = client.getConnection()
       const { result } = await (conn as any)._rpcRequest('getBlockHeight', [])
@@ -62,8 +108,8 @@ export async function solanaFetcherFactory(
 
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     blockchainId,
-    solanaPrivateRPC,
-    solanaMainPublicRPC,
+    privateRpc,
+    historyRpc,
     transactionHistoryFetcherStateDAL,
     fetcherClient,
     transactionHistoryPendingAccountDAL,
@@ -72,8 +118,8 @@ export async function solanaFetcherFactory(
 
   const transactionFetcher = new SolanaTransactionFetcher(
     blockchainId,
-    solanaPrivateRPC,
-    solanaMainPublicRPC,
+    privateRpc,
+    historyRpc,
     broker,
     pendingEntityDAL,
     pendingEntityCacheDAL,
@@ -83,8 +129,8 @@ export async function solanaFetcherFactory(
 
   // const accountStateFetcherMain = new SolanaStateFetcher(
   //   blockchainId,
-  //   solanaPrivateRPC,
-  //   solanaMainPublicRPC,
+  //   privateRpc,
+  //   historyRpc,
   //   accountStateDAL,
   //   accountStatePendingAccountDAL,
   // )

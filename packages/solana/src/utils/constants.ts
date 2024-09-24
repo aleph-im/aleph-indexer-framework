@@ -1,6 +1,8 @@
 import { PublicKey } from '@solana/web3.js'
 import { ErrorCatalog } from '../types.js'
 
+export const MAIN_SOLANA_CLUSTER_URL = 'https://api.mainnet-beta.solana.com'
+
 // CONSTANTS from raydium-ui... might be a good idea to fetch those from their github?
 export const SYSTEM_PROGRAM_ID = new PublicKey(
   '11111111111111111111111111111111',

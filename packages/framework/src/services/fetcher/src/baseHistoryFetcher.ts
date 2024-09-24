@@ -180,7 +180,9 @@ export class BaseHistoryFetcher<C> {
    * Initialises the fetcherState class property of the Fetcher instance, could get
    * the data from the data access layer when the fetching progress is restarted.
    */
-  protected async getFetcherState(): Promise<BaseFetcherState<C>> {
+  protected async getFetcherState(
+    useHistoricRPC = true,
+  ): Promise<BaseFetcherState<C>> {
     if (this.fetcherState) return this.fetcherState
 
     const id = this.options.id
@@ -193,14 +195,14 @@ export class BaseHistoryFetcher<C> {
           lastRun: 0,
           numRuns: 0,
           complete: false,
-          useHistoricRPC: false,
+          useHistoricRPC,
         },
         backward: {
           frequency: undefined,
           lastRun: 0,
           numRuns: 0,
           complete: false,
-          useHistoricRPC: false,
+          useHistoricRPC,
         },
       },
     }
