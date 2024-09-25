@@ -161,7 +161,6 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Pending], [account, Pending], {
         reverse: false,
-        atomic: true,
       })
 
     const readyRanges = []
@@ -255,7 +254,6 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Processed], [account, Processed], {
         reverse: false,
-        atomic: true,
       })
 
     const { newRanges, oldRanges, mergedRanges } =
@@ -322,7 +320,6 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       .useIndex(EntityIndexerStateDALIndex.AccountState)
       .getAllValuesFromTo([account, Ready], [account, Ready], {
         reverse: false,
-        atomic: true,
       })
 
     let count = 0
@@ -399,7 +396,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       (await this.entityIndexerStateDAL.getAllValuesFromTo(
         [account, undefined],
         [account, endDate],
-        { reverse: false, atomic: true },
+        { reverse: false },
       ))
 
     return clipDateRangesFromIterable([totalDateRange], clipRanges)
