@@ -8,6 +8,7 @@ import {
   BaseFetcherState,
   FetcherJobRunnerUpdateCursorResult,
 } from './types.js'
+import { Mutex } from '@aleph-indexer/core/dist/utils/index.js'
 
 /**
  * Fetcher abstract class that provides methods to init and stop the fetching
@@ -17,6 +18,7 @@ export class BaseHistoryFetcher<C> {
   protected fetcherState!: BaseFetcherState<C>
   protected forwardJob: Utils.JobRunner | undefined
   protected backwardJob: Utils.JobRunner | undefined
+  protected fetcherStateMutex = new Mutex()
 
   /**
    * @param options Fetcher options.
@@ -61,36 +63,61 @@ export class BaseHistoryFetcher<C> {
         })
 
         this.forwardJob.on('firstRun', () => {
-          if (this.backwardJob) this.backwardJob.run()
+          this.runBackwardJob(true).catch(() => 'ignore')
         })
       }
     }
   }
 
   async run(): Promise<unknown> {
-    const promises: Promise<void>[] = []
+    return Promise.all([this.runBackwardJob(false), this.runForwardJob()])
+  }
+
+  protected async runBackwardJob(
+    isRunAfterForwardJobFirstRun: boolean,
+  ): Promise<void> {
+    const skipMessage = `skipping backward job for ${this.options.id}`
+
+    if (!this.backwardJob) {
+      console.log(skipMessage)
+      return
+    }
 
     const fetcherState = await this.getFetcherState()
-    const backwardComplete = !!fetcherState.jobs?.backward?.complete
-    const forwardComplete = !!fetcherState.jobs?.forward?.complete
-
-    if (this.backwardJob && !backwardComplete) {
-      promises.push(this.backwardJob.hasFinished())
-      if (!this.forwardJob || forwardComplete) this.backwardJob.run()
-    } else {
-      console.log(`skipping backward job for ${this.options.id}`)
+    const { complete: backwardComplete } = fetcherState.jobs?.backward || {}
+    if (backwardComplete) {
+      console.log(skipMessage)
+      return
     }
 
-    if (this.forwardJob && !forwardComplete) {
-      promises.push(this.forwardJob.hasFinished())
-      this.forwardJob.run()
-    } else {
-      console.log(`skipping forward job for ${this.options.id}`)
+    if (!isRunAfterForwardJobFirstRun && this.forwardJob) {
+      const { complete: forwardComplete } = fetcherState.jobs?.forward || {}
+
+      if (!forwardComplete) {
+        console.log(skipMessage)
+        return
+      }
     }
 
-    await Promise.all(promises)
+    await this.backwardJob.run()
+  }
 
-    return
+  protected async runForwardJob(): Promise<void> {
+    const skipMessage = `skipping forward job for ${this.options.id}`
+
+    if (!this.forwardJob) {
+      console.log(skipMessage)
+      return
+    }
+
+    const fetcherState = await this.getFetcherState()
+    const { complete: forwardComplete } = fetcherState.jobs?.forward || {}
+    if (forwardComplete) {
+      console.log(skipMessage)
+      return
+    }
+
+    await this.forwardJob.run()
   }
 
   async stop(): Promise<void> {
@@ -187,34 +214,40 @@ export class BaseHistoryFetcher<C> {
   protected async getFetcherState(
     useHistoricRPC = true,
   ): Promise<BaseFetcherState<C>> {
-    if (this.fetcherState) return this.fetcherState
+    const release = await this.fetcherStateMutex.acquire()
 
-    const id = this.options.id
-    this.fetcherState = (await this.fetcherStateDAL.get(id)) || {
-      id,
-      cursors: undefined,
-      jobs: {
-        forward: {
-          frequency: undefined,
-          lastRun: 0,
-          numRuns: 0,
-          complete: false,
-          useHistoricRPC,
+    try {
+      if (this.fetcherState) return this.fetcherState
+
+      const id = this.options.id
+      this.fetcherState = (await this.fetcherStateDAL.get(id)) || {
+        id,
+        cursors: undefined,
+        jobs: {
+          forward: {
+            frequency: undefined,
+            lastRun: 0,
+            numRuns: 0,
+            complete: false,
+            useHistoricRPC,
+          },
+          backward: {
+            frequency: undefined,
+            lastRun: 0,
+            numRuns: 0,
+            complete: false,
+            useHistoricRPC,
+          },
         },
-        backward: {
-          frequency: undefined,
-          lastRun: 0,
-          numRuns: 0,
-          complete: false,
-          useHistoricRPC,
-        },
-      },
+      }
+
+      this.initJobsFrequencyState('forward')
+      this.initJobsFrequencyState('backward')
+
+      return this.fetcherState
+    } finally {
+      release()
     }
-
-    this.initJobsFrequencyState('forward')
-    this.initJobsFrequencyState('backward')
-
-    return this.fetcherState
   }
 
   protected initJobsFrequencyState(jobType: 'forward' | 'backward'): void {
