@@ -182,6 +182,8 @@ export async function mergeDateRangesFromIterable(
   for await (const range of mergeRanges) {
     // @note: Fix invalid ranges
     if (range.endDate < range.startDate) {
+      console.log('👺👺 Fix invalid range', JSON.stringify(range))
+
       const fixedRange = {
         startDate: range.endDate,
         endDate: range.endDate,
