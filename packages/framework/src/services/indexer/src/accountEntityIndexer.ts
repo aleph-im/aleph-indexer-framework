@@ -63,10 +63,11 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
   }
 
   async start(): Promise<void> {
-    await this.initPendingRanges()
-
     // @note: Subscribe to range request responses
     this.entityFetcher.onResponse(this.entityResponseHandler)
+
+    // @note: Calling this after subscribing to incoming ranges for not losing ranges while checking
+    await this.initPendingRanges()
 
     await this.addAccountEntityFetcher()
 
@@ -163,6 +164,8 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
         atomic: true,
       })
 
+    const readyRanges = []
+
     for await (const range of pendingRanges) {
       const requestNonce = range.requestNonce as number
 
@@ -172,29 +175,30 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
 
       if (!isComplete) continue
 
-      // @note: Update the state of the request to ready (mark for processing)
-      await this.entityIndexerStateDAL.save({
+      readyRanges.push({
         ...range,
         requestNonce,
         state: Ready,
       })
     }
+
+    // @note: Update the state of the request to ready (mark for processing)
+    // @note: Bulk write for boosting performance (more RAM comsumption)
+    await this.entityIndexerStateDAL.save(readyRanges)
   }
 
   protected async onEntityResponse(requestNonce: number): Promise<void> {
     const { Ready, Pending } = EntityIndexerStateCode
 
-    const range = await this.entityIndexerStateDAL
+    const pendingRange = await this.entityIndexerStateDAL
       .useIndex(EntityIndexerStateDALIndex.RequestState)
-      .getFirstValueFromTo([requestNonce, Pending], [requestNonce, Pending], {
-        atomic: true,
-      })
+      .getFirstValueFromTo([requestNonce, Pending], [requestNonce, Pending])
 
-    if (!range) return
+    if (!pendingRange) return
 
     // @note: Update the state of the request to ready (mark for processing)
     await this.entityIndexerStateDAL.save({
-      ...range,
+      ...pendingRange,
       requestNonce,
       state: Ready,
     })
