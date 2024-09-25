@@ -109,16 +109,21 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         EntityUpdateOp.Update,
       )
 
-      // @note: Order of operations is relevant for not causing inconsistent indexes lookup keys
-      // and race conditions issues:
-      // 1. Save Entity by id
-      // 2. Save Indexes
+      // @note: remove indexes first and then entities
+
+      await Promise.all(
+        Object.values(this.byIndex).map((byIndex) =>
+          byIndex.remove(toRemove.entities, { atomic, batch }),
+        ),
+      )
 
       await super.remove(toRemove.entities, {
         count: toRemove.count,
         atomic,
         batch,
       })
+
+      // @note: save entities first and then indexes
 
       await super.save(toSave.entities, {
         count: toSave.count,
@@ -127,12 +132,9 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
       })
 
       await Promise.all(
-        Object.values(this.byIndex).map(async (byIndex) => {
-          // @note: Improve performance by storing in a prefixed-sublevel
-          // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove.entities, { atomic, batch })
-          await byIndex.save(toSave.entities, { atomic, batch })
-        }),
+        Object.values(this.byIndex).map((byIndex) =>
+          byIndex.save(toSave.entities, { atomic, batch }),
+        ),
       )
 
       await batch.write()
@@ -155,17 +157,12 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
         EntityUpdateOp.Delete,
       )
 
-      // @note: Order of operations is relevant for not causing inconsistent indexes lookup keys
-      // and race conditions issues:
-      // 1. Remove Indexes
-      // 2. Remove Entity by id
+      // @note: remove indexes first and then entities
 
       await Promise.all(
-        Object.values(this.byIndex).map(async (byIndex) => {
-          // @note: Improve performance by storing in a prefixed-sublevel
-          // the reverse lookup keys on each index database
-          await byIndex.remove(toRemove.entities, { atomic, batch })
-        }),
+        Object.values(this.byIndex).map((byIndex) =>
+          byIndex.remove(toRemove.entities, { atomic, batch }),
+        ),
       )
 
       await super.remove(toRemove.entities, {
