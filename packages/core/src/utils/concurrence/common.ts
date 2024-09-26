@@ -212,7 +212,7 @@ export class DebouncedJobRunner extends DebouncedJob<void, number> {
       sleepTime = 1000
     }
 
-    if (sleepTime) {
+    if (sleepTime !== undefined) {
       console.log(
         `Job[${name}] running again in ${
           Duration.fromMillis(sleepTime).toISOTime() || '+24h'

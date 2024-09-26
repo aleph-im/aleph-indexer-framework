@@ -34,7 +34,7 @@ export const GraphQLAccountEntityIndexerState = new GraphQLObjectType({
     type: { type: new GraphQLNonNull(GraphQLEntityType) },
     indexer: { type: new GraphQLNonNull(GraphQLString) },
     account: { type: new GraphQLNonNull(GraphQLString) },
-    accurate: { type: new GraphQLNonNull(GraphQLBoolean) },
+    completeHistory: { type: new GraphQLNonNull(GraphQLBoolean) },
     progress: { type: new GraphQLNonNull(GraphQLFloat) },
     pending: { type: new GraphQLList(new GraphQLNonNull(GraphQLString)) },
     processed: { type: new GraphQLList(new GraphQLNonNull(GraphQLString)) },

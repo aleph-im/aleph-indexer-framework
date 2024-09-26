@@ -21,6 +21,7 @@ import {
 } from '../../../utils/time.js'
 import { AccountEntityHistoryState } from '../../fetcher/src/types.js'
 import { ParsedEntity } from '../../../types.js'
+import { EntityRequest, EntityRequestType } from './dal/entityRequest.js'
 
 const { JobRunner, JobRunnerReturnCode } = Utils
 
@@ -28,7 +29,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
   protected fetchAllJob!: Utils.JobRunner
   protected compactionJob!: Utils.JobRunner
   protected processorJob!: Utils.JobRunner
-  protected entityResponseHandler: (requestNonce: number) => Promise<void>
+  protected entityResponseHandler: (request: EntityRequest) => Promise<void>
 
   constructor(
     protected config: AccountIndexerEntityRequestArgs,
@@ -120,7 +121,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       getIntervalFromDateRange(range).toISO(),
     )
 
-    const accurate = state?.completeHistory || false
+    const completeHistory = state?.completeHistory || false
 
     const totalMilis = processedMilis + pendingMilis
     const progress =
@@ -133,7 +134,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       type: this.config.type,
       indexer: 'unknown',
       account,
-      accurate,
+      completeHistory,
       progress,
       pending,
       processed,
@@ -186,7 +187,13 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     await this.entityIndexerStateDAL.save(readyRanges)
   }
 
-  protected async onEntityResponse(requestNonce: number): Promise<void> {
+  protected async onEntityResponse(request: EntityRequest): Promise<void> {
+    const { nonce: requestNonce, type, params } = request
+    const { account } = this.config
+
+    if (type === EntityRequestType.ByDateRange && params.account !== account)
+      return
+
     const { Ready, Pending } = EntityIndexerStateCode
 
     const pendingRange = await this.entityIndexerStateDAL

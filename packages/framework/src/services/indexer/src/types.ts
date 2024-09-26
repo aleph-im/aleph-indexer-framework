@@ -273,9 +273,9 @@ export type AccountEntityIndexerState = {
    */
   account: string
   /**
-   * If its statistics are accurate.
+   * If the progress is taking into account the whole history.
    */
-  accurate: boolean
+  completeHistory: boolean
   /**
    * Percentage of the account's transactions have been indexed.
    */

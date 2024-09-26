@@ -124,7 +124,7 @@ export class AccountTimeSeriesStatsManager<V> {
 
     let minDate
 
-    if (state.accurate) {
+    if (state.completeHistory) {
       const minProcessedDate = getDateRangeFromInterval(
         state.processed[0],
       ).startDate

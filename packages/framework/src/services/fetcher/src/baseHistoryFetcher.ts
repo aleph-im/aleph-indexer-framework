@@ -94,7 +94,7 @@ export class BaseHistoryFetcher<C> {
       const { complete: forwardComplete } = fetcherState.jobs?.forward || {}
 
       if (!forwardComplete) {
-        console.log(skipMessage)
+        await this.backwardJob.hasFinished()
         return
       }
     }
@@ -158,11 +158,10 @@ export class BaseHistoryFetcher<C> {
 
   async getLastRun(fetcherType?: 'forward' | 'backward'): Promise<number> {
     if (fetcherType) {
-      const fetcherState = await this.getFetcherState()
-
       const fetcherOptions = this.options.jobs?.[fetcherType]
       if (!fetcherOptions) return 0
 
+      const fetcherState = await this.getFetcherState()
       return fetcherState.jobs[fetcherType].lastRun
     }
 

@@ -173,8 +173,8 @@ export abstract class BaseEntityHistoryFetcher<
       fetcher: this.fetcherClient.getNodeId() || 'unknown',
       type: this.type,
       blockchain: this.blockchainId,
-      account,
       cursors: fetcherState.cursors,
+      account,
       completeHistory,
     }
   }

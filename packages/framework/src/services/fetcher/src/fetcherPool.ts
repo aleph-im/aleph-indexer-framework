@@ -34,6 +34,7 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     const { checkComplete, ...rest } = options
 
     super({
+      ...rest,
       checkComplete: async (work: PendingWork<T>): Promise<boolean> => {
         const fetcher = await this.getFetcher(work)
         await fetcher.init()
@@ -45,8 +46,10 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
         const complete = await checkCompleteFn(work, fetcher)
         if (!complete) return false
 
-        await this.options.dal.remove(work)
-        console.log(`Account tracker for ${work.id} complete!`)
+        // await this.options.dal.remove(work)
+        console.log(
+          `[${fetcher.getId()}] account tracker for ${work.id} complete!`,
+        )
 
         return true
       },
@@ -59,7 +62,7 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
 
         if (pendingRuns !== 1)
           throw new Error(
-            'Fetcher should be configured for doing a single run to be used by the fetcherPool',
+            `[${fetcher.getId()}] fetcher should be configured for doing a single run to be used by the fetcherPool`,
           )
 
         await fetcher.init()
@@ -69,11 +72,10 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
 
         await fetcher.run()
 
-        return (await this.getSleepTime(fetcher)) || 1
+        return await this.getSleepTime(fetcher)
       },
       preCheckComplete: true,
       chunkSize: 1,
-      ...rest,
     })
   }
 

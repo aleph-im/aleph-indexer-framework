@@ -215,7 +215,7 @@ export class PendingWorkPool<T> {
           try {
             sleepTime = await this.handleWork(works)
 
-            if (sleepTime) {
+            if (sleepTime !== undefined) {
               minSleepTimeRef.value = Math.min(minSleepTimeRef.value, sleepTime)
             }
           } finally {

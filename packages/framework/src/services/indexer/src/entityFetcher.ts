@@ -56,7 +56,7 @@ export abstract class BaseIndexerEntityFetcher<
 > {
   protected checkPendingRetriesJob!: Utils.JobRunner
   protected checkCompletionJob!: Utils.DebouncedJob<void>
-  protected requestFutures: Record<number, Utils.Future<number>> = {}
+  protected requestFutures: Record<number, Utils.Future<EntityRequest>> = {}
   protected requestMutex = new Mutex()
   protected events: EventEmitter = new EventEmitter()
   protected incomingEntities: PendingWorkPool<T>
@@ -128,11 +128,11 @@ export abstract class BaseIndexerEntityFetcher<
     })
   }
 
-  onResponse(handler: (nonce: number) => void): void {
+  onResponse(handler: (request: EntityRequest) => void): void {
     this.events.on('response', handler)
   }
 
-  offResponse(handler: (nonce: number) => void): void {
+  offResponse(handler: (request: EntityRequest) => void): void {
     this.events.off('response', handler)
   }
 
@@ -346,9 +346,17 @@ export abstract class BaseIndexerEntityFetcher<
     requestParams: EntityRequestParams,
     waitForResponse = false,
   ): Promise<number> {
+    const { blockchainId } = this
     const nonce = this.nonce.get()
     const future = this.getFuture(nonce)
     let count = 0
+    let request = {
+      blockchainId,
+      nonce,
+      complete: !count,
+      count,
+      ...requestParams,
+    }
 
     // @note: Sometimes we receive the responses before inserting the pending signatures on
     // the db, the purpose of this mutex is to avoid this
@@ -366,8 +374,6 @@ export abstract class BaseIndexerEntityFetcher<
           }`,
         )
 
-      const blockchainId = this.blockchainId
-
       for await (const ids of idsStream) {
         const pendingIds = ids.map((id) => {
           return { blockchainId, id, nonces: [nonce] }
@@ -383,12 +389,10 @@ export abstract class BaseIndexerEntityFetcher<
         count += ids.length
       }
 
-      const request = {
-        blockchainId,
-        nonce,
+      request = {
+        ...request,
         complete: !count,
         count,
-        ...requestParams,
       }
 
       await this.entityRequestDAL.save(request)
@@ -404,7 +408,7 @@ export abstract class BaseIndexerEntityFetcher<
 
     if (!count) {
       this.log(`🟢 Request ${nonce} complete`)
-      this.resolveFuture(nonce)
+      this.resolveFuture(request)
     }
 
     // @note: Will be resolved when the requested txs come asynchronously
@@ -484,7 +488,7 @@ export abstract class BaseIndexerEntityFetcher<
     await this.entityRequestDAL.save({ ...request, complete: true })
     this.log(`🟢 Request ${nonce} complete`)
 
-    this.resolveFuture(nonce)
+    this.resolveFuture(request)
   }
 
   protected async checkAllPendingSignatures(): Promise<void> {
@@ -542,22 +546,24 @@ export abstract class BaseIndexerEntityFetcher<
     await this.checkCompletionJob.run()
   }
 
-  protected getFuture(nonce: number): Utils.Future<number> {
+  protected getFuture(nonce: number): Utils.Future<EntityRequest> {
     let future = this.requestFutures[nonce]
 
     if (!future) {
-      future = new Future<number>()
+      future = new Future<EntityRequest>()
       this.requestFutures[nonce] = future
     }
 
     return future
   }
 
-  protected resolveFuture(nonce: number): void {
-    this.requestFutures[nonce]?.resolve(nonce)
+  protected resolveFuture(request: EntityRequest): void {
+    const { nonce } = request
+    this.requestFutures[nonce]?.resolve(request)
+    console.log('🍭 emit complete request with nonce', nonce)
 
     setImmediate(() => {
-      this.events.emit('response', nonce)
+      this.events.emit('response', request)
       delete this.requestFutures[nonce]
     })
   }
