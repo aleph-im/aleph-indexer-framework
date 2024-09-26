@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/oasys-verse",
-  "version": "1.4.12",
+  "version": "1.4.13",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -22,7 +22,7 @@
     "@aleph-indexer/oasys": "1.x"
   },
   "dependencies": {
-    "@aleph-indexer/oasys": "^1.4.12"
+    "@aleph-indexer/oasys": "^1.4.13"
   },
   "typedoc": {
     "entryPoint": "./index.ts",
