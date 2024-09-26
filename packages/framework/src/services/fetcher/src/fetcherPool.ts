@@ -79,6 +79,8 @@ export class FetcherPool<T> extends PendingWorkPool<T> {
     })
   }
 
+  // @note: sleepTime for a fetcher is always between [0, N] never undefined (stop)
+  // in case it should stop the checkComplete will remove it from the pool
   protected async getSleepTime(
     fetcher: BaseHistoryFetcher<any>,
   ): Promise<number> {

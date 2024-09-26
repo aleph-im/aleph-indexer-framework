@@ -161,9 +161,11 @@ export class PendingWorkPool<T> {
     const minSleepTimeRef = await concurrentPromises(generator, concurrency)
 
     const sleep = this.skipSleep
-      ? 1
+      ? 0
       : minSleepTimeRef.value === MAX_TIMER_INTEGER
-      ? this.options.interval
+      ? this.debouncedJob
+        ? undefined
+        : this.options.interval
       : minSleepTimeRef.value
 
     this.skipSleep = false
