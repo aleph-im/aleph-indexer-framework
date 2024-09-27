@@ -3,7 +3,6 @@ import { Utils } from '@aleph-indexer/core'
 import {
   BlockchainId,
   BlockchainIndexerI,
-  createEntityIndexerStateDAL,
   createEntityRequestDAL,
   createEntityRequestIncomingEntityDAL,
   createEntityRequestPendingEntityDAL,
@@ -34,7 +33,6 @@ export async function solanaIndexerFactory(
   const transactionRequestIncomingTransactionDAL = createEntityRequestIncomingEntityDAL<SolanaParsedTransaction>(basePath, IndexableEntityType.Transaction)
   const transactionRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Transaction)
   const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
-  const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
   const transactionFetcher = new SolanaIndexerTransactionFetcher(
     blockchainId,
@@ -48,11 +46,11 @@ export async function solanaIndexerFactory(
   const transactionFetcherMain = new BaseEntityIndexer(
     blockchainId,
     IndexableEntityType.Transaction,
+    basePath,
     domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
-    transactionIndexerStateDAL,
     transactionFetcher,
   )
 

@@ -6,6 +6,7 @@ import {
   EntityIndexerStateDALIndex,
   EntityIndexerStateCode,
   EntityIndexerStateStorage,
+  createEntityIndexerStateDAL,
 } from './dal/entityIndexerState.js'
 import {
   AccountIndexerEntityRequestArgs,
@@ -33,10 +34,15 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
 
   constructor(
     protected config: AccountIndexerEntityRequestArgs,
+    protected basePath: string,
     protected handler: EntityIndexerHandler<T>,
     protected fetcherMsClient: FetcherMsClient,
     protected entityFetcher: BaseIndexerEntityFetcher<T>,
-    protected entityIndexerStateDAL: EntityIndexerStateStorage,
+    protected entityIndexerStateDAL: EntityIndexerStateStorage = createEntityIndexerStateDAL(
+      basePath,
+      config.type,
+      config.account,
+    ),
   ) {
     const { type, account } = config
 
