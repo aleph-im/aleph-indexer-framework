@@ -1,4 +1,3 @@
-import p from 'node:path'
 import { EntityStorage } from '@aleph-indexer/core'
 import { IndexableEntityType } from '../../../../types.js'
 
@@ -58,12 +57,9 @@ const requestKey = {
 export function createEntityIndexerStateDAL(
   path: string,
   type: IndexableEntityType,
-  account: string,
 ): EntityIndexerStateStorage {
-  path = p.join(path, `${type}_indexer_state`)
-
   return new EntityStorage<EntityIndexerState>({
-    name: `${account}`,
+    name: `${type}_indexer_state`,
     path,
     key: [accountKey, startDateKey, endDateKey],
     indexes: [

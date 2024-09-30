@@ -24,25 +24,24 @@ export enum PendingWorkDALIndex {
   Sorted = 'sorted',
 }
 
-const idKey = {
-  get: (e: PendingWork<unknown>) => e.id,
-  length: EntityStorage.VariableLength,
-}
-
-const timeKey = {
-  get: (e: PendingWork<unknown>) => e.time,
-  length: EntityStorage.TimestampLength,
-}
-
 export class PendingWorkStorage<T> extends EntityStorage<PendingWork<T>> {
   constructor(options: PendingWorkStorageOptions<T>) {
     super({
       name: 'pending_work',
-      key: [idKey],
+      key: [{ get: (e) => e.id, length: EntityStorage.VariableLength }],
       indexes: [
         options.sortedIndex || {
           name: PendingWorkDALIndex.Sorted,
-          key: [timeKey, idKey],
+          key: [
+            {
+              get: (e) => e.time,
+              length: EntityStorage.TimestampLength,
+            },
+            {
+              get: (e) => e.id,
+              length: EntityStorage.VariableLength,
+            },
+          ],
         },
       ],
       async updateCheckFn(

@@ -7,6 +7,7 @@ import { FetcherMsClient } from '../../fetcher/client.js'
 import { ParserMsClient } from '../../parser/client.js'
 import { IndexerMsClient } from '../client.js'
 import { BaseAccountEntityIndexer } from './accountEntityIndexer.js'
+import { EntityIndexerStateStorage } from './dal/entityIndexerState.js'
 import { EntityRequest } from './dal/entityRequest.js'
 import { BaseIndexerEntityFetcher } from './entityFetcher.js'
 import {
@@ -28,16 +29,17 @@ export class BaseEntityIndexer<
    * @param fetcherClient Allows communication with the fetcher service.
    * @param indexerClient Allows communication with the sibling indexer instances.
    * @param parserClient Allows communication with the parser service.
+   * @param entityIndexerStateDAL Stores the entity indexer state.
    * @param entityFetcher Fetches actual entity data by their signatures.
    */
   constructor(
     protected blockchainId: BlockchainId,
     protected type: IndexableEntityType,
-    protected basePath: string,
     protected domain: IndexerWorkerDomainI,
     protected indexerClient: IndexerMsClient,
     protected fetcherClient: FetcherMsClient,
     protected parserClient: ParserMsClient,
+    protected entityIndexerStateDAL: EntityIndexerStateStorage,
     protected entityFetcher: BaseIndexerEntityFetcher<PE>,
   ) {
     this.entityHandler = this.onEntities.bind(this)
@@ -77,10 +79,10 @@ export class BaseEntityIndexer<
 
     accountIndexer = new BaseAccountEntityIndexer<PE>(
       args,
-      this.basePath,
       this.domain,
       this.fetcherClient,
       this.entityFetcher,
+      this.entityIndexerStateDAL,
     )
 
     await accountIndexer.start()

@@ -5,6 +5,7 @@ import {
   BaseIndexer,
   BlockchainId,
   BlockchainIndexerI,
+  createEntityIndexerStateDAL,
   createEntityRequestDAL,
   createEntityRequestIncomingEntityDAL,
   createEntityRequestPendingEntityDAL,
@@ -35,11 +36,13 @@ export async function ethereumIndexerFactory(
   const transactionRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<EthereumParsedTransaction>(basePath, IndexableEntityType.Transaction)
   const transactionRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Transaction)
   const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
+  const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
   const logRequestDAL = createEntityRequestDAL(basePath, IndexableEntityType.Log)
   const logRequestIncomingEntityDAL = createEntityRequestIncomingEntityDAL<EthereumParsedLog>(basePath, IndexableEntityType.Log)
   const logRequestPendingSignatureDAL = createEntityRequestPendingEntityDAL(basePath, IndexableEntityType.Log)
   const logRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Log)
+  const logIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Log)
 
   // Instances
 
@@ -55,11 +58,11 @@ export async function ethereumIndexerFactory(
   const transactionFetcherMain = new BaseEntityIndexer(
     blockchainId,
     IndexableEntityType.Transaction,
-    basePath,
     domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
+    transactionIndexerStateDAL,
     transactionFetcher,
   )
 
@@ -75,11 +78,11 @@ export async function ethereumIndexerFactory(
   const logFetcherMain = new BaseEntityIndexer(
     blockchainId,
     IndexableEntityType.Log,
-    basePath,
     domain,
     indexerMsClient,
     fetcherMsClient,
     parserMsClient,
+    logIndexerStateDAL,
     logFetcher,
   )
 
