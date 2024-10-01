@@ -85,23 +85,31 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   > {
     const { account } = this
 
+    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
+    const blockState = await this.blockHistoryFetcher.getState()
+
     const forwardCursor = this.fetcherState.cursors?.forward
-    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+    const fromBlock = forwardCursor
+      ? forwardCursor.height + 1
+      : blockState.cursors?.backward?.height
+
+    const toBlock = blockState.cursors?.forward?.height
 
     const iterationLimit = !fromBlock ? 1000 : Number.MAX_SAFE_INTEGER
+
+    if (fromBlock === undefined || toBlock === undefined)
+      throw new Error(
+        `${this.options.id} needs block fetcher cursors to be initialized`,
+      )
 
     const options: EthereumFetchSignaturesOptions = {
       account,
       fromBlock,
-      toBlock: undefined,
+      toBlock,
       iterationLimit,
     }
 
-    const { lastCursors, error } = await this.fetchTransactionHistory(
-      options,
-      true,
-    )
-    return { lastCursors, error }
+    return await this.fetchTransactionHistory(options, true)
   }
 
   protected async fetchBackward({
@@ -114,24 +122,26 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   > {
     const { account } = this
 
+    // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
+    const blockState = await this.blockHistoryFetcher.getState()
+
+    const fromBlock = blockState.cursors?.backward?.height
+
     const backwardCursor = this.fetcherState.cursors?.backward
-    let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
+    const toBlock = backwardCursor
+      ? backwardCursor.height - 1
+      : blockState.cursors?.forward?.height
 
-    if (!toBlock) {
-      const blockState = await this.blockHistoryFetcher.getState()
-      toBlock = blockState.cursors?.forward?.height
-    }
-
-    if (toBlock === undefined)
+    if (fromBlock === undefined || toBlock === undefined)
       throw new Error(
-        `${this.blockchainId} fetchTransactionHistory needs "toBlock" cursor to be initialized`,
+        `${this.options.id} needs block fetcher cursors to be initialized`,
       )
 
     const iterationLimit = 1000
 
     const options: EthereumFetchSignaturesOptions = {
       account,
-      fromBlock: undefined,
+      fromBlock,
       toBlock,
       iterationLimit,
     }
@@ -169,6 +179,8 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
         account: ${account}
       }
     `)
+
+    if (options.fromBlock > options.toBlock) return { lastCursors, count }
 
     try {
       const signatures = this.ethereumClient.fetchTransactionHistory(options)

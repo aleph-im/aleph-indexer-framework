@@ -123,9 +123,9 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     const blockState = await this.blockHistoryFetcher.getState()
 
     const forwardCursor = this.fetcherState.cursors?.forward
-    let fromBlock = forwardCursor ? forwardCursor.height - 1 : undefined
-    fromBlock =
-      fromBlock !== undefined ? fromBlock : blockState.cursors?.backward?.height
+    const fromBlock = forwardCursor
+      ? forwardCursor.height + 1
+      : blockState.cursors?.backward?.height
 
     const toBlock = blockState.cursors?.forward?.height
 
@@ -147,8 +147,7 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
       contract: params.contract,
     }
 
-    const { lastCursors, error } = await this.fetchLogHistory(options, true)
-    return { lastCursors, error }
+    return await this.fetchLogHistory(options, true)
   }
 
   protected async fetchBackward({
@@ -164,25 +163,23 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     // @note: To dont miss logs we need to start fetching from the newest block fetched by the block fetcher
     const blockState = await this.blockHistoryFetcher.getState()
 
-    const backwardCursor = this.fetcherState.cursors?.backward
-    let toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
-    toBlock =
-      toBlock !== undefined ? toBlock : blockState.cursors?.forward?.height
-
     const fromBlock = blockState.cursors?.backward?.height
+
+    const backwardCursor = this.fetcherState.cursors?.backward
+    const toBlock = backwardCursor
+      ? backwardCursor.height - 1
+      : blockState.cursors?.forward?.height
 
     if (fromBlock === undefined || toBlock === undefined)
       throw new Error(
         `${this.options.id} needs block fetcher cursors to be initialized`,
       )
 
-    const iterationLimit = params.iterationLimit
-
     const options: EthereumFetchLogsOptions = {
       account,
-      fromBlock: undefined, // first block height (0)
+      fromBlock,
       toBlock,
-      iterationLimit,
+      iterationLimit: params.iterationLimit,
       pageLimit: params.pageLimit,
       contract: params.contract,
     }
@@ -220,6 +217,8 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
         account: ${account}
       }
     `)
+
+    if (options.fromBlock > options.toBlock) return { lastCursors, count }
 
     try {
       const items = this.ethereumClient.fetchLogHistory(options)

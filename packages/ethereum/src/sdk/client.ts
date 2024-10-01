@@ -222,10 +222,8 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { fromBlock = 0, pageLimit = 1000 } = args
-
-    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
-      args
+    const { fromBlock, pageLimit = 1000 } = args
+    let { toBlock, iterationLimit = 1000 } = args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -279,10 +277,8 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { account, fromBlock = 0, pageLimit = 1000 } = args
-
-    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
-      args
+    const { account, fromBlock, pageLimit = 1000 } = args
+    let { toBlock, iterationLimit = 1000 } = args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)
@@ -338,10 +334,8 @@ export class EthereumClient {
     let firstKey
     let lastKey
 
-    const { account, fromBlock = 0, pageLimit = 1000, contract } = args
-
-    let { toBlock = await this.getLastBlockNumber(), iterationLimit = 1000 } =
-      args
+    const { account, fromBlock, pageLimit = 1000, contract } = args
+    let { toBlock, iterationLimit = 1000 } = args
 
     while (iterationLimit > 0) {
       const limit = Math.min(iterationLimit, pageLimit)

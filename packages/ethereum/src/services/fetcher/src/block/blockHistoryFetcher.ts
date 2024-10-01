@@ -1,4 +1,3 @@
-import { Utils } from '@aleph-indexer/core'
 import {
   BaseFetcherJobState,
   BaseFetcherState,
@@ -15,8 +14,6 @@ import {
 import { EthereumRawBlockStorage } from './dal/rawBlock.js'
 import { EthereumClient } from '../../../../sdk/client.js'
 import { EthereumRawBlock } from '../../../../types.js'
-
-const { JobRunnerReturnCode } = Utils
 
 export type EthereumBlockHistoryFetcherConfig = {
   indexRawBlocks?: boolean
@@ -64,7 +61,8 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
     FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
     const forwardCursor = this.fetcherState.cursors?.forward
-    const fromBlock = forwardCursor ? forwardCursor.height + 1 : undefined
+    const fromBlock = forwardCursor ? forwardCursor.height + 1 : 0
+    const toBlock = await this.ethereumClient.getLastBlockNumber()
 
     const { pageLimit } = this
     const iterationLimit = !fromBlock
@@ -72,39 +70,34 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
       : Number.MAX_SAFE_INTEGER
 
     const options: EthereumFetchBlocksOptions = {
-      toBlock: undefined, // lastHeight
+      toBlock,
       fromBlock,
       iterationLimit,
       pageLimit,
     }
 
-    const { lastCursors, error } = await this.fetchBlockHistory(options, true)
-
-    return { lastCursors, error }
+    return await this.fetchBlockHistory(options, true)
   }
 
   protected async runBackward(): Promise<
     FetcherJobRunnerHandleFetchResult<EthereumBlockHistoryPaginationCursor>
   > {
     const backwardCursor = this.fetcherState.cursors?.backward
-    const toBlock = backwardCursor ? backwardCursor.height - 1 : undefined
+    const fromBlock = 0
+    const toBlock = backwardCursor
+      ? backwardCursor.height - 1
+      : await this.ethereumClient.getLastBlockNumber()
 
     const { iterationLimit, pageLimit } = this
 
     const options: EthereumFetchBlocksOptions = {
-      fromBlock: undefined, // 0
+      fromBlock,
       toBlock,
       iterationLimit,
       pageLimit,
     }
 
-    const { lastCursors, error } = await this.fetchBlockHistory(options, false)
-
-    // @note: Stop the indexer if there wasnt more items
-    const stop = !error && !lastCursors?.backward?.height
-    const newInterval = stop ? JobRunnerReturnCode.Stop : undefined
-
-    return { newInterval, lastCursors, error }
+    return await this.fetchBlockHistory(options, false)
   }
 
   protected async fetchBlockHistory(
@@ -122,6 +115,8 @@ export class EthereumBlockHistoryFetcher extends BaseHistoryFetcher<EthereumBloc
         goingForward ? 'forward' : 'backward'
       }]`,
     )
+
+    if (options.fromBlock > options.toBlock) return { lastCursors }
 
     try {
       const blocks = this.ethereumClient.fetchBlockHistory(options)

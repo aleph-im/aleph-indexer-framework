@@ -39,8 +39,8 @@ export type EthereumBlockPaginationResponse = BaseFetcherPaginationResponse<
 >
 
 export type EthereumFetchBlocksOptions = {
-  toBlock?: number
-  fromBlock?: number
+  fromBlock: number
+  toBlock: number
   iterationLimit?: number
   pageLimit?: number
 }
@@ -64,8 +64,8 @@ export type EthereumTransactionHistoryPaginationResponse =
 
 export type EthereumFetchSignaturesOptions = {
   account: string
-  toBlock?: number
-  fromBlock?: number
+  fromBlock: number
+  toBlock: number
   iterationLimit?: number
   pageLimit?: number
 }
@@ -99,8 +99,8 @@ export type EthereumLogHistoryFetcherJobRunnerOptions =
 
 export type EthereumFetchLogsOptions = {
   account: string
-  toBlock?: number
-  fromBlock?: number
+  fromBlock: number
+  toBlock: number
   iterationLimit?: number
   pageLimit?: number
   contract?: string
