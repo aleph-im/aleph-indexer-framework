@@ -15,14 +15,16 @@ export type SolanaAccountTransactionHistoryPaginationCursor = {
   timestamp?: number
 }
 
-export type SolanaSignatureInfo = ConfirmedSignatureInfo
-
-export type SolanaSignature = Omit<
+export type SolanaSignatureInfo = Omit<
   ConfirmedSignatureInfo,
   'memo' | 'confirmationStatus'
 > & {
   id: string
+  signature: string
   timestamp: number
+}
+
+export type SolanaSignature = SolanaSignatureInfo & {
   accountSlotIndex: Record<string, number>
   accounts: string[]
 }

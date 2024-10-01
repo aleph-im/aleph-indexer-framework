@@ -158,7 +158,11 @@ export type SolanaRawTransactionOld = ConfirmedSignatureInfo &
 /**
  * Expected JSON RPC response for the "getTransaction" message
  */
-export type SolanaRawTransaction = RawEntity & RawParsedTransactionWithMeta
+export type SolanaRawTransaction = RawEntity &
+  RawParsedTransactionWithMeta & {
+    signature: string
+    timestamp: number
+  }
 
 export type RawAccountInfo = AccountInfo<Buffer>
 
@@ -223,7 +227,7 @@ export type SolanaParsedTransaction = Omit<
   parsed: AlephParsedInnerTransaction
   index: number
   signature: string
-  blocktime: number
+  blockTime?: number
   slot: number
 }
 

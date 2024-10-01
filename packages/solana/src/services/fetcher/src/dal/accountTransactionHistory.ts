@@ -29,7 +29,7 @@ const accountKey = {
 }
 
 const timestampKey = {
-  get: (e: SolanaSignature) => (e.blockTime || 0) * 1000,
+  get: (e: SolanaSignature) => e.timestamp,
   length: EntityStorage.TimestampLength,
 }
 

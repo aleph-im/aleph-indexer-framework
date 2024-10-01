@@ -1,5 +1,4 @@
 import { Duration } from 'luxon'
-import { ConfirmedSignatureInfo } from '@solana/web3.js'
 import { Utils } from '@aleph-indexer/core'
 import {
   BaseFetcherPaginationCursors,
@@ -13,6 +12,7 @@ import { SolanaAccountTransactionHistoryStorage } from './dal/accountTransaction
 import {
   SolanaAccountTransactionHistoryPaginationCursor,
   SolanaSignature,
+  SolanaSignatureInfo,
 } from './types.js'
 import {
   SolanaErrorFetching,
@@ -247,7 +247,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
   }
 
   protected async processSignatures(
-    signatures: ConfirmedSignatureInfo[],
+    signatures: SolanaSignatureInfo[],
     goingForward: boolean,
     runOffset: number,
     sigOffset: number,
@@ -267,15 +267,9 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const sigs = signatures.map((signature, index) => {
       const offset = runOffset * 1000000 + (999999 - (index + sigOffset))
 
-      const sig = signature as any
-      sig.id = sig.signature
-
-      delete sig.memo
-      delete sig.confirmationStatus
-
+      const sig = signature as SolanaSignature
       sig.accountSlotIndex = sig.accountSlotIndex || {}
       sig.accountSlotIndex[this.account] = offset
-
       sig.accounts = Object.keys(sig.accountSlotIndex)
 
       return sig

@@ -1,27 +1,13 @@
 import {
   PublicKey,
-  ConfirmedSignatureInfo,
   TransactionSignature,
   Supply,
   RpcResponseAndContext,
   SignaturesForAddressOptions,
   SolanaJSONRPCError,
+  ConfirmedSignatureInfo,
 } from '@solana/web3.js'
-import {
-  type as pick,
-  number,
-  string,
-  array,
-  boolean,
-  literal,
-  union,
-  optional,
-  nullable,
-  coerce,
-  unknown,
-  tuple,
-  assert,
-} from 'superstruct'
+import { assert } from 'superstruct'
 import { config } from '@aleph-indexer/core'
 import { Connection } from './connection.js'
 import {
@@ -30,7 +16,16 @@ import {
   SolanaRawTransaction,
   VoteAccountInfo,
 } from '../types.js'
-import { SolanaTransactionHistoryPaginationResponse } from '../services/fetcher/src/types.js'
+import {
+  SolanaSignatureInfo,
+  SolanaTransactionHistoryPaginationResponse,
+} from '../services/fetcher/src/types.js'
+import {
+  GetParsedTransactionRpcResult,
+  GetSignaturesForAddressRpcResult,
+  GetSupplyRpcResult,
+  GetVoteAccounts,
+} from './schema.js'
 
 export interface SolanaPaginationKey {
   signature: string
@@ -69,9 +64,9 @@ export type SolanaOptimizedHistoryOptions = {
 }
 
 export type SolanaOptimizedHistoryResponse = {
-  chunk: (AlephParsedTransaction | ConfirmedSignatureInfo)[]
-  firstItem?: ConfirmedSignatureInfo
-  lastItem?: ConfirmedSignatureInfo
+  chunk: SolanaSignatureInfo[]
+  firstItem?: SolanaSignatureInfo
+  lastItem?: SolanaSignatureInfo
   count: number
 }
 
@@ -84,7 +79,8 @@ export class SolanaRPC {
   protected connection: Connection
   protected rateLimit = false
   protected genesisBlockTimestamp = 1584368940000 // 2020-03-16T14:29:00.000Z
-  protected firstBlockWithTimestamp = 39824214
+  protected firstBlockWithTimestamp = 39824214 // blockTime is 1602083250 (2020-10-07T15:07:30.000Z)
+  // first block invalid timestamp 1584368940
 
   constructor(options: SolanaRPCOptions) {
     this.connection = new Connection(options.url, {
@@ -151,7 +147,7 @@ export class SolanaRPC {
   async getSignaturesForAddress(
     address: PublicKey,
     options?: SignaturesForAddressOptions,
-  ): Promise<ConfirmedSignatureInfo[]> {
+  ): Promise<SolanaSignatureInfo[]> {
     const batch: any[] = [
       { methodName: 'getSlot' },
       {
@@ -178,6 +174,7 @@ export class SolanaRPC {
     }
 
     const res = unsafeRes.result
+
     if (config.STRICT_CHECK_RPC) {
       assert(res, GetSignaturesForAddressRpcResult)
     }
@@ -188,26 +185,8 @@ export class SolanaRPC {
   async getConfirmedTransaction(
     signature: string,
   ): Promise<SolanaRawTransaction | null> {
-    const unsafeRes = await this.connection._rpcRequest('getTransaction', [
-      signature,
-      {
-        commitment: 'finalized',
-        encoding: 'jsonParsed',
-        maxSupportedTransactionVersion: 0,
-      },
-    ])
-
-    if ('error' in unsafeRes) {
-      throw new SolanaJSONRPCError(unsafeRes.error, 'failed to get transaction')
-    }
-
-    const res = unsafeRes.result
-
-    if (config.STRICT_CHECK_RPC) {
-      assert(res, GetParsedTransactionRpcResult)
-    }
-
-    return res
+    const [result] = await this.getConfirmedTransactions([signature])
+    return result
   }
 
   async getConfirmedTransactions(
@@ -236,7 +215,7 @@ export class SolanaRPC {
     // @note: Drop the response of getBlockHeight
     unsafeRes.shift()
 
-    const out = unsafeRes.map(
+    const txs: SolanaRawTransaction[] = unsafeRes.map(
       ({
         error,
         result,
@@ -262,13 +241,14 @@ export class SolanaRPC {
         if (result === null) return result
 
         const outputResult = result as SolanaRawTransaction
-        outputResult.id = result.transaction.signatures[0]
 
         return outputResult
       },
     )
 
-    return out
+    return txs.map((tx) =>
+      this.completeTransactionsInfo(tx, options?.swallowErrors),
+    )
   }
 
   async *fetchTransactionHistory({
@@ -313,7 +293,7 @@ export class SolanaRPC {
         lastKey = {
           signature: lastItem.signature,
           slot: lastItem.slot,
-          timestamp: (lastItem.blockTime || 0) * 1000,
+          timestamp: lastItem.timestamp,
         }
       }
 
@@ -321,7 +301,7 @@ export class SolanaRPC {
         firstKey = {
           signature: firstItem.signature,
           slot: firstItem.slot,
-          timestamp: (firstItem.blockTime || 0) * 1000,
+          timestamp: firstItem.timestamp,
         }
       }
 
@@ -350,19 +330,25 @@ export class SolanaRPC {
     let firstItem
     let lastItem
 
-    let history
+    let history: SolanaSignatureInfo[]
     let retries = 1
 
     // @note: Ensure that there will be at least "minSignatures" valid signatures to be fetched for not wasting batch
     // fetching size performing getConfirmedTransaction requests with just a few txs
     do {
-      history = await this.connection.getSignaturesForAddress(addressPubkey, {
-        limit,
-        before,
-        // @note: We are getting different responses with and without including "until" query arg
-        // that in some cases is causing infinite loops, so we need to handle it locally
-        // until,
-      })
+      const sigs = await this.connection.getSignaturesForAddress(
+        addressPubkey,
+        {
+          limit,
+          before,
+          // @note: We are getting different responses with and without including "until" query arg
+          // that in some cases is causing infinite loops, so we need to handle it locally
+          // until,
+        },
+      )
+
+      // @note: Calculate estimated timestamps, ids, etc
+      history = sigs.map((sig) => this.completeTransactionSignaturesInfo(sig))
 
       // @note: workaround for https://github.com/solana-labs/solana/issues/24620
       // @note: being handled on the next lines due to other unrelated issue with infinite loops
@@ -420,7 +406,7 @@ export class SolanaRPC {
   }
 
   protected filterSignature(
-    item: ConfirmedSignatureInfo,
+    item: SolanaSignatureInfo,
     errorFetching?: SolanaErrorFetching,
     signatureBlacklist?: Set<string>,
   ): TransactionSignature | undefined {
@@ -440,6 +426,63 @@ export class SolanaRPC {
     }
 
     return item.signature
+  }
+
+  protected completeTransactionSignaturesInfo(
+    sig: ConfirmedSignatureInfo,
+  ): SolanaSignatureInfo {
+    const newSig = sig as unknown as SolanaSignatureInfo
+
+    newSig.id = sig.signature
+    newSig.signature = newSig.id
+    delete (newSig as any).memo
+    delete (newSig as any).confirmationStatus
+    newSig.timestamp = this.calculateBlockTimestamp(
+      newSig.slot,
+      newSig.blockTime,
+    )
+
+    return newSig
+  }
+
+  protected completeTransactionsInfo<
+    S extends boolean,
+    R = S extends false ? SolanaRawTransaction : SolanaRawTransaction | null,
+  >(tx: RawParsedTransactionWithMeta | null, swallowErrors?: S): R {
+    if (!tx) {
+      if (!swallowErrors) throw new Error('Invalid null tx')
+      return tx as R
+    }
+
+    const newTx = tx as SolanaRawTransaction
+
+    newTx.id = tx.transaction.signatures[0]
+    newTx.signature = newTx.id
+    newTx.timestamp = this.calculateBlockTimestamp(newTx.slot, newTx.blockTime)
+
+    return newTx as R
+  }
+
+  protected calculateBlockTimestamp(
+    slot: number,
+    blockTime?: number | null,
+  ): number {
+    let timestamp: number | undefined = blockTime ? blockTime * 1000 : undefined
+
+    if (timestamp === undefined) {
+      // && slot < this.firstBlockWithTimestamp
+      timestamp = this.getAproximatedTimestamp(slot)
+    }
+
+    return timestamp
+  }
+
+  // @note: Genesis block has blockTime === 1584368940 which is wrong
+  // Replace it with genesisBlockTimestamp to don't cause problems querying entities by time range
+  // @note: Also before block 39824214 the blockTime is 0 so aproximate it taking into account there is
+  // a new slot each 400ms (using 444ms * firstBlockWithTimestamp = 2020-10-07T06:08:11.016Z which is near but still lower than the real blockTime 2020-10-07T15:07:30.000Z)
+  protected getAproximatedTimestamp(slot: number): number {
+    return this.genesisBlockTimestamp + slot * 444
   }
 }
 
@@ -486,177 +529,3 @@ export class SolanaRPCRoundRobin {
     }) as unknown as SolanaRPC
   }
 }
-
-const AddressTableLookupStruct = pick({
-  accountKey: string(),
-  writableIndexes: array(number()),
-  readonlyIndexes: array(number()),
-})
-
-const LoadedAddressesResult = pick({
-  writable: array(string()),
-  readonly: array(string()),
-})
-
-const TokenAmountResult = pick({
-  amount: string(),
-  uiAmount: nullable(number()),
-  decimals: number(),
-  uiAmountString: optional(string()),
-})
-
-const TokenBalanceResult = pick({
-  accountIndex: number(),
-  mint: string(),
-  owner: optional(string()),
-  uiTokenAmount: TokenAmountResult,
-})
-
-const TransactionErrorResult = nullable(union([pick({}), string()]))
-
-const RawInstructionResult = pick({
-  accounts: array(string()),
-  data: string(),
-  programId: string(),
-})
-
-const ParsedInstructionResult = pick({
-  parsed: unknown(),
-  program: string(),
-  programId: string(),
-})
-
-const InstructionResult = union([RawInstructionResult, ParsedInstructionResult])
-
-const UnknownInstructionResult = union([
-  pick({
-    parsed: unknown(),
-    program: string(),
-    programId: string(),
-  }),
-  pick({
-    accounts: array(string()),
-    data: string(),
-    programId: string(),
-  }),
-])
-
-const ParsedOrRawInstruction = coerce(
-  InstructionResult,
-  UnknownInstructionResult,
-  (value) => {
-    if ('accounts' in value) {
-      RawInstructionResult
-    } else {
-      ParsedInstructionResult
-    }
-  },
-)
-
-const ParsedConfirmedTransactionResult = pick({
-  signatures: array(string()),
-  message: pick({
-    accountKeys: array(
-      pick({
-        pubkey: string(),
-        signer: boolean(),
-        writable: boolean(),
-        source: optional(
-          union([literal('transaction'), literal('lookupTable')]),
-        ),
-      }),
-    ),
-    instructions: array(ParsedOrRawInstruction),
-    recentBlockhash: string(),
-    addressTableLookups: optional(nullable(array(AddressTableLookupStruct))),
-  }),
-})
-
-const TransactionVersionStruct = union([literal(0), literal('legacy')])
-
-const ParsedConfirmedTransactionMetaResult = pick({
-  err: TransactionErrorResult,
-  fee: number(),
-  innerInstructions: optional(
-    nullable(
-      array(
-        pick({
-          index: number(),
-          instructions: array(ParsedOrRawInstruction),
-        }),
-      ),
-    ),
-  ),
-  preBalances: array(number()),
-  postBalances: array(number()),
-  logMessages: optional(nullable(array(string()))),
-  preTokenBalances: optional(nullable(array(TokenBalanceResult))),
-  postTokenBalances: optional(nullable(array(TokenBalanceResult))),
-  loadedAddresses: optional(LoadedAddressesResult),
-  computeUnitsConsumed: optional(number()),
-})
-
-/**
- * Expected JSON RPC response for the "getTransaction" message
- */
-const GetParsedTransactionRpcResult = nullable(
-  pick({
-    slot: number(),
-    transaction: ParsedConfirmedTransactionResult,
-    meta: nullable(ParsedConfirmedTransactionMetaResult),
-    blockTime: optional(nullable(number())),
-    version: optional(TransactionVersionStruct),
-  }),
-)
-
-const VoteAccountInfoResult = pick({
-  votePubkey: string(),
-  nodePubkey: string(),
-  activatedStake: number(),
-  epochVoteAccount: boolean(),
-  epochCredits: array(tuple([number(), number(), number()])),
-  commission: number(),
-  lastVote: number(),
-  rootSlot: nullable(number()),
-})
-
-/**
- * Expected JSON RPC response for the "getVoteAccounts" message
- */
-const GetVoteAccounts = pick({
-  current: array(VoteAccountInfoResult),
-  delinquent: array(VoteAccountInfoResult),
-})
-
-const SupplyContext = pick({
-  apiVersion: string(),
-  slot: number(),
-})
-
-const SupplyValue = pick({
-  total: number(),
-  circulating: number(),
-  nonCirculating: number(),
-  nonCirculatingAccounts: array(string()),
-})
-
-/**
- * Expected JSON RPC response for the "getSupply" message
- */
-const GetSupplyRpcResult = pick({
-  context: SupplyContext,
-  value: SupplyValue,
-})
-
-/**
- * Expected JSON RPC response for the "getSignaturesForAddress" message
- */
-const GetSignaturesForAddressRpcResult = array(
-  pick({
-    signature: string(),
-    slot: number(),
-    err: TransactionErrorResult,
-    memo: nullable(string()),
-    blockTime: optional(nullable(number())),
-  }),
-)

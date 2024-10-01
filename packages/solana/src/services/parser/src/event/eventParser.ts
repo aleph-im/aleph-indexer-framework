@@ -26,9 +26,7 @@ export abstract class EventParser<
         : ''
     }:${instruction.index.toString().padStart(2, '0')}`
 
-    const timestamp = parentTransaction.blockTime
-      ? parentTransaction.blockTime * 1000
-      : parentTransaction.slot
+    const timestamp = parentTransaction.timestamp
 
     return {
       ...parsed.info,

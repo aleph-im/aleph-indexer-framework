@@ -230,11 +230,13 @@ export const TransactionError = new GraphQLObjectType({
 export const TransactionItem = new GraphQLObjectType({
   name: 'TransactionItem',
   fields: {
+    id: { type: new GraphQLNonNull(GraphQLString) },
     signature: { type: new GraphQLNonNull(GraphQLString) },
     slot: { type: new GraphQLNonNull(GraphQLInt) },
     err: { type: TransactionError },
     memo: { type: GraphQLString },
     blockTime: { type: GraphQLLong },
+    timestamp: { type: GraphQLLong },
     parsed: { type: ParsedTransactionType },
     meta: { type: ParsedConfirmedTransactionMeta },
   },

@@ -59,7 +59,7 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<So
             continue
           }
 
-          const timestamp = (tx.blockTime || 0) * 1000
+          const timestamp = tx.timestamp
 
           let valid = timestamp >= startDate && timestamp <= endDate
 
