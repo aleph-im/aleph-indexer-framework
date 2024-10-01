@@ -83,6 +83,8 @@ export enum SolanaErrorFetching {
 export class SolanaRPC {
   protected connection: Connection
   protected rateLimit = false
+  protected genesisBlockTimestamp = 1584368940000 // 2020-03-16T14:29:00.000Z
+  protected firstBlockWithTimestamp = 39824214
 
   constructor(options: SolanaRPCOptions) {
     this.connection = new Connection(options.url, {

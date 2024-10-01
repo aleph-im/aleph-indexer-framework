@@ -7,7 +7,7 @@ import {
 } from '@aleph-indexer/ethereum'
 
 export class OasysClient extends EthereumClient {
-  protected genesisBlockTimestamp = 1664418058000
+  protected genesisBlockTimestamp = 1664418058000 // 2022-09-29T02:20:58.000Z
 
   constructor(
     protected blockchainId: BlockchainId,

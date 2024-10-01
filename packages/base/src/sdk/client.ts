@@ -7,7 +7,7 @@ import {
 } from '@aleph-indexer/ethereum'
 
 export class BaseClient extends EthereumClient {
-  protected genesisBlockTimestamp = 1686789347000
+  protected genesisBlockTimestamp = 1686789347000 // 2023-06-15T00:35:47.000Z
 
   constructor(
     protected blockchainId: BlockchainId,

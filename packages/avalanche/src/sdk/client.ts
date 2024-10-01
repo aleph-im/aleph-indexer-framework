@@ -7,7 +7,7 @@ import {
 } from '@aleph-indexer/ethereum'
 
 export class AvalancheClient extends EthereumClient {
-  protected genesisBlockTimestamp = 0
+  protected genesisBlockTimestamp = 1600858926000 // 2020-09-23T11:02:06.000Z
 
   constructor(
     protected blockchainId: BlockchainId,

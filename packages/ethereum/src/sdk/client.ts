@@ -96,7 +96,7 @@ export type EthereumLogsChunkResponse = {
 // @note: Refactor to only use "ethers" and remove web3 deps
 export class EthereumClient {
   protected sdk: Web3
-  protected genesisBlockTimestamp = 1438269973000
+  protected genesisBlockTimestamp = 1438269973000 // 2015-07-30T15:26:13.000Z
 
   constructor(
     protected blockchainId: BlockchainId,
