@@ -28,7 +28,26 @@ import { SolanaRPC, SolanaRPCRoundRobin } from '../../sdk/client.js'
 // import { SolanaAccountState } from './src/types.js'
 
 
-function getClusterConfig(blockchainId: BlockchainId): {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function solanaDalsFetcherFactory(basePath: string) {
+  return {
+    accountSignatureDAL: createSolanaAccountTransactionHistoryDAL(basePath),
+    // accountStateDAL: createAccountStateDAL<SolanaAccountState>(basePath, true),
+    transactionHistoryFetcherStateDAL: createFetcherStateDAL(basePath, 'fetcher_state_transaction_history'),
+    transactionHistoryPendingAccountDAL: createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history'),
+    // accountStatePendingAccountDAL: createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state'),
+    pendingEntityDAL: createPendingEntityDAL(basePath, IndexableEntityType.Transaction),
+    pendingEntityCacheDAL: createPendingEntityCacheDAL(basePath, IndexableEntityType.Transaction),
+    pendingEntityFetchDAL: createPendingEntityFetchDAL(basePath, IndexableEntityType.Transaction),
+    rawTransactionDAL: createRawEntityDAL<SolanaRawTransaction>(basePath, IndexableEntityType.Transaction, true),
+
+  }
+}
+
+function getClusterConfig(
+  blockchainId: BlockchainId,
+  DALs: ReturnType<typeof solanaDalsFetcherFactory>,
+): {
   historyRpcRR: SolanaRPCRoundRobin
   historyRpc: SolanaRPC,
   privateRpcRR: SolanaRPCRoundRobin
@@ -39,7 +58,7 @@ function getClusterConfig(blockchainId: BlockchainId): {
   const historicUrlList = historicUrls.split(',')
   const historicRateLimit = historicRateLimitStr === 'true'
 
-  const historyRpcRR = new SolanaRPCRoundRobin(historicUrlList, historicRateLimit)
+  const historyRpcRR = new SolanaRPCRoundRobin(historicUrlList, historicRateLimit, DALs.accountSignatureDAL)
   const historyRpc = historyRpcRR.getProxy()
 
 
@@ -52,9 +71,8 @@ function getClusterConfig(blockchainId: BlockchainId): {
     const privateUrlList = privateUrls.split(',')
     const privateRateLimit = privateRateLimitStr === 'true'
 
-    privateRpcRR = new SolanaRPCRoundRobin(privateUrlList, privateRateLimit)
+    privateRpcRR = new SolanaRPCRoundRobin(privateUrlList, privateRateLimit, DALs.accountSignatureDAL)
     privateRpc = privateRpcRR.getProxy()
-
   }
 
   return {
@@ -73,15 +91,14 @@ export async function solanaFetcherFactory(
 ): Promise<BlockchainFetcherI> {
   if (basePath) await Utils.ensurePath(basePath)
 
+  const DALs = solanaDalsFetcherFactory(basePath)
 
-    const {
-      historyRpcRR,
-      historyRpc,
-      privateRpcRR,
-      privateRpc
-    } = getClusterConfig(blockchainId)
-
-
+  const {
+    historyRpcRR,
+    historyRpc,
+    privateRpcRR,
+    privateRpc
+  } = getClusterConfig(blockchainId, DALs)
 
   // @note: Force resolve DNS and cache it before starting fetcher
   await Promise.allSettled(
@@ -95,25 +112,14 @@ export async function solanaFetcherFactory(
     }),
   )
 
-  // DALs
-  const accountSignatureDAL = createSolanaAccountTransactionHistoryDAL(basePath)
-  // const accountStateDAL = createAccountStateDAL<SolanaAccountState>(basePath, true)
-  const transactionHistoryFetcherStateDAL = createFetcherStateDAL(basePath, 'fetcher_state_transaction_history')
-  const transactionHistoryPendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_transaction_history')
-  // const accountStatePendingAccountDAL = createPendingAccountDAL(basePath, 'fetcher_pending_account_account_state')
-  const pendingEntityDAL = createPendingEntityDAL(basePath, IndexableEntityType.Transaction)
-  const pendingEntityCacheDAL = createPendingEntityCacheDAL(basePath, IndexableEntityType.Transaction)
-  const pendingEntityFetchDAL = createPendingEntityFetchDAL(basePath, IndexableEntityType.Transaction)
-  const rawTransactionDAL = createRawEntityDAL<SolanaRawTransaction>(basePath, IndexableEntityType.Transaction, true)
-
   const transactionHistoryFetcher = new SolanaTransactionHistoryFetcher(
     blockchainId,
     privateRpc,
     historyRpc,
-    transactionHistoryFetcherStateDAL,
+    DALs.transactionHistoryFetcherStateDAL,
     fetcherClient,
-    transactionHistoryPendingAccountDAL,
-    accountSignatureDAL,
+    DALs.transactionHistoryPendingAccountDAL,
+    DALs.accountSignatureDAL,
   )
 
   const transactionFetcher = new SolanaTransactionFetcher(
@@ -121,10 +127,10 @@ export async function solanaFetcherFactory(
     privateRpc,
     historyRpc,
     broker,
-    pendingEntityDAL,
-    pendingEntityCacheDAL,
-    pendingEntityFetchDAL,
-    rawTransactionDAL,
+    DALs.pendingEntityDAL,
+    DALs.pendingEntityCacheDAL,
+    DALs.pendingEntityFetchDAL,
+    DALs.rawTransactionDAL,
   )
 
   // const accountStateFetcherMain = new SolanaStateFetcher(

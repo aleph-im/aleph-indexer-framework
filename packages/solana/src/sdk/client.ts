@@ -26,6 +26,7 @@ import {
   GetSupplyRpcResult,
   GetVoteAccounts,
 } from './schema.js'
+import { SolanaAccountTransactionHistoryStorage } from '../services/fetcher/src/dal/accountTransactionHistory.js'
 
 export interface SolanaPaginationKey {
   signature: string
@@ -80,9 +81,11 @@ export class SolanaRPC {
   protected rateLimit = false
   protected genesisBlockTimestamp = 1584368940000 // 2020-03-16T14:29:00.000Z
   protected firstBlockWithTimestamp = 39824214 // blockTime is 1602083250 (2020-10-07T15:07:30.000Z)
-  // first block invalid timestamp 1584368940
 
-  constructor(options: SolanaRPCOptions) {
+  constructor(
+    protected options: SolanaRPCOptions,
+    protected accountSignatureDAL?: SolanaAccountTransactionHistoryStorage,
+  ) {
     this.connection = new Connection(options.url, {
       rateLimit: options.rateLimit,
     })
@@ -246,8 +249,10 @@ export class SolanaRPC {
       },
     )
 
-    return txs.map((tx) =>
-      this.completeTransactionsInfo(tx, options?.swallowErrors),
+    return Promise.all(
+      txs.map((tx) =>
+        this.completeTransactionsInfo(tx, options?.swallowErrors),
+      ),
     )
   }
 
@@ -445,10 +450,10 @@ export class SolanaRPC {
     return newSig
   }
 
-  protected completeTransactionsInfo<
+  protected async completeTransactionsInfo<
     S extends boolean,
     R = S extends false ? SolanaRawTransaction : SolanaRawTransaction | null,
-  >(tx: RawParsedTransactionWithMeta | null, swallowErrors?: S): R {
+  >(tx: RawParsedTransactionWithMeta | null, swallowErrors?: S): Promise<R> {
     if (!tx) {
       if (!swallowErrors) throw new Error('Invalid null tx')
       return tx as R
@@ -458,7 +463,19 @@ export class SolanaRPC {
 
     newTx.id = tx.transaction.signatures[0]
     newTx.signature = newTx.id
-    newTx.timestamp = this.calculateBlockTimestamp(newTx.slot, newTx.blockTime)
+
+    let timestamp: number | undefined
+
+    if (this.accountSignatureDAL) {
+      const sigInfo = await this.accountSignatureDAL.get([newTx.signature])
+      timestamp = sigInfo?.timestamp
+    }
+
+    if (!timestamp) {
+      timestamp = this.calculateBlockTimestamp(newTx.slot, newTx.blockTime)
+    }
+
+    newTx.timestamp = timestamp
 
     return newTx as R
   }
@@ -480,9 +497,9 @@ export class SolanaRPC {
   // @note: Genesis block has blockTime === 1584368940 which is wrong
   // Replace it with genesisBlockTimestamp to don't cause problems querying entities by time range
   // @note: Also before block 39824214 the blockTime is 0 so aproximate it taking into account there is
-  // a new slot each 400ms (using 444ms * firstBlockWithTimestamp = 2020-10-07T06:08:11.016Z which is near but still lower than the real blockTime 2020-10-07T15:07:30.000Z)
+  // a new slot each 400ms
   protected getAproximatedTimestamp(slot: number): number {
-    return this.genesisBlockTimestamp + slot * 444
+    return this.genesisBlockTimestamp + slot * 400
   }
 }
 
@@ -490,16 +507,17 @@ export class SolanaRPCRoundRobin {
   protected i = 0
   protected rpcClients: SolanaRPC[] = []
 
-  constructor(rpcs: (string | SolanaRPC)[], rateLimit = false) {
+  constructor(
+    rpcs: (string | SolanaRPC)[],
+    rateLimit = false,
+    accountSignatureDAL: SolanaAccountTransactionHistoryStorage,
+  ) {
     const dedup = rpcs
       .filter((rpc) => !!rpc)
       .map((rpc) => {
         return rpc instanceof SolanaRPC
           ? rpc
-          : new SolanaRPC({
-              url: rpc,
-              rateLimit,
-            })
+          : new SolanaRPC({ url: rpc, rateLimit }, accountSignatureDAL)
       })
       .reduce((acc, curr) => {
         const url = curr.getConnection().endpoint
