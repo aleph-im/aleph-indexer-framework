@@ -10,8 +10,8 @@ import {
   GraphQLNamedType,
   GraphQLNonNull,
   GraphQLObjectType,
+  GraphQLOutputType,
   GraphQLString,
-  GraphQLType,
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLJSONObject } from '@aleph-indexer/core'
@@ -89,8 +89,8 @@ export function getAccountTimeSeriesStatsType(
   customTimeSeriesTypesMap?: Record<string, GraphQLObjectType>,
   customStatsType?: GraphQLObjectType,
 ): {
-  AccountTimeSeriesStatsList: GraphQLList<GraphQLType>
-  AccountStatsList: GraphQLList<GraphQLType>
+  AccountTimeSeriesStatsList: GraphQLList<GraphQLOutputType>
+  AccountStatsList: GraphQLList<GraphQLOutputType>
   types: GraphQLNamedType[]
 } {
   const GraphQLTimeSeriesItemValue = customTimeSeriesTypesMap
@@ -98,7 +98,8 @@ export function getAccountTimeSeriesStatsType(
         name: 'TimeSeriesItemUnion',
         types: Object.values(customTimeSeriesTypesMap),
         resolveType(value) {
-          return customTimeSeriesTypesMap[value.type]
+          return value.type
+          // return customTimeSeriesTypesMap[value.type]
         },
       })
     : GraphQLJSONObject
