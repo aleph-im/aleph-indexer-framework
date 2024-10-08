@@ -114,9 +114,21 @@ export class SolanaTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
 
       const { slot, timestamp } = backward
 
-      state.firstSlot = slot !== undefined ? slot + offset : slot
-      state.firstTimestamp =
-        timestamp !== undefined ? timestamp + offset : timestamp
+      if (slot !== undefined) {
+        const firstSlot = slot + offset
+
+        state.firstSlot = state.lastSlot
+          ? Math.min(firstSlot, state.lastSlot)
+          : firstSlot
+      }
+
+      if (timestamp !== undefined) {
+        const firstTimestamp = timestamp + offset
+
+        state.firstTimestamp = state.lastTimestamp
+          ? Math.min(firstTimestamp, state.lastTimestamp)
+          : firstTimestamp
+      }
     }
 
     return state
