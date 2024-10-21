@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/framework",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -60,7 +60,7 @@
     "nats": "^2.7.1"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.6.0",
+    "@aleph-indexer/core": "^1.6.1",
     "moleculer": "^0.14.24",
     "protobufjs": "^7.2.2"
   },
