@@ -184,7 +184,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
 
     // @note: Update the state of the request to ready (mark for processing)
     // @note: Bulk write for boosting performance (more RAM comsumption)
-    await this.entityIndexerStateDAL.save(readyRanges)
+    await this.entityIndexerStateDAL.save(readyRanges, { atomic: account })
   }
 
   protected async onEntityResponse(request: EntityRequest): Promise<void> {
@@ -203,11 +203,14 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     if (!pendingRange) return
 
     // @note: Update the state of the request to ready (mark for processing)
-    await this.entityIndexerStateDAL.save({
-      ...pendingRange,
-      requestNonce,
-      state: Ready,
-    })
+    await this.entityIndexerStateDAL.save(
+      {
+        ...pendingRange,
+        requestNonce,
+        state: Ready,
+      },
+      { atomic: account },
+    )
   }
 
   protected async fetchAllRanges({
@@ -309,8 +312,8 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
     // @note: Ordering is important for not causing
     // race conditions issues on pending ranges calculation due
     // to empty processed entries in db
-    await this.entityIndexerStateDAL.save(newStates)
-    await this.entityIndexerStateDAL.remove(oldStates)
+    await this.entityIndexerStateDAL.save(newStates, { atomic: account })
+    await this.entityIndexerStateDAL.remove(oldStates, { atomic: account })
 
     return mergedRanges
   }
@@ -349,11 +352,14 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       })
 
       // @note: Update the state of the request to processed (mark for compaction)
-      await this.entityIndexerStateDAL.save({
-        ...range,
-        requestNonce: undefined,
-        state: Processed,
-      })
+      await this.entityIndexerStateDAL.save(
+        {
+          ...range,
+          requestNonce: undefined,
+          state: Processed,
+        },
+        { atomic: account },
+      )
 
       // @note: Remove the request state on the entity fetcher
       await remove()
@@ -367,28 +373,35 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
   }
 
   protected async fetchRangeByDate(dateRange: AccountDateRange): Promise<void> {
+    const { account } = this.config
     const { Pending, Ready } = EntityIndexerStateCode
 
     // @note: Do the request and get the nonce
     const nonce = await this.entityFetcher.fetchAccountEntitiesByDate(dateRange)
 
     // @note: Save the pending state of the request
-    await this.entityIndexerStateDAL.save({
-      ...dateRange,
-      requestNonce: nonce,
-      state: Pending,
-    })
+    await this.entityIndexerStateDAL.save(
+      {
+        ...dateRange,
+        requestNonce: nonce,
+        state: Pending,
+      },
+      { atomic: account },
+    )
 
     // @note: Wait till the request is complete
     await this.entityFetcher.awaitRequestComplete(nonce)
 
     // @note: Update the state to ready
     // (in some cases, the response comes before saving the pending state, so we must always check it here too)
-    await this.entityIndexerStateDAL.save({
-      ...dateRange,
-      requestNonce: nonce,
-      state: Ready,
-    })
+    await this.entityIndexerStateDAL.save(
+      {
+        ...dateRange,
+        requestNonce: nonce,
+        state: Ready,
+      },
+      { atomic: account },
+    )
   }
 
   protected async calculateRangesToFetch(

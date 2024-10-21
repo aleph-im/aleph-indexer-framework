@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import path from 'node:path'
 
-import { Mutex } from '../utils/index.js'
 import { StorageGetOptions } from './baseStorage.js'
 import {
   EntityIndexStorage,
@@ -32,18 +31,17 @@ export type EntityStorageOptions<Entity> = EntityIndexStorageOptions<Entity> & {
   count?: boolean
 }
 
-export type EntityStorageInvokeOptions = { atomic?: boolean }
+export type EntityStorageInvokeOptions = { atomic?: string | boolean }
 export type EntityStorageCallOptions = EntityStorageInvokeOptions
 export type EntityStorageGetStreamOptions<K, V> = StorageGetOptions<K, V> &
   EntityStorageInvokeOptions
-
+export type EntityStorageSaveOptions = EntityStorageInvokeOptions
+export type EntityStorageRemoveOptions = EntityStorageInvokeOptions
 /**
  * Defines the storage handler class for different entities.
  */
 export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
   protected byIndex: Record<string, EntityIndexStorage<Entity, Entity>> = {}
-  protected atomicOpMutex: Mutex
-  protected noopMutex = Promise.resolve((): void => {})
 
   static AddressLength = EntityIndexStorage.AddressLength
   static TimestampLength = EntityIndexStorage.TimestampLength
@@ -54,7 +52,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     protected options: EntityStorageOptions<Entity>,
     protected StorageClass: typeof LevelStorage = LevelStorage,
   ) {
-    const atomicOpMutex = new Mutex()
+    const atomicOpMutex = {}
     const basePath = path.join(options.path, options.name)
     const storage = new LevelStorage({ ...options, path: basePath })
 
@@ -62,7 +60,6 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     super(opts, atomicOpMutex, storage)
 
     this.options = opts
-    this.atomicOpMutex = atomicOpMutex
 
     const { indexes } = this.options
     if (!indexes) return
@@ -79,7 +76,7 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
           entityStore: this,
           count: false,
         },
-        this.atomicOpMutex,
+        atomicOpMutex,
         storage,
       )
     }
@@ -96,8 +93,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     )
   }
 
-  async save(entities: Entity | Entity[]): Promise<void> {
-    const release = await this.getAtomicOpMutex(true)
+  async save(
+    entities: Entity | Entity[],
+    options?: EntityStorageSaveOptions,
+  ): Promise<void> {
+    const atomicTop = options?.atomic !== undefined ? options.atomic : true
+    const release = await this.getAtomicOpMutex(atomicTop)
+
     const atomic = false
     const batch = this.getBatch()
 
@@ -144,8 +146,13 @@ export class EntityStorage<Entity> extends EntityIndexStorage<Entity, Entity> {
     }
   }
 
-  async remove(entities: Entity | Entity[]): Promise<void> {
-    const release = await this.getAtomicOpMutex(true)
+  async remove(
+    entities: Entity | Entity[],
+    options?: EntityStorageRemoveOptions,
+  ): Promise<void> {
+    const atomicTop = options?.atomic !== undefined ? options.atomic : true
+    const release = await this.getAtomicOpMutex(atomicTop)
+
     const atomic = false
     const batch = this.getBatch()
 

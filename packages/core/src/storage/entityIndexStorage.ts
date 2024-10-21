@@ -30,7 +30,7 @@ export type EntityIndexStorageOptions<Entity> = LevelStorageOptions<
 }
 
 export type EntityIndexStorageInvokeOptions = StorageCommonOptions & {
-  atomic?: boolean
+  atomic?: string | boolean
 }
 export type EntityIndexStorageCallOptions = EntityIndexStorageInvokeOptions
 export type EntityIndexStorageSaveOptions<V> = StoragePutOptions<string, V> &
@@ -67,7 +67,7 @@ export class EntityIndexStorage<
 
   constructor(
     protected options: EntityIndexStorageOptions<Entity>,
-    protected atomicOpMutex: Mutex = new Mutex(),
+    protected atomicOpMutex: Record<string, Mutex> = {},
     protected storage: LevelStorage<string | Entity> = new LevelStorage({
       ...options,
       path: path.join(options.path, options.name),
@@ -93,8 +93,8 @@ export class EntityIndexStorage<
     }
   }
 
-  async acquire(): Promise<() => void> {
-    return this.getAtomicOpMutex(true)
+  async acquire(id?: string): Promise<() => void> {
+    return this.getAtomicOpMutex(id || true)
   }
 
   async getCount(options?: EntityIndexStorageCallOptions): Promise<number> {
@@ -664,10 +664,39 @@ export class EntityIndexStorage<
     return item.value
   }
 
-  protected getAtomicOpMutex(
-    atomic = !!this.options.entityStore,
+  protected async getAtomicOpMutex(
+    atomic: string | boolean = !!this.options.entityStore,
   ): Promise<() => void> {
-    return atomic ? this.atomicOpMutex.acquire() : this.noopMutex
+    if (!atomic) return this.noopMutex
+
+    const mainMutex = this.getMutexById('main')
+    const mainPromise = mainMutex.acquire()
+    if (atomic === true) return mainPromise
+
+    const idMutex = this.getMutexById(atomic)
+    const idPromise = idMutex.acquire()
+    const promises = [mainPromise, idPromise]
+
+    // @note: Only wait for id mutex but lock and release both: main and id mutexs
+    await idPromise
+
+    return async () => {
+      const releaseAll = await Promise.all(promises)
+      for (const release of releaseAll) {
+        release()
+      }
+    }
+  }
+
+  protected getMutexById(id: string): Mutex {
+    let mutex = this.atomicOpMutex[id]
+
+    if (!mutex) {
+      mutex = new Mutex()
+      this.atomicOpMutex[id] = mutex
+    }
+
+    return mutex
   }
 
   protected async getCountDelta(
