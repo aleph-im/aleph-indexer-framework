@@ -24,6 +24,8 @@ export interface JobRunnerOptions {
   jitter?: number
 }
 
+export type PartialJobRunnerOptions = Partial<JobRunnerOptions>
+
 /**
  * Runs an `intervalFn` at a given `interval`. The `intervalFn` can return a
  * number to change the interval for the next run. `intervalMax` can be used to
@@ -49,56 +51,7 @@ export class JobRunner {
   protected options!: Required<JobRunnerOptions>
 
   constructor(options: JobRunnerOptions) {
-    let {
-      verbose,
-      intervalAccuracy,
-      intervalMax,
-      intervalInit,
-      startAfter,
-      times,
-      jitter,
-    } = options
-
-    const { interval } = options
-
-    if (verbose === undefined) {
-      verbose = true
-    }
-
-    if (intervalAccuracy === undefined) {
-      intervalAccuracy = true
-    }
-
-    if (intervalMax === undefined) {
-      intervalMax = Number.MAX_SAFE_INTEGER
-    }
-
-    if (intervalInit === undefined) {
-      intervalInit = interval
-    }
-
-    if (startAfter === undefined) {
-      startAfter = 0
-    }
-
-    if (times === undefined) {
-      times = Number.POSITIVE_INFINITY
-    }
-
-    if (jitter === undefined) {
-      jitter = 0
-    }
-
-    this.options = {
-      ...options,
-      intervalAccuracy,
-      verbose,
-      intervalMax,
-      intervalInit,
-      startAfter,
-      times,
-      jitter,
-    }
+    this.parseOptions(options)
   }
 
   /**
@@ -133,9 +86,11 @@ export class JobRunner {
    * The runner function. Returns a promise that resolves when the runner is
    * finished.
    */
-  async run(): Promise<void> {
+  async run(options?: PartialJobRunnerOptions): Promise<void> {
     if (this._isRunning) return
     this._isRunning = true
+
+    this.parseOptions(options)
 
     const {
       name,
@@ -246,5 +201,65 @@ export class JobRunner {
    */
   hasFinished(): Promise<void> {
     return this._finished.promise
+  }
+
+  protected parseOptions(options?: PartialJobRunnerOptions): void {
+    if (!options) return
+
+    const mergedOptions = {
+      ...this.options,
+      ...options,
+    }
+
+    let {
+      verbose,
+      intervalAccuracy,
+      intervalMax,
+      intervalInit,
+      startAfter,
+      times,
+      jitter,
+    } = mergedOptions
+
+    const { interval } = mergedOptions
+
+    if (verbose === undefined) {
+      verbose = true
+    }
+
+    if (intervalAccuracy === undefined) {
+      intervalAccuracy = true
+    }
+
+    if (intervalMax === undefined) {
+      intervalMax = Number.MAX_SAFE_INTEGER
+    }
+
+    if (intervalInit === undefined) {
+      intervalInit = interval
+    }
+
+    if (startAfter === undefined) {
+      startAfter = 0
+    }
+
+    if (times === undefined) {
+      times = Number.POSITIVE_INFINITY
+    }
+
+    if (jitter === undefined) {
+      jitter = 0
+    }
+
+    this.options = {
+      ...mergedOptions,
+      intervalAccuracy,
+      verbose,
+      intervalMax,
+      intervalInit,
+      startAfter,
+      times,
+      jitter,
+    }
   }
 }

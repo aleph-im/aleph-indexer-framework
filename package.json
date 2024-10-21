@@ -40,6 +40,7 @@
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "graphql": "^16.9.0",
     "husky": "^8.0.1",
     "jest": "^28.1.0",
     "lerna": "^7.1.4",

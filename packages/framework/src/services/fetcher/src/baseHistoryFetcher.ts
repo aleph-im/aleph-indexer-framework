@@ -37,12 +37,11 @@ export class BaseHistoryFetcher<C> {
     const fetcherState = await this.getFetcherState()
 
     if (!this.backwardJob && this.options.jobs?.backward) {
-      const { frequency: intervalInit, complete } =
-        fetcherState.jobs?.backward || {}
+      const { frequency: intervalInit, complete } = fetcherState.jobs.backward
 
       if (!complete) {
         this.backwardJob = new Utils.JobRunner({
-          ...this.options.jobs?.backward,
+          ...this.options.jobs.backward,
           name: `${this.options.id} ⏪`,
           intervalInit,
           intervalFn: this._runJob.bind(this, 'backward'),
@@ -51,12 +50,11 @@ export class BaseHistoryFetcher<C> {
     }
 
     if (!this.forwardJob && this.options.jobs?.forward) {
-      const { frequency: intervalInit, complete } =
-        fetcherState.jobs?.forward || {}
+      const { frequency: intervalInit, complete } = fetcherState.jobs.forward
 
       if (!complete) {
         this.forwardJob = new Utils.JobRunner({
-          ...this.options.jobs?.forward,
+          ...this.options.jobs.forward,
           name: `${this.options.id} ⏩`,
           intervalInit,
           intervalFn: this._runJob.bind(this, 'forward'),
@@ -77,21 +75,21 @@ export class BaseHistoryFetcher<C> {
     isRunAfterForwardJobFirstRun: boolean,
   ): Promise<void> {
     const skipMessage = `skipping backward job for ${this.options.id}`
+    const fetcherState = await this.getFetcherState()
+    const { frequency: intervalInit, complete } = fetcherState.jobs.backward
 
     if (!this.backwardJob) {
       console.log(skipMessage)
       return
     }
 
-    const fetcherState = await this.getFetcherState()
-    const { complete: backwardComplete } = fetcherState.jobs?.backward || {}
-    if (backwardComplete) {
+    if (complete) {
       console.log(skipMessage)
       return
     }
 
     if (!isRunAfterForwardJobFirstRun && this.forwardJob) {
-      const { complete: forwardComplete } = fetcherState.jobs?.forward || {}
+      const { complete: forwardComplete } = fetcherState.jobs.forward
 
       if (!forwardComplete) {
         await this.backwardJob.hasFinished()
@@ -99,25 +97,25 @@ export class BaseHistoryFetcher<C> {
       }
     }
 
-    await this.backwardJob.run()
+    await this.backwardJob.run({ intervalInit })
   }
 
   protected async runForwardJob(): Promise<void> {
     const skipMessage = `skipping forward job for ${this.options.id}`
+    const fetcherState = await this.getFetcherState()
+    const { frequency: intervalInit, complete } = fetcherState.jobs.forward
 
     if (!this.forwardJob) {
       console.log(skipMessage)
       return
     }
 
-    const fetcherState = await this.getFetcherState()
-    const { complete: forwardComplete } = fetcherState.jobs?.forward || {}
-    if (forwardComplete) {
+    if (complete) {
       console.log(skipMessage)
       return
     }
 
-    await this.forwardJob.run()
+    await this.forwardJob.run({ intervalInit })
   }
 
   async stop(): Promise<void> {

@@ -48,7 +48,7 @@ export default class MainDomain
     if (this.context.supportedBlockchains.includes(BlockchainChain.Solana))
       accountIndexerConfigs.push({
         blockchainId: BlockchainChain.Solana,
-        account: alephTokenSol,
+        account: 'DkxNXPCuJDpYA4rKKpqm1Jwv4tD9SNRcpEH2rf9juicd', // alephTokenSol,
         meta: 2,
         index: {
           transactions: {

@@ -57,7 +57,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
             times,
             interval: 0,
             intervalInit: 0,
-            intervalMax: 1000 * 10,
+            intervalMax: 1000 * 60 * 5,
             handleFetch: (ctx) => this.fetchForward(ctx),
           },
           backward: {
@@ -122,7 +122,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     const calculateNewIt = this.forwardAutoInterval && (!error || count > 0)
 
     const newInterval = calculateNewIt
-      ? this.calculateNewInterval(count, interval)
+      ? this.calculateNewInterval(account, count, interval)
       : interval
 
     return { newInterval, lastCursors, error }
@@ -221,7 +221,11 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
     }
   }
 
-  protected calculateNewInterval(count: number, interval: number): number {
+  protected calculateNewInterval(
+    account: string,
+    count: number,
+    interval: number,
+  ): number {
     const ratioFactor = count > 0 ? this.forwardRatio / count : 2
     const reset = count > this.forwardRatioThreshold
     const newInterval = Math.max(interval, 1000) * ratioFactor
@@ -231,6 +235,7 @@ export class SolanaAccountTransactionHistoryFetcher extends BaseHistoryFetcher<S
 
     console.log(
       `${this.blockchainId} transaction | fetchForward ratio: {
+        account: ${account}
         target: ${this.forwardRatio}
         current: ${count}
         factor: ${ratioFactor.toFixed(2)}
