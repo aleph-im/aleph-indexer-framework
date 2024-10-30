@@ -82,7 +82,7 @@ export function createSolanaAccountTransactionHistoryDAL(
         entity = {
           ...newEntity,
           accountSlotIndex,
-          accounts: Object.keys(newEntity.accountSlotIndex),
+          accounts: Object.keys(accountSlotIndex),
         }
       }
 
