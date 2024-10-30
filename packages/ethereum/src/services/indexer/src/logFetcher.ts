@@ -21,7 +21,7 @@ export class EthereumIndexerLogFetcher extends BaseIndexerEntityFetcher<Ethereum
     protected logRequestIncomingLogDAL: EntityRequestIncomingEntityStorage<EthereumParsedLog>,
     protected logRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
     protected logRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedLog>,
-    protected nonce: NonceTimestamp = new NonceTimestamp(),
+    protected nonce: NonceTimestamp,
   ) {
     super(
       blockchainId,

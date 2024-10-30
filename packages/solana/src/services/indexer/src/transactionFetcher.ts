@@ -21,7 +21,7 @@ export class SolanaIndexerTransactionFetcher extends BaseIndexerEntityFetcher<So
     protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<SolanaParsedTransaction>,
     protected transactionRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
     protected transactionRequestResponseDAL: EntityRequestResponseStorage<SolanaParsedTransaction>,
-    protected nonce: NonceTimestamp = new NonceTimestamp(),
+    protected nonce: NonceTimestamp,
   ) {
     super(
       blockchainId,

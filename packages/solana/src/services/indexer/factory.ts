@@ -14,7 +14,8 @@ import {
   IndexerWorkerDomainI,
   ParserMsClient,
   BaseEntityIndexer,
-  BaseIndexer
+  BaseIndexer,
+  NonceTimestamp
 } from '@aleph-indexer/framework'
 import { SolanaParsedTransaction } from '../../types.js'
 import { SolanaIndexerTransactionFetcher } from './src/transactionFetcher.js'
@@ -36,6 +37,8 @@ export async function solanaIndexerFactory(
   const transactionRequestResponseDAL = createEntityRequestResponseDAL(basePath, IndexableEntityType.Transaction)
   const transactionIndexerStateDAL = createEntityIndexerStateDAL(basePath, IndexableEntityType.Transaction)
 
+  const nonce = new NonceTimestamp()
+
   const transactionFetcher = new SolanaIndexerTransactionFetcher(
     blockchainId,
     fetcherMsClient,
@@ -43,6 +46,7 @@ export async function solanaIndexerFactory(
     transactionRequestIncomingTransactionDAL,
     transactionRequestPendingSignatureDAL,
     transactionRequestResponseDAL,
+    nonce
   )
 
   const transactionFetcherMain = new BaseEntityIndexer(

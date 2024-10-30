@@ -71,7 +71,7 @@ export abstract class BaseIndexerEntityFetcher<
     protected entityRequestIncomingEntityDAL: EntityRequestIncomingEntityStorage<T>,
     protected entityRequestPendingEntityDAL: EntityRequestPendingEntityStorage,
     protected entityRequestResponseDAL: EntityRequestResponseStorage<T>,
-    protected nonce: NonceTimestamp = new NonceTimestamp(),
+    protected nonce: NonceTimestamp,
   ) {
     this.incomingEntities = new PendingWorkPool({
       id: `${type}-indexer-incoming-entities`,

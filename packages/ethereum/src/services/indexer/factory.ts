@@ -14,6 +14,7 @@ import {
   IndexableEntityType,
   IndexerMsClient,
   IndexerWorkerDomainI,
+  NonceTimestamp,
   ParserMsClient,
 } from '@aleph-indexer/framework'
 import { EthereumParsedLog, EthereumParsedTransaction } from '../parser/src/types.js'
@@ -46,6 +47,8 @@ export async function ethereumIndexerFactory(
 
   // Instances
 
+  const nonce = new NonceTimestamp()
+
   const transactionFetcher = new EthereumIndexerTransactionFetcher(
     blockchainId,
     fetcherMsClient,
@@ -53,6 +56,7 @@ export async function ethereumIndexerFactory(
     transactionRequestIncomingEntityDAL,
     transactionRequestPendingSignatureDAL,
     transactionRequestResponseDAL,
+    nonce
   )
 
   const transactionFetcherMain = new BaseEntityIndexer(
@@ -73,6 +77,7 @@ export async function ethereumIndexerFactory(
     logRequestIncomingEntityDAL,
     logRequestPendingSignatureDAL,
     logRequestResponseDAL,
+    nonce
   )
 
   const logFetcherMain = new BaseEntityIndexer(

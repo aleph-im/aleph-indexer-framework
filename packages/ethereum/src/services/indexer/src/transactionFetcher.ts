@@ -21,7 +21,7 @@ export class EthereumIndexerTransactionFetcher extends BaseIndexerEntityFetcher<
     protected transactionRequestIncomingTransactionDAL: EntityRequestIncomingEntityStorage<EthereumParsedTransaction>,
     protected transactionRequestPendingSignatureDAL: EntityRequestPendingEntityStorage,
     protected transactionRequestResponseDAL: EntityRequestResponseStorage<EthereumParsedTransaction>,
-    protected nonce: NonceTimestamp = new NonceTimestamp(),
+    protected nonce: NonceTimestamp,
   ) {
     super(
       blockchainId,
