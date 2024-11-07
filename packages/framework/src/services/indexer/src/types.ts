@@ -288,6 +288,8 @@ export type AccountEntityIndexerState = {
    * Which transactions have been indexed.
    */
   processed: string[]
+  // @deprecated: Breaking change fix (remove after publishing new CCN version)
+  accurate: boolean
 }
 
 /**

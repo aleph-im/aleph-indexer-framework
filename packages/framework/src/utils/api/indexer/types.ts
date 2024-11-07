@@ -38,6 +38,8 @@ export const GraphQLAccountEntityIndexerState = new GraphQLObjectType({
     progress: { type: new GraphQLNonNull(GraphQLFloat) },
     pending: { type: new GraphQLList(new GraphQLNonNull(GraphQLString)) },
     processed: { type: new GraphQLList(new GraphQLNonNull(GraphQLString)) },
+    // @deprecated: Breaking change fix (remove after publishing new CCN version)
+    accurate: { type: new GraphQLNonNull(GraphQLBoolean) },
   },
 })
 
