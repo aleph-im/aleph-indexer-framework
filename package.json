@@ -1,8 +1,7 @@
 {
   "name": "@aleph-indexer/lerna",
   "repository": {
-    "type": "git",
-    "url": "https://github.com/aleph-im/aleph-indexer-framework.git"
+    "url": "https://github.com/aleph-im/aleph-indexer-framework"
   },
   "version": "1.0.0",
   "main": "index.js",
