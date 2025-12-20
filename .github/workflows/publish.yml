@@ -14,10 +14,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest 
-    
-    permissions: 
-      contents: read
-      packages: write 
 
     steps:
       - name: "Checkout"
@@ -26,10 +22,10 @@ jobs:
           fetch-depth: 0
 
       # Setup .npmrc file to publish to GitHub Packages
-      - name: "Setup NodeJs v16 and npm registry"
+      - name: "Setup NodeJs and npm registry"
         uses: actions/setup-node@v4
         with:
-          node-version: '16.x'
+          node-version: 'lts/*'
           registry-url: 'https://registry.npmjs.org'
           scope: '@aleph-indexer'
 

@@ -12,8 +12,6 @@ export * from './src/domain/index.js'
 export * from './src/sdk/index.js'
 export * from './src/services/index.js'
 
-// ---
-
 export default {
   fetcher: {
     main: ethereumFetcherFactory,
