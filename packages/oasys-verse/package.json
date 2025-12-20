@@ -3,7 +3,7 @@
   "repository": {
     "url": "https://github.com/aleph-im/aleph-indexer-framework"
   },
-  "version": "1.6.7",
+  "version": "1.6.8",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -25,7 +25,7 @@
     "@aleph-indexer/oasys": "1.x"
   },
   "dependencies": {
-    "@aleph-indexer/oasys": "^1.6.7"
+    "@aleph-indexer/oasys": "^1.6.8"
   },
   "typedoc": {
     "entryPoint": "./index.ts",

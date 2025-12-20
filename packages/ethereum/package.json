@@ -3,7 +3,7 @@
   "repository": {
     "url": "https://github.com/aleph-im/aleph-indexer-framework"
   },
-  "version": "1.6.7",
+  "version": "1.6.8",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -34,8 +34,8 @@
     "luxon": "3.2.1"
   },
   "dependencies": {
-    "@aleph-indexer/core": "^1.6.1",
-    "@aleph-indexer/framework": "^1.6.3",
+    "@aleph-indexer/core": "^1.6.8",
+    "@aleph-indexer/framework": "^1.6.8",
     "ethereum-bloom-filters": "^1.0.10",
     "ethers": "^5.7.2",
     "moleculer": "^0.14.24",
