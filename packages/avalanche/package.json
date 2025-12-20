@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/avalanche",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.6.1",
-    "@aleph-indexer/ethereum": "^1.6.6",
+    "@aleph-indexer/ethereum": "^1.6.7",
     "@aleph-indexer/framework": "^1.6.3",
     "moleculer": "^0.14.24"
   },
