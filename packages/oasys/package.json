@@ -1,6 +1,6 @@
 {
   "name": "@aleph-indexer/oasys",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.6.1",
-    "@aleph-indexer/ethereum": "^1.6.4",
+    "@aleph-indexer/ethereum": "^1.6.5",
     "@aleph-indexer/framework": "^1.6.3",
     "moleculer": "^0.14.24"
   },
