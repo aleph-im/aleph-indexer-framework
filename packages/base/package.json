@@ -39,5 +39,6 @@
   "typedoc": {
     "entryPoint": "./index.ts",
     "displayName": "Base Indexer Framework"
-  }
+  },
+  "gitHead": "499b905bfab0588e57e58351dad45a7cc439893f"
 }
