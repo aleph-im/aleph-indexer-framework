@@ -146,13 +146,14 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       iterationLimit,
     }
 
-    const { lastCursors, error, count } = await this.fetchTransactionHistory(
+    const { lastCursors, error } = await this.fetchTransactionHistory(
       options,
       false,
     )
 
-    const newInterval =
-      error || count === 0 ? interval + 1000 : JobRunnerReturnCode.Reset
+    const newInterval = error
+      ? Math.min(interval + 1000, 1000 * 60)
+      : JobRunnerReturnCode.Reset
 
     return { lastCursors, error, newInterval }
   }
