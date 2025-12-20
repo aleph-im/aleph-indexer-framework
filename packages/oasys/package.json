@@ -1,5 +1,8 @@
 {
   "name": "@aleph-indexer/oasys",
+  "repository": {
+    "url": "https://github.com/aleph-im/aleph-indexer-framework"
+  },
   "version": "1.6.7",
   "description": "",
   "main": "dist/index.js",

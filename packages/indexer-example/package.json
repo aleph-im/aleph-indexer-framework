@@ -1,5 +1,8 @@
 {
   "name": "@aleph-indexer/indexer-example",
+  "repository": {
+    "url": "https://github.com/aleph-im/aleph-indexer-framework"
+  },
   "version": "1.0.43",
   "description": "",
   "main": "dist/index.js",
