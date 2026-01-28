@@ -18,6 +18,16 @@ import {
 
 const { JobRunnerReturnCode } = Utils
 
+export type EthereumAccountTransactionHistoryFetcherParams = {
+  iterationLimit?: number
+  /**
+   * Minimum block height to fetch transactions from. Backward fetching will stop
+   * when it reaches this block height (inclusive). Useful for limiting
+   * historical data fetching to a specific starting point.
+   */
+  minBlockHeight?: number
+}
+
 /**
  * Handles the fetching and processing of signatures on an account.
  */
@@ -27,11 +37,13 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
   /**
    * Initializes the signature fetcher.
    * @param account The account account to fetch related signatures for.
+   * @param params Configuration parameters including minBlockHeight for cutoff.
    * @param ethereumClient The Solana RPC client.
    * @param fetcherStateDAL The fetcher state storage.
    */
   constructor(
     protected account: string,
+    protected params: EthereumAccountTransactionHistoryFetcherParams,
     protected blockchainId: BlockchainId,
     protected fetcherStateDAL: FetcherStateLevelStorage<EthereumAccountTransactionHistoryPaginationCursor>,
     protected ethereumClient: EthereumClient,
@@ -59,6 +71,13 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       },
       fetcherStateDAL,
     )
+
+    // @note: Copy to dont override referenced object
+    this.params = { ...params }
+
+    if (this.params.minBlockHeight === undefined) {
+      this.params.minBlockHeight = 0
+    }
   }
 
   async init(): Promise<void> {
@@ -217,11 +236,14 @@ export class EthereumAccountTransactionHistoryFetcher extends BaseHistoryFetcher
       'backward',
     )
 
+    // Use minBlockHeight as cutoff if specified, otherwise default to 0
+    const minBlockHeight = this.params.minBlockHeight ?? 0
+
     return (
       isBlockComplete &&
       !error &&
       fetcherBackward !== undefined &&
-      fetcherBackward <= 0
+      fetcherBackward <= minBlockHeight
     )
   }
 

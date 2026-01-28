@@ -138,6 +138,7 @@ export class BaseAccountEntityIndexer<T extends ParsedEntity<unknown>> {
       progress,
       pending,
       processed,
+      params: this.config.params,
       // @deprecated: Breaking change fix (remove after publishing new CCN version)
       accurate: completeHistory,
     }

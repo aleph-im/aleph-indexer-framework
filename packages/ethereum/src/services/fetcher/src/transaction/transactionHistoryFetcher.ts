@@ -11,7 +11,10 @@ import {
   EthereumAccountTransactionHistoryPaginationCursor,
   EthereumAccountTransactionHistoryState,
 } from '../types.js'
-import { EthereumAccountTransactionHistoryFetcher } from './accountTransactionHistoryFetcher.js'
+import {
+  EthereumAccountTransactionHistoryFetcher,
+  EthereumAccountTransactionHistoryFetcherParams,
+} from './accountTransactionHistoryFetcher.js'
 import { EthereumBlockHistoryFetcher } from '../block/blockHistoryFetcher.js'
 import { EthereumClient } from '../../../../sdk/client.js'
 import {
@@ -77,9 +80,11 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
 
   protected getAccountFetcher(
     account: string,
+    params: EthereumAccountTransactionHistoryFetcherParams = {},
   ): EthereumAccountTransactionHistoryFetcher {
     return new EthereumAccountTransactionHistoryFetcher(
       account,
+      params,
       this.blockchainId,
       this.fetcherStateDAL,
       this.ethereumClient,

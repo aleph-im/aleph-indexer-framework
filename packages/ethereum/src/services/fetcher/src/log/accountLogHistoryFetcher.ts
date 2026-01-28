@@ -24,6 +24,12 @@ export type EthereumAccountLogHistoryFetcherParams = {
   contract?: string | '*'
   iterationLimit?: number
   pageLimit?: number
+  /**
+   * Minimum block height to fetch logs from. Backward fetching will stop
+   * when it reaches this block height (inclusive). Useful for limiting
+   * historical data fetching to a specific starting point.
+   */
+  minBlockHeight?: number
 }
 
 /**
@@ -78,6 +84,10 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
 
     if (this.params.pageLimit === undefined) {
       this.params.pageLimit = 5000
+    }
+
+    if (this.params.minBlockHeight === undefined) {
+      this.params.minBlockHeight = 0
     }
   }
 
@@ -250,11 +260,14 @@ export class EthereumAccountLogHistoryFetcher extends BaseHistoryFetcher<Ethereu
     const fetcherBackward = fetcherState.cursors?.backward?.height
     const isComplete = await this.blockHistoryFetcher.isComplete('backward')
 
+    // Use minBlockHeight as cutoff if specified, otherwise default to 0
+    const minBlockHeight = this.params.minBlockHeight ?? 0
+
     return (
       isComplete &&
       !error &&
       fetcherBackward !== undefined &&
-      fetcherBackward <= 0
+      fetcherBackward <= minBlockHeight
     )
   }
 

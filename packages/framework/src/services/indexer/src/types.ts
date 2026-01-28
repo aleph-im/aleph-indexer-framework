@@ -288,6 +288,10 @@ export type AccountEntityIndexerState = {
    * Which transactions have been indexed.
    */
   processed: string[]
+  /**
+   * Additional params used for fetching (e.g., minBlockHeight, contract, etc.)
+   */
+  params?: Record<string, unknown>
   // @deprecated: Breaking change fix (remove after publishing new CCN version)
   accurate: boolean
 }
