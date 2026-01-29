@@ -3,7 +3,7 @@
   "repository": {
     "url": "https://github.com/aleph-im/aleph-indexer-framework"
   },
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@aleph-indexer/core": "^1.6.8",
-    "@aleph-indexer/framework": "^1.7.0",
+    "@aleph-indexer/framework": "^1.7.1",
     "@solana/spl-token-registry": "^0.2.7",
     "@solana/web3.js": "^1.66.2",
     "bn.js": "^5.2.0",

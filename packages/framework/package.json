@@ -3,7 +3,7 @@
   "repository": {
     "url": "https://github.com/aleph-im/aleph-indexer-framework"
   },
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
