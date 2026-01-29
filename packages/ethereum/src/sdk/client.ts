@@ -97,6 +97,7 @@ export type EthereumLogsChunkResponse = {
 export class EthereumClient {
   protected sdk: Web3
   protected genesisBlockTimestamp = 1438269973000 // 2015-07-30T15:26:13.000Z
+  protected blockTimestampCache: Map<number, number> = new Map()
 
   constructor(
     protected blockchainId: BlockchainId,
@@ -117,6 +118,18 @@ export class EthereumClient {
 
   getLastBlockNumber(): Promise<number> {
     return this.sdk.eth.getBlockNumber()
+  }
+
+  async getBlockTimestamp(blockNumber: number): Promise<number | undefined> {
+    const cached = this.blockTimestampCache.get(blockNumber)
+    if (cached !== undefined) return cached
+
+    const [block] = await this.getBlocks([blockNumber], false)
+    if (!block) return undefined
+
+    const timestamp = Number(block.timestamp)
+    this.blockTimestampCache.set(blockNumber, timestamp)
+    return timestamp
   }
 
   async getTransactions(

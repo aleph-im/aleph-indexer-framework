@@ -163,7 +163,14 @@ export abstract class BaseEntityHistoryFetcher<
   ): Promise<AccountEntityHistoryState<CU> | undefined> {
     const { account } = args
 
-    const fetcher = this.getAccountFetcher(args.account, undefined)
+    // Get the account work to retrieve params
+    const accountWork = await this.accountDAL.getFirstValueFromTo(
+      [account],
+      [account],
+    )
+    const params = accountWork?.payload?.params
+
+    const fetcher = this.getAccountFetcher(args.account, params)
     const fetcherState = await fetcher.getState()
     if (!fetcherState) return
 
@@ -176,6 +183,7 @@ export abstract class BaseEntityHistoryFetcher<
       cursors: fetcherState.cursors,
       account,
       completeHistory,
+      params,
     }
   }
 

@@ -89,6 +89,7 @@ export type AccountEntityHistoryState<C> = {
   firstTimestamp?: number
   lastTimestamp?: number
   cursors?: BaseFetcherPaginationCursors<C>
+  params?: Record<string, unknown>
 }
 
 // @todo

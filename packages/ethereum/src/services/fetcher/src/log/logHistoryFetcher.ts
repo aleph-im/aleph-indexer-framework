@@ -75,6 +75,21 @@ export class EthereumLogHistoryFetcher extends BaseEntityHistoryFetcher<
       state.firstHeight = backward.height
     }
 
+    // Adjust firstTimestamp based on minBlockHeight to expose a virtual available range
+    const minBlockHeight = state.params?.minBlockHeight as number | undefined
+    if (minBlockHeight !== undefined && state.firstTimestamp !== undefined) {
+      const minBlockTimestamp = await this.ethereumClient.getBlockTimestamp(
+        minBlockHeight,
+      )
+      if (
+        minBlockTimestamp !== undefined &&
+        minBlockTimestamp > state.firstTimestamp
+      ) {
+        state.firstTimestamp = minBlockTimestamp
+        state.firstHeight = minBlockHeight
+      }
+    }
+
     return state
   }
 

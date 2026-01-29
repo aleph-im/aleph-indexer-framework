@@ -75,6 +75,21 @@ export class EthereumTransactionHistoryFetcher extends BaseEntityHistoryFetcher<
       state.firstSignature = backward.signature
     }
 
+    // Adjust firstTimestamp based on minBlockHeight to expose a virtual available range
+    const minBlockHeight = state.params?.minBlockHeight as number | undefined
+    if (minBlockHeight !== undefined && state.firstTimestamp !== undefined) {
+      const minBlockTimestamp = await this.ethereumClient.getBlockTimestamp(
+        minBlockHeight,
+      )
+      if (
+        minBlockTimestamp !== undefined &&
+        minBlockTimestamp > state.firstTimestamp
+      ) {
+        state.firstTimestamp = minBlockTimestamp
+        state.firstHeight = minBlockHeight
+      }
+    }
+
     return state
   }
 
