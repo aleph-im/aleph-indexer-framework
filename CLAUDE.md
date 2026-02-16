@@ -41,7 +41,65 @@ npm run docs
 
 # Release new version (uses lerna)
 npm run version
+
+# Publish to npm (uses lerna)
+npm run publish
 ```
+
+## Publishing with OIDC Trusted Publishing
+
+This project uses **OIDC trusted publishing** (available in Lerna v9+) for secure package publishing to npm without using long-lived tokens.
+
+### How It Works
+
+- Publishing happens automatically via GitHub Actions (`.github/workflows/publish.yml`) when tags are pushed
+- Uses OpenID Connect (OIDC) tokens instead of traditional `NPM_TOKEN` secrets
+- Generates signed provenance attestations for published packages
+- Each package must be configured on npm to require publishing from GitHub Actions
+
+### GitHub Actions Configuration
+
+The workflow already has the required setup:
+- ✅ `id-token: write` permission for OIDC token retrieval
+- ✅ `NPM_CONFIG_PROVENANCE: true` for signed attestations
+- ✅ Lerna v9.0.3 with OIDC support
+
+### npm Package Configuration (Required)
+
+For each published package, configure trusted publishing on npm:
+
+1. Go to `https://www.npmjs.com/package/@aleph-indexer/<package-name>/access`
+2. Under "Publishing access", enable **"Require publishing from CI/CD"**
+3. Select **"GitHub Actions"** as the provider
+4. Add repository: `aleph-im/aleph-indexer-framework`
+5. Optional: Specify workflow file or environment restrictions
+
+### Published Packages
+
+Configure these packages on npm:
+- `@aleph-indexer/core`
+- `@aleph-indexer/framework`
+- `@aleph-indexer/ethereum`
+- `@aleph-indexer/solana`
+- `@aleph-indexer/bsc`
+- `@aleph-indexer/oasys`
+- `@aleph-indexer/oasys-verse`
+- `@aleph-indexer/base`
+- `@aleph-indexer/avalanche`
+
+### Triggering a Release
+
+```bash
+# Create and push a version tag
+npm run version  # Interactive version bump
+git push && git push --tags
+
+# Or manually tag
+git tag v1.7.2
+git push origin v1.7.2
+```
+
+The GitHub Actions workflow will automatically publish with OIDC authentication.
 
 ## Architecture
 
