@@ -1,6 +1,3 @@
-import { jest } from '@jest/globals'
-jest.useFakeTimers()
-
 import {
   mergeDateRangesFromIterable,
   clipDateRangesFromIterable,
