@@ -17,7 +17,7 @@ import {
   Stringifable,
 } from './types.js'
 import { StreamFilter, StreamMap } from '../utils/stream.js'
-import { Mutex } from '../utils/index.js'
+import { Mutex } from '../utils/concurrence/common.js'
 
 export type EntityIndexStorageOptions<Entity> = LevelStorageOptions<
   string | Entity

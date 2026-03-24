@@ -34,5 +34,4 @@ jobs:
         run: npx eslint --cache --ignore-path .gitignore './packages/**/src/**/*.{js,ts,tsx}' --max-warnings=-1
 
       - name: Test
-        continue-on-error: true # TODO: fix pre-existing test failures
         run: npm test

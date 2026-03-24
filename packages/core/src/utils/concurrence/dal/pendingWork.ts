@@ -1,4 +1,4 @@
-import { PendingWork } from '../../index.js'
+import { PendingWork } from '../pendingWork.js'
 import {
   EntityStorage,
   EntityStorageOptions,
