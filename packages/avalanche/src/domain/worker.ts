@@ -18,14 +18,17 @@ export type AvalancheTransactionIndexerWorkerDomainI = {
 
 export type AvalancheLogIndexerWorkerDomainI = {
   avalancheLogBufferLength?: number // default 1000
-  avalancheFilterLog(context: ParserContext, entity: AvalancheParsedLog): Promise<boolean>
+  avalancheFilterLog(
+    context: ParserContext,
+    entity: AvalancheParsedLog,
+  ): Promise<boolean>
   avalancheIndexLogs(
     context: ParserContext,
     entities: AvalancheParsedLog[],
   ): Promise<void>
 }
 
-export type AvalancheIndexerWorkerDomainI = AvalancheTransactionIndexerWorkerDomainI &
-  AvalancheLogIndexerWorkerDomainI
+export type AvalancheIndexerWorkerDomainI =
+  AvalancheTransactionIndexerWorkerDomainI & AvalancheLogIndexerWorkerDomainI
 
 export { ethereumWorkerDomainFactory as avalancheWorkerDomainFactory } from '@aleph-indexer/ethereum'

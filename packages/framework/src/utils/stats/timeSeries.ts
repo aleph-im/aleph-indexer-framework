@@ -127,7 +127,7 @@ export class TimeSeriesStats<I extends object, O> {
         const timeFrameSize = Duration.fromObject({
           [timeFrameName.toLowerCase()]: 1,
         }).toMillis()
-        while (true) {
+        for (;;) {
           if (trueDivideTimeFrameIndex <= 0) break
           const smallerSize = Duration.fromObject({
             [TimeFrame[
@@ -235,8 +235,9 @@ export class TimeSeriesStats<I extends object, O> {
         if (!intervals.length) continue
 
         for (const interval of intervals) {
-          let { startDate, endDate } = getDateRangeFromInterval(interval)
-          endDate = endDate - 1
+          const { startDate, endDate: rawEndDate } =
+            getDateRangeFromInterval(interval)
+          const endDate = rawEndDate - 1
 
           // const key = [account, type, timeFrame, startDate]
           const cache = {}
