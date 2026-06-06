@@ -63,7 +63,7 @@
     "packages/oasys-verse",
     "packages/solana"
   ],
-  "optionalDependencies": {
+  "dependencies": {
     "encoding": "^0.1.13"
   }
 }
