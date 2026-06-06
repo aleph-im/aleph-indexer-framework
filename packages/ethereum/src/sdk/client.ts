@@ -489,6 +489,52 @@ export class EthereumClient {
     )
   }
 
+  // @note: Fetch all logs in a block range resilient to the provider's result
+  // cap (e.g. "query returned more than 10000 results"). High-volume contracts
+  // like USDC can exceed the limit in just a few blocks, so we split the range
+  // and retry. We prefer the safe range suggested by the provider when present
+  // (error.data.from/to), otherwise we bisect.
+  protected async getBlockLogsInRange(
+    fromBlock: number,
+    toBlock: number,
+    contract?: string,
+  ): Promise<EthereumRawLog[]> {
+    try {
+      return (await this.getBlockLogs(
+        [{ fromBlock, toBlock }],
+        false,
+        contract,
+      )) as EthereumRawLog[]
+    } catch (error) {
+      const message = (error as Error)?.message ?? ''
+      const isResultLimitError = /more than [\d,]+ results/i.test(message)
+
+      // @note: Can't split a single block any further, propagate the error
+      if (!isResultLimitError || fromBlock >= toBlock) throw error
+
+      // @note: Use the provider's suggested upper bound when available,
+      // otherwise bisect the range
+      let splitTo = Math.floor((fromBlock + toBlock) / 2)
+      const hintTo = Number((error as { data?: { to?: string } })?.data?.to)
+      if (Number.isInteger(hintTo) && hintTo >= fromBlock && hintTo < toBlock) {
+        splitTo = hintTo
+      }
+
+      console.log(
+        `${this.blockchainId} log range [${fromBlock}, ${toBlock}] over result limit, splitting at ${splitTo}`,
+      )
+
+      const head = await this.getBlockLogsInRange(fromBlock, splitTo, contract)
+      const tail = await this.getBlockLogsInRange(
+        splitTo + 1,
+        toBlock,
+        contract,
+      )
+
+      return head.concat(tail)
+    }
+  }
+
   // @note: Take a look at:
   // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-method/src/index.js#L847
   // https://github.com/web3/web3.js/blob/1.x/packages/web3-core-requestmanager/src/index.js#L196
@@ -704,12 +750,10 @@ export class EthereumClient {
         const toBlock = relevantLogBloomChunk[0].height
 
         // @note: Fetch the biggest range in just one rpc method and then filter locally
-        // to avoid Error: Too many ["eth_getLogs"] methods in the batch
-        let logs = (await this.getBlockLogs(
-          [{ fromBlock, toBlock }],
-          false,
-          contract,
-        )) as EthereumRawLog[]
+        // to avoid Error: Too many ["eth_getLogs"] methods in the batch.
+        // @note: Splits the range automatically when the provider's result cap
+        // is exceeded (e.g. high-volume contracts like USDC)
+        let logs = await this.getBlockLogsInRange(fromBlock, toBlock, contract)
 
         if (!contract) {
           const accountTopic = `0x${account.substring(2).padStart(64, '0')}`
