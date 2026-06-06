@@ -27,6 +27,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
+      # Guard: 'encoding' MUST stay a regular dependency. npm prunes optional
+      # deps from the lockfile differently per platform (macOS drops it, Linux
+      # CI needs it), which breaks 'npm ci'. Do not move it back to
+      # optionalDependencies. See CLAUDE.md > Triggering a Release.
+      - name: Guard encoding dependency
+        run: |
+          node -e "const p=require('./package.json'); if(!p.dependencies||!p.dependencies.encoding){console.error('ERROR: \"encoding\" must remain under dependencies (not optionalDependencies). npm prunes optional deps from package-lock.json on macOS, breaking npm ci on Linux CI. See CLAUDE.md.'); process.exit(1)}"
+
       - name: Install dependencies
         run: npm ci
 

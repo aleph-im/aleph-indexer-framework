@@ -101,6 +101,23 @@ git push origin v1.7.2
 
 The GitHub Actions workflow will automatically publish with OIDC authentication.
 
+### ⚠️ Lockfile: do NOT move `encoding` out of `dependencies`
+
+The root `package.json` declares `encoding` under **`dependencies`** (not
+`optionalDependencies`) on purpose. `node-fetch` pulls `encoding` as an
+optional dependency, and npm resolves optional dependencies differently per
+platform: on **macOS** `npm install` prunes `encoding`/`iconv-lite` from
+`package-lock.json`, while **Linux CI** requires them — so the moment a macOS
+dev runs `npm install`, the lockfile drifts and `npm ci` fails in CI with
+`Missing: encoding ... from lock file`.
+
+Keeping `encoding` as a regular dependency forces npm to lock it on every
+platform. **Do not** revert it to `optionalDependencies`, and after any
+`npm install`/`lerna version` on macOS, verify `encoding` and
+`iconv-lite@0.6.3` are still present in `package-lock.json` before committing.
+CI also pins Node to `24` (matching the local npm major) for the same reason.
+A CI guard fails the build if `encoding` leaves `dependencies`.
+
 ## Architecture
 
 ### Monorepo Structure
